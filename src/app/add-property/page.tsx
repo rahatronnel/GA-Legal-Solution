@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth, useFirestore, useUser } from '@/firebase';
@@ -29,7 +29,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,8 +44,6 @@ const propertySchema = z.object({
   type: z.enum(['flat', 'plot'], {
     required_error: 'You need to select a property type.',
   }),
-  lat: z.coerce.number().min(-90).max(90),
-  lng: z.coerce.number().min(-180).max(180),
 });
 
 type PropertyFormValues = z.infer<typeof propertySchema>;
@@ -65,8 +62,6 @@ export default function AddPropertyPage() {
       title: '',
       description: '',
       price: 0,
-      lat: 34.052235,
-      lng: -118.243683
     },
   });
 
@@ -95,7 +90,6 @@ export default function AddPropertyPage() {
         agent: { name: 'New Agent', phone: '555-555-5555', avatarId: 'agent-1' },
         details: { area: 1500 },
         isNearRoad: false,
-        location: { lat: data.lat, lng: data.lng },
       });
 
       toast({
@@ -201,36 +195,6 @@ export default function AddPropertyPage() {
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="lat"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Latitude</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="any" placeholder="34.052235" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lng"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Longitude</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="any" placeholder="-118.243683" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
 
               <Button type="submit" disabled={isSubmitting || isUserLoading} className="w-full">
                 {isSubmitting ? (

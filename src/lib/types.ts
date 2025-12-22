@@ -22,10 +22,6 @@ export type Property = {
   description: string;
   price: number;
   type: 'plot' | 'flat';
-  location: {
-    lat: number;
-    lng: number;
-  };
   isNearRoad: boolean;
   imageIds: string[];
   agent: Agent;

@@ -26,10 +26,6 @@
           "type": "string",
           "description": "Detailed description of the property."
         },
-        "location": {
-          "type": "string",
-          "description": "Geographic coordinates of the property (e.g., latitude, longitude)."
-        },
         "price": {
           "type": "number",
           "description": "Price of the property."
@@ -57,7 +53,6 @@
         "categoryId",
         "title",
         "description",
-        "location",
         "price",
         "imageUrls",
         "contactInformation",
