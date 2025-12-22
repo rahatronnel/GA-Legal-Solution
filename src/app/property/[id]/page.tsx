@@ -1,7 +1,12 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { properties } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Property } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import {
   Carousel,
@@ -25,7 +30,7 @@ import {
   Bath,
   Ruler,
   Phone,
-  Building,
+  Loader,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { UploadPlotImage } from '@/components/upload-plot-image';
@@ -34,15 +39,44 @@ type Props = {
   params: { id: string };
 };
 
-export function generateStaticParams() {
-  return properties.map((property) => ({
-    id: property.id,
-  }));
-}
-
 export default function PropertyPage({ params }: Props) {
-  const property = properties.find((p) => p.id === params.id);
+  const firestore = useFirestore();
+  const propertyRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'properties', params.id) : null),
+    [firestore, params.id]
+  );
+  const { data: property, isLoading, error } = useDoc<Property>(propertyRef);
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-6xl py-8">
+        <div className="mb-8">
+          <Skeleton className="h-12 w-3/4 mb-4" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+        </div>
+        <Skeleton className="aspect-video w-full rounded-lg mb-8" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2 space-y-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-32 w-full" />
+            </div>
+            <div className="space-y-8">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="container text-center py-10">Error loading property.</div>
+  }
+  
   if (!property) {
     notFound();
   }

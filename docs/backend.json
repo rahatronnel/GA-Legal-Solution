@@ -10,6 +10,10 @@
           "type": "string",
           "description": "Unique identifier for the Property entity."
         },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this property."
+        },
         "categoryId": {
           "type": "string",
           "description": "Reference to Category. (Relationship: Category 1:N Property)"
@@ -49,6 +53,7 @@
       },
       "required": [
         "id",
+        "ownerId",
         "categoryId",
         "title",
         "description",

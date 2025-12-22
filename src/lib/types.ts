@@ -30,4 +30,5 @@ export type Property = {
   imageIds: string[];
   agent: Agent;
   details: PropertyDetails;
+  ownerId?: string;
 };
