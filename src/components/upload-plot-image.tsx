@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ImageIcon, Lightbulb, Loader, Trash2, Upload } from 'lucide-react';
+import { ImageIcon, Lightbulb, Loader, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useRef, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,7 +27,7 @@ function SubmitButton() {
 
 export function UploadPlotImage() {
   const initialState = { success: false, message: '', suggestedLabels: [] };
-  const [state, formAction] = useFormState(handleImageUpload, initialState);
+  const [state, formAction] = useActionState(handleImageUpload, initialState);
   const { toast } = useToast();
 
   const [preview, setPreview] = useState<string | null>(null);
