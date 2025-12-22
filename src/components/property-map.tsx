@@ -6,7 +6,7 @@ import {
   Map,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { Home, LandPlot, Road } from 'lucide-react';
+import { Car, Home, LandPlot } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { Property } from '@/lib/types';
@@ -88,7 +88,7 @@ export function PropertyMap({ properties }: { properties: Property[] }) {
                   <span className="text-sm capitalize">{selectedProperty.type}</span>
                   {selectedProperty.isNearRoad && (
                     <div className="flex items-center gap-1">
-                      <Road className="h-4 w-4 text-muted-foreground" />
+                      <Car className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">Near Road</span>
                     </div>
                   )}
