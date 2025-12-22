@@ -7,6 +7,7 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { use } from 'react';
 
 import {
   Carousel,
@@ -36,14 +37,15 @@ import { Separator } from '@/components/ui/separator';
 import { UploadPlotImage } from '@/components/upload-plot-image';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default function PropertyPage({ params }: Props) {
+  const { id } = use(params);
   const firestore = useFirestore();
   const propertyRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'properties', params.id) : null),
-    [firestore, params.id]
+    () => (firestore ? doc(firestore, 'properties', id) : null),
+    [firestore, id]
   );
   const { data: property, isLoading, error } = useDoc<Property>(propertyRef);
 
