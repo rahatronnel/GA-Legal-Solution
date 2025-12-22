@@ -1,0 +1,64 @@
+/**
+ * Core Philosophy: This ruleset establishes a public, read-only data model for a real estate application. 
+ * The primary security goal is to make all property and category information accessible to any user,
+ * including those who are not authenticated, to encourage browsing and discovery.
+ *
+ * Data Structure: The data is organized into two distinct, top-level collections:
+ * - /categories/{categoryId}: Stores property categories like 'Plot' or 'Flat'.
+ * - /properties/{propertyId}: Stores individual property listings.
+ * This flat, segregated structure simplifies data access and security management.
+ *
+ * Key Security Decisions:
+ * - Public Read Access: All documents in both `/categories` and `/properties` are publicly readable (`get`) and listable (`list`).
+ * - Write Lock-down: All write operations (`create`, `update`, `delete`) are currently disabled (`if false`). This is a critical security measure because the data models for 'Property' and 'Category' are missing an 'ownerId' or 'authorId' field. Without an ownership field, it is impossible to securely determine who is allowed to create, modify, or delete a document.
+ * - Future Implementation: To enable writes, the backend data models MUST be updated to include an ownership field (e.g., `authorId: string`). The rules can then be updated to enforce that only the authenticated author can manage their own listings.
+ *
+ * Denormalization for Authorization: This ruleset is designed with denormalization in mind. For write rules to function, an `authorId` must be denormalized (copied) onto every `Property` and `Category` document. This will allow for simple, performant, and secure ownership checks directly within the security rules without needing costly `get()` calls to other documents.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description  Manages property categories (e.g., 'Plots', 'Flats'). This collection is publicly readable by all users. Writes are currently disabled pending a schema update.
+     * @path         /categories/{categoryId}
+     * @allow        (get, list) Any user, authenticated or not, can read the list of categories.
+     * @deny         (create) Any user attempting to create a new category will be denied.
+     * @principle    Public read access. Writes are disabled because the 'Category' entity lacks an `ownerId` field, making it impossible to authorize write operations securely.
+     */
+    match /categories/{categoryId} {
+      allow get: if true;
+      allow list: if true;
+      
+      // CRITICAL: Cannot implement owner-only writes. The 'Category' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if false; // TODO: Add owner validation once the schema is updated with an ownership field (e.g., `request.resource.data.ownerId == request.auth.uid`).
+      allow update: if false; // TODO: Add owner validation once the schema is updated (e.g., `resource.data.ownerId == request.auth.uid`).
+      allow delete: if false; // TODO: Add owner validation once the schema is updated (e.g., `resource.data.ownerId == request.auth.uid`).
+    }
+
+    /**
+     * @description  Manages real estate property listings. This collection is publicly readable by all users. Writes are currently disabled pending a schema update.
+     * @path         /properties/{propertyId}
+     * @allow        (get, list) Any user, authenticated or not, can view property listings.
+     * @deny         (create) An authenticated user attempting to create a new property will be denied.
+     * @principle    Public read access. Writes are disabled because the 'Property' entity lacks an `ownerId` field, making it impossible to authorize write operations securely.
+     */
+    match /properties/{propertyId} {
+      allow get: if true;
+      allow list: if true;
+
+      // CRITICAL: Cannot implement owner-only writes. The 'Property' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if false; // TODO: Add owner validation once the schema is updated with an ownership field (e.g., `request.resource.data.ownerId == request.auth.uid`).
+      allow update: if false; // TODO: Add owner validation once the schema is updated (e.g., `resource.data.ownerId == request.auth.uid`).
+      allow delete: if false; // TODO: Add owner validation once the schema is updated (e.g., `resource.data.ownerId == request.auth.uid`).
+    }
+  }
+}
