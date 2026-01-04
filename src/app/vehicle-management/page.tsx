@@ -24,6 +24,8 @@ export default function VehicleManagementPage() {
             <TabsTrigger value="trips">Trips</TabsTrigger>
             <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
             <TabsTrigger value="drivers">Drivers</TabsTrigger>
+            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            <TabsTrigger value="accidents">Accidents</TabsTrigger>
             <TabsTrigger value="trip-management">Trip Master</TabsTrigger>
             <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
           </TabsList>
@@ -52,6 +54,28 @@ export default function VehicleManagementPage() {
                   <DriverTable />
               </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="maintenance">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Maintenance</CardTitle>
+                    <CardDescription>This section is under construction. Here you will manage vehicle maintenance records.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Coming soon...</p>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="accidents">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Accidents</CardTitle>
+                    <CardDescription>This section is under construction. Here you will manage vehicle accident reports.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Coming soon...</p>
+                </CardContent>
+            </Card>
         </TabsContent>
         <TabsContent value="trip-management">
           <div className="grid gap-6">
