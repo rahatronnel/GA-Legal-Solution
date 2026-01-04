@@ -14,6 +14,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ExpenseTypeTable } from "./components/expense-type-table";
 import { MaintenanceTypeTable } from "./components/maintenance-type-table";
 import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-type-table";
+import { ServiceCenterTable } from "./components/service-center-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -59,6 +60,15 @@ export default function VehicleManagementPage() {
         </TabsContent>
         <TabsContent value="maintenance">
             <div className="grid gap-6">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Service Centers / Garages</CardTitle>
+                        <CardDescription>Manage your approved service centers and garages.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ServiceCenterTable />
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <CardTitle>Maintenance Types</CardTitle>
