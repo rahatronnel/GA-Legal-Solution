@@ -29,6 +29,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 type VehicleType = {
   id: string;
   name: string;
+  vehicleTypeCode: string;
 };
 
 export function VehicleTypeTable() {
@@ -37,7 +38,7 @@ export function VehicleTypeTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
-  const [typeName, setTypeName] = useState('');
+  const [typeData, setTypeData] = useState({ name: '', vehicleTypeCode: '' });
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
@@ -46,15 +47,24 @@ export function VehicleTypeTable() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleAdd = () => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setTypeData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const resetForm = () => {
     setCurrentVehicleType(null);
-    setTypeName('');
+    setTypeData({ name: '', vehicleTypeCode: '' });
+  }
+
+  const handleAdd = () => {
+    resetForm();
     setIsDialogOpen(true);
   };
 
   const handleEdit = (vehicleType: VehicleType) => {
     setCurrentVehicleType(vehicleType);
-    setTypeName(vehicleType.name);
+    setTypeData({ name: vehicleType.name, vehicleTypeCode: vehicleType.vehicleTypeCode });
     setIsDialogOpen(true);
   };
 
@@ -69,33 +79,32 @@ export function VehicleTypeTable() {
         toast({ title: 'Success', description: 'Vehicle type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
-    setCurrentVehicleType(null);
+    resetForm();
   };
 
   const handleSave = () => {
-    if (!typeName.trim()) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Name field is required.' });
+    if (!typeData.name.trim() || !typeData.vehicleTypeCode.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
 
     if (currentVehicleType?.id) {
       // Update
-      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, name: typeName } : vt));
+      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } : vt));
       toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
     } else {
       // Create
-      const newVehicleType = { id: Date.now().toString(), name: typeName };
+      const newVehicleType = { id: Date.now().toString(), ...typeData };
       setVehicleTypes(prev => [...prev, newVehicleType]);
       toast({ title: 'Success', description: 'Vehicle type added successfully.' });
     }
 
     setIsDialogOpen(false);
-    setCurrentVehicleType(null);
-    setTypeName('');
+    resetForm();
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '' }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '', vehicleTypeCode: '' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'VehicleTypes');
     XLSX.writeFile(wb, 'VehicleTypeTemplate.xlsx');
@@ -111,15 +120,15 @@ export function VehicleTypeTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json: { name: string }[] = XLSX.utils.sheet_to_json(worksheet);
+          const json: { name: string, vehicleTypeCode: string }[] = XLSX.utils.sheet_to_json(worksheet);
 
-          if (!json[0] || !('name' in json[0])) {
-             throw new Error('Invalid Excel file format. Expecting a column with header "name".');
+          if (!json[0] || !('name' in json[0]) || !('vehicleTypeCode' in json[0])) {
+             throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "vehicleTypeCode".');
           }
 
           const newTypes = json
-            .filter(item => item.name && item.name.trim())
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim() }));
+            .filter(item => item.name && item.name.trim() && item.vehicleTypeCode && item.vehicleTypeCode.trim())
+            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim(), vehicleTypeCode: item.vehicleTypeCode.trim() }));
           
           if(newTypes.length > 0) {
             setVehicleTypes(prev => [...prev, ...newTypes]);
@@ -152,18 +161,20 @@ export function VehicleTypeTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead>Vehicle Type</TableHead>
+                    <TableHead>Vehicle Type Code</TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
                     <TableRow>
-                    <TableCell colSpan={2} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : vehicleTypes && vehicleTypes.length > 0 ? (
                     vehicleTypes.map((vt) => (
                     <TableRow key={vt.id}>
                         <TableCell>{vt.name}</TableCell>
+                        <TableCell>{vt.vehicleTypeCode}</TableCell>
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -188,7 +199,7 @@ export function VehicleTypeTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={2} className="text-center">No vehicle types found.</TableCell>
+                    <TableCell colSpan={3} className="text-center">No vehicle types found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -209,7 +220,13 @@ export function VehicleTypeTable() {
               <Label htmlFor="name" className="text-right">
                 Name
               </Label>
-              <Input id="name" value={typeName} onChange={(e) => setTypeName(e.target.value)} className="col-span-3" />
+              <Input id="name" value={typeData.name} onChange={handleInputChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="vehicleTypeCode" className="text-right">
+                Type Code
+              </Label>
+              <Input id="vehicleTypeCode" value={typeData.vehicleTypeCode} onChange={handleInputChange} className="col-span-3" />
             </div>
           </div>
           <DialogFooter>
