@@ -117,19 +117,29 @@ export function DesignationTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json: { name: string, designationCode: string }[] = XLSX.utils.sheet_to_json(worksheet);
+          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
           if (!json[0] || !('name' in json[0]) || !('designationCode' in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "designationCode".');
           }
 
           const newItems = json
-            .filter(item => item.name && item.name.trim() && item.designationCode && item.designationCode.trim())
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim(), designationCode: item.designationCode.trim() }));
+            .map(item => ({
+              name: String(item.name || '').trim(),
+              designationCode: String(item.designationCode || '').trim()
+            }))
+            .filter(item => item.name && item.designationCode)
+            .map(item => ({
+              id: Date.now().toString() + item.name,
+              name: item.name,
+              designationCode: item.designationCode
+            }));
           
           if(newItems.length > 0) {
             setDesignations(prev => [...prev, ...newItems]);
             toast({ title: 'Success', description: 'Designations uploaded successfully.' });
+          } else {
+            toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid designations found in the file.' });
           }
 
         } catch (error: any) {
