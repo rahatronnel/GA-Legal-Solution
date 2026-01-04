@@ -8,10 +8,11 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download } from 'lucide-react';
+import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     if (!doc) {
@@ -76,6 +77,7 @@ export default function DriverProfilePage() {
   const { id } = params;
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [driver, setDriver] = useState<Driver | null>(null);
+  const { handlePrint } = usePrint();
 
   useEffect(() => {
     if (id && drivers.length > 0) {
@@ -102,10 +104,16 @@ export default function DriverProfilePage() {
 
   return (
     <div className="space-y-6">
-       <Button variant="outline" onClick={() => router.back()}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Driver List
-      </Button>
+       <div className="flex justify-between items-center">
+         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Driver List
+        </Button>
+        <Button onClick={() => handlePrint(driver)}>
+          <Printer className="mr-2 h-4 w-4" />
+          Print Profile
+        </Button>
+       </div>
       
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">

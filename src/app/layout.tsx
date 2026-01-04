@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
+import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 
 export const metadata: Metadata = {
   title: 'GA & Legal Solution',
@@ -26,7 +27,8 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-          <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <PrintProvider>
+          <div className="flex min-h-screen w-full flex-col bg-muted/40 print:hidden">
             <Sidebar />
             <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
               <Header />
@@ -36,6 +38,7 @@ export default function RootLayout({
             </div>
           </div>
           <Toaster />
+        </PrintProvider>
       </body>
     </html>
   );

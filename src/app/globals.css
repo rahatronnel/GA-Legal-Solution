@@ -70,3 +70,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+    .page-break {
+        page-break-before: always;
+    }
+}
