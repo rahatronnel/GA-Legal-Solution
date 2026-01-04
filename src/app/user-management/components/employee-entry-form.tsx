@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -76,7 +77,7 @@ interface EmployeeEntryFormProps {
 export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, sections, designations }: EmployeeEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [employeeData, setEmployeeData] = useState(initialEmployeeData);
+  const [employeeData, setEmployeeData] = useState<Omit<Employee, 'id'>>(initialEmployeeData);
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   
   const [docFiles, setDocFiles] = useState({ nid: null as File | null, other: null as File | null });

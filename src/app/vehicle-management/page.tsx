@@ -15,6 +15,7 @@ import { ExpenseTypeTable } from "./components/expense-type-table";
 import { MaintenanceTypeTable } from "./components/maintenance-type-table";
 import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-type-table";
 import { ServiceCenterTable } from "./components/service-center-table";
+import { MaintenanceRecordTable } from "./components/maintenance-record-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -60,6 +61,15 @@ export default function VehicleManagementPage() {
         </TabsContent>
         <TabsContent value="maintenance">
             <div className="grid gap-6">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Maintenance Records</CardTitle>
+                        <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <MaintenanceRecordTable />
+                    </CardContent>
+                </Card>
                  <Card>
                     <CardHeader>
                         <CardTitle>Service Centers / Garages</CardTitle>

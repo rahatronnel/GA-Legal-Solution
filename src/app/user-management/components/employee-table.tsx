@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -93,7 +94,7 @@ export function EmployeeTable() {
       userIdCode: '',
       fullName: '',
       mobileNumber: '',
-      emailAddress: '',
+      email: '',
       userRole: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
       username: '',
@@ -136,7 +137,7 @@ export function EmployeeTable() {
                     userIdCode: item.userIdCode?.toString().trim() || '',
                     fullName: item.fullName?.toString().trim() || '',
                     mobileNumber: item.mobileNumber?.toString().trim() || '',
-                    email: item.emailAddress?.toString().trim() || '',
+                    email: item.email?.toString().trim() || '',
                     role: item.userRole?.toString().trim() || '',
                     status: item.status?.toString().trim() || '',
                     username: item.username?.toString().trim() || '',
