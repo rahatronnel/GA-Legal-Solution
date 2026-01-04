@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ import type { Driver } from './driver-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import type { Route } from './route-table';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 type Expense = {
   id: string;
@@ -101,6 +102,70 @@ interface TripEntryFormProps {
   routes: Route[];
 }
 
+// Combobox Component
+interface ComboboxProps<T> {
+  items: T[];
+  value: string;
+  onSelect: (value: string) => void;
+  displayValue: (item: T) => string;
+  searchValue: (item: T) => string;
+  placeholder: string;
+  emptyMessage: string;
+  disabled?: boolean;
+}
+
+function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage, disabled = false }: ComboboxProps<T>) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+          disabled={disabled}
+        >
+          {value
+            ? displayValue(items.find((item) => item.id === value)!)
+            : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={placeholder} />
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
+          <CommandList>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={searchValue(item)}
+                  onSelect={() => {
+                    onSelect(item.id === value ? '' : item.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === item.id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {displayValue(item)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
 export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drivers, purposes, locations, routes }: TripEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -147,8 +212,12 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   };
 
   const handleSelectChange = (id: keyof Trip) => (value: string) => {
-    if (id === 'routeId') {
-        const isClearing = value === 'none';
+    setTripData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleComboboxSelect = (id: keyof Trip) => (value: string) => {
+     if (id === 'routeId') {
+        const isClearing = !value;
         const newRouteId = isClearing ? '' : value;
         setTripData(prev => ({ ...prev, [id]: newRouteId }));
 
@@ -167,7 +236,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
     } else {
         setTripData(prev => ({ ...prev, [id]: value }));
     }
-  };
+  }
 
   const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Trip) => (date: Date | undefined) => {
       setter(date);
@@ -259,10 +328,45 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
                   <div className="space-y-2"><Label>End Time</Label><Input id="endTime" type="time" value={tripData.endTime} onChange={handleInputChange}/></div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <div className="space-y-2"><Label>Route</Label><Select value={tripData.routeId || 'none'} onValueChange={handleSelectChange('routeId')}><SelectTrigger><SelectValue placeholder="Select Route (Optional)"/></SelectTrigger><SelectContent><SelectItem value="none">None</SelectItem>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select></div>
-                   <div className="space-y-2"><Label>Start Location</Label><Select value={tripData.startLocationId} onValueChange={handleSelectChange('startLocationId')} disabled={!!tripData.routeId}><SelectTrigger><SelectValue placeholder="Select Start Location"/></SelectTrigger><SelectContent>{locations.map(l=><SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select></div>
-                   <div className="space-y-2"><Label>Destination</Label><Select value={tripData.destinationLocationId} onValueChange={handleSelectChange('destinationLocationId')} disabled={!!tripData.routeId}><SelectTrigger><SelectValue placeholder="Select Destination"/></SelectTrigger><SelectContent>{locations.map(l=><SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="space-y-2">
+                        <Label>Route</Label>
+                        <Combobox
+                            items={routes}
+                            value={tripData.routeId}
+                            onSelect={handleComboboxSelect('routeId')}
+                            displayValue={(route) => route.name}
+                            searchValue={(route) => `${route.name} ${route.routeCode}`}
+                            placeholder="Select Route..."
+                            emptyMessage="No route found."
+                        />
+                    </div>
+                   <div className="space-y-2">
+                        <Label>Start Location</Label>
+                        <Combobox
+                            items={locations}
+                            value={tripData.startLocationId}
+                            onSelect={handleComboboxSelect('startLocationId')}
+                            displayValue={(loc) => loc.name}
+                            searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
+                            placeholder="Select Start..."
+                            emptyMessage="No location found."
+                            disabled={!!tripData.routeId}
+                        />
+                   </div>
+                   <div className="space-y-2">
+                       <Label>Destination</Label>
+                        <Combobox
+                            items={locations}
+                            value={tripData.destinationLocationId}
+                            onSelect={handleComboboxSelect('destinationLocationId')}
+                            displayValue={(loc) => loc.name}
+                            searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
+                            placeholder="Select Destination..."
+                            emptyMessage="No location found."
+                            disabled={!!tripData.routeId}
+                        />
+                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
