@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
+import { Sidebar } from '@/components/sidebar';
+import { Header } from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'GA & Legal Solution',
-  description: 'A new project created in Firebase Studio.',
+  description: 'Internal documentation software for our organization.',
 };
 
 export default function RootLayout({
@@ -24,7 +26,15 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <main>{children}</main>
+        <div className="flex min-h-screen w-full flex-col bg-muted/40">
+          <Sidebar />
+          <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+            <Header />
+            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+              {children}
+            </main>
+          </div>
+        </div>
         <Toaster />
       </body>
     </html>

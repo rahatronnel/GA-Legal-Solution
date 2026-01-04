@@ -1,12 +1,16 @@
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
 export default function Home() {
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold tracking-tighter">
-        Welcome to GA & Legal Solution
-      </h1>
-      <p className="text-muted-foreground">
-        Get started by editing <code>src/app/page.tsx</code>
-      </p>
+    <div className="flex flex-col items-center justify-center">
+       <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Welcome to GA & Legal Solution</CardTitle>
+          <CardDescription>
+            This is your internal documentation software. Select a module from the sidebar to get started.
+          </CardDescription>
+        </CardHeader>
+      </Card>
     </div>
   );
 }
