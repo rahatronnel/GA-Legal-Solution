@@ -1,24 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // By default, deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Allow authenticated users to manage vehicle types
+    
     match /vehicleTypes/{vehicleTypeId} {
       allow read, create, update, delete: if request.auth != null;
     }
 
-    // Allow authenticated users to manage drivers
     match /drivers/{driverId} {
-        allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if request.auth != null;
     }
 
-    // Allow authenticated users to manage vehicles
     match /vehicles/{vehicleId} {
-        allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if request.auth != null;
     }
   }
 }
