@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'New Project',
+  title: 'GA & Legal Solution',
   description: 'A new project created in Firebase Studio.',
 };
 
