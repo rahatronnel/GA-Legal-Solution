@@ -147,18 +147,25 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   };
 
   const handleSelectChange = (id: keyof Trip) => (value: string) => {
-    setTripData(prev => ({ ...prev, [id]: value }));
-     if (id === 'routeId') {
-        const selectedRoute = routes.find(r => r.id === value);
-        if (selectedRoute) {
-            setTripData(prev => ({
-                ...prev,
-                startLocationId: selectedRoute.startLocationId,
-                destinationLocationId: selectedRoute.endLocationId
-            }));
+    if (id === 'routeId') {
+        const isClearing = value === 'none';
+        const newRouteId = isClearing ? '' : value;
+        setTripData(prev => ({ ...prev, [id]: newRouteId }));
+
+        if (!isClearing) {
+            const selectedRoute = routes.find(r => r.id === value);
+            if (selectedRoute) {
+                setTripData(prev => ({
+                    ...prev,
+                    startLocationId: selectedRoute.startLocationId,
+                    destinationLocationId: selectedRoute.endLocationId
+                }));
+            }
         } else {
              setTripData(prev => ({...prev, startLocationId: '', destinationLocationId: ''}));
         }
+    } else {
+        setTripData(prev => ({ ...prev, [id]: value }));
     }
   };
 
@@ -253,7 +260,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <div className="space-y-2"><Label>Route</Label><Select value={tripData.routeId} onValueChange={handleSelectChange('routeId')}><SelectTrigger><SelectValue placeholder="Select Route (Optional)"/></SelectTrigger><SelectContent><SelectItem value="">None</SelectItem>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select></div>
+                   <div className="space-y-2"><Label>Route</Label><Select value={tripData.routeId || 'none'} onValueChange={handleSelectChange('routeId')}><SelectTrigger><SelectValue placeholder="Select Route (Optional)"/></SelectTrigger><SelectContent><SelectItem value="none">None</SelectItem>{routes.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select></div>
                    <div className="space-y-2"><Label>Start Location</Label><Select value={tripData.startLocationId} onValueChange={handleSelectChange('startLocationId')} disabled={!!tripData.routeId}><SelectTrigger><SelectValue placeholder="Select Start Location"/></SelectTrigger><SelectContent>{locations.map(l=><SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select></div>
                    <div className="space-y-2"><Label>Destination</Label><Select value={tripData.destinationLocationId} onValueChange={handleSelectChange('destinationLocationId')} disabled={!!tripData.routeId}><SelectTrigger><SelectValue placeholder="Select Destination"/></SelectTrigger><SelectContent>{locations.map(l=><SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
