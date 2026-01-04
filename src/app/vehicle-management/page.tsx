@@ -16,6 +16,7 @@ import { MaintenanceTypeTable } from "./components/maintenance-type-table";
 import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-type-table";
 import { ServiceCenterTable } from "./components/service-center-table";
 import { MaintenanceRecordTable } from "./components/maintenance-record-table";
+import { PartTable } from "./components/part-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -68,6 +69,15 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceRecordTable />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Parts</CardTitle>
+                        <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <PartTable />
                     </CardContent>
                 </Card>
                  <Card>
