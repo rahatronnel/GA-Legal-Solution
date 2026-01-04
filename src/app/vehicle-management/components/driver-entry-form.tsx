@@ -310,7 +310,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                                             </span>
                                         </span>
                                         <Input id={`file-upload-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
-                                    </AELabel>
+                                    </Label>
                                 )}
                             </div>
                         );
