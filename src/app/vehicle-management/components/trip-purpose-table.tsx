@@ -23,8 +23,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type TripPurpose = {
   id: string;
@@ -147,6 +147,7 @@ export function TripPurposeTable() {
 
 
   return (
+    <TooltipProvider>
     <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between gap-2">
             <div className="relative w-full sm:max-w-xs">
@@ -173,7 +174,7 @@ export function TripPurposeTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead>Purpose Name</TableHead>
-                    <TableHead className="w-[50px] text-right">Actions</TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -186,30 +187,30 @@ export function TripPurposeTable() {
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(item)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(item)} className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                            </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                          <div className="flex justify-end gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Purpose</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(item)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete Purpose</TooltipContent>
+                            </Tooltip>
+                          </div>
                         </TableCell>
                     </TableRow>
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={2} className="text-center">No trip purposes found.</TableCell>
+                    <TableCell colSpan={2} className="h-24 text-center">No trip purposes found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -254,5 +255,6 @@ export function TripPurposeTable() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
