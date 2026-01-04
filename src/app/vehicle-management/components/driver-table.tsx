@@ -21,9 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { useFirestore, useCollection } from '@/firebase';
-import { useMemoFirebase } from '@/firebase/hooks';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { MoreHorizontal, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
@@ -35,19 +33,19 @@ type Driver = {
 };
 
 export function DriverTable() {
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
   const [driverData, setDriverData] = useState({ name: '', licenseNumber: '', contactNumber: '' });
+  const [isLoading, setIsLoading] = useState(true);
 
-  const driversCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'drivers') : null),
-    [firestore]
-  );
-
-  const { data: drivers, isLoading } = useCollection<Driver>(driversCollection);
+  React.useEffect(() => {
+    // Faking a loading state
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -75,39 +73,30 @@ export function DriverTable() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (firestore && currentDriver?.id) {
-      try {
-        await deleteDoc(doc(firestore, 'drivers', currentDriver.id));
+  const confirmDelete = () => {
+    if (currentDriver?.id) {
+        setDrivers(prev => prev.filter(d => d.id !== currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
     }
     setIsDeleteConfirmOpen(false);
     resetForm();
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!driverData.name.trim() || !driverData.licenseNumber.trim() || !driverData.contactNumber.trim()) {
       toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
 
-    if (firestore && driversCollection) {
-      try {
-        if (currentDriver?.id) {
-          const docRef = doc(firestore, 'drivers', currentDriver.id);
-          await updateDoc(docRef, driverData);
-          toast({ title: 'Success', description: 'Driver updated successfully.' });
-        } else {
-          await addDoc(driversCollection, driverData);
-          toast({ title: 'Success', description: 'Driver added successfully.' });
-        }
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
+    if (currentDriver?.id) {
+        setDrivers(prev => prev.map(d => d.id === currentDriver.id ? { ...d, ...driverData } : d));
+        toast({ title: 'Success', description: 'Driver updated successfully.' });
+    } else {
+        const newDriver = { id: Date.now().toString(), ...driverData };
+        setDrivers(prev => [...prev, newDriver]);
+        toast({ title: 'Success', description: 'Driver added successfully.' });
     }
+    
     setIsDialogOpen(false);
     resetForm();
   };

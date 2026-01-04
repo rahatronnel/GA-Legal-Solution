@@ -21,9 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { useFirestore, useCollection } from '@/firebase';
-import { useMemoFirebase } from '@/firebase/hooks';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -34,21 +32,20 @@ type VehicleType = {
 };
 
 export function VehicleTypeTable() {
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
   const [typeName, setTypeName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
+  React.useEffect(() => {
+    // Faking a loading state
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const vehicleTypesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicleTypes') : null),
-    [firestore]
-  );
-
-  const { data: vehicleTypes, isLoading } = useCollection<VehicleType>(vehicleTypesCollection);
-  
   const handleAdd = () => {
     setCurrentVehicleType(null);
     setTypeName('');
@@ -66,42 +63,32 @@ export function VehicleTypeTable() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (firestore && currentVehicleType?.id) {
-      try {
-        await deleteDoc(doc(firestore, 'vehicleTypes', currentVehicleType.id));
+  const confirmDelete = () => {
+    if (currentVehicleType?.id) {
+        setVehicleTypes(prev => prev.filter(vt => vt.id !== currentVehicleType.id));
         toast({ title: 'Success', description: 'Vehicle type deleted successfully.' });
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
     }
     setIsDeleteConfirmOpen(false);
     setCurrentVehicleType(null);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!typeName.trim()) {
       toast({ variant: 'destructive', title: 'Error', description: 'Name field is required.' });
       return;
     }
 
-    if (firestore && vehicleTypesCollection) {
-      const dataToSave = { name: typeName };
-      try {
-        if (currentVehicleType?.id) {
-          // Update
-          const docRef = doc(firestore, 'vehicleTypes', currentVehicleType.id);
-          await updateDoc(docRef, dataToSave);
-          toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
-        } else {
-          // Create
-          await addDoc(vehicleTypesCollection, dataToSave);
-          toast({ title: 'Success', description: 'Vehicle type added successfully.' });
-        }
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
+    if (currentVehicleType?.id) {
+      // Update
+      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, name: typeName } : vt));
+      toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
+    } else {
+      // Create
+      const newVehicleType = { id: Date.now().toString(), name: typeName };
+      setVehicleTypes(prev => [...prev, newVehicleType]);
+      toast({ title: 'Success', description: 'Vehicle type added successfully.' });
     }
+
     setIsDialogOpen(false);
     setCurrentVehicleType(null);
     setTypeName('');
@@ -116,9 +103,9 @@ export function VehicleTypeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && firestore && vehicleTypesCollection) {
+    if (file) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -130,12 +117,15 @@ export function VehicleTypeTable() {
              throw new Error('Invalid Excel file format. Expecting a column with header "name".');
           }
 
-          for (const item of json) {
-             if(item.name && item.name.trim()) {
-                await addDoc(vehicleTypesCollection, { name: item.name });
-             }
+          const newTypes = json
+            .filter(item => item.name && item.name.trim())
+            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim() }));
+          
+          if(newTypes.length > 0) {
+            setVehicleTypes(prev => [...prev, ...newTypes]);
+            toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
           }
-          toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
+
         } catch (error: any) {
           toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
         }

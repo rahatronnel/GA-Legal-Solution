@@ -15,8 +15,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 import { Upload, X } from 'lucide-react';
 import type { Vehicle } from './vehicle-table';
 
@@ -27,13 +25,13 @@ const ownershipTypes = ['Company Vehicle', 'Rental Vehicle', 'Covered Van'] as c
 interface VehicleEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  onSave: (vehicle: Omit<Vehicle, 'id'>, id?: string) => void;
   vehicle: Partial<Vehicle> | null;
   drivers: Driver[];
   vehicleTypes: VehicleType[];
 }
 
-export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleTypes }: VehicleEntryFormProps) {
-  const firestore = useFirestore();
+export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, vehicleTypes }: VehicleEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   
@@ -131,32 +129,18 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
         return;
     }
     
-    // In a real app, you would upload files to Firebase Storage and get URLs.
     // For this prototype, we'll just store filenames.
     const documentNames = documents.map(file => file.name);
 
-    if (firestore) {
-        const dataToSave: Omit<Vehicle, 'id'> = {
-            ...vehicleData,
-            driverId,
-            documents: documentNames, 
-        };
+    const dataToSave: Omit<Vehicle, 'id'> = {
+        ...vehicleData,
+        driverId,
+        // In edit mode, if no new documents are uploaded, keep the old ones.
+        documents: isEditing && documentNames.length === 0 ? vehicle.documents || [] : documentNames, 
+    };
 
-        try {
-            const vehiclesCollection = collection(firestore, 'vehicles');
-            if (isEditing) {
-                const docRef = doc(firestore, 'vehicles', vehicle.id!);
-                await updateDoc(docRef, dataToSave);
-                toast({ title: 'Success', description: 'Vehicle updated successfully.' });
-            } else {
-                await addDoc(vehiclesCollection, dataToSave);
-                toast({ title: 'Success', description: 'Vehicle added successfully.' });
-            }
-            setIsOpen(false);
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        }
-    }
+    onSave(dataToSave, vehicle?.id);
+    setIsOpen(false);
   };
 
   return (

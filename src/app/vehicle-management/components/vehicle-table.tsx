@@ -11,9 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { collection, deleteDoc, doc } from 'firebase/firestore';
-import { useFirestore, useCollection } from '@/firebase';
-import { useMemoFirebase } from '@/firebase/hooks';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { MoreHorizontal, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { VehicleEntryForm } from './vehicle-entry-form';
@@ -42,29 +40,22 @@ type Driver = {
 };
 
 export function VehicleTable() {
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Partial<Vehicle> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const vehiclesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicles') : null),
-    [firestore]
-  );
-  const driversCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'drivers') : null),
-    [firestore]
-  );
-  const vehicleTypesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'vehicleTypes') : null),
-    [firestore]
-  );
+  React.useEffect(() => {
+    // Faking a loading state
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const { data: vehicles, isLoading: isLoadingVehicles } = useCollection<Vehicle>(vehiclesCollection);
-  const { data: drivers, isLoading: isLoadingDrivers } = useCollection<Driver>(driversCollection);
-  const { data: vehicleTypes, isLoading: isLoadingVehicleTypes } = useCollection<VehicleType>(vehicleTypesCollection);
-  
   const getDriverName = (driverId: string) => drivers?.find(d => d.id === driverId)?.name || 'N/A';
   const getVehicleTypeName = (typeId: string) => vehicleTypes?.find(vt => vt.id === typeId)?.name || 'N/A';
 
@@ -78,25 +69,30 @@ export function VehicleTable() {
     setIsFormOpen(true);
   };
 
+  const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
+    if (id) {
+        setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...data } : v));
+        toast({ title: 'Success', description: 'Vehicle updated successfully.' });
+    } else {
+        const newVehicle = { id: Date.now().toString(), ...data };
+        setVehicles(prev => [...prev, newVehicle]);
+        toast({ title: 'Success', description: 'Vehicle added successfully.' });
+    }
+  };
+
   const handleDelete = (vehicle: Vehicle) => {
     setCurrentVehicle(vehicle);
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (firestore && currentVehicle?.id) {
-      try {
-        await deleteDoc(doc(firestore, 'vehicles', currentVehicle.id));
+  const confirmDelete = () => {
+    if (currentVehicle?.id) {
+        setVehicles(prev => prev.filter(v => v.id !== currentVehicle.id));
         toast({ title: 'Success', description: 'Vehicle deleted successfully.' });
-      } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-      }
     }
     setIsDeleteConfirmOpen(false);
     setCurrentVehicle(null);
   };
-
-  const isLoading = isLoadingVehicles || isLoadingDrivers || isLoadingVehicleTypes;
 
   return (
     <>
@@ -174,6 +170,7 @@ export function VehicleTable() {
       <VehicleEntryForm
         isOpen={isFormOpen}
         setIsOpen={setIsFormOpen}
+        onSave={handleSave}
         vehicle={currentVehicle}
         drivers={drivers || []}
         vehicleTypes={vehicleTypes || []}
