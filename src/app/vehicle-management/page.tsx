@@ -16,7 +16,7 @@ export default function VehicleManagementPage() {
           </TabsList>
         </div>
         <TabsContent value="vehicles">
-          <VehicleTable />
+           <VehicleTable />
         </TabsContent>
         <TabsContent value="drivers">
           <Card>

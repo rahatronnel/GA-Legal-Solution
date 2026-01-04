@@ -4,20 +4,19 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { type Vehicle } from '@/app/vehicle-management/components/vehicle-entry-form';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
+import { type VehicleType } from '@/app/vehicle-management/components/vehicle-type-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-    ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer,
-    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock
+    ArrowLeft, Car, FileText, Download, Printer, Users, Wrench, Package,
+    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import type { Vehicle } from '../../components/vehicle-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { Badge } from '@/components/ui/badge';
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     if (!doc) {
@@ -36,7 +35,7 @@ const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     const mimeType = doc.substring(doc.indexOf(':') + 1, doc.indexOf(';'));
     const isImage = mimeType.startsWith('image/');
     const isPdf = mimeType === 'application/pdf';
-    const fileName = `${label.replace(/\s+/g, '_')}.${mimeType.split('/')[1]}`;
+    const fileName = `${label.replace(/\s+/g, '_')}.${isPdf ? 'pdf' : mimeType.split('/')[1]}`;
   
     return (
         <Card>
@@ -86,68 +85,80 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </li>
 );
 
-export default function DriverProfilePage() {
+export default function VehicleProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [driver, setDriver] = useState<Driver | null>(null);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && drivers.length > 0) {
-      const foundDriver = drivers.find(d => d.id === id);
-      if (foundDriver) {
-        setDriver(foundDriver);
+    if (id && vehicles.length > 0) {
+      const foundVehicle = vehicles.find(v => v.id === id);
+      if (foundVehicle) {
+        setVehicle(foundVehicle);
       } else {
         notFound();
       }
     }
-  }, [id, drivers]);
+  }, [id, vehicles]);
 
-  if (!driver) {
+  if (!vehicle) {
     return (
       <div className="flex justify-center items-center h-full">
-        <p>Loading driver profile...</p>
+        <p>Loading vehicle profile...</p>
       </div>
     );
   }
   
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  }
+  const assignedDriver = drivers.find(d => d.id === vehicle.driverId);
+  const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
+  
+  const getStatusVariant = (status: Vehicle['status']) => {
+    switch (status) {
+      case 'Active': return 'default';
+      case 'Under Maintenance': return 'secondary';
+      case 'Inactive': return 'destructive';
+      default: return 'outline';
+    }
+  };
 
-  const assignedVehicle = vehicles.find(v => v.id === driver.assignedVehicleId);
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  }
+  const documentLabels: Record<keyof Vehicle['documents'], string> = {
+    registration: "Registration Certificate (RC / Blue Book)",
+    insurance: "Insurance Certificate",
+    fitness: "Fitness Certificate",
+    taxToken: "Tax Token / Road Tax Receipt",
+    routePermit: "Route Permit",
+    other: "Other Document"
+  };
 
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
          <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Driver List
+          Back to Vehicle List
         </Button>
-        <Button onClick={() => handlePrint(driver, 'driver')}>
+        <Button onClick={() => handlePrint(vehicle, 'vehicle')}>
           <Printer className="mr-2 h-4 w-4" />
           Print Profile
         </Button>
        </div>
       
       <Card>
-        <CardHeader className="flex flex-row items-center gap-6">
-            <Avatar className="h-24 w-24">
-                <AvatarImage src={driver.profilePicture} alt={driver.name} />
-                <AvatarFallback className="text-3xl">{getInitials(driver.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-                <CardTitle className="text-3xl">{driver.name}</CardTitle>
-                <CardDescription>Driver ID: {driver.driverIdCode}</CardDescription>
-                <CardDescription className="mt-1">Department: {driver.department || 'N/A'}</CardDescription>
+        <CardHeader>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-3xl">{vehicle.make} {vehicle.model}</CardTitle>
+                    <CardDescription>Reg No: {vehicle.registrationNumber}</CardDescription>
+                    <CardDescription className="mt-1">Vehicle ID: {vehicle.vehicleIdCode}</CardDescription>
+                </div>
+                 <Badge variant={getStatusVariant(vehicle.status)} className="text-base">{vehicle.status}</Badge>
             </div>
         </CardHeader>
         <CardContent>
@@ -160,54 +171,33 @@ export default function DriverProfilePage() {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                 
                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Personal Information</h3>
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Vehicle Details</h3>
                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={UserSquare2} label="Father's/Guardian's Name" value={driver.fatherOrGuardianName} />
-                        <InfoItem icon={Cake} label="Date of Birth" value={formatDate(driver.dateOfBirth)} />
-                        <InfoItem icon={VenetianMask} label="Gender" value={driver.gender} />
-                        <InfoItem icon={FileText} label="National ID / Passport" value={driver.nationalIdOrPassport} />
+                        <InfoItem icon={Car} label="Category" value={vehicleType?.name} />
+                        <InfoItem icon={Palette} label="Brand & Model" value={`${vehicle.make} ${vehicle.model}`} />
+                        <InfoItem icon={Calendar} label="Manufacture Year" value={vehicle.manufactureYear} />
+                        <InfoItem icon={Fuel} label="Fuel Type" value={vehicle.fuelType} />
+                        <InfoItem icon={Package} label="Capacity" value={vehicle.capacity} />
                     </ul>
                 </div>
 
                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Contact Information</h3>
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Identification</h3>
                      <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Phone} label="Mobile Number" value={driver.mobileNumber} />
-                        <InfoItem icon={Mail} label="Alternate Mobile Number" value={driver.alternateMobileNumber} />
-                        <InfoItem icon={Home} label="Present Address" value={driver.presentAddress} />
-                        <InfoItem icon={Home} label="Permanent Address" value={driver.permanentAddress} />
-                    </ul>
-                </div>
-                
-                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">License Information</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={ShieldCheck} label="Driving License Number" value={driver.drivingLicenseNumber} />
-                        <InfoItem icon={ShieldCheck} label="License Type" value={driver.licenseType} />
-                        <InfoItem icon={Calendar} label="License Issue Date" value={formatDate(driver.licenseIssueDate)} />
-                        <InfoItem icon={Calendar} label="License Expiry Date" value={formatDate(driver.licenseExpiryDate)} />
-                        <InfoItem icon={Briefcase} label="Issuing Authority" value={driver.issuingAuthority} />
-                    </ul>
-                </div>
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Employment Details</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Calendar} label="Joining Date" value={formatDate(driver.joiningDate)} />
-                        <InfoItem icon={Briefcase} label="Employment Type" value={driver.employmentType} />
-                        <InfoItem icon={Briefcase} label="Department / Unit" value={driver.department} />
-                        <InfoItem icon={Clock} label="Duty Shift / Schedule" value={driver.dutyShift} />
-                        <InfoItem icon={Users} label="Supervisor" value={driver.supervisor} />
-                        <InfoItem icon={Car} label="Assigned Vehicle" value={assignedVehicle?.registrationNumber || 'None'} />
+                        <InfoItem icon={Hash} label="Engine Number" value={vehicle.engineNumber} />
+                        <InfoItem icon={Hash} label="Chassis Number" value={vehicle.chassisNumber} />
+                        <InfoItem icon={Building} label="Ownership" value={vehicle.ownership} />
+                        <InfoItem icon={Users} label="Assigned Driver" value={assignedDriver?.name} />
+                        <InfoItem icon={CheckCircle} label="Status" value={vehicle.status} />
                     </ul>
                 </div>
               </div>
             </TabsContent>
              <TabsContent value="documents">
                 <div className="space-y-6 pt-4">
-                    <DocumentViewer doc={driver.documents.drivingLicense} label="Driving License" />
-                    <DocumentViewer doc={driver.documents.nid} label="National ID (NID)" />
-                    <DocumentViewer doc={driver.documents.other} label="Other Document" />
+                    {(Object.keys(documentLabels) as (keyof Vehicle['documents'])[]).map(key => (
+                        <DocumentViewer key={key} doc={vehicle.documents[key]} label={documentLabels[key]} />
+                    ))}
                 </div>
             </TabsContent>
           </Tabs>

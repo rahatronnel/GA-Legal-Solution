@@ -253,7 +253,7 @@ export function DriverTable() {
                       </Tooltip>
                        <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(driver)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(driver, 'driver')}>
                             <Printer className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>

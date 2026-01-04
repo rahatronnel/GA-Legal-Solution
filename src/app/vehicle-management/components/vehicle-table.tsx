@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -13,13 +14,14 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Search } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { PlusCircle, Edit, Trash2, Download, Upload, Search, Eye, Printer } from 'lucide-react';
 import { VehicleEntryForm, type Vehicle } from './vehicle-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePrint } from './print-provider';
 
 type VehicleType = {
   id: string;
@@ -36,6 +38,7 @@ export function VehicleTable() {
   const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -194,7 +197,7 @@ export function VehicleTable() {
 
 
   return (
-    <>
+    <TooltipProvider>
     <Card>
         <CardHeader>
             <CardTitle>Vehicles</CardTitle>
@@ -227,54 +230,70 @@ export function VehicleTable() {
                 <TableRow>
                     <TableHead>Vehicle ID</TableHead>
                     <TableHead>Registration No.</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Model</TableHead>
+                    <TableHead>Brand & Model</TableHead>
                     <TableHead>Assigned Driver</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="w-[50px] text-right">Actions</TableHead>
+                    <TableHead className="w-[160px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
                     <TableRow>
-                    <TableCell colSpan={7} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={6} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : filteredVehicles && filteredVehicles.length > 0 ? (
                     filteredVehicles.map((v) => (
                     <TableRow key={v.id}>
                         <TableCell>{v.vehicleIdCode}</TableCell>
                         <TableCell>{v.registrationNumber}</TableCell>
-                        <TableCell>{v.make}</TableCell>
-                        <TableCell>{v.model}</TableCell>
+                        <TableCell>{v.make} {v.model}</TableCell>
                         <TableCell>{getDriverName(v.driverId)}</TableCell>
                         <TableCell>
                            <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <span className="sr-only">Open menu</span>
-                                      <Edit className="h-4 w-4" />
+                          <div className="flex justify-end gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                  <Link href={`/vehicle-management/vehicles/${v.id}`}>
+                                    <Eye className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View Vehicle</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit Vehicle</TooltipContent>
+                            </Tooltip>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(v, 'vehicle')}>
+                                    <Printer className="h-4 w-4" />
                                   </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleEdit(v)}>
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      <span>Edit</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleDelete(v)} className="text-destructive">
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      <span>Delete</span>
-                                  </DropdownMenuItem>
-                              </DropdownMenuContent>
-                          </DropdownMenu>
+                                </TooltipTrigger>
+                                <TooltipContent>Print</TooltipContent>
+                              </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(v)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete Vehicle</TooltipContent>
+                            </Tooltip>
+                          </div>
                         </TableCell>
                     </TableRow>
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                        {searchTerm ? `No vehicles found for "${searchTerm}".` : "No vehicles found."}
                     </TableCell>
                     </TableRow>
@@ -308,6 +327,6 @@ export function VehicleTable() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }
