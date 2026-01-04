@@ -10,5 +10,15 @@ service cloud.firestore {
     match /vehicleTypes/{vehicleTypeId} {
       allow read, create, update, delete: if request.auth != null;
     }
+
+    // Allow authenticated users to manage drivers
+    match /drivers/{driverId} {
+        allow read, create, update, delete: if request.auth != null;
+    }
+
+    // Allow authenticated users to manage vehicles
+    match /vehicles/{vehicleId} {
+        allow read, create, update, delete: if request.auth != null;
+    }
   }
 }

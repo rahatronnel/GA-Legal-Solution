@@ -28,7 +28,6 @@ import { useMemoFirebase } from '@/firebase/hooks';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 type VehicleType = {
   id: string;
@@ -158,73 +157,63 @@ export function VehicleTypeTable() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-            <div className="flex justify-between items-center">
-                <div>
-                    <CardTitle>Vehicle Types</CardTitle>
-                    <CardDescription>Manage the different types of vehicles available.</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                    <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Type</Button>
-                    <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-                    <Label htmlFor="upload-excel" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
-                        <Upload className="mr-2 h-4 w-4" /> Upload Excel
-                    </Label>
-                    <Input id="upload-excel" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                </div>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vehicle Type</TableHead>
-                <TableHead>Ownership Type</TableHead>
-                <TableHead className="w-[50px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+        <div className="flex justify-end gap-2">
+            <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Type</Button>
+            <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+            <Label htmlFor="upload-excel-types" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                <Upload className="mr-2 h-4 w-4" /> Upload Excel
+            </Label>
+            <Input id="upload-excel-types" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+        </div>
+        <div className="border rounded-lg">
+            <Table>
+                <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                    <TableHead>Vehicle Type</TableHead>
+                    <TableHead>Ownership Type</TableHead>
+                    <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
-              ) : vehicleTypes && vehicleTypes.length > 0 ? (
-                vehicleTypes.map((vt) => (
-                  <TableRow key={vt.id}>
-                    <TableCell>{vt.name}</TableCell>
-                    <TableCell>{vt.ownership}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(vt)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(vt)} className="text-destructive">
-                             <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center">No vehicle types found.</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                {isLoading ? (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                    </TableRow>
+                ) : vehicleTypes && vehicleTypes.length > 0 ? (
+                    vehicleTypes.map((vt) => (
+                    <TableRow key={vt.id}>
+                        <TableCell>{vt.name}</TableCell>
+                        <TableCell>{vt.ownership}</TableCell>
+                        <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(vt)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(vt)} className="text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                            </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                    <TableCell colSpan={3} className="text-center">No vehicle types found.</TableCell>
+                    </TableRow>
+                )}
+                </TableBody>
+            </Table>
+        </div>
       
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

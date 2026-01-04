@@ -16,6 +16,61 @@
         }
       },
       "required": ["name", "ownership"]
+    },
+    "driver": {
+      "title": "Driver",
+      "description": "Represents a driver.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the driver."
+        },
+        "licenseNumber": {
+          "type": "string",
+          "description": "The driver's license number."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "The driver's contact number."
+        }
+      },
+      "required": ["name", "licenseNumber", "contactNumber"]
+    },
+    "vehicle": {
+      "title": "Vehicle",
+      "description": "Represents a vehicle.",
+      "type": "object",
+      "properties": {
+        "make": {
+          "type": "string",
+          "description": "The make of the vehicle."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model of the vehicle."
+        },
+        "registrationNumber": {
+          "type": "string",
+          "description": "The registration number of the vehicle."
+        },
+        "vehicleTypeId": {
+          "type": "string",
+          "description": "The ID of the associated vehicle type."
+        },
+        "driverId": {
+          "type": "string",
+          "description": "The ID of the assigned driver."
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of URLs to vehicle documents."
+        }
+      },
+      "required": ["make", "model", "registrationNumber", "vehicleTypeId", "driverId"]
     }
   },
   "auth": {
@@ -27,6 +82,18 @@
         "$ref": "#/entities/vehicleType"
       },
       "description": "Stores all vehicle types."
+    },
+    "/drivers/{driverId}": {
+      "schema": {
+        "$ref": "#/entities/driver"
+      },
+      "description": "Stores all drivers."
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": {
+        "$ref": "#/entities/vehicle"
+      },
+      "description": "Stores all vehicles."
     }
   }
 }
