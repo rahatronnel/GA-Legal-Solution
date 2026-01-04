@@ -45,10 +45,10 @@ export function DriverTable() {
     if (!searchTerm) return drivers;
     const lowercasedTerm = searchTerm.toLowerCase();
     return drivers.filter(driver => 
-      driver.name.toLowerCase().includes(lowercasedTerm) ||
-      driver.driverIdCode.toLowerCase().includes(lowercasedTerm) ||
-      driver.mobileNumber.toLowerCase().includes(lowercasedTerm) ||
-      driver.drivingLicenseNumber.toLowerCase().includes(lowercasedTerm)
+      (driver.name && driver.name.toLowerCase().includes(lowercasedTerm)) ||
+      (driver.driverIdCode && driver.driverIdCode.toLowerCase().includes(lowercasedTerm)) ||
+      (driver.mobileNumber && driver.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
+      (driver.drivingLicenseNumber && driver.drivingLicenseNumber.toLowerCase().includes(lowercasedTerm))
     );
   }, [drivers, searchTerm]);
 
