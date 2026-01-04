@@ -49,8 +49,7 @@ export function EmployeeTable() {
     return employees.filter(emp => 
       (emp.fullName && emp.fullName.toLowerCase().includes(lowercasedTerm)) ||
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
-      (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
-      (emp.email && emp.email.toLowerCase().includes(lowercasedTerm))
+      (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm))
     );
   }, [employees, searchTerm]);
 
@@ -98,8 +97,8 @@ export function EmployeeTable() {
       userRole: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
       username: '',
-      department: '', // section name
-      designation: '', // designation name
+      sectionCode: '',
+      designationCode: '',
       joiningDate: 'YYYY-MM-DD',
       address: '',
       remarks: ''
@@ -130,8 +129,8 @@ export function EmployeeTable() {
           const newEmployees: Employee[] = json
             .filter(item => item.fullName && item.fullName.toString().trim() && item.userIdCode)
             .map(item => {
-                const section = sections.find(s => s.name === item.department);
-                const designation = designations.find(d => d.name === item.designation);
+                const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
+                const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
                 return {
                     id: Date.now().toString() + item.userIdCode, 
                     userIdCode: item.userIdCode?.toString().trim() || '',
