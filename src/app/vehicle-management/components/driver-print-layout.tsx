@@ -138,9 +138,9 @@ export const DriverPrintLayout: React.FC<DriverPrintLayoutProps> = ({ driver, ve
             </PrintPage>
 
             {/* Subsequent Pages: Documents */}
-            <DocumentPage doc={driver.documents.drivingLicense} label="Driving License" pageNumber={pageCounter++} />
-            <DocumentPage doc={driver.documents.nid} label="National ID (NID)" pageNumber={pageCounter++} />
-            <DocumentPage doc={driver.documents.other} label="Other Document" pageNumber={pageCounter++} />
+            {driver.documents.drivingLicense && <DocumentPage doc={driver.documents.drivingLicense} label="Driving License" pageNumber={pageCounter++} />}
+            {driver.documents.nid && <DocumentPage doc={driver.documents.nid} label="National ID (NID)" pageNumber={pageCounter++} />}
+            {driver.documents.other && <DocumentPage doc={driver.documents.other} label="Other Document" pageNumber={pageCounter++} />}
         </div>
     );
 };
