@@ -13,14 +13,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X } from 'lucide-react';
 import type { Vehicle } from './vehicle-table';
 
 type Driver = { id: string; name: string; };
 type VehicleType = { id: string; name: string; };
-const ownershipTypes = ['Company Vehicle', 'Rental Vehicle', 'Covered Van'] as const;
+
+const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverId'> = {
+    vehicleIdCode: '',
+    vehicleTypeId: '',
+    registrationNumber: '',
+    engineNumber: '',
+    chassisNumber: '',
+    make: '',
+    model: '',
+    manufactureYear: '',
+    fuelType: '',
+    capacity: '',
+    ownership: '',
+    status: '',
+};
 
 interface VehicleEntryFormProps {
   isOpen: boolean;
@@ -33,37 +46,28 @@ interface VehicleEntryFormProps {
 
 export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, vehicleTypes }: VehicleEntryFormProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
   
-  const [vehicleData, setVehicleData] = useState({
-    make: '',
-    model: '',
-    registrationNumber: '',
-    vehicleTypeId: '',
-    ownership: '',
-  });
+  const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const [documents, setDocuments] = useState<File[]>([]);
   const [driverId, setDriverId] = useState('');
 
-  const progress = Math.round((step / 3) * 100);
   const isEditing = vehicle && vehicle.id;
 
   useEffect(() => {
     if (isOpen) {
-        setStep(1);
-        if (isEditing) {
-            setVehicleData({
-                make: vehicle.make || '',
-                model: vehicle.model || '',
-                registrationNumber: vehicle.registrationNumber || '',
-                vehicleTypeId: vehicle.vehicleTypeId || '',
-                ownership: vehicle.ownership || '',
-            });
-            // Note: Documents are not loaded for editing for simplicity
-            setDocuments([]); 
+        if (isEditing && vehicle) {
+            const dataToEdit = { ...initialVehicleData };
+            for(const key of Object.keys(initialVehicleData)) {
+                if(key in vehicle) {
+                    (dataToEdit as any)[key] = (vehicle as any)[key];
+                }
+            }
+            setVehicleData(dataToEdit);
             setDriverId(vehicle.driverId || '');
+            // Note: Documents are not loaded for editing for simplicity, but existing ones are preserved on save if no new ones are uploaded.
+            setDocuments([]); 
         } else {
-            setVehicleData({ make: '', model: '', registrationNumber: '', vehicleTypeId: '', ownership: '' });
+            setVehicleData(initialVehicleData);
             setDocuments([]);
             setDriverId('');
         }
@@ -76,7 +80,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSelectChange = (id: string) => (value: string) => {
+  const handleSelectChange = (id: keyof typeof vehicleData) => (value: string) => {
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
 
@@ -94,38 +98,28 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
   const handleDriverChange = (value: string) => {
     setDriverId(value);
   };
-  
-  const validateStep1 = () => {
-    return vehicleData.make.trim() && vehicleData.model.trim() && vehicleData.registrationNumber.trim() && vehicleData.vehicleTypeId && vehicleData.ownership;
-  };
 
-  const validateStep2 = () => {
-      // In edit mode, user doesn't have to re-upload documents
-      if(isEditing) return true;
-      return documents.length > 0;
-  }
-
-  const validateStep3 = () => {
-    return driverId;
-  };
-
-  const nextStep = () => {
-    if (step === 1 && !validateStep1()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all vehicle details.' });
-        return;
+  const validateForm = () => {
+    const requiredFields: (keyof typeof vehicleData)[] = [
+      'vehicleIdCode', 'registrationNumber', 'make', 'model', 'vehicleTypeId', 'ownership', 'status'
+    ];
+    for (const field of requiredFields) {
+      if (!vehicleData[field]?.trim()) {
+        const fieldName = field.replace(/([A-Z])/g, ' $1').replace('Id', ' ID').trim();
+        toast({ variant: 'destructive', title: 'Error', description: `Please fill out the ${fieldName} field.` });
+        return false;
+      }
     }
-    if (step === 2 && !validateStep2()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please upload at least one document.' });
-        return;
+    if (!driverId) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please assign a driver.' });
+        return false;
     }
-    setStep(s => s + 1);
+    return true;
   };
 
-  const prevStep = () => setStep(s => s - 1);
 
   const handleSave = async () => {
-    if (!validateStep3()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please select a driver.' });
+    if (!validateForm()) {
         return;
     }
     
@@ -145,72 +139,118 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update the details of this vehicle.' : 'Follow the steps to add a new vehicle to the system.'}
+            {isEditing ? 'Update the details of this vehicle.' : 'Fill in the details to add a new vehicle.'}
           </DialogDescription>
-          <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4">
-            {step === 1 && (
+        <div className="py-4 space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Column 1 */}
                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Step 1: Vehicle Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="registrationNumber">Registration No.</Label>
-                            <Input id="registrationNumber" value={vehicleData.registrationNumber} onChange={handleVehicleDataChange} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="vehicleTypeId">Vehicle Type</Label>
-                             <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {vehicleTypes.map(type => (
-                                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="make">Make</Label>
-                            <Input id="make" value={vehicleData.make} onChange={handleVehicleDataChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="model">Model</Label>
-                            <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
-                        </div>
-                        <div className="space-y-2 col-span-2">
-                            <Label htmlFor="ownership">Ownership</Label>
-                             <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select ownership" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ownershipTypes.map(type => (
-                                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="vehicleIdCode">Vehicle ID / Code</Label>
+                        <Input id="vehicleIdCode" value={vehicleData.vehicleIdCode} onChange={handleVehicleDataChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="registrationNumber">Registration Number</Label>
+                        <Input id="registrationNumber" value={vehicleData.registrationNumber} onChange={handleVehicleDataChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="engineNumber">Engine Number</Label>
+                        <Input id="engineNumber" value={vehicleData.engineNumber} onChange={handleVehicleDataChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="chassisNumber">Chassis Number</Label>
+                        <Input id="chassisNumber" value={vehicleData.chassisNumber} onChange={handleVehicleDataChange} />
                     </div>
                 </div>
-            )}
 
-            {step === 2 && (
+                {/* Column 2 */}
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="vehicleTypeId">Vehicle Category</Label>
+                         <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
+                            <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                            <SelectContent>
+                                {vehicleTypes.map(type => (
+                                    <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="make">Brand</Label>
+                        <Input id="make" value={vehicleData.make} onChange={handleVehicleDataChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="model">Model</Label>
+                        <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="manufactureYear">Manufacture Year</Label>
+                        <Input id="manufactureYear" value={vehicleData.manufactureYear} onChange={handleVehicleDataChange} type="number" />
+                    </div>
+                </div>
+
+                {/* Column 3 */}
+                <div className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="fuelType">Fuel Type</Label>
+                         <Select value={vehicleData.fuelType} onValueChange={handleSelectChange('fuelType')}>
+                            <SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Petrol">Petrol</SelectItem>
+                                <SelectItem value="Diesel">Diesel</SelectItem>
+                                <SelectItem value="CNG">CNG</SelectItem>
+                                <SelectItem value="LPG">LPG</SelectItem>
+                                <SelectItem value="Electric">Electric</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="capacity">Seating / Load Capacity</Label>
+                        <Input id="capacity" value={vehicleData.capacity} onChange={handleVehicleDataChange} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="ownership">Ownership</Label>
+                         <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
+                            <SelectTrigger><SelectValue placeholder="Select ownership" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Company">Company</SelectItem>
+                                <SelectItem value="Rental">Rental</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="status">Vehicle Status</Label>
+                         <Select value={vehicleData.status} onValueChange={handleSelectChange('status')}>
+                            <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
+                                <SelectItem value="Inactive">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="grid md:grid-cols-2 gap-4">
                  <div className="space-y-4">
-                     <h3 className="font-semibold text-lg">Step 2: Upload Documents</h3>
+                     <h3 className="font-semibold text-lg">Documents</h3>
                      <div className="space-y-2">
                          <Label htmlFor="documents">Vehicle Documents</Label>
-                         <Label htmlFor="file-upload" className="flex items-center justify-center w-full h-32 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
+                         <Label htmlFor="file-upload" className="flex items-center justify-center w-full h-24 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
                             <span className="flex items-center space-x-2">
                                 <Upload className="h-6 w-6 text-muted-foreground" />
                                 <span className="font-medium text-muted-foreground">
-                                    Drop files here or <span className="text-primary">click to upload</span>
+                                    Click to upload
                                 </span>
                             </span>
                              <Input id="file-upload" type="file" multiple className="hidden" onChange={handleFileChange} />
@@ -218,7 +258,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
                      </div>
                      {documents.length > 0 && (
                          <div className="space-y-2">
-                             <h4 className="font-medium">Uploaded files:</h4>
+                             <h4 className="font-medium">New files to upload:</h4>
                              <ul className="space-y-1">
                                  {documents.map((file, index) => (
                                      <li key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
@@ -231,14 +271,20 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
                              </ul>
                          </div>
                      )}
+                     {isEditing && vehicle.documents && vehicle.documents.length > 0 && documents.length === 0 && (
+                        <div className="space-y-2">
+                             <h4 className="font-medium">Existing files:</h4>
+                             <ul className="space-y-1 text-sm text-muted-foreground">
+                                {vehicle.documents.map((docName, index) => <li key={index} className="p-2">{docName}</li>)}
+                             </ul>
+                        </div>
+                     )}
                  </div>
-            )}
 
-            {step === 3 && (
                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Step 3: Assign Driver</h3>
+                     <h3 className="font-semibold text-lg">Assignment</h3>
                     <div className="space-y-2">
-                        <Label htmlFor="driverId">Responsible Driver</Label>
+                        <Label htmlFor="driverId">Assigned Driver</Label>
                         <Select value={driverId} onValueChange={handleDriverChange}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a driver" />
@@ -251,21 +297,16 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
                         </Select>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
 
-        <DialogFooter className="flex justify-between w-full">
-            {step > 1 ? (
-                <Button variant="outline" onClick={prevStep}>Previous</Button>
-            ) : <div></div>}
-            
-            {step < 3 ? (
-                 <Button onClick={nextStep}>Next</Button>
-            ) : (
-                 <Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>
-            )}
+        <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+const Separator = () => <hr className="border-border my-4" />;

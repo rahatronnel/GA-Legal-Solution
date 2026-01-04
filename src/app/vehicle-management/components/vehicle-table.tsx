@@ -17,14 +17,23 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { VehicleEntryForm } from './vehicle-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
 
 export type Vehicle = {
   id: string;
-  make: string;
-  model: string;
-  registrationNumber: string;
-  ownership: 'Company Vehicle' | 'Rental Vehicle' | 'Covered Van' | '';
+  vehicleIdCode: string;
   vehicleTypeId: string;
+  registrationNumber: string;
+  engineNumber: string;
+  chassisNumber: string;
+  make: string; // Brand
+  model: string;
+  manufactureYear: string;
+  fuelType: 'Petrol' | 'Diesel' | 'CNG' | 'LPG' | 'Electric' | '';
+  capacity: string; // Seating / Load Capacity
+  ownership: 'Company' | 'Rental' | '';
+  status: 'Active' | 'Under Maintenance' | 'Inactive' | '';
   driverId: string;
   documents: string[];
 };
@@ -71,10 +80,10 @@ export function VehicleTable() {
 
   const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
     if (id) {
-        setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...data } : v));
+        setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...data } as Vehicle : v));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
-        const newVehicle = { id: Date.now().toString(), ...data };
+        const newVehicle: Vehicle = { id: Date.now().toString(), ...data };
         setVehicles(prev => [...prev, newVehicle]);
         toast({ title: 'Success', description: 'Vehicle added successfully.' });
     }
@@ -93,6 +102,16 @@ export function VehicleTable() {
     setIsDeleteConfirmOpen(false);
     setCurrentVehicle(null);
   };
+  
+  const getStatusVariant = (status: Vehicle['status']) => {
+    switch (status) {
+      case 'Active': return 'default';
+      case 'Under Maintenance': return 'secondary';
+      case 'Inactive': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
 
   return (
     <>
@@ -111,12 +130,12 @@ export function VehicleTable() {
             <Table>
                 <TableHeader>
                 <TableRow>
+                    <TableHead>Vehicle ID</TableHead>
                     <TableHead>Registration No.</TableHead>
-                    <TableHead>Make</TableHead>
+                    <TableHead>Brand</TableHead>
                     <TableHead>Model</TableHead>
-                    <TableHead>Ownership</TableHead>
-                    <TableHead>Vehicle Type</TableHead>
                     <TableHead>Assigned Driver</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -128,12 +147,14 @@ export function VehicleTable() {
                 ) : vehicles && vehicles.length > 0 ? (
                     vehicles.map((v) => (
                     <TableRow key={v.id}>
+                        <TableCell>{v.vehicleIdCode}</TableCell>
                         <TableCell>{v.registrationNumber}</TableCell>
                         <TableCell>{v.make}</TableCell>
                         <TableCell>{v.model}</TableCell>
-                        <TableCell>{v.ownership}</TableCell>
-                        <TableCell>{getVehicleTypeName(v.vehicleTypeId)}</TableCell>
                         <TableCell>{getDriverName(v.driverId)}</TableCell>
+                        <TableCell>
+                           <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
+                        </TableCell>
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -158,7 +179,7 @@ export function VehicleTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={7} className="text-center">No vehicles found.</TableCell>
+                    <TableCell colSpan={7} className="h-24 text-center">No vehicles found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
