@@ -8,9 +8,14 @@
         "name": {
           "type": "string",
           "description": "The name of the vehicle type."
+        },
+        "ownership": {
+          "type": "string",
+          "description": "The ownership type of the vehicle.",
+          "enum": ["Company Vehicle", "Rental Vehicle", "Covered Van"]
         }
       },
-      "required": ["name"]
+      "required": ["name", "ownership"]
     }
   },
   "auth": {
