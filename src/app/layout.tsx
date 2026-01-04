@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'RealEstate Vision',
-  description: 'Visualize your next property investment.',
+  title: 'New Project',
+  description: 'A new project created in Firebase Studio.',
 };
 
 export default function RootLayout({
@@ -26,13 +24,8 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <FirebaseClientProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster />
-        </FirebaseClientProvider>
+        <main>{children}</main>
+        <Toaster />
       </body>
     </html>
   );
