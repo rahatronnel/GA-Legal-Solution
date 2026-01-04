@@ -5,9 +5,10 @@ import React, { createContext, useContext, useState } from 'react';
 import type { Driver } from './driver-entry-form';
 import type { Vehicle } from './vehicle-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Trip } from './trip-entry-form';
 
-type PrintableItem = Driver | Vehicle | Employee;
-type PrintType = 'driver' | 'vehicle' | 'employee';
+type PrintableItem = Driver | Vehicle | Employee | Trip;
+type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip';
 
 interface PrintContextType {
   itemToPrint: PrintableItem | null;

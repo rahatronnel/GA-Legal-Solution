@@ -6,19 +6,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TripPurposeTable } from "./components/trip-purpose-table";
 import { LocationTable } from "./components/location-table";
 import { RouteTable } from "./components/route-table";
+import { TripTable } from "./components/trip-table";
 
 export default function VehicleManagementPage() {
   return (
     <>
-      <Tabs defaultValue="vehicles" className="w-full">
+      <Tabs defaultValue="trips" className="w-full">
         <div className="flex items-center">
           <TabsList>
+            <TabsTrigger value="trips">Trips</TabsTrigger>
             <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
             <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="trip-management">Trip Management</TabsTrigger>
+            <TabsTrigger value="trip-management">Trip Master</TabsTrigger>
             <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
           </TabsList>
         </div>
+         <TabsContent value="trips">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Trips</CardTitle>
+                    <CardDescription>Manage all vehicle trips.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <TripTable />
+                </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="vehicles">
            <VehicleTable />
         </TabsContent>

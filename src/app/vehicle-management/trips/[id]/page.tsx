@@ -1,0 +1,212 @@
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
+import { useParams, notFound, useRouter } from 'next/navigation';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { type Trip } from '@/app/vehicle-management/components/trip-entry-form';
+import { type Vehicle } from '@/app/vehicle-management/components/vehicle-table';
+import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
+import { type TripPurpose } from '@/app/vehicle-management/components/trip-purpose-table';
+import { type Location } from '@/app/vehicle-management/components/location-table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Fuel, Info, Hash } from 'lucide-react';
+import Link from 'next/link';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+
+const documentLabels: Record<keyof Trip['documents'], string> = {
+    approvalDoc: 'Approval Document', fuelReceipt: 'Fuel Receipt/Memo', parkingBill: 'Parking Bill',
+    tollBill: 'Toll Bill', miscExpense: 'Miscellaneous Expenses Bill', lunchBill: 'Lunch Bill',
+    otherDoc: 'Other Document', damagePhoto: 'Damage Photo', routePermit: 'Route Permit Photo',
+    specialApprove: 'Special Approval Document',
+};
+
+const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
+    if (!doc) {
+      return (
+        <Card>
+            <CardHeader><CardTitle>{label}</CardTitle></CardHeader>
+            <CardContent><p className="text-sm text-muted-foreground">This document has not been uploaded.</p></CardContent>
+        </Card>
+      );
+    }
+  
+    const isImage = doc.startsWith('data:image/');
+    const fileName = `${label.replace(/\s+/g, '_')}.${doc.substring(doc.indexOf('/') + 1, doc.indexOf(';'))}`;
+  
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{label}</CardTitle>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={doc} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <div className="mt-4 border rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{minHeight: '400px'}}>
+                    {isImage ? (
+                        <Image src={doc} alt={`${label} document`} width={800} height={600} className="object-contain" />
+                    ) : (
+                        <div className="p-8 text-center">
+                            <p className="font-semibold">Preview not available for this file type.</p>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    )
+};
+
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
+    <li className="flex items-start gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+        <div>
+            <p className="font-medium">{label}</p>
+            <p className="text-muted-foreground">{value || 'N/A'}</p>
+        </div>
+    </li>
+);
+
+const getStatusVariant = (status: Trip['tripStatus']) => {
+    switch (status) {
+        case 'Completed': return 'default';
+        case 'Ongoing': return 'secondary';
+        case 'Cancelled': return 'destructive';
+        default: return 'outline';
+    }
+};
+
+export default function TripProfilePage() {
+  const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+
+  const [trips] = useLocalStorage<Trip[]>('trips', []);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const [locations] = useLocalStorage<Location[]>('locations', []);
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const { handlePrint } = usePrint();
+
+  useEffect(() => {
+    if (id && trips.length > 0) {
+      const foundTrip = trips.find(t => t.id === id);
+      if (foundTrip) setTrip(foundTrip);
+      else notFound();
+    }
+  }, [id, trips]);
+
+  const { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses } = useMemo(() => {
+    if (!trip) return {};
+    const vehicle = vehicles.find(v => v.id === trip.vehicleId);
+    const driver = drivers.find(d => d.id === trip.driverId);
+    const purpose = purposes.find(p => p.id === trip.purposeId);
+    const startLocation = locations.find(l => l.id === trip.startLocationId);
+    const endLocation = locations.find(l => l.id === trip.destinationLocationId);
+    const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
+    const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
+    return { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses };
+  }, [trip, vehicles, drivers, purposes, locations]);
+  
+
+  if (!trip) return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
+
+  return (
+    <div className="space-y-6">
+       <div className="flex justify-between items-center">
+         <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back to Trip List</Button>
+         <Button onClick={() => handlePrint(trip, 'trip')}><Printer className="mr-2 h-4 w-4" />Print Trip</Button>
+       </div>
+      
+      <Card>
+        <CardHeader>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-3xl">Trip ID: {trip.tripId}</CardTitle>
+                    <CardDescription>Vehicle: {vehicle?.registrationNumber || 'N/A'}</CardDescription>
+                </div>
+                 <Badge variant={getStatusVariant(trip.tripStatus)} className="text-base">{trip.tripStatus}</Badge>
+            </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Primary Details</h3>
+                    <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
+                        <InfoItem icon={User} label="Driver" value={driver?.name} />
+                        <InfoItem icon={Flag} label="Purpose" value={purpose?.name} />
+                        <InfoItem icon={Info} label="Remarks" value={trip.remarks} />
+                    </ul>
+                </div>
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Timeline</h3>
+                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Calendar} label="Start Date" value={`${trip.startDate} ${trip.startTime}`} />
+                        <InfoItem icon={Clock} label="End Date" value={`${trip.endDate} ${trip.endTime}`} />
+                    </ul>
+                </div>
+                 <div className="space-y-4">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Route & Distance</h3>
+                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Route} label="Route" value={`${startLocation?.name || 'N/A'} to ${endLocation?.name || 'N/A'}`} />
+                        <InfoItem icon={Milestone} label="Starting Meter" value={`${trip.startingMeter} km`} />
+                        <InfoItem icon={Milestone} label="Ending Meter" value={`${trip.endingMeter} km`} />
+                        <InfoItem icon={Hash} label="Total Distance" value={`${totalDistance} km`} />
+                    </ul>
+                </div>
+              </div>
+               {trip.expenses && trip.expenses.length > 0 && (
+                <div className="mt-6">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Expenses</h3>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {trip.expenses.map(exp => (
+                                <TableRow key={exp.id}>
+                                    <TableCell>{exp.type}</TableCell>
+                                    <TableCell>{exp.date}</TableCell>
+                                    <TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
+                                </TableRow>
+                            ))}
+                            <TableRow className="font-bold bg-muted/50">
+                                <TableCell colSpan={2}>Total Expenses</TableCell>
+                                <TableCell className="text-right">{totalExpenses?.toFixed(2)}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+               )}
+            </TabsContent>
+            <TabsContent value="documents" className="pt-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                    {(Object.keys(documentLabels) as (keyof Trip['documents'])[]).map(key => (
+                        <DocumentViewer key={key} doc={trip.documents[key]} label={documentLabels[key]} />
+                    ))}
+                </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
