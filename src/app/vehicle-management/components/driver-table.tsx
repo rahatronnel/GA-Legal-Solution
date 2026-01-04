@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -13,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { MoreHorizontal, PlusCircle, Edit, Trash2, Download, Upload } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, PlusCircle, Edit, Trash2, Download, Upload, Eye } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { DriverEntryForm, type Driver } from './driver-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -174,10 +175,17 @@ export function DriverTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/vehicle-management/drivers/${driver.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>View Profile</span>
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(driver)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit</span>
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(driver)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Delete</span>
