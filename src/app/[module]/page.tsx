@@ -1,4 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { notFound } from 'next/navigation';
+import { coreModules, utilityModules } from "@/lib/modules";
 
 // A simple function to capitalize the first letter of a string
 function capitalizeFirstLetter(string: string) {
@@ -6,7 +8,15 @@ function capitalizeFirstLetter(string: string) {
 }
 
 export default function ModulePage({ params }: { params: { module: string } }) {
-    const moduleName = params.module.split('-').map(capitalizeFirstLetter).join(' ');
+    const allModules = [...coreModules, ...utilityModules];
+    const currentModule = allModules.find(mod => mod.href === `/${params.module}`);
+
+    if (!currentModule) {
+        notFound();
+    }
+
+    const moduleName = currentModule.name;
+
   return (
     <Card>
       <CardHeader>
