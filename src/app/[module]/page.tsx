@@ -6,7 +6,7 @@ function capitalizeFirstLetter(string: string) {
 }
 
 export default function ModulePage({ params }: { params: { module: string } }) {
-    const moduleName = capitalizeFirstLetter(params.module.replace('-', ' '));
+    const moduleName = params.module.split('-').map(capitalizeFirstLetter).join(' ');
   return (
     <Card>
       <CardHeader>
