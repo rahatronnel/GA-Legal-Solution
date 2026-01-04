@@ -8,8 +8,9 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2 } from 'lucide-react';
+import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 export default function DriverProfilePage() {
   const router = useRouter();
@@ -36,14 +37,35 @@ export default function DriverProfilePage() {
       </div>
     );
   }
-
-  const getDocumentStatus = (doc: string | undefined) => {
-    return doc ? 'Uploaded' : 'Not Uploaded';
-  }
   
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
+
+  const DocumentLink = ({ doc, label }: { doc: string; label: string }) => {
+    if (!doc) {
+      return (
+        <div>
+          <p className="font-medium">{label}</p>
+          <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>
+        </div>
+      );
+    }
+    
+    // Simplistic way to get a filename from a data URL
+    const fileType = doc.substring(doc.indexOf('/') + 1, doc.indexOf(';'));
+    const fileName = `${label.replace(/\s+/g, '_')}.${fileType}`;
+
+    return (
+        <div>
+            <p className="font-medium">{label}</p>
+             <Link href={doc} download={fileName} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
+                View/Download Document
+                <Download className="h-3 w-3"/>
+             </Link>
+        </div>
+    )
+  };
 
   return (
     <div className="space-y-6">
@@ -115,26 +137,17 @@ export default function DriverProfilePage() {
                  <div className="space-y-4">
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Documents</h3>
                      <ul className="space-y-3 text-sm">
-                        <li className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Driving License</p>
-                                <p className={`text-xs font-semibold px-2 py-1 rounded-full ${driver.documents.drivingLicense ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{getDocumentStatus(driver.documents.drivingLicense)}</p>
-                            </div>
+                        <li className="flex items-start gap-3">
+                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                            <DocumentLink doc={driver.documents.drivingLicense} label="Driving License" />
                         </li>
-                         <li className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                             <div>
-                                <p className="font-medium">NID</p>
-                                <p className={`text-xs font-semibold px-2 py-1 rounded-full ${driver.documents.nid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{getDocumentStatus(driver.documents.nid)}</p>
-                            </div>
+                         <li className="flex items-start gap-3">
+                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                            <DocumentLink doc={driver.documents.nid} label="NID" />
                         </li>
-                         <li className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                             <div>
-                                <p className="font-medium">Other Document</p>
-                                <p className={`text-xs font-semibold px-2 py-1 rounded-full ${driver.documents.other ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{getDocumentStatus(driver.documents.other)}</p>
-                            </div>
+                         <li className="flex items-start gap-3">
+                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                            <DocumentLink doc={driver.documents.other} label="Other Document" />
                         </li>
                     </ul>
                 </div>

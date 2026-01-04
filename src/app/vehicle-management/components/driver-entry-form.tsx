@@ -33,11 +33,11 @@ export type Driver = {
   gender: 'Male' | 'Female' | 'Other' | '';
   mobileNumber: string;
   alternateMobileNumber: string;
-  profilePicture: string;
+  profilePicture: string; // Will store as data URL
   documents: {
-    drivingLicense: string;
-    nid: string;
-    other: string;
+    drivingLicense: string; // Will store as data URL
+    nid: string; // Will store as data URL
+    other: string; // Will store as data URL
   }
 };
 
@@ -65,9 +65,14 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   const [step, setStep] = useState(1);
   const [driverData, setDriverData] = useState(initialDriverData);
   const [dob, setDob] = useState<Date | undefined>(undefined);
+  
+  // Store file objects temporarily
   const [docFiles, setDocFiles] = useState({ drivingLicense: null as File | null, nid: null as File | null, other: null as File | null });
   const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
+
+  // Store previews/data URLs
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+  const [docPreviews, setDocPreviews] = useState({ drivingLicense: '', nid: '', other: ''});
 
 
   const progress = Math.round((step / 2) * 100);
@@ -76,15 +81,17 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   useEffect(() => {
     if (isOpen) {
       setStep(1);
-      if (isEditing) {
+      if (isEditing && driver) {
         const initialData = { ...initialDriverData, ...driver };
         setDriverData(initialData);
         setDob(initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined);
         setProfilePicPreview(initialData.profilePicture || null);
+        setDocPreviews(initialData.documents || { drivingLicense: '', nid: '', other: '' });
       } else {
         setDriverData(initialDriverData);
         setDob(undefined);
         setProfilePicPreview(null);
+        setDocPreviews({ drivingLicense: '', nid: '', other: '' });
       }
       setDocFiles({ drivingLicense: null, nid: null, other: null });
       setProfilePicFile(null);
@@ -104,23 +111,37 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
       setDob(date);
       setDriverData(prev => ({...prev, dateOfBirth: date ? format(date, 'yyyy-MM-dd') : ''}))
   }
+  
+  const fileToDataUrl = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+      });
+  }
 
-  const handleFileChange = (docType: 'drivingLicense' | 'nid' | 'other') => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (docType: 'drivingLicense' | 'nid' | 'other') => async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setDocFiles(prev => ({ ...prev, [docType]: e.target.files![0] }));
+      const file = e.target.files[0];
+      setDocFiles(prev => ({ ...prev, [docType]: file }));
+      const dataUrl = await fileToDataUrl(file);
+      setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
     }
   };
 
-  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
         setProfilePicFile(file);
-        setProfilePicPreview(URL.createObjectURL(file));
+        const dataUrl = await fileToDataUrl(file);
+        setProfilePicPreview(dataUrl);
     }
   };
 
   const removeDocument = (docType: 'drivingLicense' | 'nid' | 'other') => {
       setDocFiles(prev => ({...prev, [docType]: null}));
+      setDocPreviews(prev => ({...prev, [docType]: ''}));
       setDriverData(prev => ({...prev, documents: {...prev.documents, [docType]: ''}}));
   };
   
@@ -146,28 +167,24 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   const prevStep = () => setStep(s => s - 1);
 
   const handleSave = async () => {
-    let finalDocuments = driverData.documents;
-    let finalProfilePic = driverData.profilePicture;
-    
-    // In this prototype, we'll just store filenames or data URLs.
-    if(profilePicFile) finalProfilePic = profilePicPreview!; // Using preview which is a blob URL
-    if(docFiles.drivingLicense) finalDocuments.drivingLicense = docFiles.drivingLicense.name;
-    if(docFiles.nid) finalDocuments.nid = docFiles.nid.name;
-    if(docFiles.other) finalDocuments.other = docFiles.other.name;
-
     const dataToSave: Omit<Driver, 'id'> = {
         ...driverData,
-        profilePicture: finalProfilePic,
-        documents: finalDocuments,
+        profilePicture: profilePicPreview || driverData.profilePicture,
+        documents: {
+            drivingLicense: docPreviews.drivingLicense || driverData.documents.drivingLicense,
+            nid: docPreviews.nid || driverData.documents.nid,
+            other: docPreviews.other || driverData.documents.other
+        },
     };
 
     onSave(dataToSave, driver?.id);
     setIsOpen(false);
   };
-
+  
   const getDocumentName = (docType: 'drivingLicense' | 'nid' | 'other') => {
       if (docFiles[docType]) return docFiles[docType]!.name;
-      if (driverData.documents && driverData.documents[docType]) return driverData.documents[docType];
+      // For editing, if a document exists, we can't get the original name, so we'll show a generic name.
+      if (docPreviews[docType] || (driverData.documents && driverData.documents[docType])) return `${docType.replace(/([A-Z])/g, ' $1')}.file`;
       return null;
   }
 
@@ -293,7 +310,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                                             </span>
                                         </span>
                                         <Input id={`file-upload-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
-                                    </Label>
+                                    </AELabel>
                                 )}
                             </div>
                         );
