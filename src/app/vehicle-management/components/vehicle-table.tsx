@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -12,31 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { MoreHorizontal, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { PlusCircle, Edit, Trash2, Download, Upload, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { VehicleEntryForm } from './vehicle-entry-form';
+import { VehicleEntryForm, type Vehicle } from './vehicle-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-
-export type Vehicle = {
-  id: string;
-  vehicleIdCode: string;
-  vehicleTypeId: string;
-  registrationNumber: string;
-  engineNumber: string;
-  chassisNumber: string;
-  make: string; // Brand
-  model: string;
-  manufactureYear: string;
-  fuelType: 'Petrol' | 'Diesel' | 'CNG' | 'LPG' | 'Electric' | '';
-  capacity: string; // Seating / Load Capacity
-  ownership: 'Company' | 'Rental' | '';
-  status: 'Active' | 'Under Maintenance' | 'Inactive' | '';
-  driverId: string;
-  documents: string[];
-};
+import { Input } from '@/components/ui/input';
 
 type VehicleType = {
   id: string;
@@ -58,15 +41,27 @@ export function VehicleTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Partial<Vehicle> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Faking a loading state
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
-
+  
   const getDriverName = (driverId: string) => drivers?.find(d => d.id === driverId)?.name || 'N/A';
-  const getVehicleTypeName = (typeId: string) => vehicleTypes?.find(vt => vt.id === typeId)?.name || 'N/A';
+
+  const filteredVehicles = useMemo(() => {
+    if (!searchTerm) return vehicles;
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return vehicles.filter(vehicle => 
+      (vehicle.vehicleIdCode && vehicle.vehicleIdCode.toLowerCase().includes(lowercasedTerm)) ||
+      (vehicle.registrationNumber && vehicle.registrationNumber.toLowerCase().includes(lowercasedTerm)) ||
+      (vehicle.make && vehicle.make.toLowerCase().includes(lowercasedTerm)) ||
+      (vehicle.model && vehicle.model.toLowerCase().includes(lowercasedTerm))
+    );
+  }, [vehicles, searchTerm]);
+
 
   const handleAdd = () => {
     setCurrentVehicle(null);
@@ -112,20 +107,120 @@ export function VehicleTable() {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const ws = XLSX.utils.json_to_sheet([{ 
+      vehicleIdCode: '',
+      registrationNumber: '',
+      vehicleCategory: '', // Name for user-friendliness
+      engineNumber: '',
+      chassisNumber: '',
+      make: '', // Brand
+      model: '',
+      manufactureYear: '',
+      fuelType: 'Petrol/Diesel/CNG/LPG/Electric',
+      capacity: '',
+      ownership: 'Company/Rental',
+      status: 'Active/Under Maintenance/Inactive',
+      assignedDriver: '' // Name for user-friendliness
+    }]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vehicles');
+    XLSX.writeFile(wb, 'VehicleTemplate.xlsx');
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+          const requiredHeaders = ['vehicleIdCode', 'registrationNumber', 'make', 'model'];
+          const headers = Object.keys(json[0] || {});
+          if (!requiredHeaders.every(h => headers.includes(h))) {
+             throw new Error('Invalid Excel file format. Expecting columns: vehicleIdCode, registrationNumber, make, model.');
+          }
+
+          const newVehicles: Vehicle[] = json
+            .filter(item => item.vehicleIdCode && item.registrationNumber)
+            .map(item => {
+              const driver = drivers.find(d => d.name === item.assignedDriver);
+              const vehicleType = vehicleTypes.find(vt => vt.name === item.vehicleCategory);
+
+              return {
+                id: Date.now().toString() + item.vehicleIdCode, 
+                vehicleIdCode: item.vehicleIdCode?.toString() || '',
+                registrationNumber: item.registrationNumber?.toString() || '',
+                vehicleTypeId: vehicleType?.id || '',
+                engineNumber: item.engineNumber?.toString() || '',
+                chassisNumber: item.chassisNumber?.toString() || '',
+                make: item.make?.toString() || '',
+                model: item.model?.toString() || '',
+                manufactureYear: item.manufactureYear?.toString() || '',
+                fuelType: item.fuelType?.toString() || '',
+                capacity: item.capacity?.toString() || '',
+                ownership: item.ownership?.toString() || '',
+                status: item.status?.toString() || '',
+                driverId: driver?.id || '',
+                documents: {
+                    registration: '',
+                    insurance: '',
+                    fitness: '',
+                    taxToken: '',
+                    routePermit: '',
+                    other: ''
+                }
+              }
+            });
+          
+          if(newVehicles.length > 0) {
+            setVehicles(prev => [...prev, ...newVehicles]);
+            toast({ title: 'Success', description: `${newVehicles.length} vehicles uploaded successfully.` });
+          }
+
+        } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    event.target.value = '';
+  };
+
 
   return (
     <>
     <Card>
         <CardHeader>
-            <div className="flex justify-between items-center">
-                <div>
-                    <CardTitle>Vehicles</CardTitle>
-                    <CardDescription>Manage all vehicles in your organization.</CardDescription>
-                </div>
-                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
-            </div>
+            <CardTitle>Vehicles</CardTitle>
+            <CardDescription>Manage all vehicles in your organization.</CardDescription>
         </CardHeader>
         <CardContent>
+            <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by ID, Reg. No..."
+                  className="w-full rounded-lg bg-background pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                  <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
+                  <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+                  <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                      <Upload className="mr-2 h-4 w-4" /> Upload
+                  </label>
+                  <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+              </div>
+            </div>
           <div className="border rounded-lg">
             <Table>
                 <TableHeader>
@@ -144,8 +239,8 @@ export function VehicleTable() {
                     <TableRow>
                     <TableCell colSpan={7} className="text-center">Loading...</TableCell>
                     </TableRow>
-                ) : vehicles && vehicles.length > 0 ? (
-                    vehicles.map((v) => (
+                ) : filteredVehicles && filteredVehicles.length > 0 ? (
+                    filteredVehicles.map((v) => (
                     <TableRow key={v.id}>
                         <TableCell>{v.vehicleIdCode}</TableCell>
                         <TableCell>{v.registrationNumber}</TableCell>
@@ -156,30 +251,32 @@ export function VehicleTable() {
                            <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(v)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(v)} className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                            </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <span className="sr-only">Open menu</span>
+                                      <Edit className="h-4 w-4" />
+                                  </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEdit(v)}>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      <span>Edit</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDelete(v)} className="text-destructive">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      <span>Delete</span>
+                                  </DropdownMenuItem>
+                              </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                     </TableRow>
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">No vehicles found.</TableCell>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                       {searchTerm ? `No vehicles found for "${searchTerm}".` : "No vehicles found."}
+                    </TableCell>
                     </TableRow>
                 )}
                 </TableBody>
