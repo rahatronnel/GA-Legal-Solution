@@ -147,6 +147,11 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   };
 
   const handleSelectChange = (id: keyof Driver) => (value: string) => {
+    // Handle "none" value for assignedVehicleId
+    if (id === 'assignedVehicleId' && value === 'none') {
+        setDriverData(prev => ({...prev, [id]: ''}));
+        return;
+    }
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
   
@@ -423,12 +428,12 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                   </div>
                   <div className="space-y-2">
                         <Label htmlFor="assignedVehicleId">Assigned Vehicle (if any)</Label>
-                        <Select value={driverData.assignedVehicleId} onValueChange={handleSelectChange('assignedVehicleId')}>
+                        <Select value={driverData.assignedVehicleId || 'none'} onValueChange={handleSelectChange('assignedVehicleId')}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select vehicle" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="none">None</SelectItem>
                                 {vehicles.map(vehicle => (
                                     <SelectItem key={vehicle.id} value={vehicle.id}>{vehicle.registrationNumber}</SelectItem>
                                 ))}
