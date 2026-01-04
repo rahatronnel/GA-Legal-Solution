@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export type ExpenseType = {
   id: string;
   name: string;
+  code: string;
 };
 
 export function ExpenseTypeTable() {
@@ -37,7 +38,7 @@ export function ExpenseTypeTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<ExpenseType> | null>(null);
-  const [expenseTypeName, setExpenseTypeName] = useState('');
+  const [expenseTypeData, setExpenseTypeData] = useState({ name: '', code: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -49,12 +50,20 @@ export function ExpenseTypeTable() {
   const filteredExpenseTypes = useMemo(() => {
     if (!searchTerm) return expenseTypes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return expenseTypes.filter(p => p.name.toLowerCase().includes(lowercasedTerm));
+    return expenseTypes.filter(p => 
+        p.name.toLowerCase().includes(lowercasedTerm) ||
+        p.code.toLowerCase().includes(lowercasedTerm)
+    );
   }, [expenseTypes, searchTerm]);
   
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setExpenseTypeData(prev => ({ ...prev, [id]: value }));
+  };
+
   const resetForm = () => {
     setCurrentExpenseType(null);
-    setExpenseTypeName('');
+    setExpenseTypeData({ name: '', code: '' });
   }
 
   const handleAdd = () => {
@@ -64,7 +73,7 @@ export function ExpenseTypeTable() {
 
   const handleEdit = (expenseType: ExpenseType) => {
     setCurrentExpenseType(expenseType);
-    setExpenseTypeName(expenseType.name);
+    setExpenseTypeData({ name: expenseType.name, code: expenseType.code });
     setIsDialogOpen(true);
   };
 
@@ -83,16 +92,16 @@ export function ExpenseTypeTable() {
   };
 
   const handleSave = () => {
-    if (!expenseTypeName.trim()) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Expense type name is required.' });
+    if (!expenseTypeData.name.trim() || !expenseTypeData.code.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
 
     if (currentExpenseType?.id) {
-      setExpenseTypes(prev => prev.map(p => p.id === currentExpenseType.id ? { ...p, name: expenseTypeName } : p));
+      setExpenseTypes(prev => prev.map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
       toast({ title: 'Success', description: 'Expense type updated successfully.' });
     } else {
-      const newExpenseType = { id: Date.now().toString(), name: expenseTypeName };
+      const newExpenseType = { id: Date.now().toString(), ...expenseTypeData };
       setExpenseTypes(prev => [...prev, newExpenseType]);
       toast({ title: 'Success', description: 'Expense type added successfully.' });
     }
@@ -102,7 +111,7 @@ export function ExpenseTypeTable() {
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '' }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '', code: '' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'ExpenseTypes');
     XLSX.writeFile(wb, 'ExpenseTypeTemplate.xlsx');
@@ -120,14 +129,17 @@ export function ExpenseTypeTable() {
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
-          if (!json[0] || !('name' in json[0])) {
-             throw new Error('Invalid Excel file format. Expecting a column with header "name".');
+          if (!json[0] || !('name' in json[0]) || !('code' in json[0])) {
+             throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "code".');
           }
 
           const newItems = json
-            .map(item => ({ name: String((item as any).name || '').trim() }))
-            .filter(item => item.name)
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name }));
+            .map(item => ({ 
+                name: String((item as any).name || '').trim(),
+                code: String((item as any).code || '').trim(),
+            }))
+            .filter(item => item.name && item.code)
+            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
             setExpenseTypes(prev => [...prev, ...newItems]);
@@ -154,7 +166,7 @@ export function ExpenseTypeTable() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search expense types..."
+                    placeholder="Search by name or code..."
                     className="w-full rounded-lg bg-background pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -174,18 +186,20 @@ export function ExpenseTypeTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead>Expense Type Name</TableHead>
+                    <TableHead>Code</TableHead>
                     <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
                     <TableRow>
-                    <TableCell colSpan={2} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : filteredExpenseTypes && filteredExpenseTypes.length > 0 ? (
                     filteredExpenseTypes.map((item) => (
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.code}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Tooltip>
@@ -210,7 +224,7 @@ export function ExpenseTypeTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">No expense types found.</TableCell>
+                    <TableCell colSpan={3} className="h-24 text-center">No expense types found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -226,11 +240,13 @@ export function ExpenseTypeTable() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value={expenseTypeName} onChange={(e) => setExpenseTypeName(e.target.value)} className="col-span-3" />
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" value={expenseTypeData.name} onChange={handleInputChange} />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="code">Code</Label>
+              <Input id="code" value={expenseTypeData.code} onChange={handleInputChange} />
             </div>
           </div>
           <DialogFooter>
