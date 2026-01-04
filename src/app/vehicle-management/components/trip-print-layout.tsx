@@ -8,6 +8,7 @@ import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import type { ExpenseType } from './expense-type-table';
 
 interface TripPrintLayoutProps {
   trip: Trip;
@@ -15,6 +16,7 @@ interface TripPrintLayoutProps {
   drivers: Driver[];
   purposes: TripPurpose[];
   locations: Location[];
+  expenseTypes: ExpenseType[];
 }
 
 const PrintHeader = () => (
@@ -87,7 +89,7 @@ const getStatusVariant = (status: Trip['tripStatus']) => {
     }
 };
 
-export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations }) => {
+export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations, expenseTypes }) => {
     let pageCounter = 1;
 
     const vehicle = vehicles.find(v => v.id === trip.vehicleId);
@@ -97,6 +99,7 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
     const endLocation = locations.find(l => l.id === trip.destinationLocationId);
     const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
     const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
+    const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
 
     return (
         <div className="bg-white">
@@ -139,7 +142,7 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
                                 <TableBody>
                                     {trip.expenses.map(exp => (
                                         <TableRow key={exp.id}>
-                                            <TableCell>{exp.type}</TableCell><TableCell>{exp.date}</TableCell><TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
+                                            <TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell><TableCell>{exp.date}</TableCell><TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

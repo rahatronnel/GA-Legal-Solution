@@ -27,10 +27,11 @@ import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import type { ExpenseType } from './expense-type-table';
 
 type Expense = {
   id: string;
-  type: string;
+  expenseTypeId: string;
   amount: number;
   date: string;
 };
@@ -100,6 +101,7 @@ interface TripEntryFormProps {
   purposes: TripPurpose[];
   locations: Location[];
   routes: Route[];
+  expenseTypes: ExpenseType[];
 }
 
 // Combobox Component
@@ -166,7 +168,7 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
 }
 
 
-export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drivers, purposes, locations, routes }: TripEntryFormProps) {
+export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drivers, purposes, locations, routes, expenseTypes }: TripEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState(initialTripData);
@@ -258,7 +260,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   
   // Expense handlers
   const addExpense = () => {
-    setExpenses(prev => [...prev, { id: Date.now().toString(), type: '', amount: 0, date: format(new Date(), 'yyyy-MM-dd') }]);
+    setExpenses(prev => [...prev, { id: Date.now().toString(), expenseTypeId: '', amount: 0, date: format(new Date(), 'yyyy-MM-dd') }]);
   };
 
   const updateExpense = (id: string, field: keyof Omit<Expense, 'id'>, value: string | number) => {
@@ -380,7 +382,12 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
                     <div className="space-y-2">
                         {expenses.map((expense) => (
                             <div key={expense.id} className="grid grid-cols-4 gap-2 items-center">
-                                <Input placeholder="Expense Type" value={expense.type} onChange={(e) => updateExpense(expense.id, 'type', e.target.value)} />
+                                <Select value={expense.expenseTypeId} onValueChange={(value) => updateExpense(expense.id, 'expenseTypeId', value)}>
+                                    <SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger>
+                                    <SelectContent>
+                                        {expenseTypes.map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                                 <Input placeholder="Amount" type="number" value={expense.amount} onChange={(e) => updateExpense(expense.id, 'amount', parseFloat(e.target.value) || 0)} />
                                 <Input type="date" value={expense.date} onChange={(e) => updateExpense(expense.id, 'date', e.target.value)} />
                                 <Button variant="ghost" size="icon" onClick={() => removeExpense(expense.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>

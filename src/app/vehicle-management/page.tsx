@@ -11,6 +11,7 @@ import { LocationTable, type Location } from "./components/location-table";
 import { RouteTable } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { ExpenseTypeTable } from "./components/expense-type-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -79,6 +80,15 @@ export default function VehicleManagementPage() {
                 </CardHeader>
                 <CardContent>
                     <LocationTable />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Expense Types</CardTitle>
+                    <CardDescription>Manage predefined types for trip expenses.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ExpenseTypeTable />
                 </CardContent>
             </Card>
           </div>

@@ -16,6 +16,7 @@ import type { Trip } from './trip-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import { TripPrintLayout } from './trip-print-layout';
+import type { ExpenseType } from './expense-type-table';
 
 
 export const PrintDriver = () => {
@@ -27,6 +28,7 @@ export const PrintDriver = () => {
   const [designations] = useLocalStorage<Designation[]>('designations', []);
   const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [locations] = useLocalStorage<Location[]>('locations', []);
+  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
 
   if (!itemToPrint) {
     return null;
@@ -37,7 +39,7 @@ export const PrintDriver = () => {
       {printType === 'driver' && <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} />}
       {printType === 'vehicle' && <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} />}
       {printType === 'employee' && <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />}
-      {printType === 'trip' && <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} />}
+      {printType === 'trip' && <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />}
     </div>
   );
 };

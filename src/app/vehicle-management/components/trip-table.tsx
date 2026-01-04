@@ -26,6 +26,7 @@ import type { Driver } from './driver-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import type { Route } from './route-table';
+import type { ExpenseType } from './expense-type-table';
 
 export function TripTable() {
   const { toast } = useToast();
@@ -35,6 +36,7 @@ export function TripTable() {
   const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [locations] = useLocalStorage<Location[]>('locations', []);
   const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -209,6 +211,7 @@ export function TripTable() {
         purposes={purposes || []}
         locations={locations || []}
         routes={routes || []}
+        expenseTypes={expenseTypes || []}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>

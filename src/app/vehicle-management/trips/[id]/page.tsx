@@ -17,6 +17,7 @@ import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ExpenseType } from '../../components/expense-type-table';
 
 
 const documentLabels: Record<keyof Trip['documents'], string> = {
@@ -91,6 +92,7 @@ export default function TripProfilePage() {
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [locations] = useLocalStorage<Location[]>('locations', []);
+  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const { handlePrint } = usePrint();
@@ -115,6 +117,7 @@ export default function TripProfilePage() {
     return { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses };
   }, [trip, vehicles, drivers, purposes, locations]);
   
+  const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
 
   if (!trip) return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
 
@@ -183,7 +186,7 @@ export default function TripProfilePage() {
                         <TableBody>
                             {trip.expenses.map(exp => (
                                 <TableRow key={exp.id}>
-                                    <TableCell>{exp.type}</TableCell>
+                                    <TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell>
                                     <TableCell>{exp.date}</TableCell>
                                     <TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
                                 </TableRow>
