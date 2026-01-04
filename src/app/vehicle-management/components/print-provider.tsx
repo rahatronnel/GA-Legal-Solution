@@ -4,22 +4,24 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { Driver } from './driver-entry-form';
 import type { Vehicle } from './vehicle-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
-type PrintableItem = Driver | Vehicle;
+type PrintableItem = Driver | Vehicle | Employee;
+type PrintType = 'driver' | 'vehicle' | 'employee';
 
 interface PrintContextType {
   itemToPrint: PrintableItem | null;
-  printType: 'driver' | 'vehicle' | null;
-  handlePrint: (item: PrintableItem, type: 'driver' | 'vehicle') => void;
+  printType: PrintType | null;
+  handlePrint: (item: PrintableItem, type: PrintType) => void;
 }
 
 const PrintContext = createContext<PrintContextType | undefined>(undefined);
 
 export const PrintProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [itemToPrint, setItemToPrint] = useState<PrintableItem | null>(null);
-  const [printType, setPrintType] = useState<'driver' | 'vehicle' | null>(null);
+  const [printType, setPrintType] = useState<PrintType | null>(null);
 
-  const handlePrint = (item: PrintableItem, type: 'driver' | 'vehicle') => {
+  const handlePrint = (item: PrintableItem, type: PrintType) => {
     setItemToPrint(item);
     setPrintType(type);
     // Use a timeout to allow the state to update before triggering the print dialog
