@@ -5,6 +5,7 @@ import { VehicleTable } from "./components/vehicle-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TripPurposeTable } from "./components/trip-purpose-table";
 import { LocationTable } from "./components/location-table";
+import { RouteTable } from "./components/route-table";
 
 export default function VehicleManagementPage() {
   return (
@@ -34,6 +35,15 @@ export default function VehicleManagementPage() {
         </TabsContent>
         <TabsContent value="trip-management">
           <div className="grid gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Routes</CardTitle>
+                    <CardDescription>Define routes by selecting a start and end location.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RouteTable />
+                </CardContent>
+            </Card>
             <Card>
                 <CardHeader>
                     <CardTitle>Trip Purposes</CardTitle>
