@@ -29,8 +29,8 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
     </div>
 )
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number}> = ({children, pageNumber}) => (
-    <div className="p-8 bg-white text-black min-h-screen flex flex-col font-sans">
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, className?: string}> = ({children, pageNumber, className = ''}) => (
+    <div className={`p-8 bg-white text-black min-h-screen flex flex-col font-sans ${className}`}>
         <PrintHeader />
         <div className="flex-grow py-8">
             {children}
@@ -45,18 +45,16 @@ const DocumentPage = ({ doc, label, pageNumber }: {doc: string, label: string, p
     const isImage = mimeType.startsWith('image/');
     
     return (
-        <div className="page-break">
-            <PrintPage pageNumber={pageNumber}>
-                <h2 className="text-xl font-bold mb-4">{label}</h2>
-                <div className="border rounded-lg p-4 flex justify-center items-center h-[80vh]">
-                     {isImage ? (
-                        <Image src={doc} alt={label} layout="fill" className="object-contain" />
-                    ) : (
-                         <p>Cannot preview this document type. It is available for download on the profile page.</p>
-                    )}
-                </div>
-            </PrintPage>
-        </div>
+        <PrintPage pageNumber={pageNumber} className="page-break">
+            <h2 className="text-xl font-bold mb-4">{label}</h2>
+            <div className="border rounded-lg p-4 flex justify-center items-center h-[80vh] relative">
+                 {isImage ? (
+                    <Image src={doc} alt={label} layout="fill" className="object-contain" />
+                ) : (
+                     <p>Cannot preview this document type. It is available for download on the profile page.</p>
+                )}
+            </div>
+        </PrintPage>
     )
 }
 
