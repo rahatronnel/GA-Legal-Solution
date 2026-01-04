@@ -3,7 +3,6 @@ import { VehicleTypeTable } from "./components/vehicle-type-table";
 import { DriverTable } from "./components/driver-table";
 import { VehicleTable } from "./components/vehicle-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PrintDriver } from "./components/print-driver";
 
 export default function VehicleManagementPage() {
   return (
@@ -42,7 +41,6 @@ export default function VehicleManagementPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <PrintDriver />
     </>
   );
 }

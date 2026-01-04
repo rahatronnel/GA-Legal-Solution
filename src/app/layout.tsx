@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
+import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
 
 export const metadata: Metadata = {
   title: 'GA & Legal Solution',
@@ -37,6 +38,7 @@ export default function RootLayout({
               </main>
             </div>
           </div>
+          <PrintDriver />
           <Toaster />
         </PrintProvider>
       </body>
