@@ -36,10 +36,13 @@ type Route = {
   endLocationId: string;
 };
 
-export function RouteTable() {
+interface RouteTableProps {
+  locations: Location[];
+}
+
+export function RouteTable({ locations }: RouteTableProps) {
   const { toast } = useToast();
   const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
-  const [locations] = useLocalStorage<Location[]>('locations', []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);

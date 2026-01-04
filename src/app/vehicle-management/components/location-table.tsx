@@ -26,7 +26,7 @@ import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-type Location = {
+export type Location = {
   id: string;
   name: string;
   locationCode: string;

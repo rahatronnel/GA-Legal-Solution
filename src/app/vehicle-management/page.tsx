@@ -1,14 +1,20 @@
+
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleTypeTable } from "./components/vehicle-type-table";
 import { DriverTable } from "./components/driver-table";
 import { VehicleTable } from "./components/vehicle-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TripPurposeTable } from "./components/trip-purpose-table";
-import { LocationTable } from "./components/location-table";
+import { LocationTable, type Location } from "./components/location-table";
 import { RouteTable } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export default function VehicleManagementPage() {
+  const [locations] = useLocalStorage<Location[]>('locations', []);
+  
   return (
     <>
       <Tabs defaultValue="trips" className="w-full">
@@ -54,7 +60,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable />
+                    <RouteTable locations={locations} />
                 </CardContent>
             </Card>
             <Card>
