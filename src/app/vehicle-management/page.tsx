@@ -13,6 +13,7 @@ import { TripTable } from "./components/trip-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ExpenseTypeTable } from "./components/expense-type-table";
 import { MaintenanceTypeTable } from "./components/maintenance-type-table";
+import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-type-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -57,15 +58,26 @@ export default function VehicleManagementPage() {
           </Card>
         </TabsContent>
         <TabsContent value="maintenance">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Maintenance Types</CardTitle>
-                    <CardDescription>Manage the different types of vehicle maintenance services.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <MaintenanceTypeTable />
-                </CardContent>
-            </Card>
+            <div className="grid gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Maintenance Types</CardTitle>
+                        <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <MaintenanceTypeTable />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Maintenance Expense Types</CardTitle>
+                        <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <MaintenanceExpenseTypeTable />
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
         <TabsContent value="accidents">
             <Card>
