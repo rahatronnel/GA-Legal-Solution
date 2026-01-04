@@ -11,6 +11,64 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
+
+const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
+    if (!doc) {
+      return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">This document has not been uploaded.</p>
+            </CardContent>
+        </Card>
+      );
+    }
+  
+    const mimeType = doc.substring(doc.indexOf(':') + 1, doc.indexOf(';'));
+    const isImage = mimeType.startsWith('image/');
+    const isPdf = mimeType === 'application/pdf';
+    const fileName = `${label.replace(/\s+/g, '_')}.${mimeType.split('/')[1]}`;
+  
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{label}</CardTitle>
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={doc} download={fileName} target="_blank" rel="noopener noreferrer">
+                        <Download className="mr-2 h-4 w-4"/>
+                        Download
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <div className="mt-4 border rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{minHeight: '400px'}}>
+                    {isImage ? (
+                        <Image src={doc} alt={`${label} document`} width={800} height={600} className="object-contain" />
+                    ) : isPdf ? (
+                        <object data={doc} type="application/pdf" width="100%" height="800px">
+                            <p className="p-4 text-center">Your browser does not support PDFs. Please <Link href={doc} download={fileName} className="text-primary underline">download the PDF</Link> to view it.</p>
+                        </object>
+                    ) : (
+                        <div className="p-8 text-center">
+                            <p className="font-semibold">Preview not available</p>
+                            <p className="text-sm text-muted-foreground mb-4">You can download the file to view it.</p>
+                            <Button asChild>
+                                <Link href={doc} download={fileName}>
+                                    <Download className="mr-2 h-4 w-4"/>
+                                    Download File
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    )
+};
+
 
 export default function DriverProfilePage() {
   const router = useRouter();
@@ -41,31 +99,6 @@ export default function DriverProfilePage() {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
-
-  const DocumentLink = ({ doc, label }: { doc: string; label: string }) => {
-    if (!doc) {
-      return (
-        <div>
-          <p className="font-medium">{label}</p>
-          <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>
-        </div>
-      );
-    }
-    
-    // Simplistic way to get a filename from a data URL
-    const fileType = doc.substring(doc.indexOf('/') + 1, doc.indexOf(';'));
-    const fileName = `${label.replace(/\s+/g, '_')}.${fileType}`;
-
-    return (
-        <div>
-            <p className="font-medium">{label}</p>
-             <Link href={doc} download={fileName} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 text-sm">
-                View/Download Document
-                <Download className="h-3 w-3"/>
-             </Link>
-        </div>
-    )
-  };
 
   return (
     <div className="space-y-6">
@@ -135,25 +168,45 @@ export default function DriverProfilePage() {
                 </div>
                 
                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Documents</h3>
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Documents Status</h3>
                      <ul className="space-y-3 text-sm">
                         <li className="flex items-start gap-3">
                             <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                            <DocumentLink doc={driver.documents.drivingLicense} label="Driving License" />
+                             <div>
+                                <p className="font-medium">Driving License</p>
+                                {driver.documents.drivingLicense ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
+                            </div>
                         </li>
                          <li className="flex items-start gap-3">
                             <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                            <DocumentLink doc={driver.documents.nid} label="NID" />
+                             <div>
+                                <p className="font-medium">NID</p>
+                                {driver.documents.nid ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
+                            </div>
                         </li>
                          <li className="flex items-start gap-3">
                             <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                            <DocumentLink doc={driver.documents.other} label="Other Document" />
+                             <div>
+                                <p className="font-medium">Other Document</p>
+                                {driver.documents.other ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
+                            </div>
                         </li>
                     </ul>
                 </div>
             </div>
         </CardContent>
       </Card>
+
+        <div>
+            <Separator className="my-6" />
+            <h2 className="text-2xl font-bold mb-4">Uploaded Documents</h2>
+            <div className="space-y-6">
+                <DocumentViewer doc={driver.documents.drivingLicense} label="Driving License" />
+                <DocumentViewer doc={driver.documents.nid} label="National ID (NID)" />
+                <DocumentViewer doc={driver.documents.other} label="Other Document" />
+            </div>
+        </div>
+
     </div>
   );
 }
