@@ -1,7 +1,9 @@
+
 "use client";
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Table,
   TableHeader,
@@ -14,12 +16,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { MoreHorizontal, PlusCircle, Edit, Trash2, Download, Upload, Eye } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User } from 'lucide-react';
 import { DriverEntryForm, type Driver } from './driver-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function DriverTable() {
   const { toast } = useToast();
@@ -31,7 +33,6 @@ export function DriverTable() {
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
-    // Faking a loading state
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
@@ -76,8 +77,8 @@ export function DriverTable() {
       driverIdCode: '',
       name: '',
       fatherOrGuardianName: '',
-      dateOfBirth: '',
-      gender: '',
+      dateOfBirth: 'YYYY-MM-DD',
+      gender: 'Male/Female/Other',
       mobileNumber: '',
       alternateMobileNumber: '',
     }]);
@@ -101,11 +102,11 @@ export function DriverTable() {
           const requiredHeaders = ['driverIdCode', 'name', 'mobileNumber'];
           const headers = Object.keys(json[0] || {});
           if (!requiredHeaders.every(h => headers.includes(h))) {
-             throw new Error('Invalid Excel file format. Expecting columns with headers like "driverIdCode", "name", etc.');
+             throw new Error('Invalid Excel file format. Expecting columns: driverIdCode, name, mobileNumber.');
           }
 
           const newDrivers: Driver[] = json
-            .filter(item => item.name && item.name.trim() && item.driverIdCode)
+            .filter(item => item.name && item.name.toString().trim() && item.driverIdCode)
             .map(item => ({ 
               id: Date.now().toString() + item.driverIdCode, 
               driverIdCode: item.driverIdCode?.toString().trim() || '',
@@ -115,6 +116,7 @@ export function DriverTable() {
               gender: item.gender?.toString().trim() || '',
               mobileNumber: item.mobileNumber?.toString().trim() || '',
               alternateMobileNumber: item.alternateMobileNumber?.toString().trim() || '',
+              profilePicture: '',
               documents: { drivingLicense: '', nid: '', other: '' },
             }));
           
@@ -134,7 +136,7 @@ export function DriverTable() {
 
 
   return (
-    <>
+    <TooltipProvider>
       <div className="flex justify-end gap-2 mb-4">
         <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Driver</Button>
         <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
@@ -147,11 +149,11 @@ export function DriverTable() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Driver</TableHead>
               <TableHead>Driver ID</TableHead>
-              <TableHead>Name</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Gender</TableHead>
-              <TableHead className="w-[50px] text-right">Actions</TableHead>
+              <TableHead className="w-[120px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -162,36 +164,48 @@ export function DriverTable() {
             ) : drivers && drivers.length > 0 ? (
               drivers.map((driver) => (
                 <TableRow key={driver.id}>
+                  <TableCell className="flex items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                       {driver.profilePicture ? (
+                           <Image src={driver.profilePicture} alt={driver.name} width={40} height={40} className="object-cover" />
+                       ) : (
+                           <User className="h-6 w-6 text-muted-foreground" />
+                       )}
+                    </div>
+                    {driver.name}
+                  </TableCell>
                   <TableCell>{driver.driverIdCode}</TableCell>
-                  <TableCell>{driver.name}</TableCell>
                   <TableCell>{driver.mobileNumber}</TableCell>
                   <TableCell>{driver.gender}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/vehicle-management/drivers/${driver.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>View Profile</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(driver)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(driver)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex justify-end gap-2">
+                       <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                             <Link href={`/vehicle-management/drivers/${driver.id}`}>
+                               <Eye className="h-4 w-4" />
+                             </Link>
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View Profile</TooltipContent>
+                      </Tooltip>
+                       <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(driver)}>
+                             <Edit className="h-4 w-4" />
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit Driver</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(driver)}>
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete Driver</TooltipContent>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -211,7 +225,6 @@ export function DriverTable() {
         driver={currentDriver}
       />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>
@@ -226,6 +239,6 @@ export function DriverTable() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </TooltipProvider>
   );
 }

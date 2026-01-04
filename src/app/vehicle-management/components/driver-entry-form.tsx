@@ -1,6 +1,8 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, User } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -31,6 +33,7 @@ export type Driver = {
   gender: 'Male' | 'Female' | 'Other' | '';
   mobileNumber: string;
   alternateMobileNumber: string;
+  profilePicture: string;
   documents: {
     drivingLicense: string;
     nid: string;
@@ -46,6 +49,7 @@ const initialDriverData: Omit<Driver, 'id'> = {
   gender: '',
   mobileNumber: '',
   alternateMobileNumber: '',
+  profilePicture: '',
   documents: { drivingLicense: '', nid: '', other: '' }
 };
 
@@ -62,6 +66,9 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   const [driverData, setDriverData] = useState(initialDriverData);
   const [dob, setDob] = useState<Date | undefined>(undefined);
   const [docFiles, setDocFiles] = useState({ drivingLicense: null as File | null, nid: null as File | null, other: null as File | null });
+  const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
+  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+
 
   const progress = Math.round((step / 2) * 100);
   const isEditing = driver && driver.id;
@@ -73,11 +80,14 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
         const initialData = { ...initialDriverData, ...driver };
         setDriverData(initialData);
         setDob(initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined);
+        setProfilePicPreview(initialData.profilePicture || null);
       } else {
         setDriverData(initialDriverData);
         setDob(undefined);
+        setProfilePicPreview(null);
       }
       setDocFiles({ drivingLicense: null, nid: null, other: null });
+      setProfilePicFile(null);
     }
   }, [isOpen, driver, isEditing]);
 
@@ -101,11 +111,24 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
     }
   };
 
+  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        setProfilePicFile(file);
+        setProfilePicPreview(URL.createObjectURL(file));
+    }
+  };
+
   const removeDocument = (docType: 'drivingLicense' | 'nid' | 'other') => {
       setDocFiles(prev => ({...prev, [docType]: null}));
-      // Also clear from driverData if it exists from a previous save
       setDriverData(prev => ({...prev, documents: {...prev.documents, [docType]: ''}}));
   };
+  
+  const removeProfilePic = () => {
+    setProfilePicFile(null);
+    setProfilePicPreview(null);
+    setDriverData(prev => ({...prev, profilePicture: ''}));
+  }
 
 
   const validateStep1 = () => {
@@ -124,14 +147,17 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
 
   const handleSave = async () => {
     let finalDocuments = driverData.documents;
+    let finalProfilePic = driverData.profilePicture;
     
-    // In this prototype, we'll just store filenames.
+    // In this prototype, we'll just store filenames or data URLs.
+    if(profilePicFile) finalProfilePic = profilePicPreview!; // Using preview which is a blob URL
     if(docFiles.drivingLicense) finalDocuments.drivingLicense = docFiles.drivingLicense.name;
     if(docFiles.nid) finalDocuments.nid = docFiles.nid.name;
     if(docFiles.other) finalDocuments.other = docFiles.other.name;
 
     const dataToSave: Omit<Driver, 'id'> = {
         ...driverData,
+        profilePicture: finalProfilePic,
         documents: finalDocuments,
     };
 
@@ -147,7 +173,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Driver' : 'Add New Driver'}</DialogTitle>
           <DialogDescription>
@@ -158,9 +184,26 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
         
         <div className="py-4 space-y-4">
             {step === 1 && (
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Step 1: Driver Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-6">
+                    <div className="col-span-1 flex flex-col items-center gap-4">
+                        <Label htmlFor="profile-pic-upload" className="cursor-pointer">
+                            <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+                                {profilePicPreview ? (
+                                    <Image src={profilePicPreview} alt="Profile" width={128} height={128} className="object-cover w-full h-full" />
+                                ) : (
+                                    <User className="w-16 h-16 text-muted-foreground" />
+                                )}
+                            </div>
+                        </Label>
+                        <Input id="profile-pic-upload" type="file" accept="image/*" className="hidden" onChange={handleProfilePicChange} />
+                        {profilePicPreview ? (
+                             <Button variant="link" size="sm" className="text-destructive" onClick={removeProfilePic}>Remove picture</Button>
+                        ) : (
+                            <Label htmlFor="profile-pic-upload" className="text-sm text-primary cursor-pointer">Upload Picture</Label>
+                        )}
+                       
+                    </div>
+                    <div className="col-span-2 grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="driverIdCode">Driver ID / Code</Label>
                             <Input id="driverIdCode" value={driverData.driverIdCode} onChange={handleInputChange} />
@@ -215,7 +258,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                             <Label htmlFor="mobileNumber">Mobile Number</Label>
                             <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 col-span-2">
                             <Label htmlFor="alternateMobileNumber">Alternate Mobile Number</Label>
                             <Input id="alternateMobileNumber" value={driverData.alternateMobileNumber} onChange={handleInputChange} />
                         </div>

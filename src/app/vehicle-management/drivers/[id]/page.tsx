@@ -1,12 +1,15 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function DriverProfilePage() {
   const router = useRouter();
@@ -37,6 +40,10 @@ export default function DriverProfilePage() {
   const getDocumentStatus = (doc: string | undefined) => {
     return doc ? 'Uploaded' : 'Not Uploaded';
   }
+  
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
 
   return (
     <div className="space-y-6">
@@ -47,9 +54,10 @@ export default function DriverProfilePage() {
       
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">
-            <div className="p-3 rounded-full bg-primary/10 text-primary">
-                <User className="h-8 w-8" />
-            </div>
+            <Avatar className="h-20 w-20">
+                <AvatarImage src={driver.profilePicture} alt={driver.name} />
+                <AvatarFallback className="text-2xl">{getInitials(driver.name)}</AvatarFallback>
+            </Avatar>
             <div>
                 <CardTitle className="text-3xl">{driver.name}</CardTitle>
                 <CardDescription>Driver ID: {driver.driverIdCode}</CardDescription>
