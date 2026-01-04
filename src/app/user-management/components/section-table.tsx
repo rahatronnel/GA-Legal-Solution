@@ -117,19 +117,29 @@ export function SectionTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json: { name: string, sectionCode: string }[] = XLSX.utils.sheet_to_json(worksheet);
+          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
           if (!json[0] || !('name' in json[0]) || !('sectionCode' in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "sectionCode".');
           }
 
           const newItems = json
-            .filter(item => item.name && item.name.trim() && item.sectionCode && item.sectionCode.trim())
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim(), sectionCode: item.sectionCode.trim() }));
+            .map(item => ({
+              name: String(item.name || '').trim(),
+              sectionCode: String(item.sectionCode || '').trim()
+            }))
+            .filter(item => item.name && item.sectionCode)
+            .map(item => ({
+              id: Date.now().toString() + item.name,
+              name: item.name,
+              sectionCode: item.sectionCode
+            }));
           
           if(newItems.length > 0) {
             setSections(prev => [...prev, ...newItems]);
             toast({ title: 'Success', description: 'Sections uploaded successfully.' });
+          } else {
+             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid sections found in the file.' });
           }
 
         } catch (error: any) {
