@@ -22,6 +22,7 @@ import type { Vehicle } from './vehicle-table';
 
 type Driver = { id: string; name: string; };
 type VehicleType = { id: string; name: string; };
+const ownershipTypes = ['Company Vehicle', 'Rental Vehicle', 'Covered Van'] as const;
 
 interface VehicleEntryFormProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
     model: '',
     registrationNumber: '',
     vehicleTypeId: '',
+    ownership: '',
   });
   const [documents, setDocuments] = useState<File[]>([]);
   const [driverId, setDriverId] = useState('');
@@ -57,12 +59,13 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
                 model: vehicle.model || '',
                 registrationNumber: vehicle.registrationNumber || '',
                 vehicleTypeId: vehicle.vehicleTypeId || '',
+                ownership: vehicle.ownership || '',
             });
             // Note: Documents are not loaded for editing for simplicity
             setDocuments([]); 
             setDriverId(vehicle.driverId || '');
         } else {
-            setVehicleData({ make: '', model: '', registrationNumber: '', vehicleTypeId: '' });
+            setVehicleData({ make: '', model: '', registrationNumber: '', vehicleTypeId: '', ownership: '' });
             setDocuments([]);
             setDriverId('');
         }
@@ -75,9 +78,10 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleVehicleTypeChange = (value: string) => {
-    setVehicleData(prev => ({ ...prev, vehicleTypeId: value }));
+  const handleSelectChange = (id: string) => (value: string) => {
+    setVehicleData(prev => ({ ...prev, [id]: value }));
   };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -94,7 +98,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
   };
   
   const validateStep1 = () => {
-    return vehicleData.make.trim() && vehicleData.model.trim() && vehicleData.registrationNumber.trim() && vehicleData.vehicleTypeId;
+    return vehicleData.make.trim() && vehicleData.model.trim() && vehicleData.registrationNumber.trim() && vehicleData.vehicleTypeId && vehicleData.ownership;
   };
 
   const validateStep2 = () => {
@@ -132,11 +136,9 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
     const documentNames = documents.map(file => file.name);
 
     if (firestore) {
-        const dataToSave = {
+        const dataToSave: Omit<Vehicle, 'id'> = {
             ...vehicleData,
             driverId,
-            // If editing and no new docs, keep old docs (not implemented here)
-            // For now, new uploads will overwrite.
             documents: documentNames, 
         };
 
@@ -179,7 +181,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="vehicleTypeId">Vehicle Type</Label>
-                             <Select value={vehicleData.vehicleTypeId} onValueChange={handleVehicleTypeChange}>
+                             <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
@@ -197,6 +199,19 @@ export function VehicleEntryForm({ isOpen, setIsOpen, vehicle, drivers, vehicleT
                         <div className="space-y-2">
                             <Label htmlFor="model">Model</Label>
                             <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
+                        </div>
+                        <div className="space-y-2 col-span-2">
+                            <Label htmlFor="ownership">Ownership</Label>
+                             <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select ownership" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ownershipTypes.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </div>

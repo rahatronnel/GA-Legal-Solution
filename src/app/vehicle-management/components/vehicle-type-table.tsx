@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useFirestore, useCollection } from '@/firebase';
@@ -32,10 +31,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 type VehicleType = {
   id: string;
   name: string;
-  ownership: 'Company Vehicle' | 'Rental Vehicle' | 'Covered Van';
 };
-
-const ownershipTypes = ['Company Vehicle', 'Rental Vehicle', 'Covered Van'] as const;
 
 export function VehicleTypeTable() {
   const firestore = useFirestore();
@@ -44,7 +40,6 @@ export function VehicleTypeTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
   const [typeName, setTypeName] = useState('');
-  const [ownership, setOwnership] = useState<VehicleType['ownership'] | ''>('');
 
 
   const vehicleTypesCollection = useMemoFirebase(
@@ -57,14 +52,12 @@ export function VehicleTypeTable() {
   const handleAdd = () => {
     setCurrentVehicleType(null);
     setTypeName('');
-    setOwnership('');
     setIsDialogOpen(true);
   };
 
   const handleEdit = (vehicleType: VehicleType) => {
     setCurrentVehicleType(vehicleType);
     setTypeName(vehicleType.name);
-    setOwnership(vehicleType.ownership);
     setIsDialogOpen(true);
   };
 
@@ -87,13 +80,13 @@ export function VehicleTypeTable() {
   };
 
   const handleSave = async () => {
-    if (!typeName.trim() || !ownership) {
-      toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
+    if (!typeName.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Name field is required.' });
       return;
     }
 
     if (firestore && vehicleTypesCollection) {
-      const dataToSave = { name: typeName, ownership };
+      const dataToSave = { name: typeName };
       try {
         if (currentVehicleType?.id) {
           // Update
@@ -112,11 +105,10 @@ export function VehicleTypeTable() {
     setIsDialogOpen(false);
     setCurrentVehicleType(null);
     setTypeName('');
-    setOwnership('');
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '', ownership: '' }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '' }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'VehicleTypes');
     XLSX.writeFile(wb, 'VehicleTypeTemplate.xlsx');
@@ -132,15 +124,15 @@ export function VehicleTypeTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json: { name: string, ownership: VehicleType['ownership']}[] = XLSX.utils.sheet_to_json(worksheet);
+          const json: { name: string }[] = XLSX.utils.sheet_to_json(worksheet);
 
-          if (!json[0] || !('name' in json[0]) || !('ownership' in json[0])) {
-             throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "ownership".');
+          if (!json[0] || !('name' in json[0])) {
+             throw new Error('Invalid Excel file format. Expecting a column with header "name".');
           }
 
           for (const item of json) {
-             if(item.name && item.name.trim() && item.ownership && ownershipTypes.includes(item.ownership)) {
-                await addDoc(vehicleTypesCollection, { name: item.name, ownership: item.ownership });
+             if(item.name && item.name.trim()) {
+                await addDoc(vehicleTypesCollection, { name: item.name });
              }
           }
           toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
@@ -170,20 +162,18 @@ export function VehicleTypeTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead>Vehicle Type</TableHead>
-                    <TableHead>Ownership Type</TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={2} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : vehicleTypes && vehicleTypes.length > 0 ? (
                     vehicleTypes.map((vt) => (
                     <TableRow key={vt.id}>
                         <TableCell>{vt.name}</TableCell>
-                        <TableCell>{vt.ownership}</TableCell>
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -208,7 +198,7 @@ export function VehicleTypeTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center">No vehicle types found.</TableCell>
+                    <TableCell colSpan={2} className="text-center">No vehicle types found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -230,21 +220,6 @@ export function VehicleTypeTable() {
                 Name
               </Label>
               <Input id="name" value={typeName} onChange={(e) => setTypeName(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ownership" className="text-right">
-                    Ownership
-                </Label>
-                <Select value={ownership} onValueChange={(value) => setOwnership(value as VehicleType['ownership'])}>
-                    <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select ownership type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {ownershipTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </div>
           </div>
           <DialogFooter>

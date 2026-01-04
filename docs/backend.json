@@ -8,14 +8,9 @@
         "name": {
           "type": "string",
           "description": "The name of the vehicle type."
-        },
-        "ownership": {
-          "type": "string",
-          "description": "The ownership type of the vehicle.",
-          "enum": ["Company Vehicle", "Rental Vehicle", "Covered Van"]
         }
       },
-      "required": ["name", "ownership"]
+      "required": ["name"]
     },
     "driver": {
       "title": "Driver",
@@ -54,6 +49,11 @@
           "type": "string",
           "description": "The registration number of the vehicle."
         },
+        "ownership": {
+          "type": "string",
+          "description": "The ownership type of the vehicle.",
+          "enum": ["Company Vehicle", "Rental Vehicle", "Covered Van"]
+        },
         "vehicleTypeId": {
           "type": "string",
           "description": "The ID of the associated vehicle type."
@@ -70,7 +70,7 @@
           "description": "A list of URLs to vehicle documents."
         }
       },
-      "required": ["make", "model", "registrationNumber", "vehicleTypeId", "driverId"]
+      "required": ["make", "model", "registrationNumber", "ownership", "vehicleTypeId", "driverId"]
     }
   },
   "auth": {

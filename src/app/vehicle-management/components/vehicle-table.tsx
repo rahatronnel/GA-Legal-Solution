@@ -25,8 +25,10 @@ export type Vehicle = {
   make: string;
   model: string;
   registrationNumber: string;
+  ownership: 'Company Vehicle' | 'Rental Vehicle' | 'Covered Van' | '';
   vehicleTypeId: string;
   driverId: string;
+  documents: string[];
 };
 
 type VehicleType = {
@@ -116,6 +118,7 @@ export function VehicleTable() {
                     <TableHead>Registration No.</TableHead>
                     <TableHead>Make</TableHead>
                     <TableHead>Model</TableHead>
+                    <TableHead>Ownership</TableHead>
                     <TableHead>Vehicle Type</TableHead>
                     <TableHead>Assigned Driver</TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
@@ -124,7 +127,7 @@ export function VehicleTable() {
                 <TableBody>
                 {isLoading ? (
                     <TableRow>
-                    <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+                    <TableCell colSpan={7} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : vehicles && vehicles.length > 0 ? (
                     vehicles.map((v) => (
@@ -132,6 +135,7 @@ export function VehicleTable() {
                         <TableCell>{v.registrationNumber}</TableCell>
                         <TableCell>{v.make}</TableCell>
                         <TableCell>{v.model}</TableCell>
+                        <TableCell>{v.ownership}</TableCell>
                         <TableCell>{getVehicleTypeName(v.vehicleTypeId)}</TableCell>
                         <TableCell>{getDriverName(v.driverId)}</TableCell>
                         <TableCell className="text-right">
@@ -158,7 +162,7 @@ export function VehicleTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={6} className="text-center">No vehicles found.</TableCell>
+                    <TableCell colSpan={7} className="text-center">No vehicles found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
