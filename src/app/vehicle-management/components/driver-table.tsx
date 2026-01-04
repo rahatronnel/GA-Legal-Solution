@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search } from 'lucide-react';
 import { DriverEntryForm, type Driver } from './driver-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -34,11 +34,23 @@ export function DriverTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   React.useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  const filteredDrivers = useMemo(() => {
+    if (!searchTerm) return drivers;
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return drivers.filter(driver => 
+      driver.name.toLowerCase().includes(lowercasedTerm) ||
+      driver.driverIdCode.toLowerCase().includes(lowercasedTerm) ||
+      driver.mobileNumber.toLowerCase().includes(lowercasedTerm) ||
+      driver.drivingLicenseNumber.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [drivers, searchTerm]);
 
   const handleAdd = () => {
     setCurrentDriver(null);
@@ -167,13 +179,25 @@ export function DriverTable() {
 
   return (
     <TooltipProvider>
-      <div className="flex justify-end gap-2 mb-4">
-        <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Driver</Button>
-        <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-        <Label htmlFor="upload-excel-drivers" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
-            <Upload className="mr-2 h-4 w-4" /> Upload Excel
-        </Label>
-        <Input id="upload-excel-drivers" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+      <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search by name, ID, mobile..."
+            className="w-full rounded-lg bg-background pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+            <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Driver</Button>
+            <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+            <Label htmlFor="upload-excel-drivers" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                <Upload className="mr-2 h-4 w-4" /> Upload
+            </Label>
+            <Input id="upload-excel-drivers" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+        </div>
       </div>
       <div className="border rounded-lg">
         <Table>
@@ -191,8 +215,8 @@ export function DriverTable() {
               <TableRow>
                 <TableCell colSpan={5} className="text-center">Loading...</TableCell>
               </TableRow>
-            ) : drivers && drivers.length > 0 ? (
-              drivers.map((driver) => (
+            ) : filteredDrivers && filteredDrivers.length > 0 ? (
+              filteredDrivers.map((driver) => (
                 <TableRow key={driver.id}>
                   <TableCell className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
@@ -249,7 +273,9 @@ export function DriverTable() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">No drivers found.</TableCell>
+                <TableCell colSpan={5} className="h-24 text-center">
+                    {searchTerm ? `No drivers found for "${searchTerm}".` : "No drivers found."}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
