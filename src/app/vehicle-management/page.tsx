@@ -12,6 +12,7 @@ import { RouteTable } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ExpenseTypeTable } from "./components/expense-type-table";
+import { MaintenanceTypeTable } from "./components/maintenance-type-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -58,11 +59,11 @@ export default function VehicleManagementPage() {
         <TabsContent value="maintenance">
             <Card>
                 <CardHeader>
-                    <CardTitle>Maintenance</CardTitle>
-                    <CardDescription>This section is under construction. Here you will manage vehicle maintenance records.</CardDescription>
+                    <CardTitle>Maintenance Types</CardTitle>
+                    <CardDescription>Manage the different types of vehicle maintenance services.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Coming soon...</p>
+                    <MaintenanceTypeTable />
                 </CardContent>
             </Card>
         </TabsContent>
