@@ -21,7 +21,7 @@ export default function VehicleManagementPage() {
          <Card>
             <CardHeader>
                 <CardTitle>Drivers</CardTitle>
-                <CardDescription>Manage your organization's drivers.</CardDescription>
+                <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
             </CardHeader>
             <CardContent>
                 <DriverTable />

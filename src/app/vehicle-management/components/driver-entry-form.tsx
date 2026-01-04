@@ -1,0 +1,276 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { Upload, X } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+
+export type Driver = {
+  id: string;
+  driverIdCode: string;
+  name: string;
+  fatherOrGuardianName: string;
+  dateOfBirth: string;
+  gender: 'Male' | 'Female' | 'Other' | '';
+  mobileNumber: string;
+  alternateMobileNumber: string;
+  documents: {
+    drivingLicense: string;
+    nid: string;
+    other: string;
+  }
+};
+
+const initialDriverData: Omit<Driver, 'id'> = {
+  driverIdCode: '',
+  name: '',
+  fatherOrGuardianName: '',
+  dateOfBirth: '',
+  gender: '',
+  mobileNumber: '',
+  alternateMobileNumber: '',
+  documents: { drivingLicense: '', nid: '', other: '' }
+};
+
+interface DriverEntryFormProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  onSave: (driver: Omit<Driver, 'id'>, id?: string) => void;
+  driver: Partial<Driver> | null;
+}
+
+export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEntryFormProps) {
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [driverData, setDriverData] = useState(initialDriverData);
+  const [dob, setDob] = useState<Date | undefined>(undefined);
+  const [docFiles, setDocFiles] = useState({ drivingLicense: null as File | null, nid: null as File | null, other: null as File | null });
+
+  const progress = Math.round((step / 2) * 100);
+  const isEditing = driver && driver.id;
+
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      if (isEditing) {
+        const initialData = { ...initialDriverData, ...driver };
+        setDriverData(initialData);
+        setDob(initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined);
+      } else {
+        setDriverData(initialDriverData);
+        setDob(undefined);
+      }
+      setDocFiles({ drivingLicense: null, nid: null, other: null });
+    }
+  }, [isOpen, driver, isEditing]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setDriverData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (id: 'gender') => (value: string) => {
+    setDriverData(prev => ({ ...prev, [id]: value as Driver['gender'] }));
+  };
+  
+  const handleDobChange = (date: Date | undefined) => {
+      setDob(date);
+      setDriverData(prev => ({...prev, dateOfBirth: date ? format(date, 'yyyy-MM-dd') : ''}))
+  }
+
+  const handleFileChange = (docType: 'drivingLicense' | 'nid' | 'other') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setDocFiles(prev => ({ ...prev, [docType]: e.target.files![0] }));
+    }
+  };
+
+  const removeDocument = (docType: 'drivingLicense' | 'nid' | 'other') => {
+      setDocFiles(prev => ({...prev, [docType]: null}));
+      // Also clear from driverData if it exists from a previous save
+      setDriverData(prev => ({...prev, documents: {...prev.documents, [docType]: ''}}));
+  };
+
+
+  const validateStep1 = () => {
+    return driverData.driverIdCode && driverData.name && driverData.mobileNumber;
+  };
+  
+  const nextStep = () => {
+    if (step === 1 && !validateStep1()) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Driver ID, Name, and Mobile Number are required.' });
+        return;
+    }
+    setStep(s => s + 1);
+  };
+
+  const prevStep = () => setStep(s => s - 1);
+
+  const handleSave = async () => {
+    let finalDocuments = driverData.documents;
+    
+    // In this prototype, we'll just store filenames.
+    if(docFiles.drivingLicense) finalDocuments.drivingLicense = docFiles.drivingLicense.name;
+    if(docFiles.nid) finalDocuments.nid = docFiles.nid.name;
+    if(docFiles.other) finalDocuments.other = docFiles.other.name;
+
+    const dataToSave: Omit<Driver, 'id'> = {
+        ...driverData,
+        documents: finalDocuments,
+    };
+
+    onSave(dataToSave, driver?.id);
+    setIsOpen(false);
+  };
+
+  const getDocumentName = (docType: 'drivingLicense' | 'nid' | 'other') => {
+      if (docFiles[docType]) return docFiles[docType]!.name;
+      if (driverData.documents && driverData.documents[docType]) return driverData.documents[docType];
+      return null;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent className="sm:max-w-[625px]">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? 'Edit Driver' : 'Add New Driver'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Update the details of this driver.' : 'Follow the steps to add a new driver.'}
+          </DialogDescription>
+          <Progress value={progress} className="w-full mt-2" />
+        </DialogHeader>
+        
+        <div className="py-4 space-y-4">
+            {step === 1 && (
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Step 1: Driver Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="driverIdCode">Driver ID / Code</Label>
+                            <Input id="driverIdCode" value={driverData.driverIdCode} onChange={handleInputChange} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="name">Driver Name</Label>
+                             <Input id="name" value={driverData.name} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="fatherOrGuardianName">Father’s / Guardian’s Name</Label>
+                            <Input id="fatherOrGuardianName" value={driverData.fatherOrGuardianName} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !dob && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {dob ? format(dob, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                    mode="single"
+                                    selected={dob}
+                                    onSelect={handleDobChange}
+                                    initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="gender">Gender</Label>
+                            <Select value={driverData.gender} onValueChange={handleSelectChange('gender')}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Male">Male</SelectItem>
+                                    <SelectItem value="Female">Female</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="mobileNumber">Mobile Number</Label>
+                            <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="alternateMobileNumber">Alternate Mobile Number</Label>
+                            <Input id="alternateMobileNumber" value={driverData.alternateMobileNumber} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {step === 2 && (
+                 <div className="space-y-6">
+                    <h3 className="font-semibold text-lg">Step 2: Upload Documents</h3>
+                    
+                    {(['drivingLicense', 'nid', 'other'] as const).map(docType => {
+                        const currentDocName = getDocumentName(docType);
+                        const docLabel = { drivingLicense: 'Driving License', nid: 'NID', other: 'Other Document'}[docType];
+                        
+                        return (
+                            <div className="space-y-2" key={docType}>
+                                <Label>{docLabel}</Label>
+                                {currentDocName ? (
+                                    <div className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
+                                        <span>{currentDocName}</span>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Label htmlFor={`file-upload-${docType}`} className="flex items-center justify-center w-full h-20 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
+                                        <span className="flex items-center space-x-2">
+                                            <Upload className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium text-muted-foreground">
+                                                Click to upload
+                                            </span>
+                                        </span>
+                                        <Input id={`file-upload-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
+                                    </Label>
+                                )}
+                            </div>
+                        );
+                    })}
+                 </div>
+            )}
+        </div>
+
+        <DialogFooter className="flex justify-between w-full">
+            {step > 1 ? (
+                <Button variant="outline" onClick={prevStep}>Previous</Button>
+            ) : <div></div>}
+            
+            {step < 2 ? (
+                 <Button onClick={nextStep}>Next</Button>
+            ) : (
+                 <Button onClick={handleSave}>{isEditing ? 'Update Driver' : 'Save Driver'}</Button>
+            )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
