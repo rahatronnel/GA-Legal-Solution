@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,11 +7,15 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer } from 'lucide-react';
+import { 
+    ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer,
+    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import type { Vehicle } from '../../components/vehicle-table';
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     if (!doc) {
@@ -71,11 +74,22 @@ const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
 };
 
 
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
+    <li className="flex items-start gap-3">
+        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+        <div>
+            <p className="font-medium">{label}</p>
+            <p className="text-muted-foreground">{value || 'N/A'}</p>
+        </div>
+    </li>
+);
+
 export default function DriverProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [driver, setDriver] = useState<Driver | null>(null);
   const { handlePrint } = usePrint();
 
@@ -102,6 +116,13 @@ export default function DriverProfilePage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
+  const assignedVehicle = vehicles.find(v => v.id === driver.assignedVehicleId);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  }
+
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
@@ -116,105 +137,83 @@ export default function DriverProfilePage() {
        </div>
       
       <Card>
-        <CardHeader className="flex flex-row items-center gap-4">
-            <Avatar className="h-20 w-20">
+        <CardHeader className="flex flex-row items-center gap-6">
+            <Avatar className="h-24 w-24">
                 <AvatarImage src={driver.profilePicture} alt={driver.name} />
-                <AvatarFallback className="text-2xl">{getInitials(driver.name)}</AvatarFallback>
+                <AvatarFallback className="text-3xl">{getInitials(driver.name)}</AvatarFallback>
             </Avatar>
             <div>
                 <CardTitle className="text-3xl">{driver.name}</CardTitle>
                 <CardDescription>Driver ID: {driver.driverIdCode}</CardDescription>
+                <CardDescription className="mt-1">Department: {driver.department || 'N/A'}</CardDescription>
             </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <CardContent>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                
                 <div className="space-y-4">
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Personal Information</h3>
-                    <ul className="space-y-3 text-sm">
-                        <li className="flex items-center gap-3">
-                            <UserSquare2 className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Father's/Guardian's Name</p>
-                                <p className="text-muted-foreground">{driver.fatherOrGuardianName || 'N/A'}</p>
-                            </div>
-                        </li>
-                        <li className="flex items-center gap-3">
-                            <Cake className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Date of Birth</p>
-                                <p className="text-muted-foreground">{driver.dateOfBirth ? new Date(driver.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
-                            </div>
-                        </li>
-                        <li className="flex items-center gap-3">
-                            <VenetianMask className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Gender</p>
-                                <p className="text-muted-foreground">{driver.gender || 'N/A'}</p>
-                            </div>
-                        </li>
+                    <ul className="space-y-4 text-sm">
+                        <InfoItem icon={UserSquare2} label="Father's/Guardian's Name" value={driver.fatherOrGuardianName} />
+                        <InfoItem icon={Cake} label="Date of Birth" value={formatDate(driver.dateOfBirth)} />
+                        <InfoItem icon={VenetianMask} label="Gender" value={driver.gender} />
+                        <InfoItem icon={FileText} label="National ID / Passport" value={driver.nationalIdOrPassport} />
                     </ul>
                 </div>
 
                 <div className="space-y-4">
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Contact Information</h3>
-                     <ul className="space-y-3 text-sm">
-                        <li className="flex items-center gap-3">
-                            <Phone className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Mobile Number</p>
-                                <p className="text-muted-foreground">{driver.mobileNumber}</p>
-                            </div>
-                        </li>
-                         <li className="flex items-center gap-3">
-                            <Phone className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">Alternate Mobile Number</p>
-                                <p className="text-muted-foreground">{driver.alternateMobileNumber || 'N/A'}</p>
-                            </div>
-                        </li>
+                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Phone} label="Mobile Number" value={driver.mobileNumber} />
+                        <InfoItem icon={Mail} label="Alternate Mobile Number" value={driver.alternateMobileNumber} />
+                        <InfoItem icon={Home} label="Present Address" value={driver.presentAddress} />
+                        <InfoItem icon={Home} label="Permanent Address" value={driver.permanentAddress} />
                     </ul>
                 </div>
                 
                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Documents Status</h3>
-                     <ul className="space-y-3 text-sm">
-                        <li className="flex items-start gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                             <div>
-                                <p className="font-medium">Driving License</p>
-                                {driver.documents.drivingLicense ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
-                            </div>
-                        </li>
-                         <li className="flex items-start gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                             <div>
-                                <p className="font-medium">NID</p>
-                                {driver.documents.nid ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
-                            </div>
-                        </li>
-                         <li className="flex items-start gap-3">
-                            <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                             <div>
-                                <p className="font-medium">Other Document</p>
-                                {driver.documents.other ? <p className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-800 inline-block">Uploaded</p> : <p className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-800 inline-block">Not Uploaded</p>}
-                            </div>
-                        </li>
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">License Information</h3>
+                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={ShieldCheck} label="Driving License Number" value={driver.drivingLicenseNumber} />
+                        <InfoItem icon={ShieldCheck} label="License Type" value={driver.licenseType} />
+                        <InfoItem icon={Calendar} label="License Issue Date" value={formatDate(driver.licenseIssueDate)} />
+                        <InfoItem icon={Calendar} label="License Expiry Date" value={formatDate(driver.licenseExpiryDate)} />
+                        <InfoItem icon={Briefcase} label="Issuing Authority" value={driver.issuingAuthority} />
                     </ul>
                 </div>
-            </div>
+
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Employment Details</h3>
+                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Calendar} label="Joining Date" value={formatDate(driver.joiningDate)} />
+                        <InfoItem icon={Briefcase} label="Employment Type" value={driver.employmentType} />
+                        <InfoItem icon={Briefcase} label="Department / Unit" value={driver.department} />
+                        <InfoItem icon={Clock} label="Duty Shift / Schedule" value={driver.dutyShift} />
+                        <InfoItem icon={Users} label="Supervisor" value={driver.supervisor} />
+                        <InfoItem icon={Car} label="Assigned Vehicle" value={assignedVehicle?.registrationNumber || 'None'} />
+                    </ul>
+                </div>
+              </div>
+            </TabsContent>
+             <TabsContent value="documents">
+                <div className="space-y-6 pt-4">
+                    <DocumentViewer doc={driver.documents.drivingLicense} label="Driving License" />
+                    <DocumentViewer doc={driver.documents.nid} label="National ID (NID)" />
+                    <DocumentViewer doc={driver.documents.other} label="Other Document" />
+                </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-        <div>
-            <Separator className="my-6" />
-            <h2 className="text-2xl font-bold mb-4">Uploaded Documents</h2>
-            <div className="space-y-6">
-                <DocumentViewer doc={driver.documents.drivingLicense} label="Driving License" />
-                <DocumentViewer doc={driver.documents.nid} label="National ID (NID)" />
-                <DocumentViewer doc={driver.documents.other} label="Other Document" />
-            </div>
-        </div>
-
     </div>
   );
 }
+
+// Add Tabs components if not globally available
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

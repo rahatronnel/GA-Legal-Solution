@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { 'useState', 'useEffect' } from 'react';
 import Image from 'next/image';
 import {
   Dialog,
@@ -17,12 +16,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, User } from 'lucide-react';
+import { Upload, X, User, CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import type { Vehicle } from './vehicle-table';
 
 export type Driver = {
   id: string;
@@ -34,6 +34,23 @@ export type Driver = {
   mobileNumber: string;
   alternateMobileNumber: string;
   profilePicture: string; // Will store as data URL
+  
+  // New fields
+  nationalIdOrPassport: string;
+  drivingLicenseNumber: string;
+  licenseType: 'Light' | 'Heavy' | 'Professional' | '';
+  licenseIssueDate: string;
+  licenseExpiryDate: string;
+  issuingAuthority: string;
+  presentAddress: string;
+  permanentAddress: string;
+  joiningDate: string;
+  employmentType: 'Permanent' | 'Contract' | 'Temporary' | '';
+  department: string;
+  dutyShift: string;
+  assignedVehicleId: string;
+  supervisor: string;
+
   documents: {
     drivingLicense: string; // Will store as data URL
     nid: string; // Will store as data URL
@@ -50,6 +67,20 @@ const initialDriverData: Omit<Driver, 'id'> = {
   mobileNumber: '',
   alternateMobileNumber: '',
   profilePicture: '',
+  nationalIdOrPassport: '',
+  drivingLicenseNumber: '',
+  licenseType: '',
+  licenseIssueDate: '',
+  licenseExpiryDate: '',
+  issuingAuthority: '',
+  presentAddress: '',
+  permanentAddress: '',
+  joiningDate: '',
+  employmentType: '',
+  department: '',
+  dutyShift: '',
+  assignedVehicleId: '',
+  supervisor: '',
   documents: { drivingLicense: '', nid: '', other: '' }
 };
 
@@ -58,13 +89,18 @@ interface DriverEntryFormProps {
   setIsOpen: (isOpen: boolean) => void;
   onSave: (driver: Omit<Driver, 'id'>, id?: string) => void;
   driver: Partial<Driver> | null;
+  vehicles: Pick<Vehicle, 'id' | 'registrationNumber'>[];
 }
 
-export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEntryFormProps) {
+export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }: DriverEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [driverData, setDriverData] = useState(initialDriverData);
+
   const [dob, setDob] = useState<Date | undefined>(undefined);
+  const [licenseIssueDate, setLicenseIssueDate] = useState<Date | undefined>(undefined);
+  const [licenseExpiryDate, setLicenseExpiryDate] = useState<Date | undefined>(undefined);
+  const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   
   // Store file objects temporarily
   const [docFiles, setDocFiles] = useState({ drivingLicense: null as File | null, nid: null as File | null, other: null as File | null });
@@ -75,7 +111,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   const [docPreviews, setDocPreviews] = useState({ drivingLicense: '', nid: '', other: ''});
 
 
-  const progress = Math.round((step / 2) * 100);
+  const progress = Math.round((step / 4) * 100);
   const isEditing = driver && driver.id;
 
   useEffect(() => {
@@ -85,11 +121,18 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
         const initialData = { ...initialDriverData, ...driver };
         setDriverData(initialData);
         setDob(initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined);
+        setLicenseIssueDate(initialData.licenseIssueDate ? new Date(initialData.licenseIssueDate) : undefined);
+        setLicenseExpiryDate(initialData.licenseExpiryDate ? new Date(initialData.licenseExpiryDate) : undefined);
+        setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
+
         setProfilePicPreview(initialData.profilePicture || null);
         setDocPreviews(initialData.documents || { drivingLicense: '', nid: '', other: '' });
       } else {
         setDriverData(initialDriverData);
         setDob(undefined);
+        setLicenseIssueDate(undefined);
+        setLicenseExpiryDate(undefined);
+        setJoiningDate(undefined);
         setProfilePicPreview(null);
         setDocPreviews({ drivingLicense: '', nid: '', other: '' });
       }
@@ -98,18 +141,18 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
     }
   }, [isOpen, driver, isEditing]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (id: 'gender') => (value: string) => {
-    setDriverData(prev => ({ ...prev, [id]: value as Driver['gender'] }));
+  const handleSelectChange = (id: keyof Driver) => (value: string) => {
+    setDriverData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleDobChange = (date: Date | undefined) => {
-      setDob(date);
-      setDriverData(prev => ({...prev, dateOfBirth: date ? format(date, 'yyyy-MM-dd') : ''}))
+  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Driver) => (date: Date | undefined) => {
+      setter(date);
+      setDriverData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
   }
   
   const fileToDataUrl = (file: File): Promise<string> => {
@@ -151,14 +194,19 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
     setDriverData(prev => ({...prev, profilePicture: ''}));
   }
 
-
-  const validateStep1 = () => {
-    return driverData.driverIdCode && driverData.name && driverData.mobileNumber;
-  };
+  const validateStep = (currentStep: number) => {
+    switch(currentStep) {
+      case 1:
+        return driverData.driverIdCode && driverData.name && driverData.mobileNumber;
+      // Add more validations for other steps if needed
+      default:
+        return true;
+    }
+  }
   
   const nextStep = () => {
-    if (step === 1 && !validateStep1()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Driver ID, Name, and Mobile Number are required.' });
+    if (!validateStep(step)) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields for this step.' });
         return;
     }
     setStep(s => s + 1);
@@ -183,7 +231,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
   
   const getDocumentName = (docType: 'drivingLicense' | 'nid' | 'other') => {
       if (docFiles[docType]) return docFiles[docType]!.name;
-      // For editing, if a document exists, we can't get the original name, so we'll show a generic name.
       if (docPreviews[docType] || (driverData.documents && driverData.documents[docType])) return `${docType.replace(/([A-Z])/g, ' $1')}.file`;
       return null;
   }
@@ -199,8 +246,10 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4">
+        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             {step === 1 && (
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg">Step 1: Personal & Contact Information</h3>
                 <div className="grid grid-cols-3 gap-6">
                     <div className="col-span-1 flex flex-col items-center gap-4">
                         <Label htmlFor="profile-pic-upload" className="cursor-pointer">
@@ -218,7 +267,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                         ) : (
                             <Label htmlFor="profile-pic-upload" className="text-sm text-primary cursor-pointer">Upload Picture</Label>
                         )}
-                       
                     </div>
                     <div className="col-span-2 grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -237,33 +285,18 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                             <Label htmlFor="dateOfBirth">Date of Birth</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !dob && "text-muted-foreground"
-                                    )}
-                                    >
+                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !dob && "text-muted-foreground")}>
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {dob ? format(dob, "PPP") : <span>Pick a date</span>}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                    mode="single"
-                                    selected={dob}
-                                    onSelect={handleDobChange}
-                                    initialFocus
-                                    />
-                                </PopoverContent>
+                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dob} onSelect={handleDateChange(setDob, 'dateOfBirth')} initialFocus/></PopoverContent>
                             </Popover>
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="gender">Gender</Label>
                             <Select value={driverData.gender} onValueChange={handleSelectChange('gender')}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select gender" />
-                                </SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Male">Male</SelectItem>
                                     <SelectItem value="Female">Female</SelectItem>
@@ -275,17 +308,140 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                             <Label htmlFor="mobileNumber">Mobile Number</Label>
                             <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
                         </div>
-                        <div className="space-y-2 col-span-2">
+                        <div className="space-y-2">
                             <Label htmlFor="alternateMobileNumber">Alternate Mobile Number</Label>
                             <Input id="alternateMobileNumber" value={driverData.alternateMobileNumber} onChange={handleInputChange} />
                         </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="nationalIdOrPassport">National ID / Passport No.</Label>
+                            <Input id="nationalIdOrPassport" value={driverData.nationalIdOrPassport} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                    <div className="col-span-3 grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="presentAddress">Present Address</Label>
+                          <Textarea id="presentAddress" value={driverData.presentAddress} onChange={handleInputChange} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="permanentAddress">Permanent Address</Label>
+                          <Textarea id="permanentAddress" value={driverData.permanentAddress} onChange={handleInputChange} />
+                      </div>
                     </div>
                 </div>
+              </div>
             )}
 
             {step === 2 && (
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg">Step 2: License Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="drivingLicenseNumber">Driving License Number</Label>
+                      <Input id="drivingLicenseNumber" value={driverData.drivingLicenseNumber} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="licenseType">License Type</Label>
+                      <Select value={driverData.licenseType} onValueChange={handleSelectChange('licenseType')}>
+                          <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="Light">Light</SelectItem>
+                              <SelectItem value="Heavy">Heavy</SelectItem>
+                              <SelectItem value="Professional">Professional</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="licenseIssueDate">License Issue Date</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !licenseIssueDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {licenseIssueDate ? format(licenseIssueDate, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={licenseIssueDate} onSelect={handleDateChange(setLicenseIssueDate, 'licenseIssueDate')} initialFocus/></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="licenseExpiryDate">License Expiry Date</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !licenseExpiryDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {licenseExpiryDate ? format(licenseExpiryDate, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={licenseExpiryDate} onSelect={handleDateChange(setLicenseExpiryDate, 'licenseExpiryDate')} initialFocus/></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                      <Label htmlFor="issuingAuthority">Issuing Authority</Label>
+                      <Input id="issuingAuthority" value={driverData.issuingAuthority} onChange={handleInputChange} />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {step === 3 && (
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg">Step 3: Employment Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="joiningDate">Joining Date</Label>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !joiningDate && "text-muted-foreground")}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {joiningDate ? format(joiningDate, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={joiningDate} onSelect={handleDateChange(setJoiningDate, 'joiningDate')} initialFocus/></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="employmentType">Employment Type</Label>
+                      <Select value={driverData.employmentType} onValueChange={handleSelectChange('employmentType')}>
+                          <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="Permanent">Permanent</SelectItem>
+                              <SelectItem value="Contract">Contract</SelectItem>
+                              <SelectItem value="Temporary">Temporary</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="department">Department / Unit</Label>
+                      <Input id="department" value={driverData.department} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="dutyShift">Duty Shift / Schedule</Label>
+                      <Input id="dutyShift" value={driverData.dutyShift} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="supervisor">Supervisor / Reporting Person</Label>
+                      <Input id="supervisor" value={driverData.supervisor} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-2">
+                        <Label htmlFor="assignedVehicleId">Assigned Vehicle (if any)</Label>
+                        <Select value={driverData.assignedVehicleId} onValueChange={handleSelectChange('assignedVehicleId')}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select vehicle" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {vehicles.map(vehicle => (
+                                    <SelectItem key={vehicle.id} value={vehicle.id}>{vehicle.registrationNumber}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Upload Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 4: Upload Documents</h3>
                     
                     {(['drivingLicense', 'nid', 'other'] as const).map(docType => {
                         const currentDocName = getDocumentName(docType);
@@ -324,7 +480,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver }: DriverEnt
                 <Button variant="outline" onClick={prevStep}>Previous</Button>
             ) : <div></div>}
             
-            {step < 2 ? (
+            {step < 4 ? (
                  <Button onClick={nextStep}>Next</Button>
             ) : (
                  <Button onClick={handleSave}>{isEditing ? 'Update Driver' : 'Save Driver'}</Button>

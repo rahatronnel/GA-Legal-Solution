@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -23,10 +22,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
+import type { Vehicle } from './vehicle-table';
 
 export function DriverTable() {
   const { toast } = useToast();
   const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -83,6 +84,19 @@ export function DriverTable() {
       gender: 'Male/Female/Other',
       mobileNumber: '',
       alternateMobileNumber: '',
+      nationalIdOrPassport: '',
+      drivingLicenseNumber: '',
+      licenseType: 'Light/Heavy/Professional',
+      licenseIssueDate: 'YYYY-MM-DD',
+      licenseExpiryDate: 'YYYY-MM-DD',
+      issuingAuthority: '',
+      presentAddress: '',
+      permanentAddress: '',
+      joiningDate: 'YYYY-MM-DD',
+      employmentType: 'Permanent/Contract/Temporary',
+      department: '',
+      dutyShift: '',
+      supervisor: '',
     }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Drivers');
@@ -120,6 +134,20 @@ export function DriverTable() {
               alternateMobileNumber: item.alternateMobileNumber?.toString().trim() || '',
               profilePicture: '',
               documents: { drivingLicense: '', nid: '', other: '' },
+              nationalIdOrPassport: item.nationalIdOrPassport?.toString().trim() || '',
+              drivingLicenseNumber: item.drivingLicenseNumber?.toString().trim() || '',
+              licenseType: item.licenseType?.toString().trim() || '',
+              licenseIssueDate: item.licenseIssueDate?.toString().trim() || '',
+              licenseExpiryDate: item.licenseExpiryDate?.toString().trim() || '',
+              issuingAuthority: item.issuingAuthority?.toString().trim() || '',
+              presentAddress: item.presentAddress?.toString().trim() || '',
+              permanentAddress: item.permanentAddress?.toString().trim() || '',
+              joiningDate: item.joiningDate?.toString().trim() || '',
+              employmentType: item.employmentType?.toString().trim() || '',
+              department: item.department?.toString().trim() || '',
+              dutyShift: item.dutyShift?.toString().trim() || '',
+              assignedVehicleId: '', // Cannot be imported from Excel easily
+              supervisor: item.supervisor?.toString().trim() || '',
             }));
           
           if(newDrivers.length > 0) {
@@ -154,7 +182,7 @@ export function DriverTable() {
               <TableHead>Driver</TableHead>
               <TableHead>Driver ID</TableHead>
               <TableHead>Mobile Number</TableHead>
-              <TableHead>Gender</TableHead>
+              <TableHead>Employment Type</TableHead>
               <TableHead className="w-[160px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -178,7 +206,7 @@ export function DriverTable() {
                   </TableCell>
                   <TableCell>{driver.driverIdCode}</TableCell>
                   <TableCell>{driver.mobileNumber}</TableCell>
-                  <TableCell>{driver.gender}</TableCell>
+                  <TableCell>{driver.employmentType}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                        <Tooltip>
@@ -233,6 +261,7 @@ export function DriverTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         driver={currentDriver}
+        vehicles={vehicles || []}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
