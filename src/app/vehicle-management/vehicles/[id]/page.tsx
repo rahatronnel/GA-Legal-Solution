@@ -185,13 +185,13 @@ export default function VehicleProfilePage() {
           Back to Vehicle List
         </Button>
         <div className="flex gap-2">
-            <Button variant="secondary" asChild>
+            <Button asChild>
                 <Link href={`/vehicle-management/reports/lifecycle/${vehicle.id}`}>
                     <GitCommitHorizontal className="mr-2 h-4 w-4" />
                     Lifecycle Report
                 </Link>
             </Button>
-            <Button onClick={() => handlePrint(vehicle, 'vehicle')}>
+            <Button variant="outline" onClick={() => handlePrint(vehicle, 'vehicle')}>
               <Printer className="mr-2 h-4 w-4" />
               Print Profile
             </Button>
