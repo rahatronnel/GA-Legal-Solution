@@ -17,6 +17,7 @@ import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-ty
 import { ServiceCenterTable } from "./components/service-center-table";
 import { MaintenanceRecordTable } from "./components/maintenance-record-table";
 import { PartTable } from "./components/part-table";
+import { AccidentTable } from "./components/accident-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -112,11 +113,11 @@ export default function VehicleManagementPage() {
         <TabsContent value="accidents">
             <Card>
                 <CardHeader>
-                    <CardTitle>Accidents</CardTitle>
-                    <CardDescription>This section is under construction. Here you will manage vehicle accident reports.</CardDescription>
+                    <CardTitle>Accident Records</CardTitle>
+                    <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Coming soon...</p>
+                    <AccidentTable />
                 </CardContent>
             </Card>
         </TabsContent>
