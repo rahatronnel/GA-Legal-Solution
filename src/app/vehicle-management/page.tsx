@@ -24,11 +24,19 @@ import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { Driver } from "./components/driver-entry-form";
+import type { Trip } from "./components/trip-entry-form";
+import type { Route } from "./components/route-table";
+import type { TripPurpose } from "./components/trip-purpose-table";
+import type { ExpenseType } from "./components/expense-type-table";
 
 
 export default function VehicleManagementPage() {
   const [locations, setLocations] = useLocalStorage<Location[]>('locations', []);
   const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
+  const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
+  const [tripPurposes, setTripPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
   
   return (
     <>
@@ -52,7 +60,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage all vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable />
+                    <TripTable trips={trips} setTrips={setTrips} />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -170,7 +178,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable locations={locations} />
+                    <RouteTable locations={locations} routes={routes} setRoutes={setRoutes} />
                 </CardContent>
             </Card>
             <Card>
@@ -179,7 +187,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripPurposeTable />
+                    <TripPurposeTable purposes={tripPurposes} setPurposes={setTripPurposes} />
                 </CardContent>
             </Card>
             <Card>
@@ -197,7 +205,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined types for trip expenses.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ExpenseTypeTable />
+                    <ExpenseTypeTable expenseTypes={expenseTypes} setExpenseTypes={setExpenseTypes} />
                 </CardContent>
             </Card>
           </div>

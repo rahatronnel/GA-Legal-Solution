@@ -29,6 +29,7 @@ import type { Location } from './location-table';
 import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type UploadedFile = {
   id: string;
@@ -104,12 +105,6 @@ interface TripEntryFormProps {
   setIsOpen: (isOpen: boolean) => void;
   onSave: (data: Omit<Trip, 'id'>, id?: string) => void;
   trip: Partial<Trip> | null;
-  vehicles: Vehicle[];
-  drivers: Driver[];
-  purposes: TripPurpose[];
-  locations: Location[];
-  routes: Route[];
-  expenseTypes: ExpenseType[];
 }
 
 // Combobox Component
@@ -177,7 +172,7 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
 }
 
 
-export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drivers, purposes, locations, routes, expenseTypes }: TripEntryFormProps) {
+export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState(initialTripData);
@@ -187,6 +182,13 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   // Date states
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const [locations] = useLocalStorage<Location[]>('locations', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);

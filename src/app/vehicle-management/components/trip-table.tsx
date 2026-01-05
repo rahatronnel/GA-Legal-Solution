@@ -32,16 +32,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
-export function TripTable() {
+interface TripTableProps {
+    trips: Trip[];
+    setTrips: React.Dispatch<React.SetStateAction<Trip[]>>;
+}
+
+export function TripTable({ trips, setTrips }: TripTableProps) {
   const { toast } = useToast();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [vehicles] = useState<Vehicle[]>([]);
-  const [drivers] = useState<Driver[]>([]);
-  const [purposes] = useState<TripPurpose[]>([]);
-  const [locations] = useState<Location[]>([]);
-  const [routes] = useState<Route[]>([]);
-  const [expenseTypes] = useState<ExpenseType[]>([]);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const [locations] = useLocalStorage<Location[]>('locations', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -277,12 +282,6 @@ export function TripTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         trip={currentTrip}
-        vehicles={vehicles || []}
-        drivers={drivers || []}
-        purposes={purposes || []}
-        locations={locations || []}
-        routes={routes || []}
-        expenseTypes={expenseTypes || []}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
