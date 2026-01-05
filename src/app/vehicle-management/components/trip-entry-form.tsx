@@ -95,7 +95,7 @@ const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...a
 interface TripEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (data: Omit<Trip, 'id' | 'tripId'>, id?: string) => void;
+  onSave: (data: Omit<Trip, 'id'>, id?: string) => void;
   trip: Partial<Trip> | null;
   vehicles: Vehicle[];
   drivers: Driver[];
@@ -292,13 +292,15 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
       return;
     }
 
-    const dataToSave = {
+    // Construct the complete trip object here
+    const completeTripData = {
         ...tripData,
         expenses,
-        documents: docPreviews
+        documents: docPreviews,
+        tripId: trip?.tripId || `TRIP-${Date.now()}` // Keep existing or create new
     };
 
-    onSave(dataToSave, trip?.id);
+    onSave(completeTripData, trip?.id);
     setIsOpen(false);
   };
   

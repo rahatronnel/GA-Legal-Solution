@@ -73,32 +73,16 @@ export function TripTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Trip, 'id' | 'tripId'>, id?: string) => {
+  const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-      setTrips(prev =>
-        prev.map(t => (t.id === id ? { ...t, ...data } : t))
-      );
+      // This is an update. Replace the entire object to ensure no data is lost.
+      setTrips(prev => prev.map(t => (t.id === id ? { id, ...data } : t)));
       toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
+      // This is a new trip. Create a complete object.
       const newTrip: Trip = {
         id: Date.now().toString(),
-        tripId: `TRIP-${Date.now()}`,
-        vehicleId: data.vehicleId,
-        driverId: data.driverId,
-        purposeId: data.purposeId,
-        routeId: data.routeId,
-        startDate: data.startDate,
-        startTime: data.startTime,
-        endDate: data.endDate,
-        endTime: data.endTime,
-        startLocationId: data.startLocationId,
-        destinationLocationId: data.destinationLocationId,
-        startingMeter: data.startingMeter,
-        endingMeter: data.endingMeter,
-        remarks: data.remarks,
-        tripStatus: data.tripStatus,
-        expenses: data.expenses || [],
-        documents: data.documents || {},
+        ...data,
       };
       setTrips(prev => [...prev, newTrip]);
       toast({ title: 'Success', description: 'Trip added successfully.' });
