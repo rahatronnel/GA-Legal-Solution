@@ -63,10 +63,10 @@ export function VehicleTable() {
   const [isLoading, setIsLoading] = useState(true);
   
   // State for filters
-  const [ownershipFilter, setOwnershipFilter] = useState('');
-  const [driverFilter, setDriverFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [ownershipFilter, setOwnershipFilter] = useState('all');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     // Faking a loading state
@@ -78,16 +78,16 @@ export function VehicleTable() {
     return vehicles.filter(vehicle => {
       const currentDriver = getCurrentDriver(vehicle, drivers);
 
-      if (ownershipFilter && vehicle.ownership !== ownershipFilter) {
+      if (ownershipFilter !== 'all' && vehicle.ownership !== ownershipFilter) {
         return false;
       }
-      if (driverFilter && currentDriver?.id !== driverFilter) {
+      if (driverFilter !== 'all' && currentDriver?.id !== driverFilter) {
         return false;
       }
-      if (categoryFilter && vehicle.vehicleTypeId !== categoryFilter) {
+      if (categoryFilter !== 'all' && vehicle.vehicleTypeId !== categoryFilter) {
         return false;
       }
-      if (statusFilter && vehicle.status !== statusFilter) {
+      if (statusFilter !== 'all' && vehicle.status !== statusFilter) {
         return false;
       }
       return true;
@@ -246,7 +246,7 @@ export function VehicleTable() {
               <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Ownership..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Ownerships</SelectItem>
+                  <SelectItem value="all">All Ownerships</SelectItem>
                   <SelectItem value="Company">Company</SelectItem>
                   <SelectItem value="Rental">Rental</SelectItem>
                 </SelectContent>
@@ -254,21 +254,21 @@ export function VehicleTable() {
               <Select value={driverFilter} onValueChange={setDriverFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Drivers</SelectItem>
+                  <SelectItem value="all">All Drivers</SelectItem>
                   {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                 </SelectContent>
               </Select>
                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Category..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {vehicleTypes.map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
                 </SelectContent>
               </Select>
                <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Status..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="Active">Active</SelectItem>
                   <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
                   <SelectItem value="Inactive">Inactive</SelectItem>
