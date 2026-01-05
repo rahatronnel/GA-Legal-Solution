@@ -93,16 +93,29 @@ export default function TripProfilePage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
   const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
 
-  const [trip, setTrip] = useState<Trip | null>(null);
+  const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && trips.length > 0) {
+    if (id && trips) {
       const foundTrip = trips.find(t => t.id === id);
-      if (foundTrip) setTrip(foundTrip);
-      else notFound();
+      if (foundTrip) {
+        setTrip(foundTrip);
+      } else {
+        setTrip(null);
+        const timer = setTimeout(() => {
+            const updatedTrips = JSON.parse(window.localStorage.getItem('trips') || '[]') as Trip[];
+            const recheckTrip = updatedTrips.find(t => t.id === id);
+            if (!recheckTrip) {
+                notFound();
+            } else {
+                setTrip(recheckTrip);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [id, trips]);
+  }, [id, trips, notFound]);
 
   const { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses } = useMemo(() => {
     if (!trip) return {};
@@ -118,7 +131,13 @@ export default function TripProfilePage() {
   
   const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
 
-  if (!trip) return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
+  if (trip === undefined || trip === null) {
+      return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
+  }
+
+  if (!trip) {
+      notFound();
+  }
 
   return (
     <div className="space-y-6">
@@ -217,3 +236,5 @@ export default function TripProfilePage() {
     </div>
   );
 }
+
+    

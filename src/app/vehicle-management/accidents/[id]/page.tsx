@@ -83,7 +83,7 @@ export default function AccidentProfilePage() {
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
+  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [employees] = useLocalStorage<Employee[]>('employees', []);
@@ -97,14 +97,29 @@ export default function AccidentProfilePage() {
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (id && accidents.length > 0) {
-      const foundRecord = accidents.find(t => t.id === id);
-      if (foundRecord) {
-        setAccident(foundRecord);
-      } else {
-        // If it's not found after the initial load and list has items, it's a 404
-        notFound();
-      }
+    if (id && accidents) {
+        const foundRecord = accidents.find(t => t.id === id);
+        if (foundRecord) {
+            setAccident(foundRecord);
+        } else {
+            // It might be that the data isn't loaded yet.
+            // We'll set it to null and let the UI show "loading".
+            setAccident(null);
+            
+            // Add a small delay to see if the record appears after a moment (e.g. after a save).
+            const timer = setTimeout(() => {
+                const updatedAccidents = JSON.parse(window.localStorage.getItem('accidents') || '[]') as Accident[];
+                const recheckRecord = updatedAccidents.find(t => t.id === id);
+                if (!recheckRecord) {
+                    // If it's still not found, then it's a 404.
+                    notFound();
+                } else {
+                    setAccident(recheckRecord);
+                }
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
     }
   }, [id, accidents, notFound]);
 
@@ -125,14 +140,13 @@ export default function AccidentProfilePage() {
   }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
 
-  if (accident === undefined) {
+  if (accident === undefined || accident === null) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
   
-  if (accident === null) {
-      // This state can be hit if the record is not found initially
-      // The useEffect will call notFound(), but this is a fallback.
-      return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
+  if (!accident) {
+      // This state should ideally not be hit if notFound() is called, but as a fallback.
+      notFound();
   }
 
   const formatCurrency = (amount: number | undefined) => {
@@ -245,6 +259,8 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
+    
+
     
 
     

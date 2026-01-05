@@ -106,19 +106,29 @@ export default function VehicleProfilePage() {
   const [accidents] = useLocalStorage<Accident[]>('accidents', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
 
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && vehicles.length > 0) {
+    if (id && vehicles) {
       const foundVehicle = vehicles.find(v => v.id === id);
       if (foundVehicle) {
         setVehicle(foundVehicle);
       } else {
-        notFound();
+        setVehicle(null);
+        const timer = setTimeout(() => {
+            const updatedVehicles = JSON.parse(window.localStorage.getItem('vehicles') || '[]') as Vehicle[];
+            const recheckVehicle = updatedVehicles.find(v => v.id === id);
+            if (!recheckVehicle) {
+                notFound();
+            } else {
+                setVehicle(recheckVehicle);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
       }
     }
-  }, [id, vehicles]);
+  }, [id, vehicles, notFound]);
 
   const vehicleMaintenanceHistory = useMemo(() => {
     if (!id) return [];
@@ -140,12 +150,16 @@ export default function VehicleProfilePage() {
   }, [vehicle, drivers]);
 
 
-  if (!vehicle) {
+  if (vehicle === undefined || vehicle === null) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading vehicle profile...</p>
       </div>
     );
+  }
+
+  if (!vehicle) {
+      notFound();
   }
   
   const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
@@ -313,3 +327,5 @@ export default function VehicleProfilePage() {
     </div>
   );
 }
+
+    

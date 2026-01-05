@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -102,19 +103,29 @@ export default function DriverProfilePage() {
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
 
-  const [driver, setDriver] = useState<Driver | null>(null);
+  const [driver, setDriver] = useState<Driver | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && drivers.length > 0) {
+    if (id && drivers) {
       const foundDriver = drivers.find(d => d.id === id);
       if (foundDriver) {
         setDriver(foundDriver);
       } else {
-        notFound();
+        setDriver(null);
+        const timer = setTimeout(() => {
+            const updatedDrivers = JSON.parse(window.localStorage.getItem('drivers') || '[]') as Driver[];
+            const recheckDriver = updatedDrivers.find(d => d.id === id);
+            if (!recheckDriver) {
+                notFound();
+            } else {
+                setDriver(recheckDriver);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
       }
     }
-  }, [id, drivers]);
+  }, [id, drivers, notFound]);
 
   const driverAccidentHistory = useMemo(() => {
     if (!id) return [];
@@ -123,17 +134,25 @@ export default function DriverProfilePage() {
 
   const driverMaintenanceHistory = useMemo(() => {
       if (!id) return [];
-      const assignedVehicleIds = vehicles.filter(v => v.driverId === id).map(v => v.id);
+      const assignedVehicleIds = vehicles.filter(v => {
+          const currentDriver = v.driverAssignmentHistory?.sort((a,b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime())[0];
+          return currentDriver?.driverId === id;
+      }).map(v => v.id);
+
       if (assignedVehicleIds.length === 0) return [];
       return maintenanceRecords.filter(record => assignedVehicleIds.includes(record.vehicleId));
   }, [id, vehicles, maintenanceRecords]);
 
-  if (!driver) {
+  if (driver === undefined || driver === null) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading driver profile...</p>
       </div>
     );
+  }
+
+  if (!driver) {
+      notFound();
   }
   
   const getInitials = (name: string) => {
@@ -307,3 +326,5 @@ export default function DriverProfilePage() {
     </div>
   );
 }
+
+    
