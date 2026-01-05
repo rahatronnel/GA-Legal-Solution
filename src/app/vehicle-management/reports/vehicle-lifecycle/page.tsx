@@ -52,6 +52,17 @@ const Section: React.FC<{icon: React.ElementType, title: string, children: React
     </Card>
 );
 
+const documentLabels: Record<string, string> = {
+    approvalDoc: 'Approval Document', fuelReceipt: 'Fuel Receipt/Memo', parkingBill: 'Parking Bill',
+    tollBill: 'Toll Bill', miscExpense: 'Miscellaneous Expenses Bill', lunchBill: 'Lunch Bill',
+    otherDoc: 'Other Document', damagePhoto: 'Damage Photo', routePermit: 'Route Permit Photo',
+    specialApprove: 'Special Approval Document', workOrder: 'Work Order / Job Card', repairInvoice: 'Repair Invoice / Bill',
+    partsInvoice: 'Parts Replacement Invoice', quotation: 'Quotation / Estimate', paymentProof: 'Payment Proof',
+    checklist: 'Maintenance Checklist / Service Report', beforeAfterPhotos: 'Before & After Photos',
+    accidentPhotos: 'Accident Photos', policeReport: 'Police Report', insuranceClaimForm: 'Insurance Claim Form',
+    workshopQuotation: 'Workshop Quotation', medicalReport: 'Medical Report',
+};
+
 export default function VehicleLifecycleReportPage() {
     const router = useRouter();
     
@@ -90,23 +101,26 @@ export default function VehicleLifecycleReportPage() {
         const vehicleAccidents = accidents.filter(a => a.vehicleId === selectedVehicleId);
         const brand = brands.find(b => b.id === vehicle.brandId);
 
-        const allPhotos: { src: string, label: string }[] = [];
-        const processDocuments = (docs: any, prefix: string) => {
-            if (!docs) return;
-            for (const key in docs) {
-                if (Array.isArray(docs[key])) {
-                    docs[key].forEach((doc: any) => {
-                         if (doc.file && doc.file.startsWith('data:image/')) {
-                            allPhotos.push({ src: doc.file, label: `${prefix}: ${doc.name}` });
-                        }
-                    })
+        const photoExtractor = (records: any[], prefix: string, idField: string) => {
+            const photos: { src: string, label: string }[] = [];
+            records.forEach(record => {
+                if (!record.documents) return;
+                for (const key in record.documents) {
+                    if (Array.isArray(record.documents[key])) {
+                        record.documents[key].forEach((doc: any) => {
+                            if (doc.file && doc.file.startsWith('data:image/')) {
+                                photos.push({ src: doc.file, label: `${prefix} ${record[idField]}: ${documentLabels[key] || key} - ${doc.name}` });
+                            }
+                        })
+                    }
                 }
-            }
-        };
-
-        vehicleMaintenance.forEach(m => processDocuments(m.documents, `Maint. ${m.serviceDate}`));
-        vehicleAccidents.forEach(a => processDocuments(a.documents, `Acc. ${a.accidentDate}`));
-
+            });
+            return photos;
+        }
+        
+        const maintenancePhotos = photoExtractor(vehicleMaintenance, "Maint.", "serviceDate");
+        const accidentPhotos = photoExtractor(vehicleAccidents, "Acc.", "accidentId");
+        const tripPhotos = photoExtractor(vehicleTrips, "Trip", "tripId");
 
         setReportData({
             vehicle,
@@ -114,7 +128,9 @@ export default function VehicleLifecycleReportPage() {
             vehicleMaintenance,
             vehicleAccidents,
             brand,
-            allPhotos
+            maintenancePhotos,
+            accidentPhotos,
+            tripPhotos
         });
     };
     
@@ -276,10 +292,10 @@ export default function VehicleLifecycleReportPage() {
                         </Table>
                     </Section>
 
-                    <Section icon={ImageIcon} title="Associated Photos">
-                        {reportData.allPhotos.length > 0 ? (
+                    {reportData.maintenancePhotos.length > 0 && (
+                        <Section icon={Wrench} title="Maintenance Photos">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {reportData.allPhotos.map((photo: {src: string, label: string}, index: number) => (
+                                {reportData.maintenancePhotos.map((photo: {src: string, label: string}, index: number) => (
                                     <div key={index} className="border rounded-lg overflow-hidden group print-no-break">
                                         <div className="w-full aspect-video bg-muted relative">
                                             <Image src={photo.src} alt={photo.label} layout="fill" className="object-cover" />
@@ -288,10 +304,39 @@ export default function VehicleLifecycleReportPage() {
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <p className="text-center text-muted-foreground">No photos found in maintenance or accident records.</p>
-                        )}
-                    </Section>
+                        </Section>
+                    )}
+
+                    {reportData.accidentPhotos.length > 0 && (
+                         <Section icon={AlertTriangle} title="Accident Photos">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {reportData.accidentPhotos.map((photo: {src: string, label: string}, index: number) => (
+                                    <div key={index} className="border rounded-lg overflow-hidden group print-no-break">
+                                        <div className="w-full aspect-video bg-muted relative">
+                                            <Image src={photo.src} alt={photo.label} layout="fill" className="object-cover" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground p-2 truncate">{photo.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </Section>
+                    )}
+                    
+                    {reportData.tripPhotos.length > 0 && (
+                         <Section icon={Route} title="Trip Photos">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {reportData.tripPhotos.map((photo: {src: string, label: string}, index: number) => (
+                                    <div key={index} className="border rounded-lg overflow-hidden group print-no-break">
+                                        <div className="w-full aspect-video bg-muted relative">
+                                            <Image src={photo.src} alt={photo.label} layout="fill" className="object-cover" />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground p-2 truncate">{photo.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </Section>
+                    )}
+
                 </div>
             )}
         </div>
