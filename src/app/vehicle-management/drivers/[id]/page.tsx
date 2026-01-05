@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer,
-    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock
+    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock, Wrench, AlertTriangle, Eye
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -17,6 +17,11 @@ import { Separator } from '@/components/ui/separator';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Vehicle } from '../../components/vehicle-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { Accident } from '../../components/accident-entry-form';
+import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
+import type { MaintenanceType } from '../../components/maintenance-type-table';
+import type { AccidentType } from '../../components/accident-type-table';
 
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
@@ -92,6 +97,11 @@ export default function DriverProfilePage() {
   const { id } = params;
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
+  const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+
   const [driver, setDriver] = useState<Driver | null>(null);
   const { handlePrint } = usePrint();
 
@@ -105,6 +115,18 @@ export default function DriverProfilePage() {
       }
     }
   }, [id, drivers]);
+
+  const driverAccidentHistory = useMemo(() => {
+    if (!id) return [];
+    return accidents.filter(accident => accident.driverId === id);
+  }, [id, accidents]);
+
+  const driverMaintenanceHistory = useMemo(() => {
+      if (!id) return [];
+      const assignedVehicleIds = vehicles.filter(v => v.driverId === id).map(v => v.id);
+      if (assignedVehicleIds.length === 0) return [];
+      return maintenanceRecords.filter(record => assignedVehicleIds.includes(record.vehicleId));
+  }, [id, vehicles, maintenanceRecords]);
 
   if (!driver) {
     return (
@@ -124,6 +146,11 @@ export default function DriverProfilePage() {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   }
+
+  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => accidentTypes.find(t => t.id === typeId)?.name || 'N/A';
+  const getVehicleRegFromId = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+
 
   return (
     <div className="space-y-6">
@@ -154,6 +181,8 @@ export default function DriverProfilePage() {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="accidents">Accident History</TabsTrigger>
+              <TabsTrigger value="maintenance">Maintenance History</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="mt-6">
@@ -202,6 +231,68 @@ export default function DriverProfilePage() {
                     </ul>
                 </div>
               </div>
+            </TabsContent>
+            <TabsContent value="accidents" className="mt-6">
+                <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Accident History</h3>
+                {driverAccidentHistory.length > 0 ? (
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Accident Date</TableHead>
+                                <TableHead>Vehicle</TableHead>
+                                <TableHead>Accident Type</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {driverAccidentHistory.map(accident => (
+                                <TableRow key={accident.id}>
+                                    <TableCell>{accident.accidentDate}</TableCell>
+                                    <TableCell>{getVehicleRegFromId(accident.vehicleId)}</TableCell>
+                                    <TableCell>{getAccidentTypeName(accident.accidentTypeId)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/vehicle-management/accidents/${accident.id}`}><AlertTriangle className="h-4 w-4 text-destructive" /></Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No accident history found for this driver.</p>
+                )}
+            </TabsContent>
+             <TabsContent value="maintenance" className="mt-6">
+                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Maintenance History on Assigned Vehicles</h3>
+                {driverMaintenanceHistory.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Service Date</TableHead>
+                                <TableHead>Vehicle</TableHead>
+                                <TableHead>Maintenance Type</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {driverMaintenanceHistory.map(record => (
+                                <TableRow key={record.id}>
+                                    <TableCell>{record.serviceDate}</TableCell>
+                                    <TableCell>{getVehicleRegFromId(record.vehicleId)}</TableCell>
+                                    <TableCell>{getMaintenanceTypeName(record.maintenanceTypeId)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/vehicle-management/maintenance/${record.id}`}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No maintenance history found for vehicles assigned to this driver.</p>
+                )}
             </TabsContent>
              <TabsContent value="documents">
                 <div className="space-y-6 pt-4">
