@@ -72,7 +72,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     if (id) {
         setDrivers(prev => prev.map(d => {
             if (d.id === id) {
-                return { ...d, ...data } as Driver;
+                return { id, ...data } as Driver;
             }
             return d;
         }));
@@ -348,3 +348,5 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     </TooltipProvider>
   );
 }
+
+    
