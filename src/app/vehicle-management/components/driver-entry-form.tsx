@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import type { Vehicle } from './vehicle-table';
 
 export type Driver = {
@@ -97,7 +98,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const [step, setStep] = useState(1);
   const [driverData, setDriverData] = useState(initialDriverData);
 
-  const [dob, setDob] = useState<Date | undefined>(undefined);
   const [licenseIssueDate, setLicenseIssueDate] = useState<Date | undefined>(undefined);
   const [licenseExpiryDate, setLicenseExpiryDate] = useState<Date | undefined>(undefined);
   const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
@@ -120,7 +120,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
       if (isEditing && driver) {
         const initialData = { ...initialDriverData, ...driver };
         setDriverData(initialData);
-        setDob(initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined);
         setLicenseIssueDate(initialData.licenseIssueDate ? new Date(initialData.licenseIssueDate) : undefined);
         setLicenseExpiryDate(initialData.licenseExpiryDate ? new Date(initialData.licenseExpiryDate) : undefined);
         setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
@@ -129,7 +128,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
         setDocPreviews(initialData.documents || { drivingLicense: '', nid: '', other: '' });
       } else {
         setDriverData(initialDriverData);
-        setDob(undefined);
         setLicenseIssueDate(undefined);
         setLicenseExpiryDate(undefined);
         setJoiningDate(undefined);
@@ -144,6 +142,12 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setDriverData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    // Store user's input directly
+    setDriverData(prev => ({ ...prev, dateOfBirth: value }));
   };
 
   const handleSelectChange = (id: keyof Driver) => (value: string) => {
@@ -220,8 +224,23 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const prevStep = () => setStep(s => s - 1);
 
   const handleSave = async () => {
+    let finalDob = '';
+    if (driverData.dateOfBirth) {
+        try {
+            const parsedDate = parse(driverData.dateOfBirth, 'dd-MM-yyyy', new Date());
+            if (isNaN(parsedDate.getTime())) {
+                throw new Error('Invalid date');
+            }
+            finalDob = format(parsedDate, 'yyyy-MM-dd');
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Invalid Date', description: 'Please enter the Date of Birth in DD-MM-YYYY format.' });
+            return;
+        }
+    }
+
     const dataToSave: Omit<Driver, 'id'> = {
         ...driverData,
+        dateOfBirth: finalDob,
         profilePicture: profilePicPreview || driverData.profilePicture,
         documents: {
             drivingLicense: docPreviews.drivingLicense || driverData.documents.drivingLicense,
@@ -288,25 +307,12 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !dob && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {dob ? format(dob, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                  <Calendar
-                                    mode="single"
-                                    selected={dob}
-                                    onSelect={handleDateChange(setDob, 'dateOfBirth')}
-                                    captionLayout="dropdown-nav"
-                                    fromYear={new Date().getFullYear() - 100}
-                                    toYear={new Date().getFullYear()}
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                            </Popover>
+                            <Input
+                                id="dateOfBirth"
+                                value={driverData.dateOfBirth}
+                                onChange={handleDobChange}
+                                placeholder="DD-MM-YYYY"
+                            />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="gender">Gender</Label>
