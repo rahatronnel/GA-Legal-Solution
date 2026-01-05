@@ -86,9 +86,15 @@ export function VehicleTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Vehicle, 'id' | 'make'>, id?: string) => {
+  const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
     if (id) {
-        setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...data } as Vehicle : v));
+        setVehicles(prev => prev.map(v => {
+            if (v.id === id) {
+                // Correctly merge existing data with new data
+                return { ...v, ...data };
+            }
+            return v;
+        }));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
         const newVehicle: Vehicle = { id: Date.now().toString(), ...data };

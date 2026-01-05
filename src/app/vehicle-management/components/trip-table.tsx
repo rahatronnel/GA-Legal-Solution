@@ -77,6 +77,7 @@ export function TripTable() {
     if (id) {
         setTrips(prev => prev.map(t => {
             if (t.id === id) {
+                // Correctly merge existing data with new data
                 return { ...t, ...data };
             }
             return t;
