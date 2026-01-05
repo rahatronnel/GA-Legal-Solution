@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export type VehicleBrand = {
   id: string;
@@ -34,7 +35,7 @@ export type VehicleBrand = {
 
 export function VehicleBrandTable() {
   const { toast } = useToast();
-  const [vehicleBrands, setVehicleBrands] = useState<VehicleBrand[]>([]);
+  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<VehicleBrand> | null>(null);
@@ -98,7 +99,7 @@ export function VehicleBrandTable() {
     }
 
     if (currentItem?.id) {
-      setVehicleBrands(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setVehicleBrands(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as VehicleBrand : p));
       toast({ title: 'Success', description: 'Vehicle brand updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
@@ -134,9 +135,9 @@ export function VehicleBrandTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));

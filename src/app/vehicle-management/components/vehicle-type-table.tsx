@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type VehicleType = {
   id: string;
@@ -34,7 +35,7 @@ type VehicleType = {
 
 export function VehicleTypeTable() {
   const { toast } = useToast();
-  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
@@ -90,7 +91,7 @@ export function VehicleTypeTable() {
 
     if (currentVehicleType?.id) {
       // Update
-      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } : vt));
+      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } as VehicleType : vt));
       toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
     } else {
       // Create
