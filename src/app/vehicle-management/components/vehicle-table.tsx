@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -23,11 +24,23 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
+import { format, parseISO } from 'date-fns';
 
 type VehicleType = {
   id: string;
   name: string;
 };
+
+// Helper function to get the current driver for a vehicle
+const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
+    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+        return null;
+    }
+    const sortedHistory = [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+    const latestAssignment = sortedHistory[0];
+    return drivers.find(d => d.id === latestAssignment.driverId) || null;
+};
+
 
 export function VehicleTable() {
   const { toast } = useToast();
@@ -48,8 +61,6 @@ export function VehicleTable() {
     return () => clearTimeout(timer);
   }, []);
   
-  const getDriverName = (driverId: string) => drivers?.find(d => d.id === driverId)?.name || 'N/A';
-
   const filteredVehicles = useMemo(() => {
     if (!searchTerm) return vehicles;
     const lowercasedTerm = searchTerm.toLowerCase();
@@ -120,7 +131,6 @@ export function VehicleTable() {
       capacity: '',
       ownership: 'Company/Rental',
       status: 'Active/Under Maintenance/Inactive',
-      assignedDriver: '' // Name for user-friendliness
     }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Vehicles');
@@ -148,7 +158,6 @@ export function VehicleTable() {
           const newVehicles: Vehicle[] = json
             .filter(item => item.vehicleIdCode && item.registrationNumber)
             .map(item => {
-              const driver = drivers.find(d => d.name === item.assignedDriver);
               const vehicleType = vehicleTypes.find(vt => vt.name === item.vehicleCategory);
 
               return {
@@ -165,7 +174,7 @@ export function VehicleTable() {
                 capacity: item.capacity?.toString() || '',
                 ownership: item.ownership?.toString() || '',
                 status: item.status?.toString() || '',
-                driverId: driver?.id || '',
+                driverAssignmentHistory: [], // Driver history can't be imported this way
                 documents: {
                     registration: '',
                     insurance: '',
@@ -243,7 +252,7 @@ export function VehicleTable() {
                         <TableCell>{v.vehicleIdCode}</TableCell>
                         <TableCell>{v.registrationNumber}</TableCell>
                         <TableCell>{v.make} {v.model}</TableCell>
-                        <TableCell>{getDriverName(v.driverId)}</TableCell>
+                        <TableCell>{getCurrentDriver(v, drivers)?.name || 'N/A'}</TableCell>
                         <TableCell>
                            <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
                         </TableCell>
@@ -305,8 +314,6 @@ export function VehicleTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         vehicle={currentVehicle}
-        drivers={drivers || []}
-        vehicleTypes={vehicleTypes || []}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>

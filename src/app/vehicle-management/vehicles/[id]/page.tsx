@@ -128,6 +128,16 @@ export default function VehicleProfilePage() {
     return accidents.filter(accident => accident.vehicleId === id);
   }, [id, accidents]);
 
+  const currentDriver = useMemo(() => {
+    if (!vehicle || !vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+      return null;
+    }
+    const sortedHistory = [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+    const latestAssignment = sortedHistory[0];
+    return drivers.find(d => d.id === latestAssignment.driverId) || null;
+  }, [vehicle, drivers]);
+
+
   if (!vehicle) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -136,7 +146,6 @@ export default function VehicleProfilePage() {
     );
   }
   
-  const assignedDriver = drivers.find(d => d.id === vehicle.driverId);
   const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
   
   const getStatusVariant = (status: Vehicle['status']) => {
@@ -217,7 +226,7 @@ export default function VehicleProfilePage() {
                         <InfoItem icon={Hash} label="Engine Number" value={vehicle.engineNumber} />
                         <InfoItem icon={Hash} label="Chassis Number" value={vehicle.chassisNumber} />
                         <InfoItem icon={Building} label="Ownership" value={vehicle.ownership} />
-                        <InfoItem icon={Users} label="Assigned Driver" value={assignedDriver?.name} />
+                        <InfoItem icon={Users} label="Current Driver" value={currentDriver?.name} />
                         <InfoItem icon={CheckCircle} label="Status" value={vehicle.status} />
                     </ul>
                 </div>

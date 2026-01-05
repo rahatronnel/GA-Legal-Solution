@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 import type { Vehicle } from './vehicle-table';
@@ -231,14 +231,64 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       if (isEditing && accident) {
         setAccidentData({ ...initialAccidentData, ...accident });
         setDocuments(accident.documents || initialDocuments);
-        setAccidentDate(accident.accidentDate ? new Date(accident.accidentDate) : undefined);
+        const accDate = accident.accidentDate ? parseISO(accident.accidentDate) : undefined;
+        setAccidentDate(accDate);
+
+        if (!accident.driverId && accDate && accident.vehicleId) {
+            const vehicle = vehicles.find(v => v.id === accident.vehicleId);
+            if (vehicle) {
+                const driverId = getDriverForDate(vehicle, accDate);
+                if (driverId) {
+                    setAccidentData(prev => ({ ...prev, driverId }));
+                }
+            }
+        }
       } else {
         setAccidentData(initialAccidentData);
         setDocuments(initialDocuments);
         setAccidentDate(undefined);
       }
     }
-  }, [isOpen, accident, isEditing]);
+  }, [isOpen, accident, isEditing, vehicles]);
+
+  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
+    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+      return '';
+    }
+
+    const sortedHistory = [...vehicle.driverAssignmentHistory]
+        .filter(h => new Date(h.effectiveDate) <= date)
+        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+
+    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
+  };
+
+  const handleVehicleChange = (vehicleId: string) => {
+    setAccidentData(prev => ({...prev, vehicleId, driverId: ''}));
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if(vehicle && accidentDate) {
+        const driverId = getDriverForDate(vehicle, accidentDate);
+        if(driverId) {
+            setAccidentData(prev => ({...prev, driverId}));
+        }
+    }
+  }
+
+  const handleAccidentDateChange = (date: Date | undefined) => {
+    setAccidentDate(date);
+    const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+    setAccidentData(prev => ({...prev, accidentDate: dateString, driverId: ''}));
+
+    if(accidentData.vehicleId && date) {
+        const vehicle = vehicles.find(v => v.id === accidentData.vehicleId);
+        if(vehicle) {
+            const driverId = getDriverForDate(vehicle, date);
+            if(driverId) {
+                setAccidentData(prev => ({...prev, driverId}));
+            }
+        }
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
@@ -247,7 +297,11 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   };
 
   const handleSelectChange = (id: keyof typeof accidentData) => (value: string) => {
-    setAccidentData(prev => ({ ...prev, [id]: value }));
+    if (id === 'vehicleId') {
+        handleVehicleChange(value);
+    } else {
+        setAccidentData(prev => ({ ...prev, [id]: value }));
+    }
   };
   
   const handleComboboxChange = (id: keyof typeof accidentData) => (value: string) => {
@@ -255,8 +309,12 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   }
 
   const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof typeof accidentData) => (date: Date | undefined) => {
-      setter(date);
-      setAccidentData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+      if (field === 'accidentDate') {
+          handleAccidentDateChange(date);
+      } else {
+        setter(date);
+        setAccidentData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+      }
   }
   
   const handleCheckboxChange = (id: keyof typeof accidentData) => (checked: boolean) => {
@@ -346,7 +404,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Vehicle ID</Label>
-                    <Combobox items={vehicles} value={accidentData.vehicleId} onSelect={handleComboboxChange('vehicleId')} displayValue={(v) => v.vehicleIdCode} searchValue={(v) => `${v.vehicleIdCode} ${v.registrationNumber}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found." />
+                    <Combobox items={vehicles} value={accidentData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.vehicleIdCode} searchValue={(v) => `${v.vehicleIdCode} ${v.registrationNumber}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found." />
                   </div>
                   <div className="space-y-2">
                     <Label>Vehicle Registration</Label>
@@ -354,14 +412,26 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                   </div>
                    <div className="space-y-2">
                     <Label>Employee</Label>
-                    <Combobox items={employees} value={accidentData.employeeId} onSelect={handleComboboxChange('employeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found." />
+                    <Combobox items={employees} value={accidentData.employeeId} onSelect={handleSelectChange('employeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found." />
                   </div>
                 </div>
 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label>Accident Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="space-y-2"><Label>Accident Time</Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
+                    <div className="space-y-2"><Label>Accident Location</Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label>Driver ID</Label>
-                         <Combobox items={drivers} value={accidentData.driverId} onSelect={handleComboboxChange('driverId')} displayValue={(d) => d.driverIdCode} searchValue={(d) => `${d.name} ${d.driverIdCode}`} placeholder="Select Driver..." emptyMessage="No driver found." />
+                        <Label>Driver (Auto-fetched)</Label>
+                         <Select value={accidentData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select vehicle and date"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                      <div className="space-y-2">
                         <Label>Driver Name</Label>
@@ -371,12 +441,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                         <Label>Driver License Number</Label>
                         <Input value={selectedDriver?.drivingLicenseNumber || ''} disabled />
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2"><Label>Accident Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>Accident Time</Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
-                  <div className="space-y-2"><Label>Accident Location</Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
                 </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

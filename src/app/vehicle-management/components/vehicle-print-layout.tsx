@@ -78,8 +78,16 @@ const getStatusVariant = (status: Vehicle['status']) => {
 
 export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle, drivers, vehicleTypes }) => {
     let pageCounter = 1;
-
-    const assignedDriver = drivers.find(d => d.id === vehicle.driverId);
+    
+    const currentDriver = React.useMemo(() => {
+        if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+            return null;
+        }
+        const sortedHistory = [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+        const latestAssignment = sortedHistory[0];
+        return drivers.find(d => d.id === latestAssignment.driverId) || null;
+    }, [vehicle, drivers]);
+    
     const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
     
     const documentLabels: Record<keyof Vehicle['documents'], string> = {
@@ -123,7 +131,7 @@ export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle,
                         <div className="grid grid-cols-2 gap-x-6">
                              <InfoRow label="Engine Number" value={vehicle.engineNumber} />
                              <InfoRow label="Chassis Number" value={vehicle.chassisNumber} />
-                             <InfoRow label="Assigned Driver" value={assignedDriver?.name} />
+                             <InfoRow label="Current Driver" value={currentDriver?.name} />
                              <InfoRow label="Status" value={vehicle.status} />
                         </div>
                     </div>

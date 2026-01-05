@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -14,11 +15,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, PlusCircle } from 'lucide-react';
+import { Upload, X, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { VehicleTypeTable } from './vehicle-type-table';
 import type { Driver as DriverType } from './driver-entry-form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+
+type DriverAssignment = {
+    id: string;
+    driverId: string;
+    effectiveDate: string;
+}
 
 export type Vehicle = {
     id: string;
@@ -34,7 +45,7 @@ export type Vehicle = {
     capacity: string; // Seating / Load Capacity
     ownership: 'Company' | 'Rental' | '';
     status: 'Active' | 'Under Maintenance' | 'Inactive' | '';
-    driverId: string;
+    driverAssignmentHistory: DriverAssignment[];
     documents: {
         registration: string; // data URL
         insurance: string; // data URL
@@ -48,7 +59,7 @@ export type Vehicle = {
 type Driver = { id: string; name: string; };
 type VehicleType = { id: string; name: string; vehicleTypeCode: string; };
 
-const initialVehicleData: Omit<Vehicle, 'id' | 'documents'> = {
+const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory'> = {
     vehicleIdCode: '',
     vehicleTypeId: '',
     registrationNumber: '',
@@ -61,7 +72,6 @@ const initialVehicleData: Omit<Vehicle, 'id' | 'documents'> = {
     capacity: '',
     ownership: '',
     status: '',
-    driverId: '',
 };
 
 const initialDocuments = {
@@ -78,8 +88,6 @@ interface VehicleEntryFormProps {
   setIsOpen: (isOpen: boolean) => void;
   onSave: (vehicle: Omit<Vehicle, 'id'>, id?: string) => void;
   vehicle: Partial<Vehicle> | null;
-  drivers: Driver[];
-  vehicleTypes: VehicleType[];
 }
 
 type DocType = keyof Vehicle['documents'];
@@ -138,105 +146,34 @@ const QuickAddVehicleTypeDialog: React.FC<{
     );
 };
 
-const QuickAddDriverDialog: React.FC<{
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSave: (newDriver: DriverType) => void;
-}> = ({ open, onOpenChange, onSave }) => {
-    const { toast } = useToast();
-    const [driverData, setDriverData] = useState({ driverIdCode: '', name: '', mobileNumber: '' });
-
-    const handleSave = () => {
-        if (!driverData.driverIdCode.trim() || !driverData.name.trim() || !driverData.mobileNumber.trim()) {
-            toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
-            return;
-        }
-        const newDriver: DriverType = {
-            id: Date.now().toString(),
-            ...driverData,
-            fatherOrGuardianName: '',
-            dateOfBirth: '',
-            gender: '',
-            alternateMobileNumber: '',
-            profilePicture: '',
-            nationalIdOrPassport: '',
-            drivingLicenseNumber: '',
-            licenseType: '',
-            licenseIssueDate: '',
-            licenseExpiryDate: '',
-            issuingAuthority: '',
-            presentAddress: '',
-            permanentAddress: '',
-            joiningDate: '',
-            employmentType: '',
-            department: '',
-            dutyShift: '',
-            assignedVehicleId: '',
-            supervisor: '',
-            documents: { drivingLicense: '', nid: '', other: '' }
-        };
-        onSave(newDriver);
-        setDriverData({ driverIdCode: '', name: '', mobileNumber: '' });
-        onOpenChange(false);
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New Driver (Quick Add)</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="quick-add-driver-id">Driver ID / Code</Label>
-                        <Input id="quick-add-driver-id" value={driverData.driverIdCode} onChange={(e) => setDriverData({...driverData, driverIdCode: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="quick-add-driver-name">Driver Name</Label>
-                        <Input id="quick-add-driver-name" value={driverData.name} onChange={(e) => setDriverData({...driverData, name: e.target.value})} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="quick-add-driver-mobile">Mobile Number</Label>
-                        <Input id="quick-add-driver-mobile" value={driverData.mobileNumber} onChange={(e) => setDriverData({...driverData, mobileNumber: e.target.value})} />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSave}>Save Driver</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
 export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: VehicleEntryFormProps) {
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const [docPreviews, setDocPreviews] = useState(initialDocuments);
+  const [driverAssignments, setDriverAssignments] = useState<DriverAssignment[]>([]);
   
   const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
   const [drivers, setDrivers] = useLocalStorage<DriverType[]>('drivers', []);
 
   const [isAddTypeOpen, setIsAddTypeOpen] = useState(false);
-  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
-
+  
   const isEditing = vehicle && vehicle.id;
-  const progress = Math.round((step / 2) * 100);
+  const progress = Math.round((step / 3) * 100);
 
   useEffect(() => {
     if (isOpen) {
         setStep(1);
         if (isEditing && vehicle) {
             const dataToEdit = { ...initialVehicleData, ...vehicle };
-            delete (dataToEdit as any).documents;
-            delete (dataToEdit as any).id;
             setVehicleData(dataToEdit);
             setDocPreviews(vehicle.documents || initialDocuments);
+            setDriverAssignments(vehicle.driverAssignmentHistory || []);
         } else {
             setVehicleData(initialVehicleData);
             setDocPreviews(initialDocuments);
+            setDriverAssignments([]);
         }
     }
   }, [isOpen, vehicle, isEditing]);
@@ -246,7 +183,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents'>) => (value: string) => {
+  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory'>) => (value: string) => {
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
 
@@ -271,6 +208,18 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
       setDocPreviews(prev => ({...prev, [docType]: ''}));
   };
 
+  const addDriverAssignment = () => {
+    setDriverAssignments(prev => [...prev, { id: Date.now().toString(), driverId: '', effectiveDate: format(new Date(), 'yyyy-MM-dd') }]);
+  };
+
+  const updateDriverAssignment = (assignmentId: string, field: 'driverId' | 'effectiveDate', value: string) => {
+    setDriverAssignments(prev => prev.map(a => a.id === assignmentId ? { ...a, [field]: value } : a));
+  };
+  
+  const removeDriverAssignment = (assignmentId: string) => {
+    setDriverAssignments(prev => prev.filter(a => a.id !== assignmentId));
+  };
+
   const validateStep1 = () => {
     const requiredFields: (keyof typeof vehicleData)[] = [
       'vehicleIdCode', 'registrationNumber', 'make', 'model', 'vehicleTypeId', 'ownership', 'status'
@@ -286,7 +235,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   };
   
   const nextStep = () => {
-    if (!validateStep1()) {
+    if (step === 1 && !validateStep1()) {
         return;
     }
     setStep(s => s + 1);
@@ -302,6 +251,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     
     const dataToSave: Omit<Vehicle, 'id'> = {
         ...vehicleData,
+        driverAssignmentHistory: driverAssignments,
         documents: docPreviews,
     };
 
@@ -315,12 +265,6 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     toast({ title: 'Success', description: `Category "${newType.name}" added and selected.` });
   };
   
-  const handleQuickAddDriver = (newDriver: DriverType) => {
-    setDrivers(prev => [...prev, newDriver]);
-    setVehicleData(prev => ({ ...prev, driverId: newDriver.id }));
-    toast({ title: 'Success', description: `Driver "${newDriver.name}" added and selected.` });
-  };
-
   const getDocumentName = (docType: DocType) => {
       if (docPreviews[docType]) {
           const prefix = `data:application/pdf;base64,`;
@@ -333,7 +277,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   return (
     <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
           <DialogDescription>
@@ -439,29 +383,42 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                         </div>
                     </div>
                 </div>
-                 <hr className="border-border my-4" />
-                 <div className="space-y-2">
-                    <Label htmlFor="driverId">Assigned Driver</Label>
-                    <div className="flex gap-2">
-                        <Select value={vehicleData.driverId} onValueChange={handleSelectChange('driverId')}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a driver" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {drivers.map(driver => (
-                                    <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button type="button" variant="outline" size="icon" onClick={() => setIsAddDriverOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
-                    </div>
-                </div>
               </div>
             )}
             
             {step === 2 && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-lg">Step 2: Driver Assignment History</h3>
+                    <Button variant="outline" size="sm" onClick={addDriverAssignment}><PlusCircle className="mr-2 h-4 w-4" /> Add Assignment</Button>
+                </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {driverAssignments.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime()).map((assignment) => (
+                        <div key={assignment.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center p-2 rounded-md border">
+                            <div className="space-y-1">
+                                <Label className="text-xs">Driver</Label>
+                                <Select value={assignment.driverId} onValueChange={(value) => updateDriverAssignment(assignment.id, 'driverId', value)}>
+                                    <SelectTrigger><SelectValue placeholder="Select driver"/></SelectTrigger>
+                                    <SelectContent>
+                                        {drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">Effective Date</Label>
+                                <Input type="date" value={assignment.effectiveDate} onChange={(e) => updateDriverAssignment(assignment.id, 'effectiveDate', e.target.value)} />
+                            </div>
+                            <Button variant="ghost" size="icon" className="self-end" onClick={() => removeDriverAssignment(assignment.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                        </div>
+                    ))}
+                    {driverAssignments.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No drivers assigned. Click "Add Assignment" to begin.</p>}
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Upload Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 3: Upload Documents</h3>
                     
                     {(Object.keys(documentLabels) as DocType[]).map(docType => {
                         const currentDocName = getDocumentName(docType);
@@ -494,12 +451,12 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
             )}
         </div>
 
-         <DialogFooter className="flex justify-between w-full">
+         <DialogFooter className="flex justify-between w-full pt-4">
             {step > 1 ? (
                 <Button variant="outline" onClick={prevStep}>Previous</Button>
             ) : <div></div>}
             
-            {step < 2 ? (
+            {step < 3 ? (
                  <Button onClick={nextStep}>Next</Button>
             ) : (
                  <Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>
@@ -508,7 +465,6 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
       </DialogContent>
     </Dialog>
     <QuickAddVehicleTypeDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} />
-    <QuickAddDriverDialog open={isAddDriverOpen} onOpenChange={setIsAddDriverOpen} onSave={handleQuickAddDriver} />
     </>
   );
 }

@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -63,6 +63,7 @@ export type MaintenanceRecord = {
   upcomingServiceDate: string;
   description: string;
   monitoringEmployeeId: string;
+  driverId: string;
   parts: Part[];
   expenses: Expense[];
   documents: MaintenanceDocument[];
@@ -76,6 +77,7 @@ const initialMaintenanceData: Omit<MaintenanceRecord, 'id' | 'parts' | 'expenses
   upcomingServiceDate: '',
   description: '',
   monitoringEmployeeId: '',
+  driverId: '',
 };
 
 interface MaintenanceEntryFormProps {
@@ -176,7 +178,8 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const [serviceDate, setServiceDate] = useState<Date | undefined>();
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
 
-  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Employee[]>('drivers', []);
   const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
@@ -196,8 +199,21 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         setParts(record.parts || []);
         setExpenses(record.expenses || []);
         setDocuments(record.documents || []);
-        setServiceDate(record.serviceDate ? new Date(record.serviceDate) : undefined);
-        setUpcomingServiceDate(record.upcomingServiceDate ? new Date(record.upcomingServiceDate) : undefined);
+        const serviceDt = record.serviceDate ? parseISO(record.serviceDate) : undefined;
+        setServiceDate(serviceDt);
+        setUpcomingServiceDate(record.upcomingServiceDate ? parseISO(record.upcomingServiceDate) : undefined);
+
+        // Auto-fetch driver if not already set in record
+        if (!record.driverId) {
+             const selectedVehicle = vehicles.find(v => v.id === record.vehicleId);
+            if (selectedVehicle && serviceDt) {
+                const driverId = getDriverForDate(selectedVehicle, serviceDt);
+                if (driverId) {
+                    setMaintenanceData(prev => ({ ...prev, driverId }));
+                }
+            }
+        }
+
       } else {
         setMaintenanceData(initialMaintenanceData);
         setParts([]);
@@ -207,7 +223,46 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         setUpcomingServiceDate(undefined);
       }
     }
-  }, [isOpen, record, isEditing]);
+  }, [isOpen, record, isEditing, vehicles]);
+
+  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
+    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+      return '';
+    }
+
+    const sortedHistory = [...vehicle.driverAssignmentHistory]
+        .filter(h => new Date(h.effectiveDate) <= date)
+        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+
+    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
+  };
+  
+  const handleVehicleChange = (vehicleId: string) => {
+    setMaintenanceData(prev => ({ ...prev, vehicleId, driverId: '' })); // Reset driver
+    const selectedVehicle = vehicles.find(v => v.id === vehicleId);
+    if (selectedVehicle && serviceDate) {
+        const driverId = getDriverForDate(selectedVehicle, serviceDate);
+        if (driverId) {
+            setMaintenanceData(prev => ({ ...prev, driverId }));
+        }
+    }
+  }
+  
+  const handleServiceDateChange = (date: Date | undefined) => {
+      setServiceDate(date);
+      const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+      setMaintenanceData(prev => ({ ...prev, serviceDate: dateString, driverId: '' }));
+
+      if (maintenanceData.vehicleId && date) {
+          const selectedVehicle = vehicles.find(v => v.id === maintenanceData.vehicleId);
+          if (selectedVehicle) {
+              const driverId = getDriverForDate(selectedVehicle, date);
+               if (driverId) {
+                    setMaintenanceData(prev => ({ ...prev, driverId }));
+                }
+          }
+      }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -215,12 +270,20 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   };
 
   const handleSelectChange = (id: keyof Omit<MaintenanceRecord, 'id'|'parts'|'expenses'|'documents'>) => (value: string) => {
-    setMaintenanceData(prev => ({ ...prev, [id]: value }));
+    if (id === 'vehicleId') {
+        handleVehicleChange(value);
+    } else {
+        setMaintenanceData(prev => ({ ...prev, [id]: value }));
+    }
   };
 
   const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof MaintenanceRecord) => (date: Date | undefined) => {
-      setter(date);
-      setMaintenanceData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+      if (field === 'serviceDate') {
+          handleServiceDateChange(date);
+      } else {
+        setter(date);
+        setMaintenanceData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+      }
   }
 
   // Parts handlers
@@ -337,6 +400,8 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                     
                     <div className="space-y-2"><Label>Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{serviceDate?format(serviceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/></PopoverContent></Popover></div>
                     <div className="space-y-2"><Label>Upcoming Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/></PopoverContent></Popover></div>
+                    
+                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')} disabled={!drivers.length}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.fullName}</SelectItem>)}</SelectContent></Select></div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description / Remarks</Label>
