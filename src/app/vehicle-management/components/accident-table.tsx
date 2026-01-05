@@ -71,7 +71,7 @@ export function AccidentTable() {
 
   const handleSave = (data: Omit<Accident, 'id'>, id?: string) => {
     if (id) {
-        setAccidents(prev => prev.map(t => t.id === id ? { ...t, ...data } as Accident : t));
+        setAccidents(prev => prev.map(t => t.id === id ? { id, ...data } : t));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
         const newRecord: Accident = { id: Date.now().toString(), ...data };
