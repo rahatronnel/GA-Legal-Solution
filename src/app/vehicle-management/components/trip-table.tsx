@@ -75,19 +75,19 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-      // This is an update. Replace the entire object to ensure no data is lost.
-      setTrips(prev => prev.map(t => (t.id === id ? { id, ...data } : t)));
-      toast({ title: 'Success', description: 'Trip updated successfully.' });
+        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } : t)));
+        toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
-      // This is a new trip. Create a complete object.
-      const newTrip: Trip = {
-        id: Date.now().toString(),
-        ...data,
-      };
-      setTrips(prev => [...prev, newTrip]);
-      toast({ title: 'Success', description: 'Trip added successfully.' });
+        const newTrip: Trip = {
+            id: Date.now().toString(),
+            tripId: `TRIP-${Date.now()}`,
+            ...data,
+        };
+        setTrips(prev => [...prev, newTrip]);
+        toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
+  
 
   const handleDelete = (trip: Trip) => {
     setCurrentTrip(trip);
@@ -235,6 +235,3 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
-    
-
-    

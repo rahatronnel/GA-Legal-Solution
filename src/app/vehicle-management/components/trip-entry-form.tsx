@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,14 +30,14 @@ import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
 
-type Expense = {
+type UploadedFile = {
   id: string;
-  expenseTypeId: string;
-  amount: number;
-  date: string;
-};
+  name: string;
+  file: string; // data URL
+}
 
 type DocType = 'approvalDoc' | 'fuelReceipt' | 'parkingBill' | 'tollBill' | 'miscExpense' | 'lunchBill' | 'otherDoc' | 'damagePhoto' | 'routePermit' | 'specialApprove';
+
 const documentLabels: Record<DocType, string> = {
     approvalDoc: 'Approval Document',
     fuelReceipt: 'Fuel Receipt/Memo',
@@ -69,7 +69,14 @@ export type Trip = {
   remarks: string;
   tripStatus: 'Planned' | 'Ongoing' | 'Completed' | 'Cancelled' | '';
   expenses: Expense[];
-  documents: Record<DocType, string>;
+  documents: Record<DocType, UploadedFile[]>;
+};
+
+type Expense = {
+  id: string;
+  expenseTypeId: string;
+  amount: number;
+  date: string;
 };
 
 const initialTripData: Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses'> = {
@@ -89,7 +96,7 @@ const initialTripData: Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses'> = 
   tripStatus: 'Planned',
 };
 
-const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: ''}), {} as Record<DocType, string>);
+const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, UploadedFile[]>);
 
 
 interface TripEntryFormProps {
@@ -175,7 +182,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState(initialTripData);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [docPreviews, setDocPreviews] = useState(initialDocuments);
+  const [documents, setDocuments] = useState(initialDocuments);
   
   // Date states
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -197,13 +204,13 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
         const initialData = { ...initialTripData, ...trip };
         setTripData(initialData);
         setExpenses(trip.expenses || []);
-        setDocPreviews(trip.documents || initialDocuments);
+        setDocuments(trip.documents || initialDocuments);
         setStartDate(trip.startDate ? new Date(trip.startDate) : undefined);
         setEndDate(trip.endDate ? new Date(trip.endDate) : undefined);
       } else {
         setTripData(initialTripData);
         setExpenses([]);
-        setDocPreviews(initialDocuments);
+        setDocuments(initialDocuments);
         setStartDate(undefined);
         setEndDate(undefined);
       }
@@ -248,16 +255,38 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
   }
 
   const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => setDocPreviews(prev => ({...prev, [docType]: reader.result as string}));
-      reader.readAsDataURL(file);
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const newFiles: UploadedFile[] = [];
+
+      for (const file of files) {
+        const reader = new FileReader();
+        const filePromise = new Promise<UploadedFile>(resolve => {
+          reader.onload = () => {
+            resolve({
+              id: Date.now().toString() + Math.random(),
+              name: file.name,
+              file: reader.result as string,
+            });
+          };
+        });
+        reader.readAsDataURL(file);
+        newFiles.push(await filePromise);
+      }
+
+      setDocuments(prev => ({
+        ...prev,
+        [docType]: [...prev[docType], ...newFiles]
+      }));
     }
+    e.target.value = ''; // Reset file input
   };
 
-  const removeDocument = (docType: DocType) => {
-      setDocPreviews(prev => ({...prev, [docType]: ''}));
+  const removeDocument = (docType: DocType, fileId: string) => {
+    setDocuments(prev => ({
+        ...prev,
+        [docType]: prev[docType].filter(doc => doc.id !== fileId)
+    }));
   };
   
   // Expense handlers
@@ -292,20 +321,16 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
       return;
     }
 
-    // Construct the complete trip object here
     const completeTripData = {
         ...tripData,
         expenses,
-        documents: docPreviews,
-        tripId: trip?.tripId || `TRIP-${Date.now()}` // Keep existing or create new
+        documents,
     };
 
     onSave(completeTripData, trip?.id);
     setIsOpen(false);
   };
   
-  const getDocumentName = (docType: DocType) => docPreviews[docType] ? `${documentLabels[docType]}.file` : null;
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl">
@@ -409,21 +434,33 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
             {step === 2 && (
                  <div className="space-y-6">
                     <h3 className="font-semibold text-lg">Step 2: Upload Documents & Photos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                       {(Object.keys(documentLabels) as DocType[]).map(docType => (
-                          <div className="space-y-2" key={docType}>
-                              <Label>{documentLabels[docType]}</Label>
-                              {getDocumentName(docType) ? (
-                                  <div className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
-                                      <span>{getDocumentName(docType)}</span>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType)}><X className="h-4 w-4" /></Button>
-                                  </div>
-                              ) : (
-                                  <Label htmlFor={`file-upload-${docType}`} className="flex items-center justify-center w-full h-20 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
-                                      <span className="flex items-center space-x-2"><Upload className="h-5 w-5 text-muted-foreground" /><span className="font-medium text-muted-foreground">Click to upload</span></span>
-                                      <Input id={`file-upload-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
+                          <div key={docType} className="space-y-2 p-3 border rounded-lg">
+                              <div className="flex justify-between items-center">
+                                  <Label className="font-medium">{documentLabels[docType]}</Label>
+                                  <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
+                                      Add File(s)
                                   </Label>
-                              )}
+                                  <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple onChange={handleFileChange(docType)} />
+                              </div>
+                              <div className="space-y-1">
+                                  {documents[docType]?.length > 0 ? (
+                                      documents[docType].map(file => (
+                                          <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
+                                              <div className="flex items-center gap-2 truncate">
+                                                  <FileIcon className="h-4 w-4 flex-shrink-0" />
+                                                  <span className="truncate">{file.name}</span>
+                                              </div>
+                                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}>
+                                                  <X className="h-4 w-4" />
+                                              </Button>
+                                          </div>
+                                      ))
+                                  ) : (
+                                      <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>
+                                  )}
+                              </div>
                           </div>
                       ))}
                     </div>

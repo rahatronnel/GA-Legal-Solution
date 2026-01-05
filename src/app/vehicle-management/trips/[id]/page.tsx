@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { type Trip } from '@/app/vehicle-management/components/trip-entry-form';
+import { type Trip, type Expense } from '@/app/vehicle-management/components/trip-entry-form';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-table';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { type TripPurpose } from '@/app/vehicle-management/components/trip-purpose-table';
@@ -20,48 +21,46 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ExpenseType } from '../../components/expense-type-table';
 
 
-const documentLabels: Record<keyof Trip['documents'], string> = {
+const documentLabels: Record<keyof Omit<Trip['documents'], 'id'>, string> = {
     approvalDoc: 'Approval Document', fuelReceipt: 'Fuel Receipt/Memo', parkingBill: 'Parking Bill',
     tollBill: 'Toll Bill', miscExpense: 'Miscellaneous Expenses Bill', lunchBill: 'Lunch Bill',
     otherDoc: 'Other Document', damagePhoto: 'Damage Photo', routePermit: 'Route Permit Photo',
     specialApprove: 'Special Approval Document',
 };
 
-const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
-    if (!doc) {
-      return (
-        <Card>
-            <CardHeader><CardTitle>{label}</CardTitle></CardHeader>
-            <CardContent><p className="text-sm text-muted-foreground">This document has not been uploaded.</p></CardContent>
-        </Card>
-      );
-    }
-  
-    const isImage = doc.startsWith('data:image/');
-    const fileName = `${label.replace(/\s+/g, '_')}.${doc.substring(doc.indexOf('/') + 1, doc.indexOf(';'))}`;
-  
+const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file: string }[]; categoryLabel: string }) => {
+    if (!files || files.length === 0) return null;
+
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{label}</CardTitle>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={doc} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
-                </Button>
+            <CardHeader>
+                <CardTitle>{categoryLabel}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="mt-4 border rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{minHeight: '400px'}}>
-                    {isImage ? (
-                        <Image src={doc} alt={`${label} document`} width={800} height={600} className="object-contain" />
-                    ) : (
-                        <div className="p-8 text-center">
-                            <p className="font-semibold">Preview not available for this file type.</p>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+                {files.map((doc, index) => {
+                    const isImage = doc.file.startsWith('data:image/');
+                    const fileName = doc.name;
+                    return (
+                        <div key={index} className="border rounded-lg p-3 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <p className="font-medium text-sm truncate">{fileName}</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
+                                </Button>
+                            </div>
+                             {isImage && (
+                                <div className="mt-2 rounded-lg overflow-hidden flex justify-center items-center bg-muted/50 aspect-video">
+                                    <Image src={doc.file} alt={fileName} width={400} height={225} className="object-contain" />
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    );
+                })}
             </CardContent>
         </Card>
-    )
+    );
 };
+
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <li className="flex items-start gap-3">
@@ -201,10 +200,15 @@ export default function TripProfilePage() {
                )}
             </TabsContent>
             <TabsContent value="documents" className="pt-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                 <div className="space-y-6">
                     {(Object.keys(documentLabels) as (keyof Trip['documents'])[]).map(key => (
-                        <DocumentViewer key={key} doc={trip.documents[key]} label={documentLabels[key]} />
+                        trip.documents[key] && trip.documents[key].length > 0 && (
+                             <DocumentViewer key={key} files={trip.documents[key]} categoryLabel={documentLabels[key]} />
+                        )
                     ))}
+                    {Object.values(trip.documents).every(arr => !arr || arr.length === 0) && (
+                         <p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this trip.</p>
+                    )}
                 </div>
             </TabsContent>
           </Tabs>

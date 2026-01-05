@@ -48,23 +48,23 @@ const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, classN
     </div>
 );
 
-const documentLabels: Record<keyof Trip['documents'], string> = {
+const documentLabels: Record<keyof Omit<Trip['documents'], 'id'>, string> = {
     approvalDoc: 'Approval Document', fuelReceipt: 'Fuel Receipt/Memo', parkingBill: 'Parking Bill',
     tollBill: 'Toll Bill', miscExpense: 'Miscellaneous Expenses Bill', lunchBill: 'Lunch Bill',
     otherDoc: 'Other Document', damagePhoto: 'Damage Photo', routePermit: 'Route Permit Photo',
     specialApprove: 'Special Approval Document',
 };
 
-const DocumentPage = ({ doc, label, pageNumber }: {doc: string, label: string, pageNumber: number}) => {
-    if (!doc) return null;
-    const isImage = doc.startsWith('data:image/');
+const DocumentPage = ({ doc, label, pageNumber }: {doc: { name: string; file: string }, label: string, pageNumber: number}) => {
+    if (!doc || !doc.file) return null;
+    const isImage = doc.file.startsWith('data:image/');
     
     return (
         <PrintPage pageNumber={pageNumber} className="page-break">
-            <h2 className="text-lg font-bold mb-4">{label}</h2>
+            <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
-                    <Image src={doc} alt={label} layout="fill" className="object-contain" />
+                    <Image src={doc.file} alt={doc.name} layout="fill" className="object-contain" />
                 ) : (
                      <p>Cannot preview this document type. It is available for download on the profile page.</p>
                 )}
@@ -153,12 +153,11 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
                 </div>
             </PrintPage>
 
-            {(Object.keys(documentLabels) as (keyof Trip['documents'])[]).map(key => {
-                if (trip.documents[key]) {
-                    return <DocumentPage key={key} doc={trip.documents[key]} label={documentLabels[key]} pageNumber={pageCounter++} />
-                }
-                return null;
-            })}
+            {(Object.keys(documentLabels) as (keyof Trip['documents'])[]).map(category => 
+                trip.documents[category] && trip.documents[category].map(doc => (
+                    <DocumentPage key={doc.id} doc={doc} label={documentLabels[category]} pageNumber={pageCounter++} />
+                ))
+            )}
         </div>
     );
 };
