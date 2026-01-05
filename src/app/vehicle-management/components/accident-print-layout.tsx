@@ -54,16 +54,16 @@ const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, classN
     </div>
 );
 
-const DocumentPage = ({ doc, label, pageNumber }: {doc: string, label: string, pageNumber: number}) => {
-    if (!doc) return null;
-    const isImage = doc.startsWith('data:image/');
+const DocumentPage = ({ doc, label, pageNumber }: {doc: {name: string, file:string}, label: string, pageNumber: number}) => {
+    if (!doc || !doc.file) return null;
+    const isImage = doc.file.startsWith('data:image/');
     
     return (
         <PrintPage pageNumber={pageNumber} className="page-break">
-            <h2 className="text-lg font-bold mb-4">{label}</h2>
+            <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
-                    <Image src={doc} alt={label} layout="fill" className="object-contain" />
+                    <Image src={doc.file} alt={doc.name} layout="fill" className="object-contain" />
                 ) : (
                      <p>Cannot preview this document type.</p>
                 )}
@@ -83,6 +83,15 @@ const formatCurrency = (amount: number | undefined) => {
     if (typeof amount !== 'number') return 'N/A';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
+
+const documentCategories: Record<keyof Accident['documents'], string> = {
+    accidentPhotos: 'Accident Photos',
+    policeReport: 'Police Report',
+    insuranceClaimForm: 'Insurance Claim Form',
+    workshopQuotation: 'Workshop Quotation',
+    repairInvoice: 'Repair Invoice',
+    medicalReport: 'Medical Report (if any)',
+};
 
 export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({ 
     accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, repairedBy 
@@ -143,6 +152,13 @@ export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({
                     </div>
                 </div>
             </PrintPage>
+            
+            {/* Documents */}
+            {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(category => 
+                accident.documents[category] && accident.documents[category].map(doc => (
+                    <DocumentPage key={doc.id} doc={doc} label={documentCategories[category]} pageNumber={pageCounter++} />
+                ))
+            )}
         </div>
     );
 };
