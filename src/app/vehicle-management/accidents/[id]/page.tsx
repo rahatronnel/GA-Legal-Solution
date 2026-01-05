@@ -97,35 +97,21 @@ export default function AccidentProfilePage() {
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (id && accidents.length > 0) {
+    if (id && accidents) {
       const foundRecord = accidents.find(t => t.id === id);
       if (foundRecord) {
         setAccident(foundRecord);
-      } else {
-        // If not found immediately, it might still be saving.
-        // We will show a loading state, and if it's still not found after a moment
-        // of the accidents array potentially updating, we'll 404.
-        // Setting it to null to indicate we've looked and not found it *yet*.
-        if(accident === undefined) {
-             setAccident(null);
-        }
-      }
-    }
-  }, [id, accidents, accident]);
-  
-  useEffect(() => {
-    // This effect is a fallback to prevent staying on a loading screen forever
-    // if the ID is truly invalid.
-    if(accident === null) {
+      } else if (accidents.length > 0) {
+        // If we have accidents, but didn't find it, it's a 404
         const timer = setTimeout(() => {
-             const foundRecord = accidents.find(t => t.id === id);
-             if(!foundRecord) {
-                 notFound();
-             }
-        }, 1000); // Wait 1 second before showing 404
+          const recheck = accidents.find(t => t.id === id);
+          if(!recheck) notFound();
+        }, 500); // give it a moment just in case
         return () => clearTimeout(timer);
+      }
+      // If accidents array is not loaded yet, we just wait.
     }
-  }, [accident, accidents, id]);
+  }, [id, accidents]);
 
 
   const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
@@ -144,8 +130,13 @@ export default function AccidentProfilePage() {
   }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
 
-  if (accident === undefined || accident === null) {
+  if (accident === undefined) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
+  }
+
+  if (accident === null) {
+      // This state is now effectively a 404, handled by notFound() in the effect
+      return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
 
   const formatCurrency = (amount: number | undefined) => {
