@@ -25,6 +25,7 @@ import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type VehicleType = {
   id: string;
@@ -49,10 +50,10 @@ const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
 
 export function VehicleTable() {
   const { toast } = useToast();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [drivers] = useState<Driver[]>([]);
-  const [vehicleTypes] = useState<VehicleType[]>([]);
-  const [vehicleBrands] = useState<VehicleBrand[]>([]);
+  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);

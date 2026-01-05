@@ -18,7 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, X, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { VehicleTypeTable } from './vehicle-type-table';
 import type { Driver as DriverType } from './driver-entry-form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -60,7 +59,7 @@ export type Vehicle = {
 type Driver = { id: string; name: string; };
 type VehicleType = { id: string; name: string; vehicleTypeCode: string; };
 
-const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' | 'make'> = {
+const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' > = {
     vehicleIdCode: '',
     vehicleTypeId: '',
     registrationNumber: '',
@@ -186,7 +185,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' | 'make'>) => (value: string) => {
+  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' >) => (value: string) => {
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
 
@@ -252,7 +251,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         return;
     }
     
-    const dataToSave: Omit<Vehicle, 'id' | 'make'> = {
+    const dataToSave: Omit<Vehicle, 'id'> = {
         ...vehicleData,
         driverAssignmentHistory: driverAssignments,
         documents: docPreviews,
