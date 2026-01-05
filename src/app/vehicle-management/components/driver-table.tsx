@@ -80,9 +80,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     } else {
         const newDriver: Driver = { 
             id: Date.now().toString(), 
-            ...data,
-            documents: data.documents || { drivingLicense: '', nid: '', other: '' },
-            profilePicture: data.profilePicture || ''
+            ...data
         };
         setDrivers(prev => [...prev, newDriver]);
         toast({ title: 'Success', description: 'Driver added successfully.' });
