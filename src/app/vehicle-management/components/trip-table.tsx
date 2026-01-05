@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -27,6 +28,22 @@ import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import type { Route } from './route-table';
 import type { ExpenseType } from './expense-type-table';
+
+type DocType = 'approvalDoc' | 'fuelReceipt' | 'parkingBill' | 'tollBill' | 'miscExpense' | 'lunchBill' | 'otherDoc' | 'damagePhoto' | 'routePermit' | 'specialApprove';
+const documentLabels: Record<DocType, string> = {
+    approvalDoc: 'Approval Document',
+    fuelReceipt: 'Fuel Receipt/Memo',
+    parkingBill: 'Parking Bill',
+    tollBill: 'Toll Bill',
+    miscExpense: 'Miscellaneous Expenses Bill',
+    lunchBill: 'Lunch Bill',
+    otherDoc: 'Other Document',
+    damagePhoto: 'Damage Photo',
+    routePermit: 'Route Permit Photo',
+    specialApprove: 'Special Approval Document',
+};
+const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: ''}), {} as Record<DocType, string>);
+
 
 export function TripTable() {
   const { toast } = useToast();
@@ -76,13 +93,22 @@ export function TripTable() {
     if (id) {
         setTrips(prev => prev.map(t => {
             if (t.id === id) {
-                return { ...t, ...data };
+                // This ensures that we merge the new data with the old, preserving nested structures
+                const existingTrip = prev.find(trip => trip.id === id) || {};
+                return { ...existingTrip, ...data, id };
             }
             return t;
         }));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
-        const newTrip: Trip = { id: Date.now().toString(), ...data };
+        // Create new trip
+        const newTrip: Trip = {
+            id: Date.now().toString(),
+            ...data,
+            // Explicitly ensure nested structures are present, even if empty
+            expenses: data.expenses || [],
+            documents: data.documents || initialDocuments,
+        };
         setTrips(prev => [...prev, newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }
@@ -234,3 +260,5 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+
+    
