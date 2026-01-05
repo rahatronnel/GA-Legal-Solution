@@ -490,7 +490,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                                   />
                                 </div>
                                 <Input placeholder="Brand" value={part.brand} onChange={(e) => updatePart(part.id, 'brand', e.target.value)} disabled />
-                                <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} disabled />
+                                <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} />
                                 <Input placeholder="Qty" type="number" value={part.quantity} onChange={(e) => updatePart(part.id, 'quantity', parseInt(e.target.value) || 0)} />
                                 <Input placeholder="Warranty" value={part.warranty} onChange={(e) => updatePart(part.id, 'warranty', e.target.value)} />
                                 <Button variant="ghost" size="icon" onClick={() => removePart(part.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
@@ -589,5 +589,3 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
     </>
   );
 }
-
-    
