@@ -59,6 +59,12 @@ export type Accident = {
   tripId: string;
   description: string;
   
+  // Damage Details
+  vehicleDamageDescription: string;
+  thirdPartyDamage: 'Yes' | 'No' | '';
+  humanInjury: 'None' | 'Minor' | 'Serious' | 'Fatal' | '';
+  vehicleStatusAfterAccident: 'Running' | 'Repair Required' | 'Total Loss' | '';
+
   // Financial
   estimatedRepairCost: number;
   actualRepairCost: number;
@@ -91,6 +97,11 @@ const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
   routeId: '',
   tripId: '',
   description: '',
+
+  vehicleDamageDescription: '',
+  thirdPartyDamage: '',
+  humanInjury: '',
+  vehicleStatusAfterAccident: '',
 
   estimatedRepairCost: 0,
   actualRepairCost: 0,
@@ -189,7 +200,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   
   const isEditing = accident && accident.id;
-  const progress = Math.round((step / 4) * 100);
+  const progress = Math.round((step / 5) * 100);
 
   const selectedVehicle = React.useMemo(() => vehicles.find(v => v.id === accidentData.vehicleId), [accidentData.vehicleId, vehicles]);
   const selectedDriver = React.useMemo(() => drivers.find(d => d.id === accidentData.driverId), [accidentData.driverId, drivers]);
@@ -353,7 +364,30 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
             )}
             {step === 2 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Step 2: Financial Information</h3>
+                 <h3 className="font-semibold text-lg">Step 2: Damage Detail</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2 col-span-2">
+                        <Label htmlFor="vehicleDamageDescription">Vehicle Damage Description</Label>
+                        <Textarea id="vehicleDamageDescription" value={accidentData.vehicleDamageDescription} onChange={handleInputChange} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Third-Party Damage</Label>
+                        <Select value={accidentData.thirdPartyDamage} onValueChange={handleSelectChange('thirdPartyDamage')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent></Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Human Injury</Label>
+                        <Select value={accidentData.humanInjury} onValueChange={handleSelectChange('humanInjury')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="None">None</SelectItem><SelectItem value="Minor">Minor</SelectItem><SelectItem value="Serious">Serious</SelectItem><SelectItem value="Fatal">Fatal</SelectItem></SelectContent></Select>
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                        <Label>Vehicle Status After Accident</Label>
+                        <Select value={accidentData.vehicleStatusAfterAccident} onValueChange={handleSelectChange('vehicleStatusAfterAccident')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Running">Running</SelectItem><SelectItem value="Repair Required">Repair Required</SelectItem><SelectItem value="Total Loss">Total Loss</SelectItem></SelectContent></Select>
+                    </div>
+                 </div>
+              </div>
+            )}
+            {step === 3 && (
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg">Step 3: Financial Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={accidentData.estimatedRepairCost} onChange={handleInputChange}/></div>
                   <div className="space-y-2"><Label>Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={accidentData.actualRepairCost} onChange={handleInputChange}/></div>
@@ -363,9 +397,9 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                 </div>
               </div>
             )}
-             {step === 3 && (
+             {step === 4 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Step 3: Legal & Insurance</h3>
+                <h3 className="font-semibold text-lg">Step 4: Legal & Insurance</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-md">
                         <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={accidentData.policeReportFiled} onCheckedChange={(checked) => handleCheckboxChange('policeReportFiled')(checked as boolean)} /><Label htmlFor="policeReportFiled">Police Report Filed?</Label></div>
@@ -388,9 +422,9 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                 </div>
               </div>
             )}
-            {step === 4 && (
+            {step === 5 && (
                  <div className="space-y-6">
-                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Step 4: Upload Documents</h3><Button variant="outline" size="sm" onClick={addDocument}><PlusCircle className="mr-2 h-4 w-4"/>Add Document</Button></div>
+                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Step 5: Upload Documents</h3><Button variant="outline" size="sm" onClick={addDocument}><PlusCircle className="mr-2 h-4 w-4"/>Add Document</Button></div>
                      <div className="space-y-4">
                         {documents.map(doc => (
                              <div key={doc.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
@@ -412,7 +446,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
 
         <DialogFooter className="flex justify-between w-full pt-4">
             {step > 1 ? (<Button variant="outline" onClick={prevStep}>Previous</Button>) : <div></div>}
-            {step < 4 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
+            {step < 5 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
         </DialogFooter>
       </DialogContent>
     </Dialog>

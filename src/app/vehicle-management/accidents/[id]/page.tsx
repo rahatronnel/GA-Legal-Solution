@@ -7,7 +7,7 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint } from 'lucide-react';
+import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -125,6 +125,7 @@ export default function AccidentProfilePage() {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="damage">Damage & Status</TabsTrigger>
               <TabsTrigger value="financial">Financial</TabsTrigger>
               <TabsTrigger value="legal">Legal & Insurance</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -154,13 +155,17 @@ export default function AccidentProfilePage() {
                         <InfoItem icon={Shield} label="Fault Status" value={faultStatus?.name} />
                     </ul>
                 </div>
-                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Damage Details</h3>
-                     <ul className="space-y-2 text-sm list-disc list-inside">
-                        <li>No details specified.</li>
-                    </ul>
-                </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="damage" className="mt-6">
+                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Damage & Status</h3>
+                 <ul className="space-y-4 text-sm max-w-md">
+                    <InfoItem icon={Wrench} label="Vehicle Damage Description" value={accident.vehicleDamageDescription} />
+                    <InfoItem icon={Car} label="Vehicle Status After Accident" value={accident.vehicleStatusAfterAccident} />
+                    <InfoItem icon={ShieldQuestion} label="Third-Party Damage" value={accident.thirdPartyDamage} />
+                    <InfoItem icon={HeartPulse} label="Human Injury" value={accident.humanInjury} />
+                 </ul>
             </TabsContent>
             
             <TabsContent value="financial" className="mt-6">
