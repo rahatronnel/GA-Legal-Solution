@@ -105,9 +105,6 @@ export function TripTable() {
         const newTrip: Trip = {
             id: Date.now().toString(),
             ...data,
-            // Explicitly ensure nested structures are present, even if empty
-            expenses: data.expenses || [],
-            documents: data.documents || initialDocuments,
         };
         setTrips(prev => [...prev, newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
@@ -260,5 +257,3 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
-
-    
