@@ -1,69 +1,54 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Wrench, LineChart, GitCommitHorizontal } from "lucide-react";
-import Link from "next/link";
-
-const ReportCard = ({ title, description, href }: { title: string; description: string; href: string }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Button asChild>
-                <Link href={href}>View Report</Link>
-            </Button>
-        </CardContent>
-    </Card>
-);
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import VehicleLifecycleReportPage from "./vehicle-lifecycle/page";
+import MaintenanceCostSummaryPage from "./maintenance-cost-summary/page";
+import VehicleMaintenanceReportPage from "./vehicle-maintenance/page";
+import PreventiveMaintenanceDuePage from "./preventive-maintenance-due/page";
+import SparePartsUsagePage from "./spare-parts-usage/page";
+import WorkshopPerformancePage from "./workshop-performance/page";
+import AccidentCostSummaryPage from "./accident-cost-summary/page";
+import AccidentFrequencyPage from "./accident-frequency/page";
+import VehicleAccidentReportPage from "./vehicle-accident/page";
+import DriverAccidentReportPage from "./driver-accident/page";
 
 export default function ReportsPage() {
     return (
-        <div className="space-y-8">
-             <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <GitCommitHorizontal className="h-6 w-6" />
-                    <h2 className="text-2xl font-bold tracking-tight">Vehicle Lifecycle</h2>
+        <Tabs defaultValue="lifecycle" orientation="vertical" className="w-full">
+             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
+                <div>
+                     <TabsList className="w-full h-full flex-col items-start">
+                        <p className="font-semibold text-lg p-3">Lifecycle</p>
+                        <TabsTrigger value="lifecycle" className="w-full justify-start">Vehicle Lifecycle</TabsTrigger>
+                        
+                        <p className="font-semibold text-lg p-3 mt-4">Maintenance</p>
+                        <TabsTrigger value="maintenance-cost" className="w-full justify-start">Cost Summary</TabsTrigger>
+                        <TabsTrigger value="vehicle-maintenance" className="w-full justify-start">Vehicle-wise History</TabsTrigger>
+                        <TabsTrigger value="preventive-maintenance" className="w-full justify-start">Preventive Due</TabsTrigger>
+                        <TabsTrigger value="parts-usage" className="w-full justify-start">Spare Parts Usage</TabsTrigger>
+                        <TabsTrigger value="workshop-performance" className="w-full justify-start">Workshop Performance</TabsTrigger>
+                        
+                        <p className="font-semibold text-lg p-3 mt-4">Accident</p>
+                        <TabsTrigger value="accident-cost" className="w-full justify-start">Cost Summary</TabsTrigger>
+                        <TabsTrigger value="accident-frequency" className="w-full justify-start">Accident Frequency</TabsTrigger>
+                        <TabsTrigger value="vehicle-accident" className="w-full justify-start">Vehicle-wise History</TabsTrigger>
+                        <TabsTrigger value="driver-accident" className="w-full justify-start">Driver-wise Report</TabsTrigger>
+                    </TabsList>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     <ReportCard title="Vehicle Lifecycle Report" description="A complete, top-to-bottom history of a single vehicle." href="/vehicle-management/reports/vehicle-lifecycle" />
-                </div>
-            </div>
-
-            <Separator />
-            
-            <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <Wrench className="h-6 w-6" />
-                    <h2 className="text-2xl font-bold tracking-tight">Maintenance Reports</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <ReportCard title="Maintenance Cost Summary" description="Aggregated summary of all maintenance costs." href="/vehicle-management/reports/maintenance-cost-summary" />
-                    <ReportCard title="Vehicle-wise Maintenance" description="Detailed maintenance history for each vehicle." href="/vehicle-management/reports/vehicle-maintenance" />
-                    <ReportCard title="Preventive Maintenance Due" description="See upcoming or overdue maintenance." href="/vehicle-management/reports/preventive-maintenance-due" />
-                    <ReportCard title="Spare Parts Usage" description="Report on quantity and cost of used parts." href="/vehicle-management/reports/spare-parts-usage" />
-                    <ReportCard title="Workshop Performance" description="Analyze cost and job frequency for workshops." href="/vehicle-management/reports/workshop-performance" />
-                </div>
-            </div>
-
-            <Separator />
-            
-            <div className="space-y-6">
-                 <div className="flex items-center gap-4">
-                    <LineChart className="h-6 w-6" />
-                    <h2 className="text-2xl font-bold tracking-tight">Accident Reports</h2>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <ReportCard title="Accident Cost Summary" description="Aggregated summary of all accident costs." href="/vehicle-management/reports/accident-cost-summary" />
-                    <ReportCard title="Accident Frequency" description="Chart of accidents over time." href="/vehicle-management/reports/accident-frequency" />
-                    <ReportCard title="Vehicle-wise Accident History" description="Detailed accident history for each vehicle." href="/vehicle-management/reports/vehicle-accident" />
-                    <ReportCard title="Driver-wise Accident Report" description="Report on accidents grouped by driver." href="/vehicle-management/reports/driver-accident" />
+                <div className="w-full">
+                    <TabsContent value="lifecycle"><VehicleLifecycleReportPage /></TabsContent>
+                    <TabsContent value="maintenance-cost"><MaintenanceCostSummaryPage /></TabsContent>
+                    <TabsContent value="vehicle-maintenance"><VehicleMaintenanceReportPage /></TabsContent>
+                    <TabsContent value="preventive-maintenance"><PreventiveMaintenanceDuePage /></TabsContent>
+                    <TabsContent value="parts-usage"><SparePartsUsagePage /></TabsContent>
+                    <TabsContent value="workshop-performance"><WorkshopPerformancePage /></TabsContent>
+                    <TabsContent value="accident-cost"><AccidentCostSummaryPage /></TabsContent>
+                    <TabsContent value="accident-frequency"><AccidentFrequencyPage /></TabsContent>
+                    <TabsContent value="vehicle-accident"><VehicleAccidentReportPage /></TabsContent>
+                    <TabsContent value="driver-accident"><DriverAccidentReportPage /></TabsContent>
                 </div>
             </div>
-        </div>
+        </Tabs>
     );
 }
