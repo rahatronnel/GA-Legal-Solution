@@ -5,20 +5,20 @@ import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { type Trip, type Expense } from '@/app/vehicle-management/components/trip-entry-form';
+import { type Trip } from '@/app/vehicle-management/components/trip-entry-form';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-table';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { type TripPurpose } from '@/app/vehicle-management/components/trip-purpose-table';
 import { type Location } from '@/app/vehicle-management/components/location-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Fuel, Info, Hash } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Info, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ExpenseType } from '../../components/expense-type-table';
+import type { ExpenseType } from '../../components/expense-type-table';
 
 
 const documentLabels: Record<keyof Omit<Trip['documents'], 'id'>, string> = {
@@ -97,16 +97,17 @@ export default function TripProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || trips.length === 0) {
+        setTrip(undefined); // Stay in loading state
+        return;
+    }
     
     const foundTrip = trips.find(t => t.id === id);
+    
     if (foundTrip) {
         setTrip(foundTrip);
     } else {
-        if (trips.length > 0) {
-            notFound();
-        }
-        setTrip(undefined);
+        notFound();
     }
   }, [id, trips, notFound]);
 
@@ -229,5 +230,3 @@ export default function TripProfilePage() {
     </div>
   );
 }
-
-    

@@ -97,22 +97,19 @@ export default function AccidentProfilePage() {
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || accidents.length === 0) {
+        // We are not ready to search if we don't have an ID or the main data array is not yet loaded.
+        setAccident(undefined); // Stay in loading state
+        return;
+    }
     
-    // Immediately try to find the record.
     const foundRecord = accidents.find(t => t.id === id);
     
     if (foundRecord) {
         setAccident(foundRecord);
     } else {
-        // If the main list has loaded but the item is not found, it's a 404.
-        if (accidents.length > 0) {
-            notFound();
-        }
-        // Otherwise, we are likely in a loading state where `accidents` is still empty.
-        // We set to `undefined` to keep showing the loading UI.
-        // `useEffect` will run again when `accidents` is populated.
-        setAccident(undefined);
+        // If the main data array is loaded and we still haven't found it, it's a 404.
+        notFound();
     }
   }, [id, accidents, notFound]);
 
@@ -138,6 +135,8 @@ export default function AccidentProfilePage() {
   }
   
   if (accident === null) {
+      // This state should ideally not be reached due to the notFound() call in useEffect,
+      // but it's a safe fallback.
       notFound();
   }
 
@@ -251,4 +250,3 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
-    

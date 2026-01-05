@@ -11,7 +11,7 @@ import { type VehicleType } from '@/app/vehicle-management/components/vehicle-ty
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-    ArrowLeft, Car, FileText, Download, Printer, Users, Wrench, Package,
+    ArrowLeft, Car, FileText, Download, Printer, Users, Wrench,
     Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
@@ -110,16 +110,16 @@ export default function VehicleProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || vehicles.length === 0) {
+        setVehicle(undefined);
+        return;
+    }
     
     const foundVehicle = vehicles.find(v => v.id === id);
     if (foundVehicle) {
         setVehicle(foundVehicle);
     } else {
-        if (vehicles.length > 0) {
-            notFound();
-        }
-        setVehicle(undefined);
+        notFound();
     }
   }, [id, vehicles, notFound]);
 
@@ -226,7 +226,7 @@ export default function VehicleProfilePage() {
                         <InfoItem icon={Palette} label="Brand & Model" value={`${vehicleBrand?.name} ${vehicle.model}`} />
                         <InfoItem icon={Calendar} label="Manufacture Year" value={vehicle.manufactureYear} />
                         <InfoItem icon={Fuel} label="Fuel Type" value={vehicle.fuelType} />
-                        <InfoItem icon={Package} label="Capacity" value={vehicle.capacity} />
+                        <InfoItem icon={Users} label="Capacity" value={vehicle.capacity} />
                     </ul>
                 </div>
 
@@ -320,5 +320,3 @@ export default function VehicleProfilePage() {
     </div>
   );
 }
-
-    

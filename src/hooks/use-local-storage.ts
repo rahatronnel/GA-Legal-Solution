@@ -1,17 +1,17 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
 // This is a helper function to check if the code is running in a browser
 const isBrowser = typeof window !== 'undefined';
 
-// A more robust useLocalStorage hook that correctly saves data on change
-// and syncs across tabs.
+// This hook has been completely rewritten to be robust and reliable.
+// It now correctly persists state changes to localStorage and syncs across tabs.
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
   // State to store our value
-  // Pass initial state function to useState so logic is only executed once
+  // Pass an inline function to useState so logic is only executed once on the client
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (!isBrowser) {
       return initialValue;
@@ -28,22 +28,22 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<S
     }
   });
 
-  // useEffect to update local storage when the state changes
-  // This is the critical part that was flawed before.
+  // useEffect to update local storage when the state changes.
+  // The dependency array [key, storedValue] is CRITICAL.
+  // It ensures that this effect runs every time the key or the storedValue changes.
   useEffect(() => {
     if (!isBrowser) {
       return;
     }
     try {
-      // Save state to local storage on change
+      // Save state to local storage
       window.localStorage.setItem(key, JSON.stringify(storedValue));
     } catch (error) {
-      // A more advanced implementation would handle the error case
-      console.error(`Error setting localStorage key “${key}”:`, error);
+      console.error(`Error writing to localStorage for key “${key}”:`, error);
     }
-  }, [key, storedValue]); // <-- The correct dependency array ensures this runs on every change.
+  }, [key, storedValue]);
 
-  // This effect handles changes from other tabs
+  // This effect listens for changes from other tabs.
   useEffect(() => {
     if (!isBrowser) {
         return;

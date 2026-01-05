@@ -106,16 +106,16 @@ export default function DriverProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || drivers.length === 0) {
+        setDriver(undefined);
+        return;
+    }
     
     const foundDriver = drivers.find(d => d.id === id);
     if (foundDriver) {
         setDriver(foundDriver);
     } else {
-        if (drivers.length > 0) {
-            notFound();
-        }
-        setDriver(undefined);
+        notFound();
     }
   }, [id, drivers, notFound]);
 
@@ -318,5 +318,3 @@ export default function DriverProfilePage() {
     </div>
   );
 }
-
-    

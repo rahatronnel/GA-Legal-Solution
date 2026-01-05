@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -98,16 +99,16 @@ export default function EmployeeProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || employees.length === 0) {
+        setEmployee(undefined);
+        return;
+    }
 
     const foundEmployee = employees.find(d => d.id === id);
     if (foundEmployee) {
         setEmployee(foundEmployee);
     } else {
-        if (employees.length > 0) {
-            notFound();
-        }
-        setEmployee(undefined);
+        notFound();
     }
   }, [id, employees, notFound]);
 

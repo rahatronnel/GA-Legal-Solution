@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import type { MaintenanceRecord, Part } from '../components/maintenance-entry-form';
+import type { MaintenanceRecord } from '../components/maintenance-entry-form';
 import type { Vehicle } from '../components/vehicle-table';
 import type { MaintenanceType } from '../components/maintenance-type-table';
 import type { ServiceCenter } from '../components/service-center-table';
@@ -93,16 +93,17 @@ export default function MaintenanceProfilePage() {
   const [record, setRecord] = useState<MaintenanceRecord | null | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof id !== 'string') return;
+    if (typeof id !== 'string' || records.length === 0) {
+        setRecord(undefined); // Stay in loading state
+        return;
+    }
     
     const foundRecord = records.find(t => t.id === id);
+    
     if (foundRecord) {
         setRecord(foundRecord);
     } else {
-        if (records.length > 0) {
-            notFound();
-        }
-        setRecord(undefined);
+        notFound();
     }
   }, [id, records, notFound]);
 
@@ -237,7 +238,3 @@ export default function MaintenanceProfilePage() {
     </div>
   );
 }
-
-    
-
-    
