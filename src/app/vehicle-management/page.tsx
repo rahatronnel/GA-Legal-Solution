@@ -21,6 +21,9 @@ import { AccidentTable } from "./components/accident-table";
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { LineChart } from "lucide-react";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -35,6 +38,7 @@ export default function VehicleManagementPage() {
             <TabsTrigger value="drivers">Drivers</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="accidents">Accidents</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="trip-management">Trip Master</TabsTrigger>
             <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
           </TabsList>
@@ -152,6 +156,22 @@ export default function VehicleManagementPage() {
                     </CardContent>
                 </Card>
             </div>
+        </TabsContent>
+        <TabsContent value="reports">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Reports Dashboard</CardTitle>
+                    <CardDescription>View and analyze accident data.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center h-60">
+                    <p className="text-muted-foreground mb-4">The reporting section has moved to a dedicated page.</p>
+                    <Button asChild>
+                        <Link href="/vehicle-management/reports">
+                           <LineChart className="mr-2 h-4 w-4" /> Go to Reports
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
         </TabsContent>
         <TabsContent value="trip-management">
           <div className="grid gap-6">
