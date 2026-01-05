@@ -13,16 +13,20 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, X } from 'lucide-react';
 import { AccidentEntryForm, type Accident } from './accident-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
 import type { AccidentType } from './accident-type-table';
+import type { SeverityLevel } from './severity-level-table';
+import type { Route } from './route-table';
+import type { FaultStatus } from './fault-status-table';
 
 interface AccidentTableProps {
     accidents: Accident[];
@@ -34,12 +38,24 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Accident> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [routeFilter, setRouteFilter] = useState('all');
+  const [faultStatusFilter, setFaultStatusFilter] = useState('all');
+
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -51,15 +67,24 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
   const getAccidentTypeName = (typeId: string) => accidentTypes.find(t => t.id === typeId)?.name || 'N/A';
 
   const filteredAccidents = useMemo(() => {
-    if (!searchTerm) return accidents;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return accidents.filter(acc => 
-      getVehicleReg(acc.vehicleId).toLowerCase().includes(lowercasedTerm) ||
-      getDriverName(acc.driverId).toLowerCase().includes(lowercasedTerm) ||
-      getAccidentTypeName(acc.accidentTypeId).toLowerCase().includes(lowercasedTerm) ||
-      (acc.accidentId && acc.accidentId.toLowerCase().includes(lowercasedTerm))
-    );
-  }, [accidents, searchTerm, vehicles, drivers, accidentTypes]);
+    return accidents.filter(acc => {
+        const searchTermMatch = searchTerm === '' ||
+            getVehicleReg(acc.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            getDriverName(acc.driverId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            getAccidentTypeName(acc.accidentTypeId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (acc.accidentId && acc.accidentId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (acc.tripId && acc.tripId.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const vehicleMatch = vehicleFilter === 'all' || acc.vehicleId === vehicleFilter;
+        const driverMatch = driverFilter === 'all' || acc.driverId === driverFilter;
+        const typeMatch = typeFilter === 'all' || acc.accidentTypeId === typeFilter;
+        const severityMatch = severityFilter === 'all' || acc.severityLevelId === severityFilter;
+        const routeMatch = routeFilter === 'all' || acc.routeId === routeFilter;
+        const faultStatusMatch = faultStatusFilter === 'all' || acc.faultStatusId === faultStatusFilter;
+
+        return searchTermMatch && vehicleMatch && driverMatch && typeMatch && severityMatch && routeMatch && faultStatusMatch;
+    });
+  }, [accidents, searchTerm, vehicleFilter, driverFilter, typeFilter, severityFilter, routeFilter, faultStatusFilter, vehicles, drivers, accidentTypes]);
 
 
   const handleAdd = () => {
@@ -135,21 +160,42 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
     setCurrentItem(null);
   };
   
+  const clearFilters = () => {
+      setSearchTerm('');
+      setVehicleFilter('all');
+      setDriverFilter('all');
+      setTypeFilter('all');
+      setSeverityFilter('all');
+      setRouteFilter('all');
+      setFaultStatusFilter('all');
+  };
+
   return (
     <TooltipProvider>
-        <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
-            <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-                type="search"
-                placeholder="Search by Vehicle, Driver..."
-                className="w-full rounded-lg bg-background pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-2">
+                <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search by ID, Trip, Vehicle..."
+                    className="w-full rounded-lg bg-background pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Record</Button>
+                </div>
             </div>
-            <div className="flex gap-2">
-                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Record</Button>
+            <div className="flex flex-wrap gap-2">
+                <Select value={vehicleFilter} onValueChange={setVehicleFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vehicles</SelectItem>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select>
+                <Select value={driverFilter} onValueChange={setDriverFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger><SelectContent><SelectItem value="all">All Drivers</SelectItem>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{accidentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={severityFilter} onValueChange={setSeverityFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Severity..." /></SelectTrigger><SelectContent><SelectItem value="all">All Severity Levels</SelectItem>{severityLevels.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={routeFilter} onValueChange={setRouteFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Route..." /></SelectTrigger><SelectContent><SelectItem value="all">All Routes</SelectItem>{routes.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={faultStatusFilter} onValueChange={setFaultStatusFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Fault..." /></SelectTrigger><SelectContent><SelectItem value="all">All Fault Statuses</SelectItem>{faultStatuses.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
+                <Button variant="ghost" onClick={clearFilters}><X className="mr-2 h-4 w-4" /> Clear</Button>
             </div>
         </div>
         <div className="border rounded-lg">
@@ -213,3 +259,5 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
     </TooltipProvider>
   );
 }
+
+    
