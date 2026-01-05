@@ -21,7 +21,6 @@ import type { Trip } from '../../components/trip-entry-form';
 import type { AccidentType } from '../../components/accident-type-table';
 import type { SeverityLevel } from '../../components/severity-level-table';
 import type { FaultStatus } from '../../components/fault-status-table';
-import type { DamageDetail } from '../../components/damage-detail-table';
 import type { ServiceCenter } from '../../components/service-center-table';
 
 
@@ -81,7 +80,6 @@ export default function AccidentProfilePage() {
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
   const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
   const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
-  const [damageDetails] = useLocalStorage<DamageDetail[]>('damageDetails', []);
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
 
   const [accident, setAccident] = useState<Accident | null>(null);
@@ -94,7 +92,7 @@ export default function AccidentProfilePage() {
     }
   }, [id, accidents]);
 
-  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, damageDetailNames, repairedBy } = useMemo(() => {
+  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
     if (!accident) return {};
     return {
         vehicle: vehicles.find(v => v.id === accident.vehicleId),
@@ -105,10 +103,9 @@ export default function AccidentProfilePage() {
         accidentType: accidentTypes.find(t => t.id === accident.accidentTypeId),
         severityLevel: severityLevels.find(sl => sl.id === accident.severityLevelId),
         faultStatus: faultStatuses.find(fs => fs.id === accident.faultStatusId),
-        damageDetailNames: accident.damageDetailIds?.map(id => damageDetails.find(dd => dd.id === id)?.name).filter(Boolean) || [],
         repairedBy: serviceCenters.find(sc => sc.id === accident.repairedById)
     };
-  }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, damageDetails, serviceCenters]);
+  }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
 
   if (!accident) return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
@@ -160,7 +157,7 @@ export default function AccidentProfilePage() {
                  <div className="space-y-4">
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Damage Details</h3>
                      <ul className="space-y-2 text-sm list-disc list-inside">
-                        {damageDetailNames.length > 0 ? damageDetailNames.map((name, i) => <li key={i} className="text-muted-foreground">{name}</li>) : <li>No details specified.</li>}
+                        <li>No details specified.</li>
                     </ul>
                 </div>
               </div>

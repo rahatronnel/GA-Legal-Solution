@@ -32,7 +32,6 @@ import type { Trip } from './trip-entry-form';
 import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
-import type { DamageDetail } from './damage-detail-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -58,7 +57,6 @@ export type Accident = {
   faultStatusId: string;
   routeId: string;
   tripId: string;
-  damageDetailIds: string[];
   description: string;
   
   // Financial
@@ -80,7 +78,7 @@ export type Accident = {
   documents: AccidentDocument[];
 };
 
-const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'damageDetailIds' | 'documents'> = {
+const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
   vehicleId: '',
   driverId: '',
   employeeId: '',
@@ -176,7 +174,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [accidentData, setAccidentData] = useState(initialAccidentData);
-  const [damageDetailIds, setDamageDetailIds] = useState<string[]>([]);
   const [documents, setDocuments] = useState<AccidentDocument[]>([]);
   
   const [accidentDate, setAccidentDate] = useState<Date | undefined>();
@@ -189,7 +186,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
   const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
   const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
-  const [damageDetails] = useLocalStorage<DamageDetail[]>('damageDetails', []);
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   
   const isEditing = accident && accident.id;
@@ -203,12 +199,10 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       setStep(1);
       if (isEditing && accident) {
         setAccidentData({ ...initialAccidentData, ...accident });
-        setDamageDetailIds(accident.damageDetailIds || []);
         setDocuments(accident.documents || []);
         setAccidentDate(accident.accidentDate ? new Date(accident.accidentDate) : undefined);
       } else {
         setAccidentData(initialAccidentData);
-        setDamageDetailIds([]);
         setDocuments([]);
         setAccidentDate(undefined);
       }
@@ -238,10 +232,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       setAccidentData(prev => ({ ...prev, [id]: checked }));
   };
   
-  const handleDamageDetailCheck = (id: string) => (checked: boolean) => {
-    setDamageDetailIds(prev => checked ? [...prev, id] : prev.filter(detailId => detailId !== id));
-  }
-
   // Document handlers
   const addDocument = () => setDocuments(d => [...d, {id: Date.now().toString(), label: '', file: ''}]);
   const updateDocumentLabel = (id: string, label: string) => {
@@ -283,7 +273,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     const dataToSave: Omit<Accident, 'id'> = {
         ...accidentData,
         accidentId,
-        damageDetailIds,
         documents
     };
     onSave(dataToSave, accident?.id);
@@ -356,17 +345,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                     </div>
                  </div>
 
-                 <div className="space-y-2">
-                  <Label>Damage Details</Label>
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border p-4 rounded-md">
-                        {damageDetails.map(detail => (
-                            <div key={detail.id} className="flex items-center space-x-2">
-                                <Checkbox id={`damage-${detail.id}`} checked={damageDetailIds.includes(detail.id)} onCheckedChange={(checked) => handleDamageDetailCheck(detail.id)(checked as boolean)} />
-                                <label htmlFor={`damage-${detail.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{detail.name}</label>
-                            </div>
-                        ))}
-                   </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description of Incident</Label>
                   <Textarea id="description" value={accidentData.description} onChange={handleInputChange} />
