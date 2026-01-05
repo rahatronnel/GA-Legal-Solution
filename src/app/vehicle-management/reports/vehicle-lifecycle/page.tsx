@@ -9,7 +9,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check } from 'lucide-react';
+import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -24,6 +24,9 @@ import type { TripPurpose } from '@/app/vehicle-management/components/trip-purpo
 import type { MaintenanceType } from '@/app/vehicle-management/components/maintenance-type-table';
 import type { AccidentType } from '@/app/vehicle-management/components/accident-type-table';
 import type { Part } from '@/app/vehicle-management/components/part-table';
+import type { ServiceCenter } from '@/app/vehicle-management/components/service-center-table';
+import type { Location } from '@/app/vehicle-management/components/location-table';
+import type { SeverityLevel } from '@/app/vehicle-management/components/severity-level-table';
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <div className="flex items-start gap-2 text-sm">
@@ -62,6 +65,9 @@ export default function VehicleLifecycleReportPage() {
     const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
     const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
     const [parts] = useLocalStorage<Part[]>('parts', []);
+    const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+    const [locations] = useLocalStorage<Location[]>('locations', []);
+    const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [reportData, setReportData] = useState<any | null>(null);
@@ -105,6 +111,39 @@ export default function VehicleLifecycleReportPage() {
             allPhotos
         });
     };
+    
+    const formatCurrency = (amount: number | undefined) => {
+        if (typeof amount !== 'number') return 'N/A';
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+    
+    const getTripDetails = (trip: Trip) => {
+        const purpose = purposes.find(p => p.id === trip.purposeId)?.name;
+        const driver = drivers.find(d => d.id === trip.driverId)?.name;
+        const startLocation = locations.find(l => l.id === trip.startLocationId)?.name;
+        const endLocation = locations.find(l => l.id === trip.destinationLocationId)?.name;
+        const route = startLocation && endLocation ? `${startLocation} to ${endLocation}` : 'N/A';
+        const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
+        const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
+        return { purpose, driver, route, totalDistance, totalExpenses };
+    }
+    
+    const getMaintenanceDetails = (maint: MaintenanceRecord) => {
+        const type = maintenanceTypes.find(t => t.id === maint.maintenanceTypeId)?.name;
+        const serviceCenter = serviceCenters.find(s => s.id === maint.serviceCenterId)?.name;
+        const partsCost = maint.parts?.reduce((acc, p) => acc + (p.price * p.quantity), 0) || 0;
+        const expensesCost = maint.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0;
+        const totalCost = partsCost + expensesCost;
+        return { type, serviceCenter, totalCost };
+    }
+    
+    const getAccidentDetails = (acc: Accident) => {
+        const type = accidentTypes.find(t => t.id === acc.accidentTypeId)?.name;
+        const severity = severityLevels.find(s => s.id === acc.severityLevelId)?.name;
+        const driver = drivers.find(d => d.id === acc.driverId)?.name;
+        return { type, severity, driver };
+    }
+
 
     return (
         <div className="space-y-6">
@@ -171,33 +210,62 @@ export default function VehicleLifecycleReportPage() {
                     
                     <Section icon={Route} title="Trip History">
                         <Table>
-                            <TableHeader><TableRow><TableHead>Trip ID</TableHead><TableHead>Date</TableHead><TableHead>Purpose</TableHead><TableHead>Driver</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Route</TableHead><TableHead>Distance</TableHead><TableHead>Expenses</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {reportData.vehicleTrips.length > 0 ? reportData.vehicleTrips.map((trip: Trip) => (
-                                    <TableRow key={trip.id}><TableCell>{trip.tripId}</TableCell><TableCell>{trip.startDate}</TableCell><TableCell>{purposes.find(p => p.id === trip.purposeId)?.name}</TableCell><TableCell>{drivers.find(d => d.id === trip.driverId)?.name}</TableCell></TableRow>
-                                )) : <TableRow><TableCell colSpan={4} className="text-center">No trips found.</TableCell></TableRow>}
+                                {reportData.vehicleTrips.length > 0 ? reportData.vehicleTrips.map((trip: Trip) => {
+                                    const details = getTripDetails(trip);
+                                    return (
+                                        <TableRow key={trip.id}>
+                                            <TableCell>{trip.startDate}</TableCell>
+                                            <TableCell>{details.driver}</TableCell>
+                                            <TableCell>{details.route}</TableCell>
+                                            <TableCell>{details.totalDistance} km</TableCell>
+                                            <TableCell>{formatCurrency(details.totalExpenses)}</TableCell>
+                                            <TableCell><Badge variant="outline">{trip.tripStatus}</Badge></TableCell>
+                                        </TableRow>
+                                    )
+                                }) : <TableRow><TableCell colSpan={6} className="text-center">No trips found.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </Section>
 
                     <Section icon={Wrench} title="Maintenance History">
                          <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Parts Used</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Service Center</TableHead><TableHead>Cost</TableHead><TableHead>Remarks</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {reportData.vehicleMaintenance.length > 0 ? reportData.vehicleMaintenance.map((maint: MaintenanceRecord) => (
-                                    <TableRow key={maint.id}><TableCell>{maint.serviceDate}</TableCell><TableCell>{maintenanceTypes.find(t => t.id === maint.maintenanceTypeId)?.name}</TableCell><TableCell>{maint.parts.map(p => { const partInfo = parts.find(part => part.id === p.partId); return partInfo ? partInfo.name : 'Unknown Part'; }).join(', ')}</TableCell></TableRow>
-                                )) : <TableRow><TableCell colSpan={3} className="text-center">No maintenance records found.</TableCell></TableRow>}
+                                {reportData.vehicleMaintenance.length > 0 ? reportData.vehicleMaintenance.map((maint: MaintenanceRecord) => {
+                                    const details = getMaintenanceDetails(maint);
+                                    return (
+                                        <TableRow key={maint.id}>
+                                            <TableCell>{maint.serviceDate}</TableCell>
+                                            <TableCell>{details.type}</TableCell>
+                                            <TableCell>{details.serviceCenter}</TableCell>
+                                            <TableCell>{formatCurrency(details.totalCost)}</TableCell>
+                                            <TableCell className="truncate max-w-xs">{maint.description}</TableCell>
+                                        </TableRow>
+                                    )
+                                }) : <TableRow><TableCell colSpan={5} className="text-center">No maintenance records found.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </Section>
 
                     <Section icon={AlertTriangle} title="Accident History">
                          <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Type</TableHead><TableHead>Severity</TableHead><TableHead>Repair Cost</TableHead><TableHead>Description</TableHead></TableRow></TableHeader>
                             <TableBody>
-                                {reportData.vehicleAccidents.length > 0 ? reportData.vehicleAccidents.map((acc: Accident) => (
-                                    <TableRow key={acc.id}><TableCell>{acc.accidentDate}</TableCell><TableCell>{accidentTypes.find(t => t.id === acc.accidentTypeId)?.name}</TableCell><TableCell>{drivers.find(d => d.id === acc.driverId)?.name}</TableCell></TableRow>
-                                )) : <TableRow><TableCell colSpan={3} className="text-center">No accidents found.</TableCell></TableRow>}
+                                {reportData.vehicleAccidents.length > 0 ? reportData.vehicleAccidents.map((acc: Accident) => {
+                                     const details = getAccidentDetails(acc);
+                                     return (
+                                        <TableRow key={acc.id}>
+                                            <TableCell>{acc.accidentDate}</TableCell>
+                                            <TableCell>{details.driver}</TableCell>
+                                            <TableCell>{details.type}</TableCell>
+                                            <TableCell><Badge variant="destructive">{details.severity}</Badge></TableCell>
+                                            <TableCell>{formatCurrency(acc.actualRepairCost)}</TableCell>
+                                            <TableCell className="truncate max-w-xs">{acc.description}</TableCell>
+                                        </TableRow>
+                                     )
+                                }) : <TableRow><TableCell colSpan={6} className="text-center">No accidents found.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </Section>
