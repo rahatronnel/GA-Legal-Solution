@@ -29,7 +29,6 @@ import type { Location } from './location-table';
 import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type Expense = {
   id: string;
@@ -96,6 +95,7 @@ const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...a
 interface TripEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  onSave: (data: Omit<Trip, 'id' | 'tripId'>, id?: string) => void;
   trip: Partial<Trip> | null;
   vehicles: Vehicle[];
   drivers: Driver[];
@@ -170,9 +170,8 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
 }
 
 
-export function TripEntryForm({ isOpen, setIsOpen, trip, vehicles, drivers, purposes, locations, routes, expenseTypes }: TripEntryFormProps) {
+export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drivers, purposes, locations, routes, expenseTypes }: TripEntryFormProps) {
   const { toast } = useToast();
-  const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState(initialTripData);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -293,33 +292,13 @@ export function TripEntryForm({ isOpen, setIsOpen, trip, vehicles, drivers, purp
       return;
     }
 
-    if (isEditing) {
-      // Update existing trip
-      setTrips(prevTrips =>
-        prevTrips.map(t =>
-          t.id === trip.id
-            ? {
-                ...t,
-                ...tripData,
-                expenses,
-                documents: docPreviews,
-              }
-            : t
-        )
-      );
-      toast({ title: 'Success', description: 'Trip updated successfully.' });
-    } else {
-      // Create new trip
-      const newTrip: Trip = {
-        id: Date.now().toString(),
-        tripId: `TRIP-${Date.now()}`,
+    const dataToSave = {
         ...tripData,
         expenses,
-        documents: docPreviews,
-      };
-      setTrips(prevTrips => [...prevTrips, newTrip]);
-      toast({ title: 'Success', description: 'Trip added successfully.' });
-    }
+        documents: docPreviews
+    };
+
+    onSave(dataToSave, trip?.id);
     setIsOpen(false);
   };
   
@@ -458,6 +437,3 @@ export function TripEntryForm({ isOpen, setIsOpen, trip, vehicles, drivers, purp
     </Dialog>
   );
 }
-    
-
-    
