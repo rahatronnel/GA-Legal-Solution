@@ -8,7 +8,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check, DollarSign, Image as ImageIcon, Eye, X } from 'lucide-react';
+import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check, DollarSign, Image as ImageIcon, Eye, X, Flag, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -274,7 +274,7 @@ export default function VehicleLifecycleReportPage() {
 
     return (
         <div className="space-y-6">
-            <Card>
+            <Card className="print-hidden">
                 <CardHeader>
                     <CardTitle>Vehicle Lifecycle Report</CardTitle>
                     <CardDescription>Select a vehicle to generate its complete history report.</CardDescription>
@@ -337,7 +337,7 @@ export default function VehicleLifecycleReportPage() {
                     
                     <Section icon={Route} title="Trip History">
                         <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Route</TableHead><TableHead>Distance</TableHead><TableHead>Expenses</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Route</TableHead><TableHead>Distance</TableHead><TableHead>Expenses</TableHead><TableHead>Status</TableHead><TableHead className="text-right print-hidden">Actions</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {reportData.vehicleTrips.length > 0 ? reportData.vehicleTrips.map((trip: Trip) => {
                                     const details = getTripDetails(trip);
@@ -349,7 +349,7 @@ export default function VehicleLifecycleReportPage() {
                                             <TableCell>{details.totalDistance} km</TableCell>
                                             <TableCell>{formatCurrency(details.totalExpenses)}</TableCell>
                                             <TableCell><Badge variant="outline">{trip.tripStatus}</Badge></TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right print-hidden">
                                                 <Button variant="ghost" size="icon" onClick={() => setModalContent({type: 'trip', data: trip, parentData: {...details, formatCurrency}})}><Eye className="h-4 w-4" /></Button>
                                             </TableCell>
                                         </TableRow>
@@ -361,7 +361,7 @@ export default function VehicleLifecycleReportPage() {
 
                     <Section icon={Wrench} title="Maintenance History">
                          <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Service Center</TableHead><TableHead>Cost</TableHead><TableHead>Remarks</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Service Center</TableHead><TableHead>Cost</TableHead><TableHead>Remarks</TableHead><TableHead className="text-right print-hidden">Actions</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {reportData.vehicleMaintenance.length > 0 ? reportData.vehicleMaintenance.map((maint: MaintenanceRecord) => {
                                     const details = getMaintenanceDetails(maint);
@@ -372,7 +372,7 @@ export default function VehicleLifecycleReportPage() {
                                             <TableCell>{details.serviceCenter}</TableCell>
                                             <TableCell>{formatCurrency(details.totalCost)}</TableCell>
                                             <TableCell className="truncate max-w-xs">{maint.description}</TableCell>
-                                             <TableCell className="text-right">
+                                             <TableCell className="text-right print-hidden">
                                                 <Button variant="ghost" size="icon" onClick={() => setModalContent({type: 'maintenance', data: maint, parentData: {...details, formatCurrency}})}><Eye className="h-4 w-4" /></Button>
                                             </TableCell>
                                         </TableRow>
@@ -384,7 +384,7 @@ export default function VehicleLifecycleReportPage() {
 
                     <Section icon={AlertTriangle} title="Accident History">
                          <Table>
-                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Type</TableHead><TableHead>Severity</TableHead><TableHead>Cost</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Driver</TableHead><TableHead>Type</TableHead><TableHead>Severity</TableHead><TableHead>Cost</TableHead><TableHead>Description</TableHead><TableHead className="text-right print-hidden">Actions</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {reportData.vehicleAccidents.length > 0 ? reportData.vehicleAccidents.map((acc: Accident) => {
                                      const details = getAccidentDetails(acc);
@@ -396,7 +396,7 @@ export default function VehicleLifecycleReportPage() {
                                             <TableCell><Badge variant="destructive">{details.severity}</Badge></TableCell>
                                             <TableCell>{formatCurrency(acc.actualRepairCost)}</TableCell>
                                             <TableCell className="truncate max-w-xs">{acc.description}</TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right print-hidden">
                                                 <Button variant="ghost" size="icon" onClick={() => setModalContent({type: 'accident', data: acc, parentData: {...details, formatCurrency}})}><Eye className="h-4 w-4" /></Button>
                                             </TableCell>
                                         </TableRow>
