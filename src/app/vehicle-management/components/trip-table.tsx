@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -15,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Search, Eye, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Search, Eye, Printer, Calendar as CalendarIcon, X } from 'lucide-react';
 import { TripEntryForm, type Trip } from './trip-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +27,11 @@ import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import type { Route } from './route-table';
 import type { ExpenseType } from './expense-type-table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 export function TripTable() {
   const { toast } = useToast();
@@ -44,7 +48,12 @@ export function TripTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentTrip, setCurrentTrip] = useState<Partial<Trip> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [routeFilter, setRouteFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState<Date | undefined>();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -52,15 +61,26 @@ export function TripTable() {
   }, []);
   
   const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
+  const getRouteName = (routeId: string) => routes.find(r => r.id === routeId)?.name || 'N/A';
 
   const filteredTrips = useMemo(() => {
-    if (!searchTerm) return trips;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return trips.filter(trip => 
-      (trip.tripId && trip.tripId.toLowerCase().includes(lowercasedTerm)) ||
-      (getVehicleReg(trip.vehicleId).toLowerCase().includes(lowercasedTerm))
-    );
-  }, [trips, searchTerm, vehicles]);
+    return trips.filter(trip => {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      const vehicle = vehicles.find(v => v.id === trip.vehicleId);
+
+      const searchMatch = searchTerm === '' || 
+        (trip.tripId && trip.tripId.toLowerCase().includes(lowercasedTerm)) ||
+        (vehicle?.registrationNumber && vehicle.registrationNumber.toLowerCase().includes(lowercasedTerm)) ||
+        (vehicle?.vehicleIdCode && vehicle.vehicleIdCode.toLowerCase().includes(lowercasedTerm));
+
+      const driverMatch = driverFilter === 'all' || trip.driverId === driverFilter;
+      const routeMatch = routeFilter === 'all' || trip.routeId === routeFilter;
+      const dateMatch = !dateFilter || trip.startDate === format(dateFilter, 'yyyy-MM-dd');
+
+      return searchMatch && driverMatch && routeMatch && dateMatch;
+    });
+  }, [trips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles]);
 
 
   const handleAdd = () => {
@@ -75,7 +95,7 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } : t)));
+        setTrips(prev => prev.map(t => (t.id === id ? { id, ...data } : t)));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         const newTrip: Trip = {
@@ -147,24 +167,65 @@ export function TripTable() {
 
   return (
     <TooltipProvider>
-        <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
-            <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-                type="search"
-                placeholder="Search by Trip ID, Vehicle..."
-                className="w-full rounded-lg bg-background pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-2">
+                <div className="relative w-full sm:max-w-xs">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search by Trip, Vehicle ID/Reg..."
+                        className="w-full rounded-lg bg-background pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Trip</Button>
+                    <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+                    <label htmlFor="upload-excel-trips" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                        <Upload className="mr-2 h-4 w-4" /> Upload
+                    </label>
+                    <Input id="upload-excel-trips" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+                </div>
             </div>
-            <div className="flex gap-2">
-                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Trip</Button>
-                <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-                <label htmlFor="upload-excel-trips" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
-                    <Upload className="mr-2 h-4 w-4" /> Upload
-                </label>
-                <Input id="upload-excel-trips" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+
+            <div className="flex flex-wrap gap-2">
+                <Select value={driverFilter} onValueChange={setDriverFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Drivers</SelectItem>
+                        {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={routeFilter} onValueChange={setRouteFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Route..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Routes</SelectItem>
+                        {routes.map(route => <SelectItem key={route.id} value={route.id}>{route.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant={"outline"} className={cn("w-full sm:w-[240px] justify-start text-left font-normal", !dateFilter && "text-muted-foreground")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateFilter ? format(dateFilter, "PPP") : <span>Filter by Start Date...</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                {(searchTerm || driverFilter !== 'all' || routeFilter !== 'all' || dateFilter) && (
+                    <Button variant="ghost" onClick={() => {
+                        setSearchTerm('');
+                        setDriverFilter('all');
+                        setRouteFilter('all');
+                        setDateFilter(undefined);
+                    }}>
+                        <X className="mr-2 h-4 w-4"/>
+                        Clear Filters
+                    </Button>
+                )}
             </div>
         </div>
         <div className="border rounded-lg">
@@ -173,22 +234,24 @@ export function TripTable() {
             <TableRow>
                 <TableHead>Trip ID</TableHead>
                 <TableHead>Vehicle</TableHead>
+                <TableHead>Driver</TableHead>
+                <TableHead>Route</TableHead>
                 <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[160px] text-right">Actions</TableHead>
             </TableRow>
             </TableHeader>
             <TableBody>
             {isLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredTrips && filteredTrips.length > 0 ? (
                 filteredTrips.map((t) => (
                 <TableRow key={t.id}>
                     <TableCell>{t.tripId}</TableCell>
                     <TableCell>{getVehicleReg(t.vehicleId)}</TableCell>
+                    <TableCell>{getDriverName(t.driverId)}</TableCell>
+                    <TableCell>{getRouteName(t.routeId)}</TableCell>
                     <TableCell>{t.startDate}</TableCell>
-                    <TableCell>{t.endDate}</TableCell>
                     <TableCell><Badge variant={getStatusVariant(t.tripStatus)}>{t.tripStatus || 'N/A'}</Badge></TableCell>
                     <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -201,7 +264,7 @@ export function TripTable() {
                 </TableRow>
                 ))
             ) : (
-                <TableRow><TableCell colSpan={6} className="h-24 text-center">{searchTerm ? `No trips found for "${searchTerm}".` : "No trips recorded."}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="h-24 text-center">{ "No trips found for the selected filters."}</TableCell></TableRow>
             )}
             </TableBody>
         </Table>
