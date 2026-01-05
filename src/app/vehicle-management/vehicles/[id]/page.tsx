@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, Car, FileText, Download, Printer, Users, Wrench, Package,
-    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, GitCommitHorizontal
+    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -184,18 +184,10 @@ export default function VehicleProfilePage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Vehicle List
         </Button>
-        <div className="flex gap-2">
-            <Button asChild>
-                <Link href={`/vehicle-management/reports/lifecycle/${vehicle.id}`}>
-                    <GitCommitHorizontal className="mr-2 h-4 w-4" />
-                    Lifecycle Report
-                </Link>
-            </Button>
-            <Button variant="outline" onClick={() => handlePrint(vehicle, 'vehicle')}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print Profile
-            </Button>
-        </div>
+        <Button variant="outline" onClick={() => handlePrint(vehicle, 'vehicle')}>
+          <Printer className="mr-2 h-4 w-4" />
+          Print Profile
+        </Button>
        </div>
       
       <Card>

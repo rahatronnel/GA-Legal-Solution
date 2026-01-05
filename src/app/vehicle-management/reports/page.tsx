@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Wrench, LineChart } from "lucide-react";
+import { Wrench, LineChart, GitCommitHorizontal } from "lucide-react";
 import Link from "next/link";
 
 const ReportCard = ({ title, description, href }: { title: string; description: string; href: string }) => (
@@ -24,6 +24,18 @@ const ReportCard = ({ title, description, href }: { title: string; description: 
 export default function ReportsPage() {
     return (
         <div className="space-y-8">
+             <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <GitCommitHorizontal className="h-6 w-6" />
+                    <h2 className="text-2xl font-bold tracking-tight">Vehicle Lifecycle</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <ReportCard title="Vehicle Lifecycle Report" description="A complete, top-to-bottom history of a single vehicle." href="/vehicle-management/reports/vehicle-lifecycle" />
+                </div>
+            </div>
+
+            <Separator />
+            
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
                     <Wrench className="h-6 w-6" />
