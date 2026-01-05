@@ -73,20 +73,6 @@ export function TripTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
-    if (id) {
-        setTrips(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
-        toast({ title: 'Success', description: 'Trip updated successfully.' });
-    } else {
-        const newTrip: Trip = {
-            id: Date.now().toString(),
-            ...data,
-        };
-        setTrips(prev => [...prev, newTrip]);
-        toast({ title: 'Success', description: 'Trip added successfully.' });
-    }
-  };
-
   const handleDelete = (trip: Trip) => {
     setCurrentTrip(trip);
     setIsDeleteConfirmOpen(true);
@@ -208,7 +194,6 @@ export function TripTable() {
       <TripEntryForm
         isOpen={isFormOpen}
         setIsOpen={setIsFormOpen}
-        onSave={handleSave}
         trip={currentTrip}
         vehicles={vehicles || []}
         drivers={drivers || []}
@@ -233,5 +218,7 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+
+    
 
     
