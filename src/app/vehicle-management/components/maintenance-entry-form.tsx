@@ -23,6 +23,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
 import type { ServiceCenter } from './service-center-table';
@@ -81,11 +83,6 @@ interface MaintenanceEntryFormProps {
   setIsOpen: (isOpen: boolean) => void;
   onSave: (record: Omit<MaintenanceRecord, 'id'>, id?: string) => void;
   record: Partial<MaintenanceRecord> | null;
-  vehicles: Vehicle[];
-  maintenanceTypes: MaintenanceType[];
-  serviceCenters: ServiceCenter[];
-  employees: Employee[];
-  maintenanceExpenseTypes: MaintenanceExpenseType[];
 }
 
 // Combobox Component
@@ -101,6 +98,7 @@ interface ComboboxProps<T> {
 
 function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
+  const currentItem = items.find((item) => item.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -111,8 +109,8 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {value
-            ? displayValue(items.find((item) => item.id === value)!)
+          {currentItem
+            ? displayValue(currentItem)
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -144,10 +142,30 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
   );
 }
 
+// Quick Add Dialogs
+const QuickAddDialog: React.FC<{
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSave: (data: any) => void;
+    title: string;
+    children: React.ReactNode;
+}> = ({ open, onOpenChange, onSave, title, children }) => {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+                <div className="py-4">{children}</div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={onSave}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
-export function MaintenanceEntryForm({ 
-    isOpen, setIsOpen, onSave, record, vehicles, maintenanceTypes, serviceCenters, employees, maintenanceExpenseTypes 
-}: MaintenanceEntryFormProps) {
+
+export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: MaintenanceEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [maintenanceData, setMaintenanceData] = useState(initialMaintenanceData);
@@ -158,6 +176,15 @@ export function MaintenanceEntryForm({
   const [serviceDate, setServiceDate] = useState<Date | undefined>();
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
 
+  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
+  const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
+
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState<string | null>(null);
+  const [quickAddData, setQuickAddData] = useState<any>({});
+  
   const isEditing = record && record.id;
   const progress = Math.round((step / 3) * 100);
 
@@ -225,6 +252,38 @@ export function MaintenanceEntryForm({
   }
   const removeDocument = (id: string) => setDocuments(d => d.filter(doc => doc.id !== id));
 
+  // Quick Add Handlers
+  const openQuickAdd = (type: string) => {
+      setQuickAddData({});
+      setIsQuickAddOpen(type);
+  }
+
+  const handleQuickAddSave = () => {
+    const { name, code } = quickAddData;
+    if (!name || (isQuickAddOpen !== 'employee' && !code)) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
+        return;
+    }
+    
+    const newItemId = Date.now().toString();
+    
+    switch(isQuickAddOpen) {
+        case 'maintenanceType':
+            const newType = { id: newItemId, name, code };
+            setMaintenanceTypes(prev => [...prev, newType]);
+            setMaintenanceData(prev => ({ ...prev, maintenanceTypeId: newItemId }));
+            toast({ title: 'Success', description: `Maintenance Type "${name}" added and selected.` });
+            break;
+        case 'serviceCenter':
+            const newCenter = { id: newItemId, name, code, ...quickAddData };
+            setServiceCenters(prev => [...prev, newCenter]);
+            setMaintenanceData(prev => ({ ...prev, serviceCenterId: newItemId }));
+            toast({ title: 'Success', description: `Service Center "${name}" added and selected.` });
+            break;
+    }
+    setIsQuickAddOpen(null);
+  };
+  
   const validateStep1 = () => {
     return maintenanceData.vehicleId && maintenanceData.maintenanceTypeId && maintenanceData.serviceDate && maintenanceData.serviceCenterId;
   }
@@ -254,6 +313,7 @@ export function MaintenanceEntryForm({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
@@ -267,10 +327,14 @@ export function MaintenanceEntryForm({
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Main Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Vehicle</Label><Combobox items={vehicles} value={maintenanceData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={v => v.registrationNumber} searchValue={v => `${v.registrationNumber} ${v.make} ${v.model}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found."/></div>
-                    <div className="space-y-2"><Label>Maintenance Type</Label><Select value={maintenanceData.maintenanceTypeId} onValueChange={handleSelectChange('maintenanceTypeId')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent>{maintenanceTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Service Center / Garage</Label><Select value={maintenanceData.serviceCenterId} onValueChange={handleSelectChange('serviceCenterId')}><SelectTrigger><SelectValue placeholder="Select Center"/></SelectTrigger><SelectContent>{serviceCenters.map(sc=><SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Monitoring Employee</Label><Combobox items={employees} value={maintenanceData.monitoringEmployeeId} onValueChange={handleSelectChange('monitoringEmployeeId')} displayValue={e => e.fullName} searchValue={e => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found."/></div>
+                    <div className="space-y-2"><Label>Vehicle</Label><Combobox items={vehicles} value={maintenanceData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.registrationNumber} searchValue={(v) => `${v.registrationNumber} ${v.make} ${v.model}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found."/></div>
+                    
+                    <div className="space-y-2"><Label>Maintenance Type</Label><div className="flex gap-2"><Select value={maintenanceData.maintenanceTypeId} onValueChange={handleSelectChange('maintenanceTypeId')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent>{maintenanceTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('maintenanceType')}><PlusCircle className="h-4 w-4" /></Button></div></div>
+                    
+                    <div className="space-y-2"><Label>Service Center / Garage</Label><div className="flex gap-2"><Select value={maintenanceData.serviceCenterId} onValueChange={handleSelectChange('serviceCenterId')}><SelectTrigger><SelectValue placeholder="Select Center"/></SelectTrigger><SelectContent>{serviceCenters.map(sc=><SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('serviceCenter')}><PlusCircle className="h-4 w-4" /></Button></div></div>
+
+                    <div className="space-y-2"><Label>Monitoring Employee</Label><Combobox items={employees} value={maintenanceData.monitoringEmployeeId} onSelect={handleSelectChange('monitoringEmployeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found."/></div>
+                    
                     <div className="space-y-2"><Label>Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{serviceDate?format(serviceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/></PopoverContent></Popover></div>
                     <div className="space-y-2"><Label>Upcoming Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/></PopoverContent></Popover></div>
                 </div>
@@ -345,6 +409,32 @@ export function MaintenanceEntryForm({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <QuickAddDialog
+        open={isQuickAddOpen === 'maintenanceType'}
+        onOpenChange={() => setIsQuickAddOpen(null)}
+        onSave={handleQuickAddSave}
+        title="Add New Maintenance Type"
+    >
+        <div className="space-y-4">
+            <div className="space-y-2"><Label>Name</Label><Input value={quickAddData.name || ''} onChange={(e) => setQuickAddData({...quickAddData, name: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Code</Label><Input value={quickAddData.code || ''} onChange={(e) => setQuickAddData({...quickAddData, code: e.target.value})} /></div>
+        </div>
+    </QuickAddDialog>
+
+    <QuickAddDialog
+        open={isQuickAddOpen === 'serviceCenter'}
+        onOpenChange={() => setIsQuickAddOpen(null)}
+        onSave={handleQuickAddSave}
+        title="Add New Service Center"
+    >
+        <div className="space-y-4">
+            <div className="space-y-2"><Label>Garage Name</Label><Input value={quickAddData.name || ''} onChange={(e) => setQuickAddData({...quickAddData, name: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Code</Label><Input value={quickAddData.code || ''} onChange={(e) => setQuickAddData({...quickAddData, code: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Owner Name</Label><Input value={quickAddData.ownerName || ''} onChange={(e) => setQuickAddData({...quickAddData, ownerName: e.target.value})} /></div>
+            <div className="space-y-2"><Label>Mobile Number</Label><Input value={quickAddData.mobileNumber || ''} onChange={(e) => setQuickAddData({...quickAddData, mobileNumber: e.target.value})} /></div>
+        </div>
+    </QuickAddDialog>
+    </>
   );
 }
-
