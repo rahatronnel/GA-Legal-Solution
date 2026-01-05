@@ -75,16 +75,22 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id' | 'tripId'>, id?: string) => {
     if (id) {
-      setTrips(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
-      toast({ title: 'Success', description: 'Trip updated successfully.' });
+        setTrips(prev => prev.map(t => {
+            if (t.id === id) {
+                // When updating, merge new data with existing data to preserve fields
+                return { ...t, ...data };
+            }
+            return t;
+        }));
+        toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
-      const newTrip: Trip = {
-        id: Date.now().toString(),
-        tripId: `TRIP-${Date.now()}`,
-        ...data,
-      };
-      setTrips(prev => [...prev, newTrip]);
-      toast({ title: 'Success', description: 'Trip added successfully.' });
+        const newTrip: Trip = {
+            id: Date.now().toString(),
+            tripId: `TRIP-${Date.now()}`,
+            ...data,
+        };
+        setTrips(prev => [...prev, newTrip]);
+        toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
 
@@ -234,3 +240,5 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+
+    
