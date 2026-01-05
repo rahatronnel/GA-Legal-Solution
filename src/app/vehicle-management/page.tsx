@@ -21,6 +21,7 @@ import { AccidentTable } from "./components/accident-table";
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
+import { DamageDetailTable } from "./components/damage-detail-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -122,6 +123,15 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <AccidentTable />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Damage Details</CardTitle>
+                        <CardDescription>Manage predefined categories for vehicle damage (e.g., Scratched Bumper).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <DamageDetailTable />
                     </CardContent>
                 </Card>
                 <Card>
