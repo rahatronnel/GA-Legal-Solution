@@ -31,11 +31,12 @@ import type { ServiceCenter } from './service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { MaintenanceExpenseType } from './maintenance-expense-type-table';
 import type { Driver } from './driver-entry-form';
+import type { Part as PartType } from './part-table';
 
 
 type Part = {
   id: string;
-  name: string;
+  partId: string;
   price: number;
   brand: string;
   quantity: number;
@@ -181,6 +182,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
 
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [allParts] = useLocalStorage<PartType[]>('parts', []);
   const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
@@ -191,6 +193,18 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   
   const isEditing = record && record.id;
   const progress = Math.round((step / 3) * 100);
+
+  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
+    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+      return '';
+    }
+
+    const sortedHistory = [...vehicle.driverAssignmentHistory]
+        .filter(h => new Date(h.effectiveDate) <= date)
+        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+
+    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -204,7 +218,6 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         setServiceDate(serviceDt);
         setUpcomingServiceDate(record.upcomingServiceDate ? parseISO(record.upcomingServiceDate) : undefined);
 
-        // Auto-fetch driver if not already set in record
         if (!record.driverId) {
              const selectedVehicle = vehicles.find(v => v.id === record.vehicleId);
             if (selectedVehicle && serviceDt) {
@@ -226,43 +239,34 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
     }
   }, [isOpen, record, isEditing, vehicles]);
 
-  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
-    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
-      return '';
-    }
-
-    const sortedHistory = [...vehicle.driverAssignmentHistory]
-        .filter(h => new Date(h.effectiveDate) <= date)
-        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
-
-    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
-  };
   
   const handleVehicleChange = (vehicleId: string) => {
-    setMaintenanceData(prev => ({ ...prev, vehicleId, driverId: '' })); // Reset driver
+    const newVehicleData = { ...maintenanceData, vehicleId, driverId: '' };
     const selectedVehicle = vehicles.find(v => v.id === vehicleId);
     if (selectedVehicle && serviceDate) {
         const driverId = getDriverForDate(selectedVehicle, serviceDate);
         if (driverId) {
-            setMaintenanceData(prev => ({ ...prev, driverId }));
+            newVehicleData.driverId = driverId;
         }
     }
+    setMaintenanceData(newVehicleData);
   }
   
   const handleServiceDateChange = (date: Date | undefined) => {
       setServiceDate(date);
       const dateString = date ? format(date, 'yyyy-MM-dd') : '';
-      setMaintenanceData(prev => ({ ...prev, serviceDate: dateString, driverId: '' }));
+      const newVehicleData = { ...maintenanceData, serviceDate: dateString, driverId: '' };
 
       if (maintenanceData.vehicleId && date) {
           const selectedVehicle = vehicles.find(v => v.id === maintenanceData.vehicleId);
           if (selectedVehicle) {
               const driverId = getDriverForDate(selectedVehicle, date);
                if (driverId) {
-                    setMaintenanceData(prev => ({ ...prev, driverId }));
+                    newVehicleData.driverId = driverId;
                 }
           }
       }
+      setMaintenanceData(newVehicleData);
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -288,10 +292,23 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   }
 
   // Parts handlers
-  const addPart = () => setParts(p => [...p, {id: Date.now().toString(), name: '', price: 0, brand: '', quantity: 1, warranty: '', expiryDate: ''}])
-  const updatePart = (id: string, field: keyof Omit<Part, 'id'>, value: string | number) => {
-    setParts(p => p.map(part => part.id === id ? {...part, [field]: value} : part));
-  }
+  const addPart = () => setParts(p => [...p, {id: Date.now().toString(), partId: '', price: 0, brand: '', quantity: 1, warranty: '', expiryDate: ''}])
+  const updatePart = (id: string, field: keyof Part, value: string | number) => {
+    setParts(p => p.map(part => {
+        if (part.id === id) {
+            const updatedPart = { ...part, [field]: value };
+            if (field === 'partId') {
+                const selectedPart = allParts.find(ap => ap.id === value);
+                if (selectedPart) {
+                    updatedPart.price = selectedPart.price;
+                    updatedPart.brand = selectedPart.brand;
+                }
+            }
+            return updatedPart;
+        }
+        return part;
+    }));
+  };
   const removePart = (id: string) => setParts(p => p.filter(part => part.id !== id));
 
   // Expense handlers
@@ -402,7 +419,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                     <div className="space-y-2"><Label>Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{serviceDate?format(serviceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/></PopoverContent></Popover></div>
                     <div className="space-y-2"><Label>Upcoming Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/></PopoverContent></Popover></div>
                     
-                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')} disabled={!drivers.length}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description / Remarks</Label>
@@ -418,9 +435,19 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                     <div className="space-y-3">
                         {parts.map((part) => (
                             <div key={part.id} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-center p-2 rounded-md border">
-                                <Input placeholder="Part Name" value={part.name} onChange={(e) => updatePart(part.id, 'name', e.target.value)} className="md:col-span-2" />
-                                <Input placeholder="Brand" value={part.brand} onChange={(e) => updatePart(part.id, 'brand', e.target.value)} />
-                                <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} />
+                                <div className="md:col-span-2">
+                                  <Combobox
+                                      items={allParts}
+                                      value={part.partId}
+                                      onSelect={(value) => updatePart(part.id, 'partId', value)}
+                                      displayValue={(p) => p.name}
+                                      searchValue={(p) => `${p.name} ${p.code}`}
+                                      placeholder="Select Part..."
+                                      emptyMessage="No part found."
+                                  />
+                                </div>
+                                <Input placeholder="Brand" value={part.brand} onChange={(e) => updatePart(part.id, 'brand', e.target.value)} disabled />
+                                <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} disabled />
                                 <Input placeholder="Qty" type="number" value={part.quantity} onChange={(e) => updatePart(part.id, 'quantity', parseInt(e.target.value) || 0)} />
                                 <Input placeholder="Warranty" value={part.warranty} onChange={(e) => updatePart(part.id, 'warranty', e.target.value)} />
                                 <Button variant="ghost" size="icon" onClick={() => removePart(part.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>

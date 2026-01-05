@@ -12,12 +12,13 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-import type { MaintenanceRecord } from '../components/maintenance-entry-form';
+import type { MaintenanceRecord, Part } from '../components/maintenance-entry-form';
 import type { Vehicle } from '../components/vehicle-table';
 import type { MaintenanceType } from '../components/maintenance-type-table';
 import type { ServiceCenter } from '../components/service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { MaintenanceExpenseType } from '../components/maintenance-expense-type-table';
+import type { Part as PartType } from '../components/part-table';
 
 
 const DocumentViewer = ({ doc, label }: { doc: {label: string, file: string}; label: string }) => {
@@ -71,6 +72,7 @@ export default function MaintenanceProfilePage() {
 
   const [records] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [allParts] = useLocalStorage<PartType[]>('parts', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [employees] = useLocalStorage<Employee[]>('employees', []);
@@ -98,6 +100,7 @@ export default function MaintenanceProfilePage() {
   }, [record, vehicles, maintenanceTypes, serviceCenters, employees]);
   
   const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find(et => et.id === id)?.name || 'N/A';
+  const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'N/A';
 
   if (!record) return <div className="flex justify-center items-center h-full"><p>Loading maintenance record...</p></div>;
 
@@ -157,7 +160,7 @@ export default function MaintenanceProfilePage() {
                         <TableBody>
                             {record.parts.map(part => (
                                 <TableRow key={part.id}>
-                                    <TableCell>{part.name}</TableCell>
+                                    <TableCell>{getPartName(part.partId)}</TableCell>
                                     <TableCell>{part.brand}</TableCell>
                                     <TableCell>{part.quantity}</TableCell>
                                     <TableCell>{part.price.toLocaleString('en-US', { style: 'currency', currency: 'USD'})}</TableCell>
@@ -205,4 +208,3 @@ export default function MaintenanceProfilePage() {
     </div>
   );
 }
-
