@@ -82,6 +82,18 @@ body {
     size: A4;
     margin: 1cm;
   }
+  body * {
+    visibility: hidden;
+  }
+  #report-content, #report-content * {
+    visibility: visible;
+  }
+  #report-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -90,5 +102,8 @@ body {
     width: 100%;
     height: 100%;
     position: relative;
+  }
+  .print-no-break {
+    page-break-inside: avoid;
   }
 }

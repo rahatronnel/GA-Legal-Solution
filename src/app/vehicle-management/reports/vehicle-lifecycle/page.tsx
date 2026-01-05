@@ -9,7 +9,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check, DollarSign } from 'lucide-react';
+import { Printer, Car, Users, Calendar, Fuel, Hash, Building, GitCommitHorizontal, Wrench, AlertTriangle, Route, ChevronsUpDown, Check, DollarSign, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -39,7 +39,7 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
 );
 
 const Section: React.FC<{icon: React.ElementType, title: string, children: React.ReactNode}> = ({icon: Icon, title, children}) => (
-    <Card className="print:border-none print:shadow-none print:break-before-page">
+    <Card className="print:border-none print:shadow-none print-no-break">
         <CardHeader>
             <div className="flex items-center gap-3">
                 <Icon className="h-6 w-6" />
@@ -91,16 +91,22 @@ export default function VehicleLifecycleReportPage() {
         const brand = brands.find(b => b.id === vehicle.brandId);
 
         const allPhotos: { src: string, label: string }[] = [];
-        vehicleMaintenance.forEach(m => {
-            if (m.documents && m.documents.beforeAfterPhotos) {
-                m.documents.beforeAfterPhotos.forEach(p => allPhotos.push({ src: p.file, label: `Maintenance ${m.serviceDate}: ${p.name}` }));
+        const processDocuments = (docs: any, prefix: string) => {
+            if (!docs) return;
+            for (const key in docs) {
+                if (Array.isArray(docs[key])) {
+                    docs[key].forEach((doc: any) => {
+                         if (doc.file && doc.file.startsWith('data:image/')) {
+                            allPhotos.push({ src: doc.file, label: `${prefix}: ${doc.name}` });
+                        }
+                    })
+                }
             }
-        });
-        vehicleAccidents.forEach(a => {
-            if (a.documents && a.documents.accidentPhotos) {
-                a.documents.accidentPhotos.forEach(p => allPhotos.push({ src: p.file, label: `Accident ${a.accidentDate}: ${p.name}` }));
-            }
-        });
+        };
+
+        vehicleMaintenance.forEach(m => processDocuments(m.documents, `Maint. ${m.serviceDate}`));
+        vehicleAccidents.forEach(a => processDocuments(a.documents, `Acc. ${a.accidentDate}`));
+
 
         setReportData({
             vehicle,
@@ -270,11 +276,11 @@ export default function VehicleLifecycleReportPage() {
                         </Table>
                     </Section>
 
-                    <Section icon={Image} title="Associated Photos">
+                    <Section icon={ImageIcon} title="Associated Photos">
                         {reportData.allPhotos.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {reportData.allPhotos.map((photo: {src: string, label: string}, index: number) => (
-                                    <div key={index} className="border rounded-lg overflow-hidden group">
+                                    <div key={index} className="border rounded-lg overflow-hidden group print-no-break">
                                         <div className="w-full aspect-video bg-muted relative">
                                             <Image src={photo.src} alt={photo.label} layout="fill" className="object-cover" />
                                         </div>
