@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Search, Eye, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, Printer } from 'lucide-react';
 import { VehicleEntryForm, type Vehicle } from './vehicle-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,7 @@ import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
 import { format, parseISO } from 'date-fns';
 import type { VehicleBrand } from './vehicle-brand-table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type VehicleType = {
   id: string;
@@ -36,7 +38,12 @@ const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
     if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
         return null;
     }
-    const sortedHistory = [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+    const sortedHistory = [...vehicle.driverAssignmentHistory]
+      .filter(h => h.effectiveDate && h.driverId)
+      .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+    
+    if (sortedHistory.length === 0) return null;
+
     const latestAssignment = sortedHistory[0];
     return drivers.find(d => d.id === latestAssignment.driverId) || null;
 };
@@ -54,7 +61,12 @@ export function VehicleTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Partial<Vehicle> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // State for filters
+  const [ownershipFilter, setOwnershipFilter] = useState('');
+  const [driverFilter, setDriverFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     // Faking a loading state
@@ -63,16 +75,24 @@ export function VehicleTable() {
   }, []);
   
   const filteredVehicles = useMemo(() => {
-    if (!searchTerm) return vehicles;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    const getBrandName = (brandId: string) => vehicleBrands.find(b => b.id === brandId)?.name || '';
-    return vehicles.filter(vehicle => 
-      (vehicle.vehicleIdCode && vehicle.vehicleIdCode.toLowerCase().includes(lowercasedTerm)) ||
-      (vehicle.registrationNumber && vehicle.registrationNumber.toLowerCase().includes(lowercasedTerm)) ||
-      (getBrandName(vehicle.brandId).toLowerCase().includes(lowercasedTerm)) ||
-      (vehicle.model && vehicle.model.toLowerCase().includes(lowercasedTerm))
-    );
-  }, [vehicles, searchTerm, vehicleBrands]);
+    return vehicles.filter(vehicle => {
+      const currentDriver = getCurrentDriver(vehicle, drivers);
+
+      if (ownershipFilter && vehicle.ownership !== ownershipFilter) {
+        return false;
+      }
+      if (driverFilter && currentDriver?.id !== driverFilter) {
+        return false;
+      }
+      if (categoryFilter && vehicle.vehicleTypeId !== categoryFilter) {
+        return false;
+      }
+      if (statusFilter && vehicle.status !== statusFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [vehicles, drivers, ownershipFilter, driverFilter, categoryFilter, statusFilter]);
 
 
   const handleAdd = () => {
@@ -95,7 +115,12 @@ export function VehicleTable() {
         }));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
-        const newVehicle: Vehicle = { id: Date.now().toString(), ...data };
+        const newVehicle: Vehicle = { 
+          id: Date.now().toString(), 
+          ...data,
+          driverAssignmentHistory: data.driverAssignmentHistory || [],
+          documents: data.documents || { registration: '', insurance: '', fitness: '', taxToken: '', routePermit: '', other: '' },
+        };
         setVehicles(prev => [...prev, newVehicle]);
         toast({ title: 'Success', description: 'Vehicle added successfully.' });
     }
@@ -217,25 +242,46 @@ export function VehicleTable() {
             <CardDescription>Manage all vehicles in your organization.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search by ID, Reg. No..."
-                  className="w-full rounded-lg bg-background pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                  <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
-                  <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-                  <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" /> Upload
-                  </label>
-                  <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-              </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Ownership..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Ownerships</SelectItem>
+                  <SelectItem value="Company">Company</SelectItem>
+                  <SelectItem value="Rental">Rental</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={driverFilter} onValueChange={setDriverFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Drivers</SelectItem>
+                  {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Category..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  {vehicleTypes.map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Status..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 mb-4">
+              <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
+              <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+              <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                  <Upload className="mr-2 h-4 w-4" /> Upload
+              </label>
+              <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
             </div>
           <div className="border rounded-lg">
             <Table>
@@ -307,7 +353,7 @@ export function VehicleTable() {
                 ) : (
                     <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                       {searchTerm ? `No vehicles found for "${searchTerm}".` : "No vehicles found."}
+                       No vehicles found for the selected filters.
                     </TableCell>
                     </TableRow>
                 )}
