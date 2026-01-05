@@ -7,13 +7,20 @@ import { VehicleAccidentReport } from '../components/reports/VehicleAccidentRepo
 import { DriverAccidentReport } from '../components/reports/DriverAccidentReport';
 import { AccidentCostSummary } from '../components/reports/AccidentCostSummary';
 import { AccidentFrequencyChart } from '../components/reports/AccidentFrequencyChart';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Construction, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
+import { MaintenanceCostSummary } from '../components/reports/MaintenanceCostSummary';
+import { PreventiveMaintenanceDueReport } from '../components/reports/PreventiveMaintenanceDueReport';
+import { VehicleMaintenanceReport } from '../components/reports/VehicleMaintenanceReport';
+import { SparePartsUsageReport } from '../components/reports/SparePartsUsageReport';
+import { WorkshopPerformanceReport } from '../components/reports/WorkshopPerformanceReport';
+
 
 export default function ReportsPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
              <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" className="h-7 w-7" asChild>
                     <Link href="/vehicle-management">
@@ -22,11 +29,31 @@ export default function ReportsPage() {
                     </Link>
                 </Button>
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                   Accident Reports
+                   Reports Dashboard
                 </h1>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <Construction className="h-6 w-6" />
+                    <h2 className="text-2xl font-bold tracking-tight">Maintenance Reports</h2>
+                </div>
+
+                <MaintenanceCostSummary />
+                <PreventiveMaintenanceDueReport />
+                <VehicleMaintenanceReport />
+                <SparePartsUsageReport />
+                <WorkshopPerformanceReport />
+            </div>
+
+            <Separator />
+            
+            <div className="space-y-6">
+                 <div className="flex items-center gap-4">
+                    <Wrench className="h-6 w-6" />
+                    <h2 className="text-2xl font-bold tracking-tight">Accident Reports</h2>
+                </div>
+                
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Accident Frequency (Monthly)</CardTitle>
