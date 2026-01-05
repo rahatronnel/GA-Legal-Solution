@@ -39,7 +39,10 @@ const initialSettings: OrganizationSettings = {
 
 const ALL_LOCALSTORAGE_KEYS = [
     'organizationSettings', 'designations', 'sections', 'employees',
-    'drivers', 'vehicles', 'locations', 'routes', 'tripPurposes', 'trips', 'vehicleTypes'
+    'drivers', 'vehicles', 'locations', 'routes', 'tripPurposes', 'trips', 
+    'vehicleTypes', 'vehicleBrands', 'expenseTypes', 'maintenanceTypes', 
+    'maintenanceExpenseTypes', 'serviceCenters', 'parts', 'maintenanceRecords',
+    'accidents', 'accidentTypes', 'severityLevels', 'faultStatuses'
 ];
 
 export default function SettingsPage() {
