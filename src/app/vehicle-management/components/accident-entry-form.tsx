@@ -265,25 +265,33 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   
   // Document handlers
   const handleFileChange = (docType: AccidentDocumentType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-     if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const newFiles: UploadedFile[] = [];
+
+      for (const file of files) {
         const reader = new FileReader();
-        reader.onload = () => {
-            const newFile: UploadedFile = {
-                id: Date.now().toString(),
-                name: file.name,
-                file: reader.result as string,
-            };
-            setDocuments(prev => ({
-                ...prev,
-                [docType]: [...prev[docType], newFile]
-            }));
-        };
+        const filePromise = new Promise<UploadedFile>(resolve => {
+          reader.onload = () => {
+            resolve({
+              id: Date.now().toString() + Math.random(),
+              name: file.name,
+              file: reader.result as string,
+            });
+          };
+        });
         reader.readAsDataURL(file);
+        newFiles.push(await filePromise);
+      }
+
+      setDocuments(prev => ({
+        ...prev,
+        [docType]: [...prev[docType], ...newFiles]
+      }));
     }
     e.target.value = ''; // Reset file input
   };
-  
+
   const removeDocument = (docType: AccidentDocumentType, fileId: string) => {
     setDocuments(prev => ({
         ...prev,
@@ -463,7 +471,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                                 <div className="flex justify-between items-center">
                                     <Label className="font-medium">{documentCategories[docType]}</Label>
                                     <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
-                                        Add File
+                                        Add File(s)
                                     </Label>
                                     <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple onChange={handleFileChange(docType)} />
                                 </div>
@@ -499,5 +507,3 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     </Dialog>
   );
 }
-
-    
