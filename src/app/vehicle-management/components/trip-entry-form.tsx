@@ -291,10 +291,9 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
         return;
     }
-    const tripId = isEditing && trip?.tripId ? trip.tripId : `TRIP-${Date.now()}`;
     const dataToSave: Omit<Trip, 'id'> = {
         ...tripData,
-        tripId: tripId!,
+        tripId: isEditing && trip?.tripId ? trip.tripId : `TRIP-${Date.now()}`,
         expenses,
         documents: docPreviews,
     };
@@ -310,7 +309,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Trip' : 'Add New Trip'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? `Update details for trip ${trip.tripId}` : 'Follow the steps to record a new trip.'}
+            {isEditing ? `Update details for trip ${trip?.tripId}` : 'Follow the steps to record a new trip.'}
           </DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
