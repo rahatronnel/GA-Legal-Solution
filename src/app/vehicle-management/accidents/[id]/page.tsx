@@ -7,7 +7,7 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark } from 'lucide-react';
+import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,6 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
 import type { Driver } from '../../components/driver-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Route as RouteType } from '../../components/route-table';
+import type { Trip } from '../../components/trip-entry-form';
 import type { AccidentType } from '../../components/accident-type-table';
 import type { SeverityLevel } from '../../components/severity-level-table';
 import type { FaultStatus } from '../../components/fault-status-table';
@@ -72,6 +75,9 @@ export default function AccidentProfilePage() {
   const [accidents] = useLocalStorage<Accident[]>('accidents', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [employees] = useLocalStorage<Employee[]>('employees', []);
+  const [routes] = useLocalStorage<RouteType[]>('routes', []);
+  const [trips] = useLocalStorage<Trip[]>('trips', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
   const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
   const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
@@ -88,18 +94,21 @@ export default function AccidentProfilePage() {
     }
   }, [id, accidents]);
 
-  const { vehicle, driver, accidentType, severityLevel, faultStatus, damageDetailNames, repairedBy } = useMemo(() => {
+  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, damageDetailNames, repairedBy } = useMemo(() => {
     if (!accident) return {};
     return {
         vehicle: vehicles.find(v => v.id === accident.vehicleId),
         driver: drivers.find(d => d.id === accident.driverId),
+        employee: employees.find(e => e.id === accident.employeeId),
+        route: routes.find(r => r.id === accident.routeId),
+        trip: trips.find(t => t.id === accident.tripId),
         accidentType: accidentTypes.find(t => t.id === accident.accidentTypeId),
         severityLevel: severityLevels.find(sl => sl.id === accident.severityLevelId),
         faultStatus: faultStatuses.find(fs => fs.id === accident.faultStatusId),
         damageDetailNames: accident.damageDetailIds?.map(id => damageDetails.find(dd => dd.id === id)?.name).filter(Boolean) || [],
         repairedBy: serviceCenters.find(sc => sc.id === accident.repairedById)
     };
-  }, [accident, vehicles, drivers, accidentTypes, severityLevels, faultStatuses, damageDetails, serviceCenters]);
+  }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, damageDetails, serviceCenters]);
   
 
   if (!accident) return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
@@ -112,7 +121,7 @@ export default function AccidentProfilePage() {
       
       <Card>
         <CardHeader>
-            <CardTitle className="text-3xl">Accident Record</CardTitle>
+            <CardTitle className="text-3xl">Accident Record: {accident.accidentId}</CardTitle>
             <CardDescription>Vehicle: {vehicle?.registrationNumber || 'N/A'} on {accident.accidentDate}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,9 +140,12 @@ export default function AccidentProfilePage() {
                     <ul className="space-y-4 text-sm">
                         <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
                         <InfoItem icon={User} label="Driver" value={driver?.name} />
+                        <InfoItem icon={User} label="Reporting Employee" value={employee?.fullName} />
                         <InfoItem icon={Calendar} label="Accident Date" value={accident.accidentDate} />
                         <InfoItem icon={Clock} label="Accident Time" value={accident.accidentTime} />
                         <InfoItem icon={MapPin} label="Location" value={accident.location} />
+                        <InfoItem icon={Route} label="Route" value={route?.name} />
+                        <InfoItem icon={Fingerprint} label="Trip ID" value={trip?.tripId} />
                         <InfoItem icon={Text} label="Description" value={accident.description} />
                     </ul>
                 </div>

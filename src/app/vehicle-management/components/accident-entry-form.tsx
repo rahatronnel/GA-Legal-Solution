@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,21 +26,17 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Route } from './route-table';
+import type { Trip } from './trip-entry-form';
 import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
 import type { DamageDetail } from './damage-detail-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
-
-type DocType = 'accidentPhotos' | 'policeReport' | 'repairInvoice' | 'insuranceClaim';
-const documentLabels: Record<DocType, string> = {
-    accidentPhotos: 'Accident Photos',
-    policeReport: 'Police Report',
-    repairInvoice: 'Repair Invoice',
-    insuranceClaim: 'Insurance Claim Document'
-}
 
 type AccidentDocument = {
   id: string;
@@ -50,14 +46,18 @@ type AccidentDocument = {
 
 export type Accident = {
   id: string;
+  accidentId: string; // Auto-generated
   vehicleId: string;
   driverId: string;
+  employeeId: string;
   accidentDate: string;
   accidentTime: string;
   location: string;
   accidentTypeId: string;
   severityLevelId: string;
   faultStatusId: string;
+  routeId: string;
+  tripId: string;
   damageDetailIds: string[];
   description: string;
   
@@ -80,15 +80,18 @@ export type Accident = {
   documents: AccidentDocument[];
 };
 
-const initialAccidentData: Omit<Accident, 'id' | 'damageDetailIds' | 'documents'> = {
+const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'damageDetailIds' | 'documents'> = {
   vehicleId: '',
   driverId: '',
+  employeeId: '',
   accidentDate: '',
   accidentTime: '',
   location: '',
   accidentTypeId: '',
   severityLevelId: '',
   faultStatusId: '',
+  routeId: '',
+  tripId: '',
   description: '',
 
   estimatedRepairCost: 0,
@@ -104,6 +107,63 @@ const initialAccidentData: Omit<Accident, 'id' | 'damageDetailIds' | 'documents'
   insuranceClaimNumber: '',
   insuranceCompany: '',
 };
+
+// Combobox Component
+interface ComboboxProps<T> {
+  items: T[];
+  value: string;
+  onSelect: (value: string) => void;
+  displayValue: (item: T) => string;
+  searchValue: (item: T) => string;
+  placeholder: string;
+  emptyMessage: string;
+}
+
+function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage }: ComboboxProps<T>) {
+  const [open, setOpen] = useState(false);
+  const currentItem = items.find((item) => item.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          {currentItem
+            ? displayValue(currentItem)
+            : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={placeholder} />
+          <CommandEmpty>{emptyMessage}</CommandEmpty>
+          <CommandList>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={searchValue(item)}
+                  onSelect={() => {
+                    onSelect(item.id === value ? '' : item.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === item.id ? "opacity-100" : "opacity-0")} />
+                  {displayValue(item)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface AccidentEntryFormProps {
   isOpen: boolean;
@@ -123,6 +183,9 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
 
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [employees] = useLocalStorage<Employee[]>('employees', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [trips] = useLocalStorage<Trip[]>('trips', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
   const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
   const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
@@ -131,6 +194,9 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   
   const isEditing = accident && accident.id;
   const progress = Math.round((step / 4) * 100);
+
+  const selectedVehicle = React.useMemo(() => vehicles.find(v => v.id === accidentData.vehicleId), [accidentData.vehicleId, vehicles]);
+  const selectedDriver = React.useMemo(() => drivers.find(d => d.id === accidentData.driverId), [accidentData.driverId, drivers]);
 
   useEffect(() => {
     if (isOpen) {
@@ -158,6 +224,10 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const handleSelectChange = (id: keyof typeof accidentData) => (value: string) => {
     setAccidentData(prev => ({ ...prev, [id]: value }));
   };
+  
+  const handleComboboxChange = (id: keyof typeof accidentData) => (value: string) => {
+      setAccidentData(prev => ({...prev, [id]: value}));
+  }
 
   const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof typeof accidentData) => (date: Date | undefined) => {
       setter(date);
@@ -209,8 +279,10 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields in Step 1.' });
         return;
     }
+    const accidentId = isEditing && accident?.id ? accident.accidentId : `ACC-${Date.now()}`;
     const dataToSave: Omit<Accident, 'id'> = {
         ...accidentData,
+        accidentId,
         damageDetailIds,
         documents
     };
@@ -222,7 +294,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Accident Record' : 'Add Accident Record'}</DialogTitle>
+          <DialogTitle>{isEditing ? `Edit Accident: ${accident?.accidentId}` : 'Add Accident Record'}</DialogTitle>
           <DialogDescription>Follow the steps to log a vehicle accident.</DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
@@ -231,16 +303,59 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Accident Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2"><Label>Vehicle</Label><Select value={accidentData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{vehicles.map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Driver</Label><Select value={accidentData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Accident Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent></Popover></div>
-                    <div className="space-y-2"><Label>Accident Time</Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
-                    <div className="space-y-2 col-span-2"><Label>Location</Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Vehicle ID</Label>
+                    <Combobox items={vehicles} value={accidentData.vehicleId} onSelect={handleComboboxChange('vehicleId')} displayValue={(v) => v.vehicleIdCode} searchValue={(v) => `${v.vehicleIdCode} ${v.registrationNumber}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found." />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vehicle Registration</Label>
+                    <Input value={selectedVehicle?.registrationNumber || ''} disabled />
+                  </div>
+                   <div className="space-y-2">
+                    <Label>Employee</Label>
+                    <Combobox items={employees} value={accidentData.employeeId} onSelect={handleComboboxChange('employeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found." />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label>Driver ID</Label>
+                         <Combobox items={drivers} value={accidentData.driverId} onSelect={handleComboboxChange('driverId')} displayValue={(d) => d.driverIdCode} searchValue={(d) => `${d.name} ${d.driverIdCode}`} placeholder="Select Driver..." emptyMessage="No driver found." />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Driver Name</Label>
+                        <Input value={selectedDriver?.name || ''} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Driver License Number</Label>
+                        <Input value={selectedDriver?.drivingLicenseNumber || ''} disabled />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label>Accident Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent></Popover></div>
+                  <div className="space-y-2"><Label>Accident Time</Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
+                  <div className="space-y-2"><Label>Accident Location</Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
+                </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2"><Label>Accident Type</Label><Select value={accidentData.accidentTypeId} onValueChange={handleSelectChange('accidentTypeId')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent>{accidentTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
                     <div className="space-y-2"><Label>Severity Level</Label><Select value={accidentData.severityLevelId} onValueChange={handleSelectChange('severityLevelId')}><SelectTrigger><SelectValue placeholder="Select Level"/></SelectTrigger><SelectContent>{severityLevels.map(sl=><SelectItem key={sl.id} value={sl.id}>{sl.name}</SelectItem>)}</SelectContent></Select></div>
                     <div className="space-y-2"><Label>Fault Status</Label><Select value={accidentData.faultStatusId} onValueChange={handleSelectChange('faultStatusId')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent>{faultStatuses.map(fs=><SelectItem key={fs.id} value={fs.id}>{fs.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                        <Label>Route (Optional)</Label>
+                        <Combobox items={routes} value={accidentData.routeId} onSelect={handleComboboxChange('routeId')} displayValue={(r) => r.name} searchValue={(r) => `${r.name} ${r.routeCode}`} placeholder="Select Route..." emptyMessage="No route found." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Trip ID (Optional)</Label>
+                        <Combobox items={trips} value={accidentData.tripId} onSelect={handleComboboxChange('tripId')} displayValue={(t) => t.tripId} searchValue={(t) => `${t.tripId}`} placeholder="Select Trip..." emptyMessage="No trip found." />
+                    </div>
+                 </div>
+
                  <div className="space-y-2">
                   <Label>Damage Details</Label>
                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border p-4 rounded-md">
@@ -275,7 +390,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                 <h3 className="font-semibold text-lg">Step 3: Legal & Insurance</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 p-4 border rounded-md">
-                        <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={accidentData.policeReportFiled} onCheckedChange={handleCheckboxChange('policeReportFiled')} /><Label htmlFor="policeReportFiled">Police Report Filed?</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={accidentData.policeReportFiled} onCheckedChange={(checked) => handleCheckboxChange('policeReportFiled')(checked as boolean)} /><Label htmlFor="policeReportFiled">Police Report Filed?</Label></div>
                         {accidentData.policeReportFiled && (
                             <div className="space-y-4 pl-6 pt-2">
                                 <div className="space-y-2"><Label>Police Report Number</Label><Input id="policeReportNumber" value={accidentData.policeReportNumber} onChange={handleInputChange}/></div>
@@ -284,7 +399,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                         )}
                     </div>
                      <div className="space-y-4 p-4 border rounded-md">
-                        <div className="flex items-center space-x-2"><Checkbox id="insuranceClaimFiled" checked={accidentData.insuranceClaimFiled} onCheckedChange={handleCheckboxChange('insuranceClaimFiled')} /><Label htmlFor="insuranceClaimFiled">Insurance Claim Filed?</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="insuranceClaimFiled" checked={accidentData.insuranceClaimFiled} onCheckedChange={(checked) => handleCheckboxChange('insuranceClaimFiled')(checked as boolean)} /><Label htmlFor="insuranceClaimFiled">Insurance Claim Filed?</Label></div>
                          {accidentData.insuranceClaimFiled && (
                             <div className="space-y-4 pl-6 pt-2">
                                 <div className="space-y-2"><Label>Insurance Claim Number</Label><Input id="insuranceClaimNumber" value={accidentData.insuranceClaimNumber} onChange={handleInputChange}/></div>
@@ -307,7 +422,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                                 </Label>
                                 <Input id={`file-upload-${doc.id}`} type="file" className="hidden" onChange={handleFileChange(doc.id)} />
                                  <div className="flex items-center gap-2">
-                                    {doc.file && <span className="text-xs text-muted-foreground truncate">File uploaded</span>}
+                                    {doc.file && <span className="text-xs text-muted-foreground truncate max-w-xs">File uploaded</span>}
                                     <Button variant="ghost" size="icon" onClick={() => removeDocument(doc.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                                 </div>
                             </div>

@@ -53,7 +53,8 @@ export function AccidentTable() {
     return accidents.filter(acc => 
       getVehicleReg(acc.vehicleId).toLowerCase().includes(lowercasedTerm) ||
       getDriverName(acc.driverId).toLowerCase().includes(lowercasedTerm) ||
-      getAccidentTypeName(acc.accidentTypeId).toLowerCase().includes(lowercasedTerm)
+      getAccidentTypeName(acc.accidentTypeId).toLowerCase().includes(lowercasedTerm) ||
+      (acc.accidentId && acc.accidentId.toLowerCase().includes(lowercasedTerm))
     );
   }, [accidents, searchTerm, vehicles, drivers, accidentTypes]);
 
@@ -114,6 +115,7 @@ export function AccidentTable() {
         <Table>
             <TableHeader>
             <TableRow>
+                <TableHead>Accident ID</TableHead>
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Driver</TableHead>
                 <TableHead>Accident Type</TableHead>
@@ -123,10 +125,11 @@ export function AccidentTable() {
             </TableHeader>
             <TableBody>
             {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredAccidents && filteredAccidents.length > 0 ? (
                 filteredAccidents.map((accident) => (
                 <TableRow key={accident.id}>
+                    <TableCell>{accident.accidentId}</TableCell>
                     <TableCell>{getVehicleReg(accident.vehicleId)}</TableCell>
                     <TableCell>{getDriverName(accident.driverId)}</TableCell>
                     <TableCell>{getAccidentTypeName(accident.accidentTypeId)}</TableCell>
@@ -141,7 +144,7 @@ export function AccidentTable() {
                 </TableRow>
                 ))
             ) : (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center">{searchTerm ? `No records found for "${searchTerm}".` : "No accident records found."}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center">{searchTerm ? `No records found for "${searchTerm}".` : "No accident records found."}</TableCell></TableRow>
             )}
             </TableBody>
         </Table>
@@ -158,7 +161,7 @@ export function AccidentTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
-            <DialogDescription>This action cannot be undone. This will permanently delete the accident record.</DialogDescription>
+            <DialogDescription>This action cannot be undone. This will permanently delete the accident record for "{currentItem?.accidentId}".</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
@@ -169,4 +172,3 @@ export function AccidentTable() {
     </TooltipProvider>
   );
 }
-
