@@ -97,19 +97,16 @@ export default function AccidentProfilePage() {
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (id && accidents) {
+    if (id && accidents.length > 0) {
       const foundRecord = accidents.find(t => t.id === id);
       if (foundRecord) {
         setAccident(foundRecord);
-      } else if (accidents.length > 0) {
-        const timer = setTimeout(() => {
-          const recheck = accidents.find(t => t.id === id);
-          if(!recheck) notFound();
-        }, 500); 
-        return () => clearTimeout(timer);
+      } else {
+        // If it's not found after the initial load and list has items, it's a 404
+        notFound();
       }
     }
-  }, [id, accidents]);
+  }, [id, accidents, notFound]);
 
 
   const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
@@ -130,6 +127,12 @@ export default function AccidentProfilePage() {
 
   if (accident === undefined) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
+  }
+  
+  if (accident === null) {
+      // This state can be hit if the record is not found initially
+      // The useEffect will call notFound(), but this is a fallback.
+      return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
 
   const formatCurrency = (amount: number | undefined) => {
@@ -242,5 +245,6 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
+    
 
     
