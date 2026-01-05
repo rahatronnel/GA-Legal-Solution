@@ -169,7 +169,7 @@ export default function VehicleLifecycleReportPage() {
 
     return (
         <div className="space-y-6">
-            <Card className="print:hidden">
+            <Card>
                 <CardHeader>
                     <CardTitle>Vehicle Lifecycle Report</CardTitle>
                     <CardDescription>Select a vehicle to generate its complete history report.</CardDescription>
@@ -206,7 +206,7 @@ export default function VehicleLifecycleReportPage() {
             </Card>
 
             {reportData && (
-                <div className="p-4 print:p-0 space-y-6" id="report-content">
+                <div id="report-content" className="space-y-6">
                     <Card className="print:border-none print:shadow-none">
                         <CardHeader>
                             <div className="flex flex-col items-center text-center">

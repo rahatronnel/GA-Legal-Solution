@@ -52,13 +52,26 @@ export const PrintDriver = () => {
     return null;
   }
 
+  const renderContent = () => {
+      switch(printType) {
+          case 'driver':
+              return <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} />;
+          case 'vehicle':
+              return <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} />;
+          case 'employee':
+              return <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />;
+          case 'trip':
+              return <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />;
+          case 'accident':
+              return <AccidentPrintLayout accident={itemToPrint as Accident} vehicles={vehicles} drivers={drivers} employees={employees} routes={routes} trips={trips} accidentTypes={accidentTypes} severityLevels={severityLevels} faultStatuses={faultStatuses} repairedBy={serviceCenters} />;
+          default:
+              return null;
+      }
+  }
+
   return (
-    <div className="hidden print:block">
-      {printType === 'driver' && <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} />}
-      {printType === 'vehicle' && <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} />}
-      {printType === 'employee' && <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />}
-      {printType === 'trip' && <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />}
-      {printType === 'accident' && <AccidentPrintLayout accident={itemToPrint as Accident} vehicles={vehicles} drivers={drivers} employees={employees} routes={routes} trips={trips} accidentTypes={accidentTypes} severityLevels={severityLevels} faultStatuses={faultStatuses} repairedBy={serviceCenters} />}
+    <div id="report-content">
+        {renderContent()}
     </div>
   );
 };

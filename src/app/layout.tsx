@@ -79,7 +79,7 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased')}>
         <PrintProvider>
-          <div className="flex min-h-screen w-full flex-col bg-muted/40 print:hidden">
+          <div className="flex min-h-screen w-full flex-col bg-muted/40 app-container">
             <Sidebar />
             <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
               <Header />
@@ -88,7 +88,9 @@ export default function RootLayout({
               </main>
             </div>
           </div>
-          <PrintDriver />
+          <div className="print-container">
+            <PrintDriver />
+          </div>
           <Toaster />
         </PrintProvider>
       </body>
