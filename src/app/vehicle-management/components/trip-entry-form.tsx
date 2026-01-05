@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -118,6 +119,7 @@ interface ComboboxProps<T> {
 
 function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage, disabled = false }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
+  const currentItem = items.find((item) => item.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -129,8 +131,8 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
           className="w-full justify-between"
           disabled={disabled}
         >
-          {value
-            ? displayValue(items.find((item) => item.id === value)!)
+          {currentItem
+            ? displayValue(currentItem)
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -289,7 +291,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
         return;
     }
-    const tripId = isEditing && trip.id ? trip.tripId : `TRIP-${Date.now()}`;
+    const tripId = isEditing && trip?.tripId ? trip.tripId : `TRIP-${Date.now()}`;
     const dataToSave: Omit<Trip, 'id'> = {
         ...tripData,
         tripId: tripId!,
@@ -435,3 +437,5 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip, vehicles, drive
     </Dialog>
   );
 }
+
+    
