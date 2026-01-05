@@ -6,9 +6,10 @@ import type { Driver } from './driver-entry-form';
 import type { Vehicle } from './vehicle-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Trip } from './trip-entry-form';
+import type { Accident } from './accident-entry-form';
 
-type PrintableItem = Driver | Vehicle | Employee | Trip;
-type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip';
+type PrintableItem = Driver | Vehicle | Employee | Trip | Accident;
+type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip' | 'accident';
 
 interface PrintContextType {
   itemToPrint: PrintableItem | null;

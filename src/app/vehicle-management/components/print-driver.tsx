@@ -19,12 +19,20 @@ import type { Location } from './location-table';
 import { TripPrintLayout } from './trip-print-layout';
 import type { ExpenseType } from './expense-type-table';
 import type { VehicleBrand } from './vehicle-brand-table';
+import type { Accident } from './accident-entry-form';
+import { AccidentPrintLayout } from './accident-print-layout';
+import type { AccidentType } from './accident-type-table';
+import type { SeverityLevel } from './severity-level-table';
+import type { FaultStatus } from './fault-status-table';
+import type { ServiceCenter } from './service-center-table';
+import type { Route } from './route-table';
 
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [employees] = useLocalStorage<Employee[]>('employees', []);
   const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
   const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const [sections] = useLocalStorage<Section[]>('sections', []);
@@ -32,6 +40,13 @@ export const PrintDriver = () => {
   const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [locations] = useLocalStorage<Location[]>('locations', []);
   const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const [trips] = useLocalStorage<Trip[]>('trips', []);
+  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
+  const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
+  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
+
 
   if (!itemToPrint) {
     return null;
@@ -43,6 +58,7 @@ export const PrintDriver = () => {
       {printType === 'vehicle' && <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} />}
       {printType === 'employee' && <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />}
       {printType === 'trip' && <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />}
+      {printType === 'accident' && <AccidentPrintLayout accident={itemToPrint as Accident} vehicles={vehicles} drivers={drivers} employees={employees} routes={routes} trips={trips} accidentTypes={accidentTypes} severityLevels={severityLevels} faultStatuses={faultStatuses} repairedBy={serviceCenters} />}
     </div>
   );
 };
