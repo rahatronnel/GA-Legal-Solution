@@ -295,7 +295,17 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                                     {dob ? format(dob, "PPP") : <span>Pick a date</span>}
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dob} onSelect={handleDateChange(setDob, 'dateOfBirth')} initialFocus/></PopoverContent>
+                                <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                    mode="single"
+                                    selected={dob}
+                                    onSelect={handleDateChange(setDob, 'dateOfBirth')}
+                                    captionLayout="dropdown-nav"
+                                    fromYear={new Date().getFullYear() - 100}
+                                    toYear={new Date().getFullYear()}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
                             </Popover>
                         </div>
                          <div className="space-y-2">
