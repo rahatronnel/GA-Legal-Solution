@@ -86,10 +86,14 @@ export default function VehicleLifecycleReportPage() {
 
         const allPhotos: { src: string, label: string }[] = [];
         vehicleMaintenance.forEach(m => {
-            m.documents?.beforeAfterPhotos?.forEach(p => allPhotos.push({ src: p.file, label: `Maintenance ${m.serviceDate}: ${p.name}` }));
+            if (m.documents && m.documents.beforeAfterPhotos) {
+                m.documents.beforeAfterPhotos.forEach(p => allPhotos.push({ src: p.file, label: `Maintenance ${m.serviceDate}: ${p.name}` }));
+            }
         });
         vehicleAccidents.forEach(a => {
-            a.documents?.accidentPhotos?.forEach(p => allPhotos.push({ src: p.file, label: `Accident ${a.accidentDate}: ${p.name}` }));
+            if (a.documents && a.documents.accidentPhotos) {
+                a.documents.accidentPhotos.forEach(p => allPhotos.push({ src: p.file, label: `Accident ${a.accidentDate}: ${p.name}` }));
+            }
         });
 
         setReportData({
@@ -181,7 +185,7 @@ export default function VehicleLifecycleReportPage() {
                             <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Parts Used</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {reportData.vehicleMaintenance.length > 0 ? reportData.vehicleMaintenance.map((maint: MaintenanceRecord) => (
-                                    <TableRow key={maint.id}><TableCell>{maint.serviceDate}</TableCell><TableCell>{maintenanceTypes.find(t => t.id === maint.maintenanceTypeId)?.name}</TableCell><TableCell>{maint.parts.map(p => parts.find(part => part.id === p.partId)?.name).join(', ')}</TableCell></TableRow>
+                                    <TableRow key={maint.id}><TableCell>{maint.serviceDate}</TableCell><TableCell>{maintenanceTypes.find(t => t.id === maint.maintenanceTypeId)?.name}</TableCell><TableCell>{maint.parts.map(p => { const partInfo = parts.find(part => part.id === p.partId); return partInfo ? partInfo.name : 'Unknown Part'; }).join(', ')}</TableCell></TableRow>
                                 )) : <TableRow><TableCell colSpan={3} className="text-center">No maintenance records found.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
