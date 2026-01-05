@@ -23,10 +23,12 @@ import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { Driver } from "./components/driver-entry-form";
 
 
 export default function VehicleManagementPage() {
   const [locations, setLocations] = useLocalStorage<Location[]>('locations', []);
+  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
   
   return (
     <>
@@ -64,7 +66,7 @@ export default function VehicleManagementPage() {
                   <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable />
+                  <DriverTable drivers={drivers} setDrivers={setDrivers} />
               </CardContent>
           </Card>
         </TabsContent>

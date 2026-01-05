@@ -24,9 +24,13 @@ import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
-export function DriverTable() {
+interface DriverTableProps {
+  drivers: Driver[];
+  setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
+}
+
+export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
   const { toast } = useToast();
-  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const { handlePrint } = usePrint();
   
