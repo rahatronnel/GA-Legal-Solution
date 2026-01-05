@@ -97,23 +97,16 @@ export default function TripProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && trips) {
-      const foundTrip = trips.find(t => t.id === id);
-      if (foundTrip) {
+    if (typeof id !== 'string') return;
+    
+    const foundTrip = trips.find(t => t.id === id);
+    if (foundTrip) {
         setTrip(foundTrip);
-      } else {
-        setTrip(null);
-        const timer = setTimeout(() => {
-            const updatedTrips = JSON.parse(window.localStorage.getItem('trips') || '[]') as Trip[];
-            const recheckTrip = updatedTrips.find(t => t.id === id);
-            if (!recheckTrip) {
-                notFound();
-            } else {
-                setTrip(recheckTrip);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+    } else {
+        if (trips.length > 0) {
+            notFound();
+        }
+        setTrip(undefined);
     }
   }, [id, trips, notFound]);
 
@@ -131,11 +124,11 @@ export default function TripProfilePage() {
   
   const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
 
-  if (trip === undefined || trip === null) {
+  if (trip === undefined) {
       return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
   }
 
-  if (!trip) {
+  if (trip === null) {
       notFound();
   }
 

@@ -110,23 +110,16 @@ export default function VehicleProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && vehicles) {
-      const foundVehicle = vehicles.find(v => v.id === id);
-      if (foundVehicle) {
+    if (typeof id !== 'string') return;
+    
+    const foundVehicle = vehicles.find(v => v.id === id);
+    if (foundVehicle) {
         setVehicle(foundVehicle);
-      } else {
-        setVehicle(null);
-        const timer = setTimeout(() => {
-            const updatedVehicles = JSON.parse(window.localStorage.getItem('vehicles') || '[]') as Vehicle[];
-            const recheckVehicle = updatedVehicles.find(v => v.id === id);
-            if (!recheckVehicle) {
-                notFound();
-            } else {
-                setVehicle(recheckVehicle);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+    } else {
+        if (vehicles.length > 0) {
+            notFound();
+        }
+        setVehicle(undefined);
     }
   }, [id, vehicles, notFound]);
 
@@ -150,7 +143,7 @@ export default function VehicleProfilePage() {
   }, [vehicle, drivers]);
 
 
-  if (vehicle === undefined || vehicle === null) {
+  if (vehicle === undefined) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading vehicle profile...</p>
@@ -158,7 +151,7 @@ export default function VehicleProfilePage() {
     );
   }
 
-  if (!vehicle) {
+  if (vehicle === null) {
       notFound();
   }
   

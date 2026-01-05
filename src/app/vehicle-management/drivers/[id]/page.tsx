@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Vehicle } from '../../components/vehicle-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,23 +106,16 @@ export default function DriverProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && drivers) {
-      const foundDriver = drivers.find(d => d.id === id);
-      if (foundDriver) {
+    if (typeof id !== 'string') return;
+    
+    const foundDriver = drivers.find(d => d.id === id);
+    if (foundDriver) {
         setDriver(foundDriver);
-      } else {
-        setDriver(null);
-        const timer = setTimeout(() => {
-            const updatedDrivers = JSON.parse(window.localStorage.getItem('drivers') || '[]') as Driver[];
-            const recheckDriver = updatedDrivers.find(d => d.id === id);
-            if (!recheckDriver) {
-                notFound();
-            } else {
-                setDriver(recheckDriver);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+    } else {
+        if (drivers.length > 0) {
+            notFound();
+        }
+        setDriver(undefined);
     }
   }, [id, drivers, notFound]);
 
@@ -143,7 +135,7 @@ export default function DriverProfilePage() {
       return maintenanceRecords.filter(record => assignedVehicleIds.includes(record.vehicleId));
   }, [id, vehicles, maintenanceRecords]);
 
-  if (driver === undefined || driver === null) {
+  if (driver === undefined) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading driver profile...</p>
@@ -151,7 +143,7 @@ export default function DriverProfilePage() {
     );
   }
 
-  if (!driver) {
+  if (driver === null) {
       notFound();
   }
   

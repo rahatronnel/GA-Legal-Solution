@@ -93,23 +93,16 @@ export default function MaintenanceProfilePage() {
   const [record, setRecord] = useState<MaintenanceRecord | null | undefined>(undefined);
 
   useEffect(() => {
-    if (id && records) {
-      const foundRecord = records.find(t => t.id === id);
-      if (foundRecord) {
+    if (typeof id !== 'string') return;
+    
+    const foundRecord = records.find(t => t.id === id);
+    if (foundRecord) {
         setRecord(foundRecord);
-      } else {
-        setRecord(null);
-        const timer = setTimeout(() => {
-            const updatedRecords = JSON.parse(window.localStorage.getItem('maintenanceRecords') || '[]') as MaintenanceRecord[];
-            const recheckRecord = updatedRecords.find(t => t.id === id);
-            if (!recheckRecord) {
-                notFound();
-            } else {
-                setRecord(recheckRecord);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+    } else {
+        if (records.length > 0) {
+            notFound();
+        }
+        setRecord(undefined);
     }
   }, [id, records, notFound]);
 
@@ -128,11 +121,11 @@ export default function MaintenanceProfilePage() {
   const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find(et => et.id === id)?.name || 'N/A';
   const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'N/A';
 
-  if (record === undefined || record === null) {
+  if (record === undefined) {
       return <div className="flex justify-center items-center h-full"><p>Loading maintenance record...</p></div>;
   }
   
-  if (!record) {
+  if (record === null) {
       notFound();
   }
 

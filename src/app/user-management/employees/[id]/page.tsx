@@ -94,26 +94,33 @@ export default function EmployeeProfilePage() {
   const [employees] = useLocalStorage<Employee[]>('employees', []);
   const [sections] = useLocalStorage<Section[]>('sections', []);
   const [designations] = useLocalStorage<Designation[]>('designations', []);
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [employee, setEmployee] = useState<Employee | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (id && employees.length > 0) {
-      const foundEmployee = employees.find(d => d.id === id);
-      if (foundEmployee) {
-        setEmployee(foundEmployee);
-      } else {
-        notFound();
-      }
-    }
-  }, [id, employees]);
+    if (typeof id !== 'string') return;
 
-  if (!employee) {
+    const foundEmployee = employees.find(d => d.id === id);
+    if (foundEmployee) {
+        setEmployee(foundEmployee);
+    } else {
+        if (employees.length > 0) {
+            notFound();
+        }
+        setEmployee(undefined);
+    }
+  }, [id, employees, notFound]);
+
+  if (employee === undefined) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading employee profile...</p>
       </div>
     );
+  }
+
+  if (employee === null) {
+      notFound();
   }
   
   const getInitials = (name: string) => {

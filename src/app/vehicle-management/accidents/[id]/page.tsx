@@ -83,7 +83,7 @@ export default function AccidentProfilePage() {
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
+  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [employees] = useLocalStorage<Employee[]>('employees', []);
@@ -97,29 +97,22 @@ export default function AccidentProfilePage() {
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (id && accidents) {
-        const foundRecord = accidents.find(t => t.id === id);
-        if (foundRecord) {
-            setAccident(foundRecord);
-        } else {
-            // It might be that the data isn't loaded yet.
-            // We'll set it to null and let the UI show "loading".
-            setAccident(null);
-            
-            // Add a small delay to see if the record appears after a moment (e.g. after a save).
-            const timer = setTimeout(() => {
-                const updatedAccidents = JSON.parse(window.localStorage.getItem('accidents') || '[]') as Accident[];
-                const recheckRecord = updatedAccidents.find(t => t.id === id);
-                if (!recheckRecord) {
-                    // If it's still not found, then it's a 404.
-                    notFound();
-                } else {
-                    setAccident(recheckRecord);
-                }
-            }, 500);
-
-            return () => clearTimeout(timer);
+    if (typeof id !== 'string') return;
+    
+    // Immediately try to find the record.
+    const foundRecord = accidents.find(t => t.id === id);
+    
+    if (foundRecord) {
+        setAccident(foundRecord);
+    } else {
+        // If the main list has loaded but the item is not found, it's a 404.
+        if (accidents.length > 0) {
+            notFound();
         }
+        // Otherwise, we are likely in a loading state where `accidents` is still empty.
+        // We set to `undefined` to keep showing the loading UI.
+        // `useEffect` will run again when `accidents` is populated.
+        setAccident(undefined);
     }
   }, [id, accidents, notFound]);
 
@@ -140,12 +133,11 @@ export default function AccidentProfilePage() {
   }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
 
-  if (accident === undefined || accident === null) {
+  if (accident === undefined) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
   
-  if (!accident) {
-      // This state should ideally not be hit if notFound() is called, but as a fallback.
+  if (accident === null) {
       notFound();
   }
 
@@ -259,8 +251,4 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
-    
-
-    
-
     
