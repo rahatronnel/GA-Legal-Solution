@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, X } from 'lucide-react';
 import { MaintenanceEntryForm, type MaintenanceRecord } from './maintenance-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
+import { isWithinInterval, parseISO } from 'date-fns';
+import type { Driver } from './driver-entry-form';
+import type { ServiceCenter } from './service-center-table';
 
 interface MaintenanceRecordTableProps {
   records: MaintenanceRecord[];
@@ -31,12 +37,21 @@ export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecor
   const { toast } = useToast();
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<MaintenanceRecord> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -52,13 +67,27 @@ export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecor
   }
 
   const filteredRecords = useMemo(() => {
-    if (!searchTerm) return records;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return records.filter(record => 
-      (getVehicleReg(record.vehicleId).toLowerCase().includes(lowercasedTerm)) ||
-      (getMaintenanceTypeName(record.maintenanceTypeId).toLowerCase().includes(lowercasedTerm))
-    );
-  }, [records, searchTerm, vehicles, maintenanceTypes]);
+    return records.filter(record => {
+        const searchTermMatch = searchTerm === '' || 
+            getVehicleReg(record.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            getMaintenanceTypeName(record.maintenanceTypeId).toLowerCase().includes(searchTerm.toLowerCase());
+
+        const vehicleMatch = vehicleFilter === 'all' || record.vehicleId === vehicleFilter;
+        const typeMatch = typeFilter === 'all' || record.maintenanceTypeId === typeFilter;
+        const driverMatch = driverFilter === 'all' || record.driverId === driverFilter;
+        const serviceCenterMatch = serviceCenterFilter === 'all' || record.serviceCenterId === serviceCenterFilter;
+        
+        let dateMatch = true;
+        if (dateRangeFilter?.from && dateRangeFilter?.to && record.serviceDate) {
+            const serviceDate = parseISO(record.serviceDate);
+            dateMatch = isWithinInterval(serviceDate, { start: dateRangeFilter.from, end: dateRangeFilter.to });
+        } else if (dateRangeFilter?.from && record.serviceDate) {
+            dateMatch = parseISO(record.serviceDate) >= dateRangeFilter.from;
+        }
+
+        return searchTermMatch && vehicleMatch && typeMatch && driverMatch && serviceCenterMatch && dateMatch;
+    });
+  }, [records, searchTerm, vehicleFilter, typeFilter, driverFilter, serviceCenterFilter, dateRangeFilter, vehicles, maintenanceTypes]);
 
 
   const handleAdd = () => {
@@ -101,22 +130,65 @@ export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecor
     setIsDeleteConfirmOpen(false);
     setCurrentItem(null);
   };
+
+  const clearFilters = () => {
+      setSearchTerm('');
+      setVehicleFilter('all');
+      setTypeFilter('all');
+      setDriverFilter('all');
+      setServiceCenterFilter('all');
+      setDateRangeFilter(undefined);
+  }
   
   return (
     <TooltipProvider>
-        <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
-            <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-                type="search"
-                placeholder="Search by Vehicle, Type..."
-                className="w-full rounded-lg bg-background pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-2">
+                <div className="relative w-full sm:max-w-xs">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search by Vehicle, Type..."
+                        className="w-full rounded-lg bg-background pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Record</Button>
+                </div>
             </div>
-            <div className="flex gap-2">
-                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Record</Button>
+             <div className="flex flex-wrap gap-2">
+                <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Vehicles</SelectItem>
+                        {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Type..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {maintenanceTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={driverFilter} onValueChange={setDriverFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Drivers</SelectItem>
+                        {drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Select value={serviceCenterFilter} onValueChange={setServiceCenterFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Garage..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Garages</SelectItem>
+                        {serviceCenters.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+                 <Button variant="ghost" onClick={clearFilters}><X className="mr-2 h-4 w-4" /> Clear</Button>
             </div>
         </div>
         <div className="border rounded-lg">
@@ -180,3 +252,5 @@ export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecor
     </TooltipProvider>
   );
 }
+
+    
