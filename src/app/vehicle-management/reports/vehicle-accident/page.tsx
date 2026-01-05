@@ -73,21 +73,21 @@ export default function VehicleAccidentReportPage() {
                         </PopoverTrigger>
                         <PopoverContent className="w-[250px] p-0">
                             <Command>
-                                <CommandInput placeholder="Search vehicle..." />
+                                <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList>
                                 <CommandGroup>
                                     {vehicles.map((vehicle) => (
                                     <CommandItem
                                         key={vehicle.id}
-                                        value={vehicle.registrationNumber}
+                                        value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`}
                                         onSelect={() => {
                                             setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
                                             setOpen(false);
                                         }}
                                     >
                                         <Check className={cn("mr-2 h-4 w-4", selectedVehicleId === vehicle.id ? "opacity-100" : "opacity-0")} />
-                                        {vehicle.registrationNumber}
+                                        {vehicle.registrationNumber} ({vehicle.vehicleIdCode})
                                     </CommandItem>
                                     ))}
                                 </CommandGroup>
