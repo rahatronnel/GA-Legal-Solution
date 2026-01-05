@@ -23,8 +23,18 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LineChart } from "lucide-react";
+import { Construction, LineChart, Wrench } from "lucide-react";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
+import { MaintenanceCostSummary } from "./components/reports/MaintenanceCostSummary";
+import { PreventiveMaintenanceDueReport } from "./components/reports/PreventiveMaintenanceDueReport";
+import { VehicleMaintenanceReport } from "./components/reports/VehicleMaintenanceReport";
+import { SparePartsUsageReport } from "./components/reports/SparePartsUsageReport";
+import { WorkshopPerformanceReport } from "./components/reports/WorkshopPerformanceReport";
+import { Separator } from "@/components/ui/separator";
+import { AccidentFrequencyChart } from "./components/reports/AccidentFrequencyChart";
+import { AccidentCostSummary } from "./components/reports/AccidentCostSummary";
+import { VehicleAccidentReport } from "./components/reports/VehicleAccidentReport";
+import { DriverAccidentReport } from "./components/reports/DriverAccidentReport";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -159,20 +169,51 @@ export default function VehicleManagementPage() {
             </div>
         </TabsContent>
         <TabsContent value="reports">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Reports Dashboard</CardTitle>
-                    <CardDescription>View and analyze accident data.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center h-60">
-                    <p className="text-muted-foreground mb-4">The reporting section has moved to a dedicated page.</p>
-                    <Button asChild>
-                        <Link href="/vehicle-management/reports">
-                           <LineChart className="mr-2 h-4 w-4" /> Go to Reports
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
+            <div className="space-y-8">
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <Construction className="h-6 w-6" />
+                        <h2 className="text-2xl font-bold tracking-tight">Maintenance Reports</h2>
+                    </div>
+
+                    <MaintenanceCostSummary />
+                    <PreventiveMaintenanceDueReport />
+                    <VehicleMaintenanceReport />
+                    <SparePartsUsageReport />
+                    <WorkshopPerformanceReport />
+                </div>
+
+                <Separator />
+                
+                <div className="space-y-6">
+                     <div className="flex items-center gap-4">
+                        <Wrench className="h-6 w-6" />
+                        <h2 className="text-2xl font-bold tracking-tight">Accident Reports</h2>
+                    </div>
+                    
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Accident Frequency (Monthly)</CardTitle>
+                            <CardDescription>Number of accidents reported each month.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <AccidentFrequencyChart />
+                        </CardContent>
+                    </Card>
+
+                    <div className="lg:col-span-2">
+                         <AccidentCostSummary />
+                    </div>
+                   
+                    <div className="lg:col-span-2">
+                        <VehicleAccidentReport />
+                    </div>
+
+                    <div className="lg:col-span-2">
+                        <DriverAccidentReport />
+                    </div>
+                </div>
+            </div>
         </TabsContent>
         <TabsContent value="trip-master">
           <div className="grid gap-6">
