@@ -32,9 +32,13 @@ export type MaintenanceExpenseType = {
   code: string;
 };
 
-export function MaintenanceExpenseTypeTable() {
+interface MaintenanceExpenseTypeTableProps {
+  expenseTypes: MaintenanceExpenseType[];
+  setExpenseTypes: React.Dispatch<React.SetStateAction<MaintenanceExpenseType[]>>;
+}
+
+export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: MaintenanceExpenseTypeTableProps) {
   const { toast } = useToast();
-  const [expenseTypes, setExpenseTypes] = useState<MaintenanceExpenseType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<MaintenanceExpenseType> | null>(null);

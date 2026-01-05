@@ -20,13 +20,17 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
+interface MaintenanceRecordTableProps {
+  records: MaintenanceRecord[];
+  setRecords: React.Dispatch<React.SetStateAction<MaintenanceRecord[]>>;
+}
 
-export function MaintenanceRecordTable() {
+export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecordTableProps) {
   const { toast } = useToast();
-  const [records, setRecords] = useState<MaintenanceRecord[]>([]);
-  const [vehicles] = useState<Vehicle[]>([]);
-  const [maintenanceTypes] = useState<MaintenanceType[]>([]);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);

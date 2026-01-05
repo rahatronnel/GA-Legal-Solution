@@ -41,9 +41,13 @@ const initialData = {
     price: 0,
 }
 
-export function PartTable() {
+interface PartTableProps {
+  parts: Part[];
+  setParts: React.Dispatch<React.SetStateAction<Part[]>>;
+}
+
+export function PartTable({ parts, setParts }: PartTableProps) {
   const { toast } = useToast();
-  const [parts, setParts] = useState<Part[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Part> | null>(null);

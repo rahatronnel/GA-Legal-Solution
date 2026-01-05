@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
@@ -201,13 +202,13 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const [serviceDate, setServiceDate] = useState<Date | undefined>();
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
 
-  const [vehicles] = useState<Vehicle[]>([]);
-  const [drivers] = useState<Driver[]>([]);
-  const [allParts] = useState<PartType[]>([]);
-  const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceType[]>([]);
-  const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
-  const [employees] = useState<Employee[]>([]);
-  const [maintenanceExpenseTypes] = useState<MaintenanceExpenseType[]>([]);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [allParts] = useLocalStorage<PartType[]>('parts', []);
+  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [employees] = useLocalStorage<Employee[]>('employees', []);
+  const [maintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<string | null>(null);
   const [quickAddData, setQuickAddData] = useState<any>({});

@@ -44,9 +44,13 @@ const initialData = {
     ownerName: '',
 }
 
-export function ServiceCenterTable() {
+interface ServiceCenterTableProps {
+  serviceCenters: ServiceCenter[];
+  setServiceCenters: React.Dispatch<React.SetStateAction<ServiceCenter[]>>;
+}
+
+export function ServiceCenterTable({ serviceCenters, setServiceCenters }: ServiceCenterTableProps) {
   const { toast } = useToast();
-  const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<ServiceCenter> | null>(null);

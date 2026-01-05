@@ -32,9 +32,13 @@ export type MaintenanceType = {
   code: string;
 };
 
-export function MaintenanceTypeTable() {
+interface MaintenanceTypeTableProps {
+  maintenanceTypes: MaintenanceType[];
+  setMaintenanceTypes: React.Dispatch<React.SetStateAction<MaintenanceType[]>>;
+}
+
+export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: MaintenanceTypeTableProps) {
   const { toast } = useToast();
-  const [maintenanceTypes, setMaintenanceTypes] = useState<MaintenanceType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentMaintenanceType, setCurrentMaintenanceType] = useState<Partial<MaintenanceType> | null>(null);

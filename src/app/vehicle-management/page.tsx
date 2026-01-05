@@ -28,6 +28,11 @@ import type { Trip } from "./components/trip-entry-form";
 import type { Route } from "./components/route-table";
 import type { TripPurpose } from "./components/trip-purpose-table";
 import type { ExpenseType } from "./components/expense-type-table";
+import type { MaintenanceRecord } from "./components/maintenance-entry-form";
+import type { Part } from "./components/part-table";
+import type { ServiceCenter } from "./components/service-center-table";
+import type { MaintenanceType } from "./components/maintenance-type-table";
+import type { MaintenanceExpenseType } from "./components/maintenance-expense-type-table";
 
 
 export default function VehicleManagementPage() {
@@ -37,6 +42,11 @@ export default function VehicleManagementPage() {
   const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
   const [tripPurposes, setTripPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const [maintenanceRecords, setMaintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+  const [parts, setParts] = useLocalStorage<Part[]>('parts', []);
+  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
   
   return (
     <>
@@ -86,7 +96,10 @@ export default function VehicleManagementPage() {
                         <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceRecordTable />
+                        <MaintenanceRecordTable 
+                            records={maintenanceRecords} 
+                            setRecords={setMaintenanceRecords} 
+                        />
                     </CardContent>
                 </Card>
                  <Card>
@@ -95,7 +108,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PartTable />
+                        <PartTable parts={parts} setParts={setParts} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -104,7 +117,10 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage your approved service centers and garages.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ServiceCenterTable />
+                        <ServiceCenterTable 
+                            serviceCenters={serviceCenters} 
+                            setServiceCenters={setServiceCenters} 
+                        />
                     </CardContent>
                 </Card>
                 <Card>
@@ -113,7 +129,10 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceTypeTable />
+                        <MaintenanceTypeTable 
+                            maintenanceTypes={maintenanceTypes} 
+                            setMaintenanceTypes={setMaintenanceTypes} 
+                        />
                     </CardContent>
                 </Card>
                 <Card>
@@ -122,7 +141,10 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceExpenseTypeTable />
+                        <MaintenanceExpenseTypeTable 
+                            expenseTypes={maintenanceExpenseTypes} 
+                            setExpenseTypes={setMaintenanceExpenseTypes}
+                        />
                     </CardContent>
                 </Card>
             </div>
