@@ -24,6 +24,7 @@ export default function WorkshopPerformancePage() {
         let filteredRecords = maintenanceRecords;
         if (dateRange?.from && dateRange?.to) {
             filteredRecords = maintenanceRecords.filter(rec => {
+                 if (!rec.serviceDate) return false;
                  const serviceDate = parseISO(rec.serviceDate);
                  return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
             });
@@ -52,6 +53,11 @@ export default function WorkshopPerformancePage() {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
+    
+    React.useEffect(() => {
+        handleGenerateReport();
+    }, [maintenanceRecords, serviceCenters]);
+
 
     return (
         <div className="space-y-6">
@@ -74,10 +80,10 @@ export default function WorkshopPerformancePage() {
                     <CardContent>
                         {reportData.length > 0 ? (
                             <Table>
-                                <TableHeader><TableRow><TableHead>Workshop Name</TableHead><TableHead>Total Jobs</TableHead><TableHead>Total Billed Amount</TableHead><TableHead>Average Cost Per Job</TableHead></TableRow></TableHeader>
+                                <TableHeader><TableRow><TableHead>Workshop Name</TableHead><TableHead>Total Jobs</TableHead><TableHead>Total Billed Amount</TableHead><TableHead className="text-right">Average Cost Per Job</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {reportData.map(ws => (
-                                        <TableRow key={ws.name}><TableCell>{ws.name}</TableCell><TableCell>{ws.jobs}</TableCell><TableCell>{formatCurrency(ws.totalCost)}</TableCell><TableCell>{formatCurrency(ws.totalCost / ws.jobs)}</TableCell></TableRow>
+                                        <TableRow key={ws.name}><TableCell>{ws.name}</TableCell><TableCell>{ws.jobs}</TableCell><TableCell>{formatCurrency(ws.totalCost)}</TableCell><TableCell className="text-right">{formatCurrency(ws.jobs > 0 ? ws.totalCost / ws.jobs : 0)}</TableCell></TableRow>
                                     ))}
                                 </TableBody>
                             </Table>

@@ -11,17 +11,22 @@ import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
+import type { Part as PartType } from '../../components/part-table';
 
 export default function SparePartsUsagePage() {
     const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+    const [allParts] = useLocalStorage<PartType[]>('parts', []);
     
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[] | null>(null);
+    
+    const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'Unknown Part';
 
     const handleGenerateReport = () => {
         let filteredRecords = maintenanceRecords;
         if (dateRange?.from && dateRange?.to) {
             filteredRecords = maintenanceRecords.filter(rec => {
+                 if (!rec.serviceDate) return false;
                  const serviceDate = parseISO(rec.serviceDate);
                  return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
             });
@@ -30,10 +35,11 @@ export default function SparePartsUsagePage() {
         const usage: { [key: string]: { name: string; brand: string; quantity: number; totalCost: number } } = {};
 
         filteredRecords.forEach(rec => {
-            rec.parts?.forEach(part => {
-                const key = `${part.name}-${part.brand}`;
+            if (!rec.parts) return;
+            rec.parts.forEach(part => {
+                const key = `${part.partId}-${part.brand}`;
                 if (!usage[key]) {
-                    usage[key] = { name: part.name, brand: part.brand, quantity: 0, totalCost: 0 };
+                    usage[key] = { name: getPartName(part.partId), brand: part.brand, quantity: 0, totalCost: 0 };
                 }
                 usage[key].quantity += part.quantity;
                 usage[key].totalCost += part.quantity * part.price;
@@ -47,6 +53,10 @@ export default function SparePartsUsagePage() {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
+
+    React.useEffect(() => {
+        handleGenerateReport();
+    }, [maintenanceRecords, allParts]);
 
     return (
         <div className="space-y-6">
@@ -69,10 +79,10 @@ export default function SparePartsUsagePage() {
                     <CardContent>
                         {reportData.length > 0 ? (
                             <Table>
-                                <TableHeader><TableRow><TableHead>Part Name</TableHead><TableHead>Brand</TableHead><TableHead>Total Quantity Used</TableHead><TableHead>Total Cost</TableHead></TableRow></TableHeader>
+                                <TableHeader><TableRow><TableHead>Part Name</TableHead><TableHead>Brand</TableHead><TableHead>Total Quantity Used</TableHead><TableHead className="text-right">Total Cost</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {reportData.map(part => (
-                                        <TableRow key={`${part.name}-${part.brand}`}><TableCell>{part.name}</TableCell><TableCell>{part.brand}</TableCell><TableCell>{part.quantity}</TableCell><TableCell>{formatCurrency(part.totalCost)}</TableCell></TableRow>
+                                        <TableRow key={`${part.name}-${part.brand}`}><TableCell>{part.name}</TableCell><TableCell>{part.brand}</TableCell><TableCell>{part.quantity}</TableCell><TableCell className="text-right">{formatCurrency(part.totalCost)}</TableCell></TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
