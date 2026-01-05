@@ -378,10 +378,13 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields in Step 1.' });
         return;
     }
-    const dataToSave = {
+    const dataToSave: Partial<Accident> = {
         ...accidentData,
-        documents
+        documents,
     };
+    if (isEditing) {
+        dataToSave.id = accident.id;
+    }
     onSave(dataToSave);
     setIsOpen(false);
   };

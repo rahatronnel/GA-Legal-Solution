@@ -70,17 +70,51 @@ export function AccidentTable() {
   };
 
   const handleSave = (data: Partial<Accident>) => {
-    if (currentItem?.id) {
+    if (data.id) {
         // This is an edit
-        setAccidents(prev => prev.map(acc => (acc.id === currentItem.id ? { ...acc, ...data } as Accident : acc)));
+        setAccidents(prev => prev.map(acc => (acc.id === data.id ? { ...acc, ...data } as Accident : acc)));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
         // This is a new record
         const newRecord: Accident = { 
             id: Date.now().toString(), 
             accidentId: `ACC-${Date.now()}`,
-            ...data,
-        } as Accident;
+            vehicleId: data.vehicleId || '',
+            driverId: data.driverId || '',
+            employeeId: data.employeeId || '',
+            accidentDate: data.accidentDate || '',
+            accidentTime: data.accidentTime || '',
+            location: data.location || '',
+            accidentTypeId: data.accidentTypeId || '',
+            severityLevelId: data.severityLevelId || '',
+            faultStatusId: data.faultStatusId || '',
+            routeId: data.routeId || '',
+            tripId: data.tripId || '',
+            description: data.description || '',
+            vehicleDamageDescription: data.vehicleDamageDescription || '',
+            thirdPartyDamage: data.thirdPartyDamage || '',
+            humanInjury: data.humanInjury || '',
+            vehicleStatusAfterAccident: data.vehicleStatusAfterAccident || '',
+            estimatedRepairCost: data.estimatedRepairCost || 0,
+            actualRepairCost: data.actualRepairCost || 0,
+            thirdPartyDamageCost: data.thirdPartyDamageCost || 0,
+            repairedById: data.repairedById || '',
+            repairPaymentStatus: data.repairPaymentStatus || '',
+            policeReportFiled: data.policeReportFiled || false,
+            policeReportNumber: data.policeReportNumber || '',
+            policeStation: data.policeStation || '',
+            insuranceClaimFiled: data.insuranceClaimFiled || false,
+            insuranceClaimNumber: data.insuranceClaimNumber || '',
+            insuranceCompany: data.insuranceCompany || '',
+            documents: data.documents || {
+                accidentPhotos: [],
+                policeReport: [],
+                insuranceClaimForm: [],
+                workshopQuotation: [],
+                repairInvoice: [],
+                medicalReport: [],
+            },
+        };
         setAccidents(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Accident record added successfully.' });
     }
