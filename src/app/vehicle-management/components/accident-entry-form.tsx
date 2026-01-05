@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,11 +37,22 @@ import type { ServiceCenter } from './service-center-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 
-type AccidentDocument = {
+type UploadedFile = {
   id: string;
-  label: string;
+  name: string;
   file: string; // data URL
 }
+
+type AccidentDocumentType = 'accidentPhotos' | 'policeReport' | 'insuranceClaimForm' | 'workshopQuotation' | 'repairInvoice' | 'medicalReport';
+
+const documentCategories: Record<AccidentDocumentType, string> = {
+    accidentPhotos: 'Accident Photos',
+    policeReport: 'Police Report',
+    insuranceClaimForm: 'Insurance Claim Form',
+    workshopQuotation: 'Workshop Quotation',
+    repairInvoice: 'Repair Invoice',
+    medicalReport: 'Medical Report (if any)',
+};
 
 export type Accident = {
   id: string;
@@ -81,7 +92,16 @@ export type Accident = {
   insuranceCompany: string;
 
   // Documents
-  documents: AccidentDocument[];
+  documents: Record<AccidentDocumentType, UploadedFile[]>;
+};
+
+const initialDocuments: Record<AccidentDocumentType, UploadedFile[]> = {
+    accidentPhotos: [],
+    policeReport: [],
+    insuranceClaimForm: [],
+    workshopQuotation: [],
+    repairInvoice: [],
+    medicalReport: [],
 };
 
 const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
@@ -185,7 +205,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [accidentData, setAccidentData] = useState(initialAccidentData);
-  const [documents, setDocuments] = useState<AccidentDocument[]>([]);
+  const [documents, setDocuments] = useState<Record<AccidentDocumentType, UploadedFile[]>>(initialDocuments);
   
   const [accidentDate, setAccidentDate] = useState<Date | undefined>();
 
@@ -210,11 +230,11 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       setStep(1);
       if (isEditing && accident) {
         setAccidentData({ ...initialAccidentData, ...accident });
-        setDocuments(accident.documents || []);
+        setDocuments(accident.documents || initialDocuments);
         setAccidentDate(accident.accidentDate ? new Date(accident.accidentDate) : undefined);
       } else {
         setAccidentData(initialAccidentData);
-        setDocuments([]);
+        setDocuments(initialDocuments);
         setAccidentDate(undefined);
       }
     }
@@ -244,20 +264,32 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   };
   
   // Document handlers
-  const addDocument = () => setDocuments(d => [...d, {id: Date.now().toString(), label: '', file: ''}]);
-  const updateDocumentLabel = (id: string, label: string) => {
-    setDocuments(d => d.map(doc => doc.id === id ? {...doc, label} : doc));
-  };
-  const handleFileChange = (id: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (docType: AccidentDocumentType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
      if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => setDocuments(d => d.map(doc => doc.id === id ? {...doc, file: reader.result as string} : doc));
-      reader.readAsDataURL(file);
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            const newFile: UploadedFile = {
+                id: Date.now().toString(),
+                name: file.name,
+                file: reader.result as string,
+            };
+            setDocuments(prev => ({
+                ...prev,
+                [docType]: [...prev[docType], newFile]
+            }));
+        };
+        reader.readAsDataURL(file);
     }
-  }
-  const removeDocument = (id: string) => setDocuments(d => d.filter(doc => doc.id !== id));
-
+    e.target.value = ''; // Reset file input
+  };
+  
+  const removeDocument = (docType: AccidentDocumentType, fileId: string) => {
+    setDocuments(prev => ({
+        ...prev,
+        [docType]: prev[docType].filter(doc => doc.id !== fileId)
+    }));
+  };
   
   const validateStep = (currentStep: number) => {
     if (currentStep === 1) {
@@ -424,22 +456,37 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
             )}
             {step === 5 && (
                  <div className="space-y-6">
-                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Step 5: Upload Documents</h3><Button variant="outline" size="sm" onClick={addDocument}><PlusCircle className="mr-2 h-4 w-4"/>Add Document</Button></div>
-                     <div className="space-y-4">
-                        {documents.map(doc => (
-                             <div key={doc.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
-                                <Input placeholder="Document Label (e.g., Accident Photo)" value={doc.label} onChange={(e) => updateDocumentLabel(doc.id, e.target.value)} />
-                                <Label htmlFor={`file-upload-${doc.id}`} className="flex items-center justify-center w-full h-10 px-4 transition bg-background border rounded-md appearance-none cursor-pointer hover:border-primary text-sm text-muted-foreground">
-                                    <Upload className="h-4 w-4 mr-2" /> {doc.file ? 'Change File' : 'Upload File'}
-                                </Label>
-                                <Input id={`file-upload-${doc.id}`} type="file" className="hidden" onChange={handleFileChange(doc.id)} />
-                                 <div className="flex items-center gap-2">
-                                    {doc.file && <span className="text-xs text-muted-foreground truncate max-w-xs">File uploaded</span>}
-                                    <Button variant="ghost" size="icon" onClick={() => removeDocument(doc.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                    <h3 className="font-semibold text-lg">Step 5: Upload Documents</h3>
+                    <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                        {(Object.keys(documentCategories) as AccidentDocumentType[]).map(docType => (
+                            <div key={docType} className="space-y-2 p-3 border rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <Label className="font-medium">{documentCategories[docType]}</Label>
+                                    <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
+                                        Add File
+                                    </Label>
+                                    <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple onChange={handleFileChange(docType)} />
+                                </div>
+                                <div className="space-y-1">
+                                    {documents[docType]?.length > 0 ? (
+                                        documents[docType].map(file => (
+                                            <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <FileIcon className="h-4 w-4 flex-shrink-0" />
+                                                    <span className="truncate">{file.name}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>
+                                    )}
                                 </div>
                             </div>
                         ))}
-                     </div>
+                    </div>
                  </div>
             )}
         </div>
@@ -452,3 +499,5 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     </Dialog>
   );
 }
+
+    

@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
@@ -23,37 +22,48 @@ import type { SeverityLevel } from '../../components/severity-level-table';
 import type { FaultStatus } from '../../components/fault-status-table';
 import type { ServiceCenter } from '../../components/service-center-table';
 
+const documentCategories: Record<keyof Accident['documents'], string> = {
+    accidentPhotos: 'Accident Photos',
+    policeReport: 'Police Report',
+    insuranceClaimForm: 'Insurance Claim Form',
+    workshopQuotation: 'Workshop Quotation',
+    repairInvoice: 'Repair Invoice',
+    medicalReport: 'Medical Report (if any)',
+};
 
-const DocumentViewer = ({ doc, label }: { doc: {label: string, file: string}; label: string }) => {
-    if (!doc || !doc.file) return null;
-  
-    const isImage = doc.file.startsWith('data:image/');
-    const fileName = `${label.replace(/\s+/g, '_')}.${doc.file.substring(doc.file.indexOf('/') + 1, doc.file.indexOf(';'))}`;
-  
+const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file: string }[]; categoryLabel: string }) => {
+    if (!files || files.length === 0) return null;
+
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{doc.label}</CardTitle>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
-                </Button>
+            <CardHeader>
+                <CardTitle>{categoryLabel}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="mt-4 border rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{minHeight: '400px'}}>
-                    {isImage ? (
-                        <Image src={doc.file} alt={doc.label} width={800} height={600} className="object-contain" />
-                    ) : (
-                        <div className="p-8 text-center">
-                            <FileText className="h-16 w-16 mx-auto text-muted-foreground" />
-                            <p className="font-semibold mt-4">Preview not available</p>
-                            <p className="text-sm text-muted-foreground">Download the file to view its contents.</p>
+            <CardContent className="grid gap-4">
+                {files.map((doc, index) => {
+                    const isImage = doc.file.startsWith('data:image/');
+                    const fileName = doc.name;
+                    return (
+                        <div key={index} className="border rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-2">
+                                <p className="font-medium text-sm truncate">{fileName}</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
+                                </Button>
+                            </div>
+                             {isImage && (
+                                <div className="mt-2 rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{maxHeight: '400px'}}>
+                                    <Image src={doc.file} alt={fileName} width={600} height={400} className="object-contain" />
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    );
+                })}
             </CardContent>
         </Card>
-    )
+    );
 };
+
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <li className="flex items-start gap-3">
@@ -206,11 +216,14 @@ export default function AccidentProfilePage() {
             </TabsContent>
 
             <TabsContent value="documents" className="pt-4">
-                 <div className="grid md:grid-cols-2 gap-4">
-                    {accident.documents && accident.documents.length > 0 ? accident.documents.map(doc => (
-                        <DocumentViewer key={doc.id} doc={doc} label={doc.label} />
-                    )) : (
-                        <p className="text-sm text-muted-foreground col-span-2">No documents were uploaded for this record.</p>
+                 <div className="grid md:grid-cols-1 gap-6">
+                    {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(key => (
+                        accident.documents[key] && accident.documents[key].length > 0 && (
+                             <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
+                        )
+                    ))}
+                    {Object.values(accident.documents).every(arr => arr.length === 0) && (
+                         <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                     )}
                 </div>
             </TabsContent>
@@ -220,3 +233,5 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
+
+    
