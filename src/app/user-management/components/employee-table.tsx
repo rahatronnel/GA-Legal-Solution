@@ -69,7 +69,13 @@ export function EmployeeTable() {
         setEmployees(prev => prev.map(d => d.id === id ? { id, ...data } : d));
         toast({ title: 'Success', description: 'Employee updated successfully.' });
     } else {
-        const newEmployee = { id: Date.now().toString(), ...data };
+        const newEmployee: Employee = { 
+            id: Date.now().toString(), 
+            ...data,
+            // Ensure nested objects are initialized
+            documents: data.documents || { nid: '', other: '' },
+            profilePicture: data.profilePicture || ''
+        };
         setEmployees(prev => [...prev, newEmployee]);
         toast({ title: 'Success', description: 'Employee added successfully.' });
     }

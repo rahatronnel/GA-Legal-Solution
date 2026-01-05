@@ -78,7 +78,10 @@ export function AccidentTable() {
         }));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
-        const newRecord: Accident = { id: Date.now().toString(), ...data };
+        const newRecord: Accident = { 
+            id: Date.now().toString(), 
+            ...data
+        };
         setAccidents(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Accident record added successfully.' });
     }
