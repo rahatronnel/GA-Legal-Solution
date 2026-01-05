@@ -18,18 +18,22 @@ import { AccidentEntryForm, type Accident } from './accident-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
 import type { AccidentType } from './accident-type-table';
 
+interface AccidentTableProps {
+    accidents: Accident[];
+    setAccidents: React.Dispatch<React.SetStateAction<Accident[]>>;
+}
 
-export function AccidentTable() {
+export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
   const { toast } = useToast();
-  const [accidents, setAccidents] = useState<Accident[]>([]);
-  const [vehicles] = useState<Vehicle[]>([]);
-  const [drivers] = useState<Driver[]>([]);
-  const [accidentTypes] = useState<AccidentType[]>([]);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);

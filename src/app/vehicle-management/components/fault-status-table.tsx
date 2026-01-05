@@ -32,9 +32,13 @@ export type FaultStatus = {
   code: string;
 };
 
-export function FaultStatusTable() {
+interface FaultStatusTableProps {
+    faultStatuses: FaultStatus[];
+    setFaultStatuses: React.Dispatch<React.SetStateAction<FaultStatus[]>>;
+}
+
+export function FaultStatusTable({ faultStatuses, setFaultStatuses }: FaultStatusTableProps) {
   const { toast } = useToast();
-  const [faultStatuses, setFaultStatuses] = useState<FaultStatus[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<FaultStatus> | null>(null);
@@ -98,7 +102,7 @@ export function FaultStatusTable() {
     }
 
     if (currentItem?.id) {
-      setFaultStatuses(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setFaultStatuses(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as FaultStatus : p));
       toast({ title: 'Success', description: 'Fault status updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };

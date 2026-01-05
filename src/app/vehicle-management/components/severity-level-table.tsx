@@ -32,9 +32,13 @@ export type SeverityLevel = {
   code: string;
 };
 
-export function SeverityLevelTable() {
+interface SeverityLevelTableProps {
+    severityLevels: SeverityLevel[];
+    setSeverityLevels: React.Dispatch<React.SetStateAction<SeverityLevel[]>>;
+}
+
+export function SeverityLevelTable({ severityLevels, setSeverityLevels }: SeverityLevelTableProps) {
   const { toast } = useToast();
-  const [severityLevels, setSeverityLevels] = useState<SeverityLevel[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<SeverityLevel> | null>(null);
@@ -98,7 +102,7 @@ export function SeverityLevelTable() {
     }
 
     if (currentItem?.id) {
-      setSeverityLevels(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setSeverityLevels(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as SeverityLevel : p));
       toast({ title: 'Success', description: 'Severity level updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };

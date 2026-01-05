@@ -33,6 +33,10 @@ import type { Part } from "./components/part-table";
 import type { ServiceCenter } from "./components/service-center-table";
 import type { MaintenanceType } from "./components/maintenance-type-table";
 import type { MaintenanceExpenseType } from "./components/maintenance-expense-type-table";
+import type { Accident } from "./components/accident-entry-form";
+import type { AccidentType } from "./components/accident-type-table";
+import type { SeverityLevel } from "./components/severity-level-table";
+import type { FaultStatus } from "./components/fault-status-table";
 
 
 export default function VehicleManagementPage() {
@@ -47,6 +51,10 @@ export default function VehicleManagementPage() {
   const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
+  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
+  const [accidentTypes, setAccidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [severityLevels, setSeverityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
+  const [faultStatuses, setFaultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
   
   return (
     <>
@@ -157,7 +165,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTable />
+                        <AccidentTable accidents={accidents} setAccidents={setAccidents} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -166,7 +174,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTypeTable />
+                        <AccidentTypeTable accidentTypes={accidentTypes} setAccidentTypes={setAccidentTypes} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -175,7 +183,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SeverityLevelTable />
+                        <SeverityLevelTable severityLevels={severityLevels} setSeverityLevels={setSeverityLevels} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -184,7 +192,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FaultStatusTable />
+                        <FaultStatusTable faultStatuses={faultStatuses} setFaultStatuses={setFaultStatuses} />
                     </CardContent>
                 </Card>
             </div>
@@ -200,7 +208,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable locations={locations} routes={routes} setRoutes={setRoutes} />
+                    <RouteTable locations={locations} />
                 </CardContent>
             </Card>
             <Card>
@@ -209,7 +217,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripPurposeTable purposes={tripPurposes} setPurposes={setTripPurposes} />
+                    <TripPurposeTable />
                 </CardContent>
             </Card>
             <Card>
@@ -227,7 +235,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined types for trip expenses.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ExpenseTypeTable expenseTypes={expenseTypes} setExpenseTypes={setExpenseTypes} />
+                    <ExpenseTypeTable />
                 </CardContent>
             </Card>
           </div>

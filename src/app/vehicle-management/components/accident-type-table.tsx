@@ -32,9 +32,13 @@ export type AccidentType = {
   code: string;
 };
 
-export function AccidentTypeTable() {
+interface AccidentTypeTableProps {
+    accidentTypes: AccidentType[];
+    setAccidentTypes: React.Dispatch<React.SetStateAction<AccidentType[]>>;
+}
+
+export function AccidentTypeTable({ accidentTypes, setAccidentTypes }: AccidentTypeTableProps) {
   const { toast } = useToast();
-  const [accidentTypes, setAccidentTypes] = useState<AccidentType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<AccidentType> | null>(null);
@@ -98,7 +102,7 @@ export function AccidentTypeTable() {
     }
 
     if (currentItem?.id) {
-      setAccidentTypes(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setAccidentTypes(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as AccidentType : p));
       toast({ title: 'Success', description: 'Accident type updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
