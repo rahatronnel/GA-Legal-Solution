@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
+import { Upload, X, CalendarIcon, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,7 +35,7 @@ import type { FaultStatus } from './fault-status-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-
+import { ChevronsUpDown, Check } from 'lucide-react';
 
 type UploadedFile = {
   id: string;
@@ -197,7 +197,7 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
 interface AccidentEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (record: Omit<Accident, 'id'>, id?: string) => void;
+  onSave: (record: Partial<Accident>) => void;
   accident: Partial<Accident> | null;
 }
 
@@ -378,13 +378,11 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields in Step 1.' });
         return;
     }
-    const accidentId = isEditing && accident?.id ? accident.accidentId : `ACC-${Date.now()}`;
-    const dataToSave: Omit<Accident, 'id'> = {
+    const dataToSave = {
         ...accidentData,
-        accidentId,
         documents
     };
-    onSave(dataToSave, accident?.id);
+    onSave(dataToSave);
     setIsOpen(false);
   };
 
@@ -571,3 +569,5 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     </Dialog>
   );
 }
+
+    

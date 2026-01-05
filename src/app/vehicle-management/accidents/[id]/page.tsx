@@ -102,14 +102,12 @@ export default function AccidentProfilePage() {
       if (foundRecord) {
         setAccident(foundRecord);
       } else if (accidents.length > 0) {
-        // If we have accidents, but didn't find it, it's a 404
         const timer = setTimeout(() => {
           const recheck = accidents.find(t => t.id === id);
           if(!recheck) notFound();
-        }, 500); // give it a moment just in case
+        }, 500); 
         return () => clearTimeout(timer);
       }
-      // If accidents array is not loaded yet, we just wait.
     }
   }, [id, accidents]);
 
@@ -132,11 +130,6 @@ export default function AccidentProfilePage() {
 
   if (accident === undefined) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
-  }
-
-  if (accident === null) {
-      // This state is now effectively a 404, handled by notFound() in the effect
-      return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
 
   const formatCurrency = (amount: number | undefined) => {
@@ -249,3 +242,5 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
+
+    

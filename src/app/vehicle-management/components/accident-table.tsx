@@ -69,16 +69,18 @@ export function AccidentTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Accident, 'id'>, id?: string) => {
-    if (id) {
-        setAccidents(prev => prev.map(acc => (acc.id === id ? { ...acc, ...data } : acc)));
+  const handleSave = (data: Partial<Accident>) => {
+    if (currentItem?.id) {
+        // This is an edit
+        setAccidents(prev => prev.map(acc => (acc.id === currentItem.id ? { ...acc, ...data } as Accident : acc)));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
+        // This is a new record
         const newRecord: Accident = { 
             id: Date.now().toString(), 
+            accidentId: `ACC-${Date.now()}`,
             ...data,
-            documents: data.documents || {},
-        };
+        } as Accident;
         setAccidents(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Accident record added successfully.' });
     }
@@ -165,7 +167,7 @@ export function AccidentTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
-            <DialogDescription>This action cannot be undone. This will permanently delete the accident record for "{currentItem?.accidentId}".</DialogDescription>
+            <DialogDescription>This action cannot be undone. This will permanently delete the accident record "{currentItem?.accidentId}".</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
@@ -176,3 +178,5 @@ export function AccidentTable() {
     </TooltipProvider>
   );
 }
+
+    
