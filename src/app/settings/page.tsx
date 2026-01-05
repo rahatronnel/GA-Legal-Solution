@@ -53,20 +53,6 @@ export default function SettingsPage() {
     setLogoPreview(storedSettings.logo);
   }, [storedSettings]);
 
-  // Backup reminder effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      toast({
-        title: "Backup Reminder",
-        description: "It's been a while! Don't forget to back up your data to prevent loss.",
-        action: <Button variant="secondary" size="sm" onClick={handleDownloadBackup}>Backup Now</Button>,
-        duration: 20000, // 20 seconds
-      });
-    }, 30 * 60 * 1000); // 30 minutes
-
-    return () => clearInterval(interval);
-  }, [toast]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setSettings(prev => ({ ...prev, [id]: value }));
