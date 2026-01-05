@@ -7,15 +7,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { VehicleTypeTable } from './vehicle-type-table';
+import type { Driver as DriverType } from './driver-entry-form';
 
 export type Vehicle = {
     id: string;
@@ -43,7 +46,7 @@ export type Vehicle = {
 };
 
 type Driver = { id: string; name: string; };
-type VehicleType = { id: string; name: string; };
+type VehicleType = { id: string; name: string; vehicleTypeCode: string; };
 
 const initialVehicleData: Omit<Vehicle, 'id' | 'documents'> = {
     vehicleIdCode: '',
@@ -89,13 +92,136 @@ const documentLabels: Record<DocType, string> = {
   other: "Other Document"
 };
 
-export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, vehicleTypes }: VehicleEntryFormProps) {
+const QuickAddVehicleTypeDialog: React.FC<{
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSave: (newType: VehicleType) => void;
+}> = ({ open, onOpenChange, onSave }) => {
+    const { toast } = useToast();
+    const [name, setName] = useState('');
+    const [code, setCode] = useState('');
+
+    const handleSave = () => {
+        if (!name.trim() || !code.trim()) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
+            return;
+        }
+        const newType = { id: Date.now().toString(), name, vehicleTypeCode: code };
+        onSave(newType);
+        setName('');
+        setCode('');
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Vehicle Category</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-add-type-name">Category Name</Label>
+                        <Input id="quick-add-type-name" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-add-type-code">Category Code</Label>
+                        <Input id="quick-add-type-code" value={code} onChange={(e) => setCode(e.target.value)} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave}>Save Category</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const QuickAddDriverDialog: React.FC<{
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSave: (newDriver: DriverType) => void;
+}> = ({ open, onOpenChange, onSave }) => {
+    const { toast } = useToast();
+    const [driverData, setDriverData] = useState({ driverIdCode: '', name: '', mobileNumber: '' });
+
+    const handleSave = () => {
+        if (!driverData.driverIdCode.trim() || !driverData.name.trim() || !driverData.mobileNumber.trim()) {
+            toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
+            return;
+        }
+        const newDriver: DriverType = {
+            id: Date.now().toString(),
+            ...driverData,
+            fatherOrGuardianName: '',
+            dateOfBirth: '',
+            gender: '',
+            alternateMobileNumber: '',
+            profilePicture: '',
+            nationalIdOrPassport: '',
+            drivingLicenseNumber: '',
+            licenseType: '',
+            licenseIssueDate: '',
+            licenseExpiryDate: '',
+            issuingAuthority: '',
+            presentAddress: '',
+            permanentAddress: '',
+            joiningDate: '',
+            employmentType: '',
+            department: '',
+            dutyShift: '',
+            assignedVehicleId: '',
+            supervisor: '',
+            documents: { drivingLicense: '', nid: '', other: '' }
+        };
+        onSave(newDriver);
+        setDriverData({ driverIdCode: '', name: '', mobileNumber: '' });
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Driver (Quick Add)</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-add-driver-id">Driver ID / Code</Label>
+                        <Input id="quick-add-driver-id" value={driverData.driverIdCode} onChange={(e) => setDriverData({...driverData, driverIdCode: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="quick-add-driver-name">Driver Name</Label>
+                        <Input id="quick-add-driver-name" value={driverData.name} onChange={(e) => setDriverData({...driverData, name: e.target.value})} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="quick-add-driver-mobile">Mobile Number</Label>
+                        <Input id="quick-add-driver-mobile" value={driverData.mobileNumber} onChange={(e) => setDriverData({...driverData, mobileNumber: e.target.value})} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave}>Save Driver</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: VehicleEntryFormProps) {
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const [docPreviews, setDocPreviews] = useState(initialDocuments);
   
+  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [drivers, setDrivers] = useLocalStorage<DriverType[]>('drivers', []);
+
+  const [isAddTypeOpen, setIsAddTypeOpen] = useState(false);
+  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+
   const isEditing = vehicle && vehicle.id;
   const progress = Math.round((step / 2) * 100);
 
@@ -104,10 +230,8 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
         setStep(1);
         if (isEditing && vehicle) {
             const dataToEdit = { ...initialVehicleData, ...vehicle };
-             // remove documents and id, they are handled separately
             delete (dataToEdit as any).documents;
             delete (dataToEdit as any).id;
-
             setVehicleData(dataToEdit);
             setDocPreviews(vehicle.documents || initialDocuments);
         } else {
@@ -116,7 +240,6 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
         }
     }
   }, [isOpen, vehicle, isEditing]);
-
 
   const handleVehicleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -150,11 +273,11 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
 
   const validateStep1 = () => {
     const requiredFields: (keyof typeof vehicleData)[] = [
-      'vehicleIdCode', 'registrationNumber', 'make', 'model', 'vehicleTypeId', 'ownership', 'status', 'driverId'
+      'vehicleIdCode', 'registrationNumber', 'make', 'model', 'vehicleTypeId', 'ownership', 'status'
     ];
     for (const field of requiredFields) {
       if (!vehicleData[field]?.trim()) {
-        const fieldName = field.replace(/([A-Z])/g, ' $1').replace('Id', ' ID').trim();
+        const fieldName = field.replace(/([A-Z])/g, ' $1').replace('Id', '').trim();
         toast({ variant: 'destructive', title: 'Error', description: `Please fill out the ${fieldName} field.` });
         return false;
       }
@@ -171,7 +294,6 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
 
   const prevStep = () => setStep(s => s - 1);
 
-
   const handleSave = async () => {
     if (!validateStep1()) {
         toast({variant: 'destructive', title: 'Error', description: 'Please go back and fill out all required fields.'});
@@ -186,7 +308,19 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
     onSave(dataToSave, vehicle?.id);
     setIsOpen(false);
   };
+
+  const handleQuickAddType = (newType: VehicleType) => {
+    setVehicleTypes(prev => [...prev, newType]);
+    setVehicleData(prev => ({ ...prev, vehicleTypeId: newType.id }));
+    toast({ title: 'Success', description: `Category "${newType.name}" added and selected.` });
+  };
   
+  const handleQuickAddDriver = (newDriver: DriverType) => {
+    setDrivers(prev => [...prev, newDriver]);
+    setVehicleData(prev => ({ ...prev, driverId: newDriver.id }));
+    toast({ title: 'Success', description: `Driver "${newDriver.name}" added and selected.` });
+  };
+
   const getDocumentName = (docType: DocType) => {
       if (docPreviews[docType]) {
           const prefix = `data:application/pdf;base64,`;
@@ -197,6 +331,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
@@ -235,15 +370,18 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
                     {/* Column 2 */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleTypeId">Vehicle Category</Label>
-                            <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
-                                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                                <SelectContent>
-                                    {vehicleTypes.map(type => (
-                                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                           <Label htmlFor="vehicleTypeId">Vehicle Category</Label>
+                            <div className="flex gap-2">
+                                <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
+                                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                                    <SelectContent>
+                                        {vehicleTypes.map(type => (
+                                            <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button type="button" variant="outline" size="icon" onClick={() => setIsAddTypeOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="make">Brand</Label>
@@ -304,16 +442,19 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
                  <hr className="border-border my-4" />
                  <div className="space-y-2">
                     <Label htmlFor="driverId">Assigned Driver</Label>
-                    <Select value={vehicleData.driverId} onValueChange={handleSelectChange('driverId')}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a driver" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {drivers.map(driver => (
-                                <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                        <Select value={vehicleData.driverId} onValueChange={handleSelectChange('driverId')}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a driver" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {drivers.map(driver => (
+                                    <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button type="button" variant="outline" size="icon" onClick={() => setIsAddDriverOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
+                    </div>
                 </div>
               </div>
             )}
@@ -366,5 +507,8 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle, drivers, 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <QuickAddVehicleTypeDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} />
+    <QuickAddDriverDialog open={isAddDriverOpen} onOpenChange={setIsAddDriverOpen} onSave={handleQuickAddDriver} />
+    </>
   );
 }

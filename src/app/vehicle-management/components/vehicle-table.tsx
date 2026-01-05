@@ -22,15 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
+import type { Driver } from './driver-entry-form';
 
 type VehicleType = {
   id: string;
   name: string;
-};
-
-type Driver = {
-    id: string;
-    name: string;
 };
 
 export function VehicleTable() {
