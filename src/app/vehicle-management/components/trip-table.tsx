@@ -75,22 +75,33 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id' | 'tripId'>, id?: string) => {
     if (id) {
-        setTrips(prev => prev.map(t => {
-            if (t.id === id) {
-                // When updating, merge new data with existing data to preserve fields
-                return { ...t, ...data };
-            }
-            return t;
-        }));
-        toast({ title: 'Success', description: 'Trip updated successfully.' });
+      setTrips(prev =>
+        prev.map(t => (t.id === id ? { ...t, ...data } : t))
+      );
+      toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
-        const newTrip: Trip = {
-            id: Date.now().toString(),
-            tripId: `TRIP-${Date.now()}`,
-            ...data,
-        };
-        setTrips(prev => [...prev, newTrip]);
-        toast({ title: 'Success', description: 'Trip added successfully.' });
+      const newTrip: Trip = {
+        id: Date.now().toString(),
+        tripId: `TRIP-${Date.now()}`,
+        vehicleId: data.vehicleId,
+        driverId: data.driverId,
+        purposeId: data.purposeId,
+        routeId: data.routeId,
+        startDate: data.startDate,
+        startTime: data.startTime,
+        endDate: data.endDate,
+        endTime: data.endTime,
+        startLocationId: data.startLocationId,
+        destinationLocationId: data.destinationLocationId,
+        startingMeter: data.startingMeter,
+        endingMeter: data.endingMeter,
+        remarks: data.remarks,
+        tripStatus: data.tripStatus,
+        expenses: data.expenses || [],
+        documents: data.documents || {},
+      };
+      setTrips(prev => [...prev, newTrip]);
+      toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
 
@@ -240,5 +251,6 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+    
 
     
