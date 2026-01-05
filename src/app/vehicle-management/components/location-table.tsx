@@ -32,9 +32,13 @@ export type Location = {
   locationCode: string;
 };
 
-export function LocationTable() {
+interface LocationTableProps {
+  locations: Location[];
+  setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
+}
+
+export function LocationTable({ locations, setLocations }: LocationTableProps) {
   const { toast } = useToast();
-  const [locations, setLocations] = useState<Location[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Partial<Location> | null>(null);

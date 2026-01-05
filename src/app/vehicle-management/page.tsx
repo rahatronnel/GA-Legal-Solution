@@ -186,7 +186,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LocationTable />
+                    <LocationTable locations={locations} setLocations={setLocations} />
                 </CardContent>
             </Card>
             <Card>
