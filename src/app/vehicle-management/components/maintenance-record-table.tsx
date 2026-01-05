@@ -21,9 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
-import type { ServiceCenter } from './service-center-table';
-import type { Employee } from '@/app/user-management/components/employee-entry-form';
-import type { MaintenanceExpenseType } from './maintenance-expense-type-table';
 
 
 export function MaintenanceRecordTable() {
@@ -31,9 +28,6 @@ export function MaintenanceRecordTable() {
   const [records, setRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [maintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -160,11 +154,6 @@ export function MaintenanceRecordTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         record={currentItem}
-        vehicles={vehicles || []}
-        maintenanceTypes={maintenanceTypes || []}
-        serviceCenters={serviceCenters || []}
-        employees={employees || []}
-        maintenanceExpenseTypes={maintenanceExpenseTypes || []}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>

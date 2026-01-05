@@ -30,6 +30,7 @@ import type { MaintenanceType } from './maintenance-type-table';
 import type { ServiceCenter } from './service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { MaintenanceExpenseType } from './maintenance-expense-type-table';
+import type { Driver } from './driver-entry-form';
 
 
 type Part = {
@@ -179,7 +180,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
 
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Employee[]>('drivers', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
@@ -401,7 +402,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                     <div className="space-y-2"><Label>Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{serviceDate?format(serviceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/></PopoverContent></Popover></div>
                     <div className="space-y-2"><Label>Upcoming Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/></PopoverContent></Popover></div>
                     
-                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')} disabled={!drivers.length}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.fullName}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')} disabled={!drivers.length}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description / Remarks</Label>
