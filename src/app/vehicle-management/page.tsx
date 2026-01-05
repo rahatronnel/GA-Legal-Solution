@@ -22,11 +22,11 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { useState } from "react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 
 export default function VehicleManagementPage() {
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [locations, setLocations] = useLocalStorage<Location[]>('locations', []);
   
   return (
     <>
