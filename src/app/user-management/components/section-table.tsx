@@ -26,7 +26,7 @@ import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-type Section = {
+export type Section = {
   id: string;
   name: string;
   sectionCode: string;
@@ -124,7 +124,7 @@ export function SectionTable() {
           }
 
           const newItems = json
-            .map(item => ({
+            .map((item: any) => ({
               name: String(item.name || '').trim(),
               sectionCode: String(item.sectionCode || '').trim()
             }))

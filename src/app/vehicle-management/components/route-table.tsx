@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Location } from './location-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-type Route = {
+export type Route = {
   id: string;
   name: string;
   routeCode: string;
@@ -163,7 +163,7 @@ export function RouteTable({ locations }: RouteTableProps) {
           }
 
           const newItems = json
-            .map(item => {
+            .map((item: any) => {
               const startLocation = locations.find(l => l.locationCode === String(item.startLocationCode || '').trim());
               const endLocation = locations.find(l => l.locationCode === String(item.endLocationCode || '').trim());
               const routeCode = String(item.routeCode || '').trim();

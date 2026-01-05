@@ -134,7 +134,7 @@ export function LocationTable() {
           }
 
           const newItems = json
-            .map(item => ({
+            .map((item: any) => ({
               name: String(item.name || '').trim(),
               locationCode: String(item.locationCode || '').trim()
             }))

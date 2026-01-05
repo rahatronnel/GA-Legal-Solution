@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -90,7 +89,6 @@ export function VehicleTable() {
     if (id) {
         setVehicles(prev => prev.map(v => {
             if (v.id === id) {
-                // Correctly merge existing data with new data
                 return { ...v, ...data };
             }
             return v;

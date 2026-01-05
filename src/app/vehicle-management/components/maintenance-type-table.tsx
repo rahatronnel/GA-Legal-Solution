@@ -134,9 +134,9 @@ export function MaintenanceTypeTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));

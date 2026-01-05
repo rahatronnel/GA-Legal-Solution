@@ -124,7 +124,7 @@ export function DesignationTable() {
           }
 
           const newItems = json
-            .map(item => ({
+            .map((item: any) => ({
               name: String(item.name || '').trim(),
               designationCode: String(item.designationCode || '').trim()
             }))

@@ -26,7 +26,7 @@ import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-type TripPurpose = {
+export type TripPurpose = {
   id: string;
   name: string;
 };
@@ -125,7 +125,7 @@ export function TripPurposeTable() {
           }
 
           const newItems = json
-            .map(item => ({ name: String(item.name || '').trim() }))
+            .map((item: any) => ({ name: String(item.name || '').trim() }))
             .filter(item => item.name)
             .map(item => ({ id: Date.now().toString() + item.name, name: item.name }));
           

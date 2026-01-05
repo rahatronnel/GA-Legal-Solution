@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -70,7 +69,12 @@ export function MaintenanceRecordTable() {
 
   const handleSave = (data: Omit<MaintenanceRecord, 'id'>, id?: string) => {
     if (id) {
-        setRecords(prev => prev.map(t => t.id === id ? { ...t, ...data } as MaintenanceRecord : t));
+        setRecords(prev => prev.map(rec => {
+            if (rec.id === id) {
+                return { ...rec, ...data };
+            }
+            return rec;
+        }));
         toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
     } else {
         const newRecord: MaintenanceRecord = { id: Date.now().toString(), ...data };
