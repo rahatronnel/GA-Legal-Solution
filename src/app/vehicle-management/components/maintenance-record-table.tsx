@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -69,15 +70,16 @@ export function MaintenanceRecordTable() {
 
   const handleSave = (data: Omit<MaintenanceRecord, 'id'>, id?: string) => {
     if (id) {
-        setRecords(prev => prev.map(rec => {
-            if (rec.id === id) {
-                return { ...rec, ...data };
-            }
-            return rec;
-        }));
+        setRecords(prev => prev.map(rec => (rec.id === id ? { ...rec, ...data } : rec)));
         toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
     } else {
-        const newRecord: MaintenanceRecord = { id: Date.now().toString(), ...data };
+        const newRecord: MaintenanceRecord = { 
+            id: Date.now().toString(), 
+            ...data,
+            parts: data.parts || [],
+            expenses: data.expenses || [],
+            documents: data.documents || {},
+        };
         setRecords(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Maintenance record added successfully.' });
     }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -95,13 +96,15 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-        setTrips(prev => prev.map(t => (t.id === id ? { id, ...data } : t)));
+        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } : t)));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         const newTrip: Trip = {
             id: Date.now().toString(),
             tripId: `TRIP-${Date.now()}`,
             ...data,
+            expenses: data.expenses || [],
+            documents: data.documents || {},
         };
         setTrips(prev => [...prev, newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });

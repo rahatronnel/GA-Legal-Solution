@@ -24,7 +24,6 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
-import { format, parseISO } from 'date-fns';
 import type { VehicleBrand } from './vehicle-brand-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -115,19 +114,27 @@ export function VehicleTable() {
 
   const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
     if (id) {
-        setVehicles(prev => prev.map(v => {
-            if (v.id === id) {
-                return { ...v, ...data };
-            }
-            return v;
-        }));
+        // Update existing vehicle
+        setVehicles(prev => prev.map(v => (v.id === id ? { ...v, ...data } : v)));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
-        const newVehicle: Vehicle = { 
-          id: Date.now().toString(), 
-          ...data,
-          driverAssignmentHistory: data.driverAssignmentHistory || [],
-          documents: data.documents || { registration: '', insurance: '', fitness: '', taxToken: '', routePermit: '', other: '' },
+        // Create new vehicle with complete structure
+        const newVehicle: Vehicle = {
+            id: Date.now().toString(),
+            vehicleIdCode: data.vehicleIdCode,
+            vehicleTypeId: data.vehicleTypeId,
+            registrationNumber: data.registrationNumber,
+            engineNumber: data.engineNumber,
+            chassisNumber: data.chassisNumber,
+            brandId: data.brandId,
+            model: data.model,
+            manufactureYear: data.manufactureYear,
+            fuelType: data.fuelType,
+            capacity: data.capacity,
+            ownership: data.ownership,
+            status: data.status,
+            driverAssignmentHistory: data.driverAssignmentHistory || [],
+            documents: data.documents || { registration: '', insurance: '', fitness: '', taxToken: '', routePermit: '', other: '' },
         };
         setVehicles(prev => [...prev, newVehicle]);
         toast({ title: 'Success', description: 'Vehicle added successfully.' });

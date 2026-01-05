@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -70,17 +71,13 @@ export function AccidentTable() {
 
   const handleSave = (data: Omit<Accident, 'id'>, id?: string) => {
     if (id) {
-        setAccidents(prev => prev.map(acc => {
-            if (acc.id === id) {
-                return { ...acc, ...data };
-            }
-            return acc;
-        }));
+        setAccidents(prev => prev.map(acc => (acc.id === id ? { ...acc, ...data } : acc)));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
         const newRecord: Accident = { 
             id: Date.now().toString(), 
-            ...data
+            ...data,
+            documents: data.documents || {},
         };
         setAccidents(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Accident record added successfully.' });
