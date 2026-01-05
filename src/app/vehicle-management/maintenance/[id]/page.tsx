@@ -7,7 +7,7 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text } from 'lucide-react';
+import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, DollarSign, Text } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,40 +19,51 @@ import type { ServiceCenter } from '../components/service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { MaintenanceExpenseType } from '../components/maintenance-expense-type-table';
 import type { Part as PartType } from '../components/part-table';
+import type { Driver } from '../components/driver-entry-form';
 
+const documentCategories: Record<keyof MaintenanceRecord['documents'], string> = {
+    workOrder: 'Work Order / Job Card',
+    repairInvoice: 'Repair Invoice / Bill',
+    partsInvoice: 'Parts Replacement Invoice (If separate)',
+    quotation: 'Quotation / Estimate',
+    paymentProof: 'Payment Proof',
+    checklist: 'Maintenance Checklist / Service Report',
+    beforeAfterPhotos: 'Before & After Photos',
+};
 
-const DocumentViewer = ({ doc, label }: { doc: {label: string, file: string}; label: string }) => {
-    if (!doc || !doc.file) {
-      return null;
-    }
-  
-    const isImage = doc.file.startsWith('data:image/');
-    const fileName = `${label.replace(/\s+/g, '_')}.${doc.file.substring(doc.file.indexOf('/') + 1, doc.file.indexOf(';'))}`;
-  
+const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file: string }[]; categoryLabel: string }) => {
+    if (!files || files.length === 0) return null;
+
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{doc.label}</CardTitle>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
-                </Button>
+            <CardHeader>
+                <CardTitle>{categoryLabel}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="mt-4 border rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{minHeight: '400px'}}>
-                    {isImage ? (
-                        <Image src={doc.file} alt={doc.label} width={800} height={600} className="object-contain" />
-                    ) : (
-                        <div className="p-8 text-center">
-                            <FileText className="h-16 w-16 mx-auto text-muted-foreground" />
-                            <p className="font-semibold mt-4">Preview not available</p>
-                            <p className="text-sm text-muted-foreground">Download the file to view its contents.</p>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+                {files.map((doc, index) => {
+                    const isImage = doc.file.startsWith('data:image/');
+                    const fileName = doc.name;
+                    return (
+                        <div key={index} className="border rounded-lg p-3 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <p className="font-medium text-sm truncate">{fileName}</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
+                                </Button>
+                            </div>
+                             {isImage && (
+                                <div className="mt-2 rounded-lg overflow-hidden flex justify-center items-center bg-muted/50 aspect-video">
+                                    <Image src={doc.file} alt={fileName} width={400} height={225} className="object-contain" />
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    );
+                })}
             </CardContent>
         </Card>
-    )
+    );
 };
+
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <li className="flex items-start gap-3">
@@ -72,6 +83,7 @@ export default function MaintenanceProfilePage() {
 
   const [records] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [allParts] = useLocalStorage<PartType[]>('parts', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
@@ -88,16 +100,17 @@ export default function MaintenanceProfilePage() {
     }
   }, [id, records]);
 
-  const { vehicle, maintenanceType, serviceCenter, employee, totalCost } = useMemo(() => {
+  const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost } = useMemo(() => {
     if (!record) return {};
     const vehicle = vehicles.find(v => v.id === record.vehicleId);
     const maintenanceType = maintenanceTypes.find(t => t.id === record.maintenanceTypeId);
     const serviceCenter = serviceCenters.find(sc => sc.id === record.serviceCenterId);
     const employee = employees.find(e => e.id === record.monitoringEmployeeId);
+    const driver = drivers.find(d => d.id === record.driverId);
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-    return { vehicle, maintenanceType, serviceCenter, employee, totalCost: partsCost + expensesCost };
-  }, [record, vehicles, maintenanceTypes, serviceCenters, employees]);
+    return { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost: partsCost + expensesCost };
+  }, [record, vehicles, maintenanceTypes, serviceCenters, employees, drivers]);
   
   const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find(et => et.id === id)?.name || 'N/A';
   const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'N/A';
@@ -133,6 +146,7 @@ export default function MaintenanceProfilePage() {
                         <InfoItem icon={Wrench} label="Maintenance Type" value={maintenanceType?.name} />
                         <InfoItem icon={Building} label="Service Center" value={serviceCenter?.name} />
                         <InfoItem icon={User} label="Monitoring Employee" value={employee?.fullName} />
+                         <InfoItem icon={User} label="Driver During Service" value={driver?.name} />
                     </ul>
                 </div>
                 <div className="space-y-4">
@@ -194,11 +208,14 @@ export default function MaintenanceProfilePage() {
             </TabsContent>
 
             <TabsContent value="documents" className="pt-4">
-                 <div className="grid md:grid-cols-2 gap-4">
-                    {record.documents && record.documents.length > 0 ? record.documents.map(doc => (
-                        <DocumentViewer key={doc.id} doc={doc} label={doc.label} />
-                    )) : (
-                        <p className="text-sm text-muted-foreground col-span-2">No documents were uploaded for this record.</p>
+                 <div className="space-y-6">
+                    {(Object.keys(documentCategories) as (keyof MaintenanceRecord['documents'])[]).map(key => (
+                        record.documents[key] && record.documents[key].length > 0 && (
+                             <DocumentViewer key={key} files={record.documents[key]} categoryLabel={documentCategories[key]} />
+                        )
+                    ))}
+                    {Object.values(record.documents).every(arr => !arr || arr.length === 0) && (
+                         <p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this record.</p>
                     )}
                 </div>
             </TabsContent>
@@ -208,3 +225,5 @@ export default function MaintenanceProfilePage() {
     </div>
   );
 }
+
+    

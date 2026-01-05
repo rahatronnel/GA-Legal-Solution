@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -50,11 +50,23 @@ type Expense = {
   amount: number;
 };
 
-type MaintenanceDocument = {
+type UploadedFile = {
   id: string;
-  label: string;
+  name: string;
   file: string; // data URL
 }
+
+type MaintenanceDocumentType = 'workOrder' | 'repairInvoice' | 'partsInvoice' | 'quotation' | 'paymentProof' | 'checklist' | 'beforeAfterPhotos';
+
+const documentCategories: Record<MaintenanceDocumentType, string> = {
+    workOrder: 'Work Order / Job Card',
+    repairInvoice: 'Repair Invoice / Bill',
+    partsInvoice: 'Parts Replacement Invoice (If separate)',
+    quotation: 'Quotation / Estimate',
+    paymentProof: 'Payment Proof',
+    checklist: 'Maintenance Checklist / Service Report',
+    beforeAfterPhotos: 'Before & After Photos',
+};
 
 export type MaintenanceRecord = {
   id: string;
@@ -68,7 +80,17 @@ export type MaintenanceRecord = {
   driverId: string;
   parts: Part[];
   expenses: Expense[];
-  documents: MaintenanceDocument[];
+  documents: Record<MaintenanceDocumentType, UploadedFile[]>;
+};
+
+const initialDocuments: Record<MaintenanceDocumentType, UploadedFile[]> = {
+    workOrder: [],
+    repairInvoice: [],
+    partsInvoice: [],
+    quotation: [],
+    paymentProof: [],
+    checklist: [],
+    beforeAfterPhotos: [],
 };
 
 const initialMaintenanceData: Omit<MaintenanceRecord, 'id' | 'parts' | 'expenses' | 'documents'> = {
@@ -175,7 +197,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const [maintenanceData, setMaintenanceData] = useState(initialMaintenanceData);
   const [parts, setParts] = useState<Part[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [documents, setDocuments] = useState<MaintenanceDocument[]>([]);
+  const [documents, setDocuments] = useState<Record<MaintenanceDocumentType, UploadedFile[]>>(initialDocuments);
   
   const [serviceDate, setServiceDate] = useState<Date | undefined>();
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
@@ -185,7 +207,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const [allParts] = useLocalStorage<PartType[]>('parts', []);
   const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
+  const [employees] = useLocalStorage<Employee[]>('employees', []);
   const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<string | null>(null);
@@ -213,7 +235,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         setMaintenanceData({ ...initialMaintenanceData, ...record });
         setParts(record.parts || []);
         setExpenses(record.expenses || []);
-        setDocuments(record.documents || []);
+        setDocuments(record.documents || initialDocuments);
         const serviceDt = record.serviceDate ? parseISO(record.serviceDate) : undefined;
         setServiceDate(serviceDt);
         setUpcomingServiceDate(record.upcomingServiceDate ? parseISO(record.upcomingServiceDate) : undefined);
@@ -232,7 +254,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         setMaintenanceData(initialMaintenanceData);
         setParts([]);
         setExpenses([]);
-        setDocuments([]);
+        setDocuments(initialDocuments);
         setServiceDate(undefined);
         setUpcomingServiceDate(undefined);
       }
@@ -319,20 +341,41 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   const removeExpense = (id: string) => setExpenses(e => e.filter(exp => exp.id !== id));
 
   // Document handlers
-  const addDocument = () => setDocuments(d => [...d, {id: Date.now().toString(), label: '', file: ''}]);
-  const updateDocumentLabel = (id: string, label: string) => {
-    setDocuments(d => d.map(doc => doc.id === id ? {...doc, label} : doc));
-  };
-  const handleFileChange = (id: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => setDocuments(d => d.map(doc => doc.id === id ? {...doc, file: reader.result as string} : doc));
-      reader.readAsDataURL(file);
-    }
-  }
-  const removeDocument = (id: string) => setDocuments(d => d.filter(doc => doc.id !== id));
+  const handleFileChange = (docType: MaintenanceDocumentType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const newFiles: UploadedFile[] = [];
 
+      for (const file of files) {
+        const reader = new FileReader();
+        const filePromise = new Promise<UploadedFile>(resolve => {
+          reader.onload = () => {
+            resolve({
+              id: Date.now().toString() + Math.random(),
+              name: file.name,
+              file: reader.result as string,
+            });
+          };
+        });
+        reader.readAsDataURL(file);
+        newFiles.push(await filePromise);
+      }
+
+      setDocuments(prev => ({
+        ...prev,
+        [docType]: [...prev[docType], ...newFiles]
+      }));
+    }
+    e.target.value = ''; // Reset file input
+  };
+
+  const removeDocument = (docType: MaintenanceDocumentType, fileId: string) => {
+    setDocuments(prev => ({
+        ...prev,
+        [docType]: prev[docType].filter(doc => doc.id !== fileId)
+    }));
+  };
+  
   // Quick Add Handlers
   const openQuickAdd = (type: string) => {
       setQuickAddData({});
@@ -476,22 +519,37 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
             )}
             {step === 3 && (
                  <div className="space-y-6">
-                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Step 3: Upload Documents</h3><Button variant="outline" size="sm" onClick={addDocument}><PlusCircle className="mr-2 h-4 w-4"/>Add Document</Button></div>
-                     <div className="space-y-4">
-                        {documents.map(doc => (
-                             <div key={doc.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
-                                <Input placeholder="Document Label (e.g., Invoice)" value={doc.label} onChange={(e) => updateDocumentLabel(doc.id, e.target.value)} />
-                                <Label htmlFor={`file-upload-${doc.id}`} className="flex items-center justify-center w-full h-10 px-4 transition bg-background border rounded-md appearance-none cursor-pointer hover:border-primary text-sm text-muted-foreground">
-                                    <Upload className="h-4 w-4 mr-2" /> {doc.file ? 'Change File' : 'Upload File'}
-                                </Label>
-                                <Input id={`file-upload-${doc.id}`} type="file" className="hidden" onChange={handleFileChange(doc.id)} />
-                                 <div className="flex items-center gap-2">
-                                    {doc.file && <span className="text-xs text-muted-foreground truncate">File uploaded</span>}
-                                    <Button variant="ghost" size="icon" onClick={() => removeDocument(doc.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                    <h3 className="font-semibold text-lg">Step 3: Upload Documents</h3>
+                    <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                        {(Object.keys(documentCategories) as MaintenanceDocumentType[]).map(docType => (
+                            <div key={docType} className="space-y-2 p-3 border rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <Label className="font-medium">{documentCategories[docType]}</Label>
+                                    <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
+                                        Add File(s)
+                                    </Label>
+                                    <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple onChange={handleFileChange(docType)} />
+                                </div>
+                                <div className="space-y-1">
+                                    {documents[docType]?.length > 0 ? (
+                                        documents[docType].map(file => (
+                                            <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <FileIcon className="h-4 w-4 flex-shrink-0" />
+                                                    <span className="truncate">{file.name}</span>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>
+                                    )}
                                 </div>
                             </div>
                         ))}
-                     </div>
+                    </div>
                  </div>
             )}
         </div>
@@ -531,3 +589,5 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
     </>
   );
 }
+
+    
