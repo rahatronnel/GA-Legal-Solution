@@ -10,7 +10,6 @@ import { TripPurposeTable } from "./components/trip-purpose-table";
 import { LocationTable, type Location } from "./components/location-table";
 import { RouteTable } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { ExpenseTypeTable } from "./components/expense-type-table";
 import { MaintenanceTypeTable } from "./components/maintenance-type-table";
 import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-type-table";
@@ -21,14 +20,13 @@ import { AccidentTable } from "./components/accident-table";
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import ReportsPage from "./reports/page";
+import { VehicleBrandTable } from "./components/vehicle-brand-table";
+import { useState } from "react";
 
 
 export default function VehicleManagementPage() {
-  const [locations] = useLocalStorage<Location[]>('locations', []);
+  const [locations, setLocations] = useState<Location[]>([]);
   
   return (
     <>

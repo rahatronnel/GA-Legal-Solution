@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { PlusCircle, Edit, Trash2, Download, Upload, Search, Eye, Printer, Calendar as CalendarIcon, X } from 'lucide-react';
 import { TripEntryForm, type Trip } from './trip-entry-form';
@@ -36,13 +35,13 @@ import { format } from 'date-fns';
 
 export function TripTable() {
   const { toast } = useToast();
-  const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
-  const [locations] = useLocalStorage<Location[]>('locations', []);
-  const [routes] = useLocalStorage<Route[]>('routes', []);
-  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [vehicles] = useState<Vehicle[]>([]);
+  const [drivers] = useState<Driver[]>([]);
+  const [purposes] = useState<TripPurpose[]>([]);
+  const [locations] = useState<Location[]>([]);
+  const [routes] = useState<Route[]>([]);
+  const [expenseTypes] = useState<ExpenseType[]>([]);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -96,7 +95,7 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } : t)));
+        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } as Trip : t)));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         const newTrip: Trip = {
@@ -105,7 +104,7 @@ export function TripTable() {
             ...data,
             expenses: data.expenses || [],
             documents: data.documents || {},
-        };
+        } as Trip;
         setTrips(prev => [...prev, newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }

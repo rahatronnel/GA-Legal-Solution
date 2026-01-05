@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -21,7 +22,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -34,7 +34,7 @@ type VehicleType = {
 
 export function VehicleTypeTable() {
   const { toast } = useToast();
-  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
@@ -151,9 +151,9 @@ export function VehicleTypeTable() {
         <div className="flex justify-end gap-2">
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Type</Button>
             <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-            <Label htmlFor="upload-excel-types" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+            <label htmlFor="upload-excel-types" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
                 <Upload className="mr-2 h-4 w-4" /> Upload Excel
-            </Label>
+            </label>
             <Input id="upload-excel-types" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
         </div>
         <div className="border rounded-lg">

@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { PlusCircle, Edit, Trash2, Download, Upload, Eye, Printer, Search } from 'lucide-react';
 import { VehicleEntryForm, type Vehicle } from './vehicle-entry-form';
@@ -50,10 +49,10 @@ const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
 
 export function VehicleTable() {
   const { toast } = useToast();
-  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
-  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [drivers] = useState<Driver[]>([]);
+  const [vehicleTypes] = useState<VehicleType[]>([]);
+  const [vehicleBrands] = useState<VehicleBrand[]>([]);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -115,7 +114,7 @@ export function VehicleTable() {
   const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
     if (id) {
         // Update existing vehicle
-        setVehicles(prev => prev.map(v => (v.id === id ? { ...v, ...data } : v)));
+        setVehicles(prev => prev.map(v => (v.id === id ? { ...v, ...data } as Vehicle : v)));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
         // Create new vehicle with complete structure
@@ -231,7 +230,7 @@ export function VehicleTable() {
                     routePermit: '',
                     other: ''
                 }
-              }
+              } as Vehicle
             });
           
           if(newVehicles.length > 0) {

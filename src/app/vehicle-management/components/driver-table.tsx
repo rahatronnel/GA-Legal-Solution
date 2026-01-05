@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -13,12 +14,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search } from 'lucide-react';
 import { DriverEntryForm, type Driver } from './driver-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
@@ -26,8 +25,8 @@ import type { Vehicle } from './vehicle-table';
 
 export function DriverTable() {
   const { toast } = useToast();
-  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [vehicles] = useState<Vehicle[]>([]);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -66,7 +65,7 @@ export function DriverTable() {
     if (id) {
         setDrivers(prev => prev.map(d => {
             if (d.id === id) {
-                return { ...d, ...data };
+                return { ...d, ...data } as Driver;
             }
             return d;
         }));
@@ -203,9 +202,9 @@ export function DriverTable() {
         <div className="flex gap-2">
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Driver</Button>
             <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-            <Label htmlFor="upload-excel-drivers" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+            <label htmlFor="upload-excel-drivers" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
                 <Upload className="mr-2 h-4 w-4" /> Upload
-            </Label>
+            </label>
             <Input id="upload-excel-drivers" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
         </div>
       </div>

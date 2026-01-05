@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { PlusCircle, Edit, Trash2, Search, Eye } from 'lucide-react';
 import { MaintenanceEntryForm, type MaintenanceRecord } from './maintenance-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -25,9 +24,9 @@ import type { MaintenanceType } from './maintenance-type-table';
 
 export function MaintenanceRecordTable() {
   const { toast } = useToast();
-  const [records, setRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [records, setRecords] = useState<MaintenanceRecord[]>([]);
+  const [vehicles] = useState<Vehicle[]>([]);
+  const [maintenanceTypes] = useState<MaintenanceType[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -70,7 +69,7 @@ export function MaintenanceRecordTable() {
 
   const handleSave = (data: Omit<MaintenanceRecord, 'id'>, id?: string) => {
     if (id) {
-        setRecords(prev => prev.map(rec => (rec.id === id ? { ...rec, ...data } : rec)));
+        setRecords(prev => prev.map(rec => (rec.id === id ? { ...rec, ...data } as MaintenanceRecord : rec)));
         toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
     } else {
         const newRecord: MaintenanceRecord = { 
@@ -79,7 +78,7 @@ export function MaintenanceRecordTable() {
             parts: data.parts || [],
             expenses: data.expenses || [],
             documents: data.documents || {},
-        };
+        } as MaintenanceRecord;
         setRecords(prev => [...prev, newRecord]);
         toast({ title: 'Success', description: 'Maintenance record added successfully.' });
     }

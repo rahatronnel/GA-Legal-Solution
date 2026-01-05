@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { PlusCircle, Edit, Trash2, Search, Eye } from 'lucide-react';
 import { AccidentEntryForm, type Accident } from './accident-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -27,10 +26,10 @@ import type { AccidentType } from './accident-type-table';
 
 export function AccidentTable() {
   const { toast } = useToast();
-  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [accidents, setAccidents] = useState<Accident[]>([]);
+  const [vehicles] = useState<Vehicle[]>([]);
+  const [drivers] = useState<Driver[]>([]);
+  const [accidentTypes] = useState<AccidentType[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -71,13 +70,11 @@ export function AccidentTable() {
 
   const handleSave = (data: Partial<Accident>) => {
     if (data.id) {
-        // This is an edit
         setAccidents(prev => prev.map(acc => (acc.id === data.id ? { ...acc, ...data } as Accident : acc)));
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
-        // This is a new record
         const newRecord: Accident = { 
-            id: Date.now().toString(), 
+            id: Date.now().toString(),
             accidentId: `ACC-${Date.now()}`,
             vehicleId: data.vehicleId || '',
             driverId: data.driverId || '',
@@ -212,5 +209,3 @@ export function AccidentTable() {
     </TooltipProvider>
   );
 }
-
-    
