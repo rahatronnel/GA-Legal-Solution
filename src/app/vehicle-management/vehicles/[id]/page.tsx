@@ -23,6 +23,7 @@ import type { Accident } from '../../components/accident-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { AccidentType } from '../../components/accident-type-table';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     if (!doc) {
@@ -99,6 +100,7 @@ export default function VehicleProfilePage() {
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [accidents] = useLocalStorage<Accident[]>('accidents', []);
@@ -147,6 +149,7 @@ export default function VehicleProfilePage() {
   }
   
   const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
+  const vehicleBrand = vehicleBrands.find(vb => vb.id === vehicle.brandId);
   
   const getStatusVariant = (status: Vehicle['status']) => {
     switch (status) {
@@ -191,7 +194,7 @@ export default function VehicleProfilePage() {
         <CardHeader>
             <div className="flex justify-between items-start">
                 <div>
-                    <CardTitle className="text-3xl">{vehicle.make} {vehicle.model}</CardTitle>
+                    <CardTitle className="text-3xl">{vehicleBrand?.name} {vehicle.model}</CardTitle>
                     <CardDescription>Reg No: {vehicle.registrationNumber}</CardDescription>
                     <CardDescription className="mt-1">Vehicle ID: {vehicle.vehicleIdCode}</CardDescription>
                 </div>
@@ -213,7 +216,7 @@ export default function VehicleProfilePage() {
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Vehicle Details</h3>
                     <ul className="space-y-4 text-sm">
                         <InfoItem icon={Car} label="Category" value={vehicleType?.name} />
-                        <InfoItem icon={Palette} label="Brand & Model" value={`${vehicle.make} ${vehicle.model}`} />
+                        <InfoItem icon={Palette} label="Brand & Model" value={`${vehicleBrand?.name} ${vehicle.model}`} />
                         <InfoItem icon={Calendar} label="Manufacture Year" value={vehicle.manufactureYear} />
                         <InfoItem icon={Fuel} label="Fuel Type" value={vehicle.fuelType} />
                         <InfoItem icon={Package} label="Capacity" value={vehicle.capacity} />

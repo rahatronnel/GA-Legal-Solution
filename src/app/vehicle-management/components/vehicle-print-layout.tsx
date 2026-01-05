@@ -5,11 +5,13 @@ import type { Driver } from './driver-entry-form';
 import type { VehicleType } from './vehicle-type-table';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import type { VehicleBrand } from './vehicle-brand-table';
 
 interface VehiclePrintLayoutProps {
   vehicle: Vehicle;
   drivers: Pick<Driver, 'id' | 'name'>[];
   vehicleTypes: Pick<VehicleType, 'id' | 'name'>[];
+  vehicleBrands: Pick<VehicleBrand, 'id' | 'name'>[];
 }
 
 const PrintHeader = () => (
@@ -76,7 +78,7 @@ const getStatusVariant = (status: Vehicle['status']) => {
     }
   };
 
-export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle, drivers, vehicleTypes }) => {
+export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle, drivers, vehicleTypes, vehicleBrands }) => {
     let pageCounter = 1;
     
     const currentDriver = React.useMemo(() => {
@@ -89,6 +91,7 @@ export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle,
     }, [vehicle, drivers]);
     
     const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
+    const vehicleBrand = vehicleBrands.find(vb => vb.id === vehicle.brandId);
     
     const documentLabels: Record<keyof Vehicle['documents'], string> = {
         registration: "Registration Certificate (RC / Blue Book)",
@@ -107,7 +110,7 @@ export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle,
                 
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex-grow">
-                        <h3 className="text-2xl font-bold">{vehicle.make} {vehicle.model}</h3>
+                        <h3 className="text-2xl font-bold">{vehicleBrand?.name} {vehicle.model}</h3>
                         <p className="text-md text-gray-600">Reg No: {vehicle.registrationNumber}</p>
                         <p className="text-sm text-gray-600">Vehicle ID: {vehicle.vehicleIdCode}</p>
                     </div>
@@ -119,7 +122,7 @@ export const VehiclePrintLayout: React.FC<VehiclePrintLayoutProps> = ({ vehicle,
                         <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Vehicle Details</h4>
                         <div className="grid grid-cols-2 gap-x-6">
                             <InfoRow label="Category" value={vehicleType?.name} />
-                            <InfoRow label="Brand / Model" value={`${vehicle.make} ${vehicle.model}`} />
+                            <InfoRow label="Brand & Model" value={`${vehicleBrand?.name} ${vehicle.model}`} />
                             <InfoRow label="Manufacture Year" value={vehicle.manufactureYear} />
                             <InfoRow label="Fuel Type" value={vehicle.fuelType} />
                             <InfoRow label="Seating / Load Capacity" value={vehicle.capacity} />

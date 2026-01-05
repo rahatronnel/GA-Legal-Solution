@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
 import { format, parseISO } from 'date-fns';
+import type { VehicleBrand } from './vehicle-brand-table';
 
 type VehicleType = {
   id: string;
@@ -47,6 +48,7 @@ export function VehicleTable() {
   const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -64,13 +66,14 @@ export function VehicleTable() {
   const filteredVehicles = useMemo(() => {
     if (!searchTerm) return vehicles;
     const lowercasedTerm = searchTerm.toLowerCase();
+    const getBrandName = (brandId: string) => vehicleBrands.find(b => b.id === brandId)?.name || '';
     return vehicles.filter(vehicle => 
       (vehicle.vehicleIdCode && vehicle.vehicleIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (vehicle.registrationNumber && vehicle.registrationNumber.toLowerCase().includes(lowercasedTerm)) ||
-      (vehicle.make && vehicle.make.toLowerCase().includes(lowercasedTerm)) ||
+      (getBrandName(vehicle.brandId).toLowerCase().includes(lowercasedTerm)) ||
       (vehicle.model && vehicle.model.toLowerCase().includes(lowercasedTerm))
     );
-  }, [vehicles, searchTerm]);
+  }, [vehicles, searchTerm, vehicleBrands]);
 
 
   const handleAdd = () => {
@@ -83,7 +86,7 @@ export function VehicleTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
+  const handleSave = (data: Omit<Vehicle, 'id' | 'make'>, id?: string) => {
     if (id) {
         setVehicles(prev => prev.map(v => v.id === id ? { ...v, ...data } as Vehicle : v));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
@@ -122,9 +125,9 @@ export function VehicleTable() {
       vehicleIdCode: '',
       registrationNumber: '',
       vehicleCategory: '', // Name for user-friendliness
+      brandName: '',
       engineNumber: '',
       chassisNumber: '',
-      make: '', // Brand
       model: '',
       manufactureYear: '',
       fuelType: 'Petrol/Diesel/CNG/LPG/Electric',
@@ -149,25 +152,26 @@ export function VehicleTable() {
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-          const requiredHeaders = ['vehicleIdCode', 'registrationNumber', 'make', 'model'];
+          const requiredHeaders = ['vehicleIdCode', 'registrationNumber', 'brandName', 'model'];
           const headers = Object.keys(json[0] || {});
           if (!requiredHeaders.every(h => headers.includes(h))) {
-             throw new Error('Invalid Excel file format. Expecting columns: vehicleIdCode, registrationNumber, make, model.');
+             throw new Error('Invalid Excel file format. Expecting columns: vehicleIdCode, registrationNumber, brandName, model.');
           }
 
           const newVehicles: Vehicle[] = json
             .filter(item => item.vehicleIdCode && item.registrationNumber)
             .map(item => {
               const vehicleType = vehicleTypes.find(vt => vt.name === item.vehicleCategory);
+              const vehicleBrand = vehicleBrands.find(b => b.name === item.brandName);
 
               return {
                 id: Date.now().toString() + item.vehicleIdCode, 
                 vehicleIdCode: item.vehicleIdCode?.toString() || '',
                 registrationNumber: item.registrationNumber?.toString() || '',
                 vehicleTypeId: vehicleType?.id || '',
+                brandId: vehicleBrand?.id || '',
                 engineNumber: item.engineNumber?.toString() || '',
                 chassisNumber: item.chassisNumber?.toString() || '',
-                make: item.make?.toString() || '',
                 model: item.model?.toString() || '',
                 manufactureYear: item.manufactureYear?.toString() || '',
                 fuelType: item.fuelType?.toString() || '',
@@ -251,7 +255,7 @@ export function VehicleTable() {
                     <TableRow key={v.id}>
                         <TableCell>{v.vehicleIdCode}</TableCell>
                         <TableCell>{v.registrationNumber}</TableCell>
-                        <TableCell>{v.make} {v.model}</TableCell>
+                        <TableCell>{vehicleBrands.find(b => b.id === v.brandId)?.name} {v.model}</TableCell>
                         <TableCell>{getCurrentDriver(v, drivers)?.name || 'N/A'}</TableCell>
                         <TableCell>
                            <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>

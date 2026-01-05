@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -17,6 +18,7 @@ import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
 import { TripPrintLayout } from './trip-print-layout';
 import type { ExpenseType } from './expense-type-table';
+import type { VehicleBrand } from './vehicle-brand-table';
 
 
 export const PrintDriver = () => {
@@ -24,6 +26,7 @@ export const PrintDriver = () => {
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const [sections] = useLocalStorage<Section[]>('sections', []);
   const [designations] = useLocalStorage<Designation[]>('designations', []);
   const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
@@ -37,7 +40,7 @@ export const PrintDriver = () => {
   return (
     <div className="hidden print:block">
       {printType === 'driver' && <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} />}
-      {printType === 'vehicle' && <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} />}
+      {printType === 'vehicle' && <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} />}
       {printType === 'employee' && <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />}
       {printType === 'trip' && <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />}
     </div>

@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import type { VehicleBrand } from './vehicle-brand-table';
 
 type DriverAssignment = {
     id: string;
@@ -38,7 +39,7 @@ export type Vehicle = {
     registrationNumber: string;
     engineNumber: string;
     chassisNumber: string;
-    make: string; // Brand
+    brandId: string; // Formerly make
     model: string;
     manufactureYear: string;
     fuelType: 'Petrol' | 'Diesel' | 'CNG' | 'LPG' | 'Electric' | '';
@@ -59,13 +60,13 @@ export type Vehicle = {
 type Driver = { id: string; name: string; };
 type VehicleType = { id: string; name: string; vehicleTypeCode: string; };
 
-const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory'> = {
+const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' | 'make'> = {
     vehicleIdCode: '',
     vehicleTypeId: '',
     registrationNumber: '',
     engineNumber: '',
     chassisNumber: '',
-    make: '',
+    brandId: '',
     model: '',
     manufactureYear: '',
     fuelType: '',
@@ -100,22 +101,24 @@ const documentLabels: Record<DocType, string> = {
   other: "Other Document"
 };
 
-const QuickAddVehicleTypeDialog: React.FC<{
+const QuickAddDialog: React.FC<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSave: (newType: VehicleType) => void;
-}> = ({ open, onOpenChange, onSave }) => {
+    onSave: (newData: any) => void;
+    title: string;
+    children: React.ReactNode;
+}> = ({ open, onOpenChange, onSave, title, children }) => {
     const { toast } = useToast();
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
 
-    const handleSave = () => {
+    const handleInternalSave = () => {
         if (!name.trim() || !code.trim()) {
             toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
             return;
         }
-        const newType = { id: Date.now().toString(), name, vehicleTypeCode: code };
-        onSave(newType);
+        const newData = { id: Date.now().toString(), name, code };
+        onSave(newData);
         setName('');
         setCode('');
         onOpenChange(false);
@@ -124,22 +127,20 @@ const QuickAddVehicleTypeDialog: React.FC<{
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add New Vehicle Category</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="quick-add-type-name">Category Name</Label>
-                        <Input id="quick-add-type-name" value={name} onChange={(e) => setName(e.target.value)} />
+                        <Label>Name</Label>
+                        <Input value={name} onChange={(e) => setName(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="quick-add-type-code">Category Code</Label>
-                        <Input id="quick-add-type-code" value={code} onChange={(e) => setCode(e.target.value)} />
+                        <Label>Code</Label>
+                        <Input value={code} onChange={(e) => setCode(e.target.value)} />
                     </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSave}>Save Category</Button>
+                    <Button onClick={handleInternalSave}>Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -155,9 +156,11 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   const [driverAssignments, setDriverAssignments] = useState<DriverAssignment[]>([]);
   
   const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
   const [drivers, setDrivers] = useLocalStorage<DriverType[]>('drivers', []);
 
   const [isAddTypeOpen, setIsAddTypeOpen] = useState(false);
+  const [isAddBrandOpen, setIsAddBrandOpen] = useState(false);
   
   const isEditing = vehicle && vehicle.id;
   const progress = Math.round((step / 3) * 100);
@@ -183,7 +186,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory'>) => (value: string) => {
+  const handleSelectChange = (id: keyof Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' | 'make'>) => (value: string) => {
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
 
@@ -222,7 +225,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
 
   const validateStep1 = () => {
     const requiredFields: (keyof typeof vehicleData)[] = [
-      'vehicleIdCode', 'registrationNumber', 'make', 'model', 'vehicleTypeId', 'ownership', 'status'
+      'vehicleIdCode', 'registrationNumber', 'brandId', 'model', 'vehicleTypeId', 'ownership', 'status'
     ];
     for (const field of requiredFields) {
       if (!vehicleData[field]?.trim()) {
@@ -249,7 +252,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         return;
     }
     
-    const dataToSave: Omit<Vehicle, 'id'> = {
+    const dataToSave: Omit<Vehicle, 'id' | 'make'> = {
         ...vehicleData,
         driverAssignmentHistory: driverAssignments,
         documents: docPreviews,
@@ -263,6 +266,12 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setVehicleTypes(prev => [...prev, newType]);
     setVehicleData(prev => ({ ...prev, vehicleTypeId: newType.id }));
     toast({ title: 'Success', description: `Category "${newType.name}" added and selected.` });
+  };
+  
+   const handleQuickAddBrand = (newBrand: VehicleBrand) => {
+    setVehicleBrands(prev => [...prev, newBrand]);
+    setVehicleData(prev => ({ ...prev, brandId: newBrand.id }));
+    toast({ title: 'Success', description: `Brand "${newBrand.name}" added and selected.` });
   };
   
   const getDocumentName = (docType: DocType) => {
@@ -327,9 +336,19 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                 <Button type="button" variant="outline" size="icon" onClick={() => setIsAddTypeOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="make">Brand</Label>
-                            <Input id="make" value={vehicleData.make} onChange={handleVehicleDataChange} />
+                         <div className="space-y-2">
+                            <Label htmlFor="brandId">Brand</Label>
+                            <div className="flex gap-2">
+                                <Select value={vehicleData.brandId} onValueChange={handleSelectChange('brandId')}>
+                                    <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
+                                    <SelectContent>
+                                        {vehicleBrands.map(brand => (
+                                            <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button type="button" variant="outline" size="icon" onClick={() => setIsAddBrandOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="model">Model</Label>
@@ -464,7 +483,8 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    <QuickAddVehicleTypeDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} />
+    <QuickAddDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} title="Add New Vehicle Category" />
+    <QuickAddDialog open={isAddBrandOpen} onOpenChange={setIsAddBrandOpen} onSave={handleQuickAddBrand} title="Add New Vehicle Brand" />
     </>
   );
 }

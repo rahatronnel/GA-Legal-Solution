@@ -24,6 +24,7 @@ import { FaultStatusTable } from "./components/fault-status-table";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LineChart } from "lucide-react";
+import { VehicleBrandTable } from "./components/vehicle-brand-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -39,8 +40,8 @@ export default function VehicleManagementPage() {
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="accidents">Accidents</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="trip-management">Trip Master</TabsTrigger>
-            <TabsTrigger value="vehicle-types">Vehicle Types</TabsTrigger>
+            <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
+            <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
           </TabsList>
         </div>
          <TabsContent value="trips">
@@ -173,7 +174,7 @@ export default function VehicleManagementPage() {
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="trip-management">
+        <TabsContent value="trip-master">
           <div className="grid gap-6">
             <Card>
                 <CardHeader>
@@ -213,16 +214,27 @@ export default function VehicleManagementPage() {
             </Card>
           </div>
         </TabsContent>
-        <TabsContent value="vehicle-types">
-          <Card>
-              <CardHeader>
-                  <CardTitle>Vehicle Types</CardTitle>
-                  <CardDescription>Manage the different types of vehicles available.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <VehicleTypeTable />
-              </CardContent>
-          </Card>
+        <TabsContent value="vehicle-master">
+           <div className="grid gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Vehicle Brands</CardTitle>
+                        <CardDescription>Manage the different brands of vehicles.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <VehicleBrandTable />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Vehicle Categories</CardTitle>
+                        <CardDescription>Manage the different categories of vehicles available.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <VehicleTypeTable />
+                    </CardContent>
+                </Card>
+           </div>
         </TabsContent>
       </Tabs>
     </>
