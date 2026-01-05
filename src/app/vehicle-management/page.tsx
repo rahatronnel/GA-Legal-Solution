@@ -18,6 +18,9 @@ import { ServiceCenterTable } from "./components/service-center-table";
 import { MaintenanceRecordTable } from "./components/maintenance-record-table";
 import { PartTable } from "./components/part-table";
 import { AccidentTable } from "./components/accident-table";
+import { AccidentTypeTable } from "./components/accident-type-table";
+import { SeverityLevelTable } from "./components/severity-level-table";
+import { FaultStatusTable } from "./components/fault-status-table";
 
 export default function VehicleManagementPage() {
   const [locations] = useLocalStorage<Location[]>('locations', []);
@@ -111,15 +114,44 @@ export default function VehicleManagementPage() {
             </div>
         </TabsContent>
         <TabsContent value="accidents">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Accident Records</CardTitle>
-                    <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AccidentTable />
-                </CardContent>
-            </Card>
+            <div className="grid gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Accident Records</CardTitle>
+                        <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AccidentTable />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Accident Types</CardTitle>
+                        <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AccidentTypeTable />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Severity Levels</CardTitle>
+                        <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <SeverityLevelTable />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Fault Status</CardTitle>
+                        <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <FaultStatusTable />
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
         <TabsContent value="trip-management">
           <div className="grid gap-6">
