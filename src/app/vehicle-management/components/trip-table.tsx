@@ -29,22 +29,6 @@ import type { Location } from './location-table';
 import type { Route } from './route-table';
 import type { ExpenseType } from './expense-type-table';
 
-type DocType = 'approvalDoc' | 'fuelReceipt' | 'parkingBill' | 'tollBill' | 'miscExpense' | 'lunchBill' | 'otherDoc' | 'damagePhoto' | 'routePermit' | 'specialApprove';
-const documentLabels: Record<DocType, string> = {
-    approvalDoc: 'Approval Document',
-    fuelReceipt: 'Fuel Receipt/Memo',
-    parkingBill: 'Parking Bill',
-    tollBill: 'Toll Bill',
-    miscExpense: 'Miscellaneous Expenses Bill',
-    lunchBill: 'Lunch Bill',
-    otherDoc: 'Other Document',
-    damagePhoto: 'Damage Photo',
-    routePermit: 'Route Permit Photo',
-    specialApprove: 'Special Approval Document',
-};
-const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: ''}), {} as Record<DocType, string>);
-
-
 export function TripTable() {
   const { toast } = useToast();
   const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
@@ -93,18 +77,32 @@ export function TripTable() {
     if (id) {
         setTrips(prev => prev.map(t => {
             if (t.id === id) {
-                // This ensures that we merge the new data with the old, preserving nested structures
-                const existingTrip = prev.find(trip => trip.id === id) || {};
+                const existingTrip = prev.find(trip => trip.id === id) || {} as Trip;
                 return { ...existingTrip, ...data, id };
             }
             return t;
         }));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
-        // Create new trip
         const newTrip: Trip = {
             id: Date.now().toString(),
-            ...data,
+            tripId: data.tripId,
+            vehicleId: data.vehicleId,
+            driverId: data.driverId,
+            purposeId: data.purposeId,
+            routeId: data.routeId,
+            startDate: data.startDate,
+            startTime: data.startTime,
+            endDate: data.endDate,
+            endTime: data.endTime,
+            startLocationId: data.startLocationId,
+            destinationLocationId: data.destinationLocationId,
+            startingMeter: data.startingMeter,
+            endingMeter: data.endingMeter,
+            remarks: data.remarks,
+            tripStatus: data.tripStatus,
+            expenses: data.expenses || [],
+            documents: data.documents || {},
         };
         setTrips(prev => [...prev, newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
