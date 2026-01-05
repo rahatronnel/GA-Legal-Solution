@@ -22,11 +22,12 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export function DriverTable() {
   const { toast } = useToast();
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [vehicles] = useState<Vehicle[]>([]);
+  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
