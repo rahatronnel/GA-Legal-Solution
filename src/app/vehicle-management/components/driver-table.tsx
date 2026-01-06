@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import { useVehicleManagement } from './vehicle-management-provider';
+import type { Vehicle } from './vehicle-table';
 
 export function DriverTable() {
   const { toast } = useToast();
@@ -43,6 +44,7 @@ export function DriverTable() {
   }, []);
 
   const safeDrivers = Array.isArray(drivers) ? drivers : [];
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
   const filteredDrivers = useMemo(() => {
     if (!searchTerm) return safeDrivers;
@@ -67,7 +69,7 @@ export function DriverTable() {
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setData(prev => ({...prev, drivers: prev.drivers.map(d => (d.id === id ? { id, ...data } as Driver : d))}));
+        setData(prev => ({...prev, drivers: (prev.drivers || []).map(d => (d.id === id ? { id, ...data } as Driver : d))}));
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
         const newDriver: Driver = { 
@@ -320,7 +322,7 @@ export function DriverTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         driver={currentDriver}
-        vehicles={vehicles || []}
+        vehicles={safeVehicles}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
