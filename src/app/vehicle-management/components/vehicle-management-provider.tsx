@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useMemo } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
 import type { Location } from "./location-table";
 import type { Driver } from "./driver-entry-form";
@@ -56,15 +55,12 @@ type VehicleManagementDataContextType = {
 const VehicleManagementContext = createContext<VehicleManagementDataContextType | undefined>(undefined);
 
 export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
-    const [data, setData] = useLocalStorage('vehicleManagementData', initialData);
-    
-    // Fallback to initialData if localStorage returns null or undefined
-    const contextData = useMemo(() => data || initialData, [data]);
+    const [data, setData] = useState<VehicleManagementData>(initialData);
 
     const value = useMemo(() => ({
-        data: contextData,
+        data,
         setData,
-    }), [contextData, setData]);
+    }), [data, setData]);
 
     return (
         <VehicleManagementContext.Provider value={value}>

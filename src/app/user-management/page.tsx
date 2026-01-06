@@ -1,17 +1,17 @@
 
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionTable, type Section } from "./components/section-table";
 import { DesignationTable, type Designation } from "./components/designation-table";
 import { EmployeeTable, type Employee } from "./components/employee-table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export default function UserManagementPage() {
-  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
-  const [sections, setSections] = useLocalStorage<Section[]>('sections', []);
-  const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [designations, setDesignations] = useState<Designation[]>([]);
 
   return (
     <>
