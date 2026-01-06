@@ -91,56 +91,62 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </li>
 );
 
+// A simple in-memory store for non-persistent data
+const tempDriverStore: { drivers: Driver[] } = {
+    drivers: []
+};
+
+// This is a temporary solution to get data for the profile page
+// without using localStorage for drivers.
+if (typeof window !== 'undefined') {
+    // @ts-ignore
+    window.tempDriverStore = tempDriverStore;
+}
+
 export default function DriverProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {
-    vehicles: [],
-    drivers: [],
-    vehicleTypes: [],
-    vehicleBrands: [],
-    trips: [],
-    tripPurposes: [],
-    locations: [],
-    routes: [],
-    expenseTypes: [],
-    maintenanceRecords: [],
-    maintenanceTypes: [],
-    maintenanceExpenseTypes: [],
-    parts: [],
-    serviceCenters: [],
-    accidents: [],
-    accidentTypes: [],
-    severityLevels: [],
-    faultStatuses: [],
-  });
 
-  const { drivers, vehicles, accidents, maintenanceRecords, maintenanceTypes, accidentTypes } = vehicleManagementData;
+  // Read other data from localStorage as it's still persistent
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { 
+      vehicles = [],
+      accidents = [],
+      maintenanceRecords = [],
+      maintenanceTypes = [],
+      accidentTypes = []
+  } = vehicleManagementData;
+  
   const [driver, setDriver] = useState<Driver | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || !drivers) {
+    if (typeof id !== 'string') {
         setDriver(undefined);
         return;
     }
     
+    // Read from the temporary in-memory store
+    const drivers = (window as any).tempDriverStore?.drivers || [];
     const foundDriver = drivers.find((d: Driver) => d.id === id);
+
     if (foundDriver) {
         setDriver(foundDriver);
     } else {
+        // If not found, it might mean a page refresh happened.
+        // We can't recover the data, so we show not found.
         notFound();
     }
-  }, [id, drivers, notFound]);
+  }, [id, notFound]);
 
   const driverAccidentHistory = useMemo(() => {
-    if (!id || !accidents) return [];
+    if (!id) return [];
     return accidents.filter((accident: Accident) => accident.driverId === id);
   }, [id, accidents]);
 
   const driverMaintenanceHistory = useMemo(() => {
-      if (!id || !vehicles || !maintenanceRecords) return [];
+      if (!id) return [];
       const assignedVehicleIds = vehicles.filter((v: Vehicle) => {
           const currentDriver = v.driverAssignmentHistory?.sort((a,b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime())[0];
           return currentDriver?.driverId === id;
@@ -163,7 +169,6 @@ export default function DriverProfilePage() {
   }
   
   const getInitials = (name: string) => {
-    if (!name) return '';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
@@ -272,7 +277,7 @@ export default function DriverProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {driverAccidentHistory.map((accident: Accident) => (
+                            {driverAccidentHistory.map(accident => (
                                 <TableRow key={accident.id}>
                                     <TableCell>{accident.accidentDate}</TableCell>
                                     <TableCell>{getVehicleRegFromId(accident.vehicleId)}</TableCell>
@@ -303,7 +308,7 @@ export default function DriverProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {driverMaintenanceHistory.map((record: MaintenanceRecord) => (
+                            {driverMaintenanceHistory.map(record => (
                                 <TableRow key={record.id}>
                                     <TableCell>{record.serviceDate}</TableCell>
                                     <TableCell>{getVehicleRegFromId(record.vehicleId)}</TableCell>
@@ -334,5 +339,3 @@ export default function DriverProfilePage() {
     </div>
   );
 }
-
-    

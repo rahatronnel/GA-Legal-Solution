@@ -24,6 +24,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
 
+// This is a temporary in-memory store for non-persistent data
+const tempDriverStore: { drivers: Driver[] } = {
+    drivers: []
+};
+
+// Expose it to the window object for sharing between components during navigation
+if (typeof window !== 'undefined') {
+    // @ts-ignore
+    window.tempDriverStore = tempDriverStore;
+}
+
 interface DriverTableProps {
   drivers: Driver[];
   setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
@@ -40,6 +51,14 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  React.useEffect(() => {
+    // Update the temporary store whenever the local state changes
+    if (typeof window !== 'undefined') {
+        // @ts-ignore
+        window.tempDriverStore.drivers = drivers;
+    }
+  }, [drivers]);
 
   React.useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
