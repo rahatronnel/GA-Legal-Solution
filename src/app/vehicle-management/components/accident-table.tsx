@@ -18,7 +18,6 @@ import { AccidentEntryForm, type Accident } from './accident-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import type { Vehicle } from './vehicle-table';
@@ -27,24 +26,30 @@ import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
 import type { Route } from './route-table';
 import type { FaultStatus } from './fault-status-table';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 interface AccidentTableProps {
     accidents: Accident[];
     setAccidents: React.Dispatch<React.SetStateAction<Accident[]>>;
 }
 
-export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
+export function AccidentTable({ accidents: initialAccidents, setAccidents: setInitialAccidents }: AccidentTableProps) {
   const { toast } = useToast();
   
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data, setData } = useVehicleManagement();
   const {
+      accidents,
       vehicles = [],
       drivers = [],
       accidentTypes = [],
       severityLevels = [],
       routes = [],
       faultStatuses = [],
-  } = vehicleManagementData;
+  } = data;
+
+  const setAccidents = (updater: React.SetStateAction<Accident[]>) => {
+    setData(prev => ({ ...prev, accidents: typeof updater === 'function' ? updater(prev.accidents || []) : updater }));
+  };
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -71,6 +76,7 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
   const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
 
   const filteredAccidents = useMemo(() => {
+    if (!accidents) return [];
     return accidents.filter(acc => {
         const searchTermMatch = searchTerm === '' ||
             getVehicleReg(acc.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -263,5 +269,3 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
     </TooltipProvider>
   );
 }
-
-    

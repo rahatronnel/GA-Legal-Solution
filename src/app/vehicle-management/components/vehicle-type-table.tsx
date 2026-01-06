@@ -53,6 +53,8 @@ export function VehicleTypeTable() {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeVehicleTypes = Array.isArray(vehicleTypes) ? vehicleTypes : [];
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setTypeData(prev => ({ ...prev, [id]: value }));
@@ -183,8 +185,8 @@ export function VehicleTypeTable() {
                     <TableRow>
                     <TableCell colSpan={3} className="text-center">Loading...</TableCell>
                     </TableRow>
-                ) : vehicleTypes && vehicleTypes.length > 0 ? (
-                    vehicleTypes.map((vt) => (
+                ) : safeVehicleTypes && safeVehicleTypes.length > 0 ? (
+                    safeVehicleTypes.map((vt) => (
                     <TableRow key={vt.id}>
                         <TableCell>{vt.name}</TableCell>
                         <TableCell>{vt.vehicleTypeCode}</TableCell>

@@ -20,13 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 import type { Driver } from './driver-entry-form';
 import type { ServiceCenter } from './service-center-table';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 interface MaintenanceRecordTableProps {
   records: MaintenanceRecord[];
@@ -35,11 +35,12 @@ interface MaintenanceRecordTableProps {
 
 export function MaintenanceRecordTable({ records: initialRecords, setRecords: setInitialRecords }: MaintenanceRecordTableProps) {
   const { toast } = useToast();
-  const [records, setRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const { data, setData } = useVehicleManagement();
+  const { maintenanceRecords: records, vehicles, maintenanceTypes, drivers, serviceCenters } = data;
+  
+  const setRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
+    setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater }));
+  };
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -59,8 +60,8 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
     return () => clearTimeout(timer);
   }, []);
   
-  const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => vehicles.find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t:any) => t.id === typeId)?.name || 'N/A';
   const calculateTotalCost = (record: MaintenanceRecord) => {
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
@@ -68,6 +69,7 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
   }
 
   const filteredRecords = useMemo(() => {
+    if (!records) return [];
     return records.filter(record => {
         const searchTermMatch = searchTerm === '' || 
             getVehicleReg(record.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,11 +81,10 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
         const serviceCenterMatch = serviceCenterFilter === 'all' || record.serviceCenterId === serviceCenterFilter;
         
         let dateMatch = true;
-        if (dateRangeFilter?.from && dateRangeFilter?.to && record.serviceDate) {
+        if (dateRangeFilter?.from && record.serviceDate) {
             const serviceDate = parseISO(record.serviceDate);
-            dateMatch = isWithinInterval(serviceDate, { start: dateRangeFilter.from, end: dateRangeFilter.to });
-        } else if (dateRangeFilter?.from && record.serviceDate) {
-            dateMatch = parseISO(record.serviceDate) >= dateRangeFilter.from;
+            const toDate = dateRangeFilter.to || dateRangeFilter.from; // if no 'to' date, use 'from' as single day filter
+            dateMatch = isWithinInterval(serviceDate, { start: dateRangeFilter.from, end: toDate });
         }
 
         return searchTermMatch && vehicleMatch && typeMatch && driverMatch && serviceCenterMatch && dateMatch;
@@ -164,28 +165,28 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Vehicles</SelectItem>
-                        {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}
+                        {vehicles.map((v:any) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Type..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Types</SelectItem>
-                        {maintenanceTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                        {maintenanceTypes.map((t:any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={driverFilter} onValueChange={setDriverFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Drivers</SelectItem>
-                        {drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                        {drivers.map((d:any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <Select value={serviceCenterFilter} onValueChange={setServiceCenterFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Garage..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Garages</SelectItem>
-                        {serviceCenters.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                        {serviceCenters.map((sc:any) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />

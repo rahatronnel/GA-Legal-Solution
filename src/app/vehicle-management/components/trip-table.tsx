@@ -36,6 +36,10 @@ export function TripTable() {
   const { data, setData } = useVehicleManagement();
   const { trips, vehicles, drivers, routes } = data;
   const { handlePrint } = usePrint();
+
+  const setTrips = (updater: React.SetStateAction<Trip[]>) => {
+    setData(prev => ({ ...prev, trips: typeof updater === 'function' ? updater(prev.trips || []) : updater }));
+  };
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -91,7 +95,7 @@ export function TripTable() {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-        setData(prev => ({...prev, trips: (prev.trips || []).map(t => (t.id === id ? { ...t, ...data } as Trip : t))}));
+        setTrips(prev => (prev || []).map(t => (t.id === id ? { ...t, ...data } as Trip : t)));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         const newTrip: Trip = {
@@ -101,7 +105,7 @@ export function TripTable() {
             expenses: data.expenses || [],
             documents: data.documents || {},
         } as Trip;
-        setData(prev => ({...prev, trips: [...(prev.trips || []), newTrip]}));
+        setTrips(prev => [...(prev || []), newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
@@ -114,7 +118,7 @@ export function TripTable() {
 
   const confirmDelete = () => {
     if (currentTrip?.id) {
-        setData(prev => ({...prev, trips: (prev.trips || []).filter(t => t.id !== currentTrip.id)}));
+        setTrips(prev => (prev || []).filter(t => t.id !== currentTrip.id));
         toast({ title: 'Success', description: 'Trip deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
