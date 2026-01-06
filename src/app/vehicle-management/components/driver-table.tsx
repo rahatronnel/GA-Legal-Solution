@@ -348,5 +348,3 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     </TooltipProvider>
   );
 }
-
-    
