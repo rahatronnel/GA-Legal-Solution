@@ -72,7 +72,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setDrivers(prev => (Array.isArray(prev) ? prev : []).map(d => {
+        setDrivers(prev => (prev || []).map(d => {
             if (d.id === id) {
                 return { id, ...data } as Driver;
             }
@@ -84,7 +84,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
             id: Date.now().toString(), 
             ...data
         };
-        setDrivers(prev => [...(Array.isArray(prev) ? prev : []), newDriver]);
+        setDrivers(prev => [...(prev || []), newDriver]);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -96,7 +96,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
 
   const confirmDelete = () => {
     if (currentDriver?.id) {
-        setDrivers(prev => (Array.isArray(prev) ? prev : []).filter(d => d.id !== currentDriver.id));
+        setDrivers(prev => (prev || []).filter(d => d.id !== currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -185,7 +185,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
             }));
           
           if(newDrivers.length > 0) {
-            setDrivers(prev => [...(Array.isArray(prev) ? prev : []), ...newDrivers]);
+            setDrivers(prev => [...(prev || []), ...newDrivers]);
             toast({ title: 'Success', description: `${newDrivers.length} drivers uploaded successfully.` });
           }
 

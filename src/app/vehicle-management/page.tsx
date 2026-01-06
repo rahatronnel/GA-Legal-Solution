@@ -61,7 +61,13 @@ export default function VehicleManagementPage() {
     vehicleBrands: []
   });
 
-  const setDrivers = (drivers: Driver[]) => setData((prev: any) => ({ ...prev, drivers }));
+  const setDrivers = (newDrivers: Driver[] | ((prev: Driver[]) => Driver[])) => {
+    if (typeof newDrivers === 'function') {
+        setData((prev: any) => ({ ...prev, drivers: newDrivers(prev.drivers || []) }));
+    } else {
+        setData((prev: any) => ({ ...prev, drivers: newDrivers }));
+    }
+  };
   const setTrips = (trips: Trip[]) => setData((prev: any) => ({ ...prev, trips }));
   const setRoutes = (routes: Route[]) => setData((prev: any) => ({ ...prev, routes }));
   const setLocations = (locations: Location[]) => setData((prev: any) => ({ ...prev, locations }));
@@ -285,5 +291,3 @@ export default function VehicleManagementPage() {
     </>
   );
 }
-
-    
