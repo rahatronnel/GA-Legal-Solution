@@ -6,23 +6,29 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Section } from './section-table';
 import type { Designation } from './designation-table';
 import { Badge } from '@/components/ui/badge';
+import type { OrganizationSettings } from '@/app/settings/page';
 
-interface EmployeePrintLayoutProps {
-  employee: Employee;
-  sections: Section[];
-  designations: Designation[];
+
+interface PrintHeaderProps {
+  orgSettings: OrganizationSettings;
 }
 
-const PrintHeader = () => (
+const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4">
         <div className="text-sm">
-            <h1 className="text-xl font-bold text-gray-800">GA & Legal Solution</h1>
-            <p className="text-xs">Head Office: 123 Business Rd, Dhaka, Bangladesh</p>
-            <p className="text-xs">Contact: +880 1234 567890 | Email: contact@galsolution.com</p>
+            <h1 className="text-xl font-bold text-gray-800">{orgSettings.name}</h1>
+            <p className="text-xs">{orgSettings.address}</p>
+            <p className="text-xs">Contact: {orgSettings.contactNumber} | Email: {orgSettings.email}</p>
         </div>
-        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
-            <p className="text-xs text-gray-500">Logo</p>
-        </div>
+        {orgSettings.logo ? (
+             <div className="w-24 h-24 relative">
+                <Image src={orgSettings.logo} alt="Organization Logo" layout="fill" className="object-contain" />
+            </div>
+        ) : (
+             <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
+                <p className="text-xs text-gray-500">Logo</p>
+            </div>
+        )}
     </div>
 );
 
@@ -32,9 +38,9 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
     </div>
 )
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, className?: string}> = ({children, pageNumber, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
-        <PrintHeader />
+        <PrintHeader orgSettings={orgSettings} />
         <div className="flex-grow pt-6">
             {children}
         </div>
@@ -42,13 +48,13 @@ const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, classN
     </div>
 )
 
-const DocumentPage = ({ doc, label, pageNumber }: {doc: string, label: string, pageNumber: number}) => {
+const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: string, label: string, pageNumber: number, orgSettings: OrganizationSettings}) => {
     if (!doc) return null;
     const mimeType = doc.substring(doc.indexOf(':') + 1, doc.indexOf(';'));
     const isImage = mimeType.startsWith('image/');
     
     return (
-        <PrintPage pageNumber={pageNumber} className="page-break">
+        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} className="page-break">
             <h2 className="text-lg font-bold mb-4">{label}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
@@ -68,8 +74,15 @@ const InfoRow: React.FC<{ label: string, value?: React.ReactNode, fullWidth?: bo
     </div>
 );
 
+interface EmployeePrintLayoutProps {
+  employee: Employee;
+  sections: Section[];
+  designations: Designation[];
+  orgSettings: OrganizationSettings;
+}
 
-export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employee, sections, designations }) => {
+
+export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employee, sections, designations, orgSettings }) => {
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
     let pageCounter = 1;
 
@@ -81,7 +94,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
     return (
         <div className="bg-white">
             {/* Page 1: Employee Information */}
-            <PrintPage pageNumber={pageCounter++}>
+            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings}>
                 <h2 className="text-xl font-bold text-center mb-4">Employee Information</h2>
                 
                 <div className="flex gap-6 items-start mb-4">
@@ -125,8 +138,8 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
             </PrintPage>
 
             {/* Subsequent Pages: Documents */}
-            {employee.documents.nid && <DocumentPage doc={employee.documents.nid} label="National ID (NID)" pageNumber={pageCounter++} />}
-            {employee.documents.other && <DocumentPage doc={employee.documents.other} label="Other Document" pageNumber={pageCounter++} />}
+            {employee.documents.nid && <DocumentPage doc={employee.documents.nid} label="National ID (NID)" pageNumber={pageCounter++} orgSettings={orgSettings} />}
+            {employee.documents.other && <DocumentPage doc={employee.documents.other} label="Other Document" pageNumber={pageCounter++} orgSettings={orgSettings} />}
         </div>
     );
 };

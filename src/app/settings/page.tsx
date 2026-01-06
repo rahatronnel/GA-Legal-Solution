@@ -9,36 +9,44 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Upload, X } from 'lucide-react';
 
-type OrganizationSettings = {
+export type OrganizationSettings = {
   name: string;
+  slogan: string;
   address: string;
   contactNumber: string;
   telephone: string;
   email: string;
   fax: string;
   registrationNumber: string;
-  slogan: string;
   logo: string; // Stored as data URL
 };
 
 const initialSettings: OrganizationSettings = {
-  name: '',
-  address: '',
-  contactNumber: '',
-  telephone: '',
-  email: '',
-  fax: '',
-  registrationNumber: '',
-  slogan: '',
+  name: 'GA & Legal Solution',
+  slogan: 'Your Trusted Partner',
+  address: 'Head Office: 123 Business Rd, Dhaka, Bangladesh',
+  contactNumber: '+880 1234 567890',
+  telephone: '+880 2 888 7777',
+  email: 'contact@galsolution.com',
+  fax: '+880 2 888 7778',
+  registrationNumber: 'C-12345/67',
   logo: '',
 };
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
+  const [settings, setSettings] = useLocalStorage<OrganizationSettings>('organizationSettings', initialSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (settings.logo) {
+      setLogoPreview(settings.logo);
+    }
+  }, [settings.logo]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -69,10 +77,11 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    // Data is only in state, not persisted.
+    // Data is saved to localStorage via the useLocalStorage hook automatically.
+    // This button just provides user feedback.
     toast({
-      title: 'Settings Updated (Temporary)',
-      description: 'Your organization settings have been updated for this session. They will be lost on refresh.',
+      title: 'Settings Saved',
+      description: 'Your organization settings have been saved successfully.',
     });
   };
 

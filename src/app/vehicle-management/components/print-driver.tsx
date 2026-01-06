@@ -12,7 +12,7 @@ import type { VehicleType } from './vehicle-type-table';
 import { EmployeePrintLayout } from '@/app/user-management/components/employee-print-layout';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Section } from '@/app/user-management/components/section-table';
-import type { Designation } from '@/app/user-management/components/designation-table';
+import type { Designation, OrganizationSettings } from '@/app/user-management/components/designation-table';
 import type { Trip } from './trip-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
@@ -46,6 +46,7 @@ export const PrintDriver = () => {
   const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
   const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
   const [routes] = useLocalStorage<Route[]>('routes', []);
+  const [organizationSettings] = useLocalStorage<OrganizationSettings>('organizationSettings', {} as OrganizationSettings);
 
 
   if (!itemToPrint) {
@@ -55,15 +56,15 @@ export const PrintDriver = () => {
   const renderContent = () => {
       switch(printType) {
           case 'driver':
-              return <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} />;
+              return <DriverPrintLayout driver={itemToPrint as Driver} vehicles={vehicles} orgSettings={organizationSettings} />;
           case 'vehicle':
-              return <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} />;
+              return <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers} vehicleTypes={vehicleTypes} vehicleBrands={vehicleBrands} orgSettings={organizationSettings} />;
           case 'employee':
-              return <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} />;
+              return <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections} designations={designations} orgSettings={organizationSettings} />;
           case 'trip':
-              return <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} />;
+              return <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles} drivers={drivers} purposes={purposes} locations={locations} expenseTypes={expenseTypes} orgSettings={organizationSettings} />;
           case 'accident':
-              return <AccidentPrintLayout accident={itemToPrint as Accident} vehicles={vehicles} drivers={drivers} employees={employees} routes={routes} trips={trips} accidentTypes={accidentTypes} severityLevels={severityLevels} faultStatuses={faultStatuses} repairedBy={serviceCenters} />;
+              return <AccidentPrintLayout accident={itemToPrint as Accident} vehicles={vehicles} drivers={drivers} employees={employees} routes={routes} trips={trips} accidentTypes={accidentTypes} severityLevels={severityLevels} faultStatuses={faultStatuses} repairedBy={serviceCenters} orgSettings={organizationSettings} />;
           default:
               return null;
       }

@@ -10,26 +10,28 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { ExpenseType } from './expense-type-table';
 import { ArrowRight } from 'lucide-react';
+import type { OrganizationSettings } from '@/app/settings/page';
 
-interface TripPrintLayoutProps {
-  trip: Trip;
-  vehicles: Vehicle[];
-  drivers: Driver[];
-  purposes: TripPurpose[];
-  locations: Location[];
-  expenseTypes: ExpenseType[];
+interface PrintHeaderProps {
+  orgSettings: OrganizationSettings;
 }
 
-const PrintHeader = () => (
+const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4">
         <div className="text-sm">
-            <h1 className="text-xl font-bold text-gray-800">GA & Legal Solution</h1>
-            <p className="text-xs">Head Office: 123 Business Rd, Dhaka, Bangladesh</p>
-            <p className="text-xs">Contact: +880 1234 567890 | Email: contact@galsolution.com</p>
+            <h1 className="text-xl font-bold text-gray-800">{orgSettings.name}</h1>
+            <p className="text-xs">{orgSettings.address}</p>
+            <p className="text-xs">Contact: {orgSettings.contactNumber} | Email: {orgSettings.email}</p>
         </div>
-        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
-            <p className="text-xs text-gray-500">Logo</p>
-        </div>
+        {orgSettings.logo ? (
+             <div className="w-24 h-24 relative">
+                <Image src={orgSettings.logo} alt="Organization Logo" layout="fill" className="object-contain" />
+            </div>
+        ) : (
+             <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
+                <p className="text-xs text-gray-500">Logo</p>
+            </div>
+        )}
     </div>
 );
 
@@ -39,9 +41,9 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
     </div>
 );
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, className?: string}> = ({children, pageNumber, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
-        <PrintHeader />
+        <PrintHeader orgSettings={orgSettings} />
         <div className="flex-grow pt-6">
             {children}
         </div>
@@ -56,12 +58,12 @@ const documentLabels: Record<keyof Omit<Trip['documents'], 'id'>, string> = {
     specialApprove: 'Special Approval Document',
 };
 
-const DocumentPage = ({ doc, label, pageNumber }: {doc: { name: string; file: string }, label: string, pageNumber: number}) => {
+const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: { name: string; file: string }, label: string, pageNumber: number, orgSettings: OrganizationSettings}) => {
     if (!doc || !doc.file) return null;
     const isImage = doc.file.startsWith('data:image/');
     
     return (
-        <PrintPage pageNumber={pageNumber} className="page-break">
+        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} className="page-break">
             <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
@@ -90,7 +92,17 @@ const getStatusVariant = (status: Trip['tripStatus']) => {
     }
 };
 
-export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations, expenseTypes }) => {
+interface TripPrintLayoutProps {
+  trip: Trip;
+  vehicles: Vehicle[];
+  drivers: Driver[];
+  purposes: TripPurpose[];
+  locations: Location[];
+  expenseTypes: ExpenseType[];
+  orgSettings: OrganizationSettings;
+}
+
+export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations, expenseTypes, orgSettings }) => {
     let pageCounter = 1;
 
     const vehicle = vehicles.find(v => v.id === trip.vehicleId);
@@ -105,7 +117,7 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
 
     return (
         <div className="bg-white">
-            <PrintPage pageNumber={pageCounter++}>
+            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings}>
                 <h2 className="text-xl font-bold text-center mb-4">Trip Information - {trip.tripId}</h2>
                 <div className="flex justify-between items-start mb-4">
                     <div>
@@ -157,11 +169,9 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
 
             {(Object.keys(documentLabels) as (keyof Trip['documents'])[]).map(category => 
                 trip.documents[category] && trip.documents[category].map(doc => (
-                    <DocumentPage key={doc.id} doc={doc} label={documentLabels[category]} pageNumber={pageCounter++} />
+                    <DocumentPage key={doc.id} doc={doc} label={documentLabels[category]} pageNumber={pageCounter++} orgSettings={orgSettings} />
                 ))
             )}
         </div>
     );
 };
-
-    

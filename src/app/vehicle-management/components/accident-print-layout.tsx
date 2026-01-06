@@ -11,30 +11,28 @@ import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
 import type { ServiceCenter } from './service-center-table';
 import Image from 'next/image';
+import type { OrganizationSettings } from '@/app/settings/page';
 
-interface AccidentPrintLayoutProps {
-  accident: Accident;
-  vehicles: Vehicle[];
-  drivers: Driver[];
-  employees: Employee[];
-  routes: RouteType[];
-  trips: Trip[];
-  accidentTypes: AccidentType[];
-  severityLevels: SeverityLevel[];
-  faultStatuses: FaultStatus[];
-  repairedBy: ServiceCenter[];
+interface PrintHeaderProps {
+  orgSettings: OrganizationSettings;
 }
 
-const PrintHeader = () => (
+const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4">
         <div className="text-sm">
-            <h1 className="text-xl font-bold text-gray-800">GA & Legal Solution</h1>
-            <p className="text-xs">Head Office: 123 Business Rd, Dhaka, Bangladesh</p>
-            <p className="text-xs">Contact: +880 1234 567890 | Email: contact@galsolution.com</p>
+            <h1 className="text-xl font-bold text-gray-800">{orgSettings.name}</h1>
+            <p className="text-xs">{orgSettings.address}</p>
+            <p className="text-xs">Contact: {orgSettings.contactNumber} | Email: {orgSettings.email}</p>
         </div>
-        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
-            <p className="text-xs text-gray-500">Logo</p>
-        </div>
+        {orgSettings.logo ? (
+             <div className="w-24 h-24 relative">
+                <Image src={orgSettings.logo} alt="Organization Logo" layout="fill" className="object-contain" />
+            </div>
+        ) : (
+             <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
+                <p className="text-xs text-gray-500">Logo</p>
+            </div>
+        )}
     </div>
 );
 
@@ -44,9 +42,9 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
     </div>
 );
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, className?: string}> = ({children, pageNumber, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
-        <PrintHeader />
+        <PrintHeader orgSettings={orgSettings} />
         <div className="flex-grow pt-6">
             {children}
         </div>
@@ -54,12 +52,12 @@ const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, classN
     </div>
 );
 
-const DocumentPage = ({ doc, label, pageNumber }: {doc: {name: string, file:string}, label: string, pageNumber: number}) => {
+const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: {name: string, file:string}, label: string, pageNumber: number, orgSettings: OrganizationSettings}) => {
     if (!doc || !doc.file) return null;
     const isImage = doc.file.startsWith('data:image/');
     
     return (
-        <PrintPage pageNumber={pageNumber} className="page-break">
+        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} className="page-break">
             <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
@@ -93,8 +91,22 @@ const documentCategories: Record<keyof Accident['documents'], string> = {
     medicalReport: 'Medical Report (if any)',
 };
 
+interface AccidentPrintLayoutProps {
+  accident: Accident;
+  vehicles: Vehicle[];
+  drivers: Driver[];
+  employees: Employee[];
+  routes: RouteType[];
+  trips: Trip[];
+  accidentTypes: AccidentType[];
+  severityLevels: SeverityLevel[];
+  faultStatuses: FaultStatus[];
+  repairedBy: ServiceCenter[];
+  orgSettings: OrganizationSettings;
+}
+
 export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({ 
-    accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, repairedBy 
+    accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, repairedBy, orgSettings 
 }) => {
     let pageCounter = 1;
 
@@ -110,7 +122,7 @@ export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({
 
     return (
         <div className="bg-white">
-            <PrintPage pageNumber={pageCounter++}>
+            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings}>
                 <h2 className="text-xl font-bold text-center mb-4">Accident Report - {accident.accidentId}</h2>
                 <div className="space-y-4">
                     <div>
@@ -156,7 +168,7 @@ export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({
             {/* Documents */}
             {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(category => 
                 accident.documents[category] && accident.documents[category].map(doc => (
-                    <DocumentPage key={doc.id} doc={doc} label={documentCategories[category]} pageNumber={pageCounter++} />
+                    <DocumentPage key={doc.id} doc={doc} label={documentCategories[category]} pageNumber={pageCounter++} orgSettings={orgSettings} />
                 ))
             )}
         </div>

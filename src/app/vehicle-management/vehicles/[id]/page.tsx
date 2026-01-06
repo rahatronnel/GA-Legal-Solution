@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, Car, FileText, Download, Printer, Users, Wrench,
-    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle
+    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, User as UserIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -24,6 +24,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { AccidentType } from '../../components/accident-type-table';
 import type { VehicleBrand } from '../../components/vehicle-brand-table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     if (!doc) {
@@ -212,6 +214,7 @@ function VehicleProfileContent() {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="driver">Driver</TabsTrigger>
               <TabsTrigger value="maintenance">Maintenance History</TabsTrigger>
               <TabsTrigger value="accidents">Accident History</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -236,11 +239,44 @@ function VehicleProfileContent() {
                         <InfoItem icon={Hash} label="Engine Number" value={vehicle.engineNumber} />
                         <InfoItem icon={Hash} label="Chassis Number" value={vehicle.chassisNumber} />
                         <InfoItem icon={Building} label="Ownership" value={vehicle.ownership} />
-                        <InfoItem icon={Users} label="Current Driver" value={currentDriver?.name} />
                         <InfoItem icon={CheckCircle} label="Status" value={vehicle.status} />
                     </ul>
                 </div>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="driver" className="mt-6">
+                 {currentDriver ? (
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Current Driver Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row items-start gap-6">
+                                <Avatar className="h-24 w-24">
+                                    <AvatarImage src={currentDriver.profilePicture} alt={currentDriver.name} />
+                                    <AvatarFallback className="text-3xl">{currentDriver.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div className="grid grid-cols-2 gap-x-8 gap-y-4 flex-grow">
+                                    <InfoItem icon={UserIcon} label="Name" value={currentDriver.name} />
+                                    <InfoItem icon={FileText} label="License Number" value={currentDriver.drivingLicenseNumber} />
+                                    <InfoItem icon={Calendar} label="Joining Date" value={currentDriver.joiningDate ? new Date(currentDriver.joiningDate).toLocaleDateString() : 'N/A'} />
+                                    <InfoItem icon={Phone} label="Mobile Number" value={currentDriver.mobileNumber} />
+                                </div>
+                            </div>
+                            <div className="flex gap-4 mt-6">
+                                <Button asChild>
+                                    <Link href={`/vehicle-management/drivers/${currentDriver.id}`}><Eye className="mr-2 h-4 w-4" /> View Profile</Link>
+                                </Button>
+                                <Button variant="outline" onClick={() => handlePrint(currentDriver, 'driver')}>
+                                    <Printer className="mr-2 h-4 w-4" /> Print Driver Profile
+                                </Button>
+                            </div>
+                        </CardContent>
+                     </Card>
+                 ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No driver is currently assigned to this vehicle.</p>
+                 )}
             </TabsContent>
 
              <TabsContent value="maintenance" className="mt-6">
