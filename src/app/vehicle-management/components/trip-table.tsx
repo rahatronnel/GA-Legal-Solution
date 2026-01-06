@@ -67,8 +67,10 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
   const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
   const getRouteName = (routeId: string) => routes.find(r => r.id === routeId)?.name || 'N/A';
 
+  const safeTrips = Array.isArray(trips) ? trips : [];
+
   const filteredTrips = useMemo(() => {
-    return trips.filter(trip => {
+    return safeTrips.filter(trip => {
       const lowercasedTerm = searchTerm.toLowerCase();
       const vehicle = vehicles.find(v => v.id === trip.vehicleId);
 
@@ -83,7 +85,7 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
 
       return searchMatch && driverMatch && routeMatch && dateMatch;
     });
-  }, [trips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles, drivers, routes]);
+  }, [safeTrips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles, drivers, routes]);
 
 
   const handleAdd = () => {
@@ -297,3 +299,5 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
     </TooltipProvider>
   );
 }
+
+    
