@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-entry-form';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { type VehicleType } from '@/app/vehicle-management/components/vehicle-type-table';
