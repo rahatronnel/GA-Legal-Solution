@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -21,20 +22,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-type Designation = {
+export type Designation = {
   id: string;
   name: string;
   designationCode: string;
 };
 
-export function DesignationTable() {
+interface DesignationTableProps {
+  designations: Designation[];
+  setDesignations: React.Dispatch<React.SetStateAction<Designation[]>>;
+}
+
+export function DesignationTable({ designations, setDesignations }: DesignationTableProps) {
   const { toast } = useToast();
-  const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentDesignation, setCurrentDesignation] = useState<Partial<Designation> | null>(null);

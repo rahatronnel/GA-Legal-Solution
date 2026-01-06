@@ -27,7 +27,6 @@ import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Location } from './location-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export type Route = {
   id: string;
@@ -39,11 +38,12 @@ export type Route = {
 
 interface RouteTableProps {
   locations: Location[];
+  routes: Route[];
+  setRoutes: React.Dispatch<React.SetStateAction<Route[]>>;
 }
 
-export function RouteTable({ locations }: RouteTableProps) {
+export function RouteTable({ locations, routes, setRoutes }: RouteTableProps) {
   const { toast } = useToast();
-  const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);

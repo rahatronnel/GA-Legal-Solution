@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
@@ -26,11 +25,15 @@ import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
 
-export function EmployeeTable() {
+interface EmployeeTableProps {
+  employees: Employee[];
+  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
+  sections: Section[];
+  designations: Designation[];
+}
+
+export function EmployeeTable({ employees, setEmployees, sections, designations }: EmployeeTableProps) {
   const { toast } = useToast();
-  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
-  const [sections] = useLocalStorage<Section[]>('sections', []);
-  const [designations] = useLocalStorage<Designation[]>('designations', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);

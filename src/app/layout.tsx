@@ -9,85 +9,13 @@ import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
-import React, { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import React from 'react';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  const { toast } = useToast();
-  const [lastBackupDate, setLastBackupDate] = useLocalStorage<string>('lastBackupDate', '');
-  
-  useEffect(() => {
-    const checkBackup = () => {
-      const today = new Date().toISOString().split('T')[0];
-      if (lastBackupDate !== today) {
-        toast({
-          title: "Data Backup Reminder",
-          description: "It's been a while since your last backup. Please download a new backup from the Settings page to keep your data safe.",
-          action: (
-             <Button onClick={handleDownloadBackup}>
-                <Download className="mr-2 h-4 w-4" />
-                Backup Now
-            </Button>
-          ),
-          duration: 30000 // 30 seconds
-        });
-      }
-    };
-    
-    // Check every 3 hours
-    const interval = setInterval(checkBackup, 3 * 60 * 60 * 1000); 
-
-    // Initial check
-    checkBackup();
-    
-    return () => clearInterval(interval);
-
-  }, [lastBackupDate, setLastBackupDate, toast]);
-
-
-  const handleDownloadBackup = () => {
-    try {
-        const backupData: { [key: string]: any } = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key) {
-                 backupData[key] = JSON.parse(localStorage.getItem(key)!);
-            }
-        }
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ga-legal-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        const today = new Date().toISOString().split('T')[0];
-        setLastBackupDate(today);
-
-        toast({
-            title: "Backup Successful",
-            description: "Your data has been downloaded.",
-        });
-    } catch(e) {
-        toast({
-            variant: "destructive",
-            title: "Backup Failed",
-            description: "Could not create backup file. Please try again from the Settings page.",
-        });
-    }
-  };
-
 
   return (
     <html lang="en" suppressHydrationWarning>

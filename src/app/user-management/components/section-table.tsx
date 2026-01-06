@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -21,7 +22,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -32,9 +32,13 @@ export type Section = {
   sectionCode: string;
 };
 
-export function SectionTable() {
+interface SectionTableProps {
+  sections: Section[];
+  setSections: React.Dispatch<React.SetStateAction<Section[]>>;
+}
+
+export function SectionTable({ sections, setSections }: SectionTableProps) {
   const { toast } = useToast();
-  const [sections, setSections] = useLocalStorage<Section[]>('sections', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<Partial<Section> | null>(null);
@@ -88,7 +92,7 @@ export function SectionTable() {
     }
 
     if (currentSection?.id) {
-      setSections(prev => prev.map(s => s.id === currentSection.id ? { ...s, ...sectionData } : s));
+      setSections(prev => prev.map(s => s.id === currentSection.id ? { ...s, ...sectionData } as Section : s));
       toast({ title: 'Success', description: 'Section updated successfully.' });
     } else {
       const newSection = { id: Date.now().toString(), ...sectionData };

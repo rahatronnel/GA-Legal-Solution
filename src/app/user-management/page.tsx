@@ -1,10 +1,21 @@
+
+"use client";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionTable } from "./components/section-table";
 import { DesignationTable } from "./components/designation-table";
 import { EmployeeTable } from "./components/employee-table";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { Employee } from "./components/employee-entry-form";
+import type { Section } from "./components/section-table";
+import type { Designation } from "./components/designation-table";
 
 export default function UserManagementPage() {
+  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
+  const [sections, setSections] = useLocalStorage<Section[]>('sections', []);
+  const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);
+
   return (
     <>
       <Tabs defaultValue="employees" className="w-full">
@@ -22,7 +33,12 @@ export default function UserManagementPage() {
                     <CardDescription>Manage all employees in your organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <EmployeeTable />
+                    <EmployeeTable 
+                      employees={employees}
+                      setEmployees={setEmployees}
+                      sections={sections}
+                      designations={designations}
+                    />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -33,7 +49,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the different sections within your organization.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <SectionTable />
+                  <SectionTable sections={sections} setSections={setSections} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -44,7 +60,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the job titles and designations for employees.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DesignationTable />
+                  <DesignationTable designations={designations} setDesignations={setDesignations} />
               </CardContent>
           </Card>
         </TabsContent>
