@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ const ALL_LOCALSTORAGE_KEYS = [
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [storedSettings, setStoredSettings] = useLocalStorage<OrganizationSettings>('organizationSettings', initialSettings);
   const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -144,8 +146,8 @@ export default function SettingsPage() {
             
             toast({ title: 'Success', description: 'Data restored successfully. The application will now reload.' });
 
-            // Reload the page to apply changes
-            setTimeout(() => window.location.reload(), 1500);
+            // Navigate to home to force a full re-initialization of all states from localStorage
+            setTimeout(() => router.push('/'), 1500);
 
           } catch (error: any) {
              console.error("Restore failed:", error);
@@ -276,5 +278,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
