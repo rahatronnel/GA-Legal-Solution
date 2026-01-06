@@ -23,15 +23,17 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 interface DriverTableProps {
   drivers: Driver[];
   setDrivers: (updater: React.SetStateAction<Driver[]>) => void;
-  vehicles: Vehicle[];
 }
 
-export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps) {
+export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
   const { toast } = useToast();
+  const { data } = useVehicleManagement();
+  const { vehicles } = data;
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -344,5 +346,3 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
     </TooltipProvider>
   );
 }
-
-    

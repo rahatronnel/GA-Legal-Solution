@@ -62,7 +62,10 @@ function VehicleManagementContent() {
                 <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
             </CardHeader>
             <CardContent>
-                <DriverTable drivers={data.drivers} setDrivers={(updater) => setData(prev => ({ ...prev, drivers: typeof updater === 'function' ? updater(prev.drivers) : updater }))} vehicles={data.vehicles} />
+                <DriverTable 
+                  drivers={data.drivers} 
+                  setDrivers={(updater) => setData(prev => ({ ...prev, drivers: typeof updater === 'function' ? updater(prev.drivers) : updater }))} 
+                />
             </CardContent>
         </Card>
       </TabsContent>
@@ -178,7 +181,7 @@ function VehicleManagementContent() {
                   <CardDescription>Define routes by selecting a start and end location.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <RouteTable locations={data.locations} />
+                  <RouteTable />
               </CardContent>
           </Card>
           <Card>
