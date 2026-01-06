@@ -171,6 +171,8 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
   );
 }
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
 
 export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryFormProps) {
   const { toast } = useToast();
@@ -222,6 +224,11 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
     setTripData(prev => ({ ...prev, [id]: type === 'number' ? parseFloat(value) || 0 : value }));
+  };
+
+  const handleTimeChange = (id: 'startTime' | 'endTime') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setTripData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleSelectChange = (id: keyof Trip) => (value: string) => {
@@ -335,7 +342,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Trip' : 'Add New Trip'}</DialogTitle>
           <DialogDescription>
@@ -344,21 +351,21 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2"><Label>Vehicle</Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{vehicles.map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Driver</Label><Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Purpose</Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{purposes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Trip Status</Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Vehicle<MandatoryIndicator/></Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{vehicles.map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Driver<MandatoryIndicator/></Label><Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Purpose<MandatoryIndicator/></Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{purposes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Trip Status<MandatoryIndicator/></Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2"><Label>Start Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>Start Time</Label><Input id="startTime" type="time" value={tripData.startTime} onChange={handleInputChange}/></div>
+                  <div className="space-y-2"><Label>Start Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
+                  <div className="space-y-2"><Label>Start Time</Label><Input id="startTime" type="time" value={tripData.startTime} onChange={handleTimeChange('startTime')}/></div>
                   <div className="space-y-2"><Label>End Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!endDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{endDate?format(endDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={handleDateChange(setEndDate,'endDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>End Time</Label><Input id="endTime" type="time" value={tripData.endTime} onChange={handleInputChange}/></div>
+                  <div className="space-y-2"><Label>End Time</Label><Input id="endTime" type="time" value={tripData.endTime} onChange={handleTimeChange('endTime')}/></div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -470,9 +477,13 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
             )}
         </div>
 
-        <DialogFooter className="flex justify-between w-full pt-4">
-            {step > 1 ? (<Button variant="outline" onClick={prevStep}>Previous</Button>) : <div></div>}
-            {step < 2 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Trip' : 'Save Trip'}</Button>)}
+        <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
+            </div>
+            <div>
+              {step < 2 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Trip' : 'Save Trip'}</Button>)}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

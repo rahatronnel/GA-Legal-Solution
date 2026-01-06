@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, parse } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
 
 import type { Vehicle } from './vehicle-table';
@@ -236,7 +236,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       if (isEditing && accident) {
         setAccidentData({ ...initialAccidentData, ...accident });
         setDocuments(accident.documents || initialDocuments);
-        const accDate = accident.accidentDate ? parseISO(accident.accidentDate) : undefined;
+        const accDate = accident.accidentDate ? parse(accident.accidentDate, 'yyyy-MM-dd', new Date()) : undefined;
         setAccidentDate(accDate);
 
         if (!accident.driverId && accDate && accident.vehicleId) {
@@ -299,6 +299,21 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     const { id, value, type } = e.target;
     const isNumber = type === 'number';
     setAccidentData(prev => ({ ...prev, [id]: isNumber ? parseFloat(value) || 0 : value }));
+  };
+
+   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    const cleaned = value.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+
+    if (cleaned.length > 2) {
+      formatted = `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}`;
+    }
+    
+    // Add AM/PM logic if needed, here we just format HH:MM from 24h input
+    const finalValue = value.includes(' PM') || value.includes(' AM') ? value : formatted;
+    
+    setAccidentData(prev => ({ ...prev, [id]: finalValue }));
   };
 
   const handleSelectChange = (id: keyof typeof accidentData) => (value: string) => {
@@ -403,7 +418,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
+        <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Accident Basic Information</h3>
@@ -430,7 +445,15 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
-                    <div className="space-y-2"><Label>Accident Time<MandatoryIndicator/></Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
+                    <div className="space-y-2">
+                      <Label>Accident Time<MandatoryIndicator/></Label>
+                      <Input
+                          id="accidentTime"
+                          type="time"
+                          value={accidentData.accidentTime}
+                          onChange={handleInputChange}
+                      />
+                    </div>
                     <div className="space-y-2"><Label>Accident Location<MandatoryIndicator/></Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
                 </div>
                 
