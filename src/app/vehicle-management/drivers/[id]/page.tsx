@@ -130,18 +130,17 @@ export default function DriverProfilePage() {
     if (foundDriver) {
         setDriver(foundDriver);
     } else {
-        // If the main data array is loaded and we still haven't found it, it's a 404.
         notFound();
     }
   }, [id, drivers, notFound]);
 
   const driverAccidentHistory = useMemo(() => {
-    if (!id) return [];
+    if (!id || !accidents) return [];
     return accidents.filter((accident: Accident) => accident.driverId === id);
   }, [id, accidents]);
 
   const driverMaintenanceHistory = useMemo(() => {
-      if (!id) return [];
+      if (!id || !vehicles || !maintenanceRecords) return [];
       const assignedVehicleIds = vehicles.filter((v: Vehicle) => {
           const currentDriver = v.driverAssignmentHistory?.sort((a,b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime())[0];
           return currentDriver?.driverId === id;
@@ -164,6 +163,7 @@ export default function DriverProfilePage() {
   }
   
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
@@ -334,3 +334,5 @@ export default function DriverProfilePage() {
     </div>
   );
 }
+
+    

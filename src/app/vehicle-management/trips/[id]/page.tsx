@@ -86,12 +86,16 @@ export default function TripProfilePage() {
   const params = useParams();
   const { id } = params;
 
-  const [trips] = useLocalStorage<Trip[]>('trips', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
-  const [locations] = useLocalStorage<Location[]>('locations', []);
-  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const {
+      trips = [],
+      vehicles = [],
+      drivers = [],
+      purposes = [],
+      locations = [],
+      expenseTypes = []
+  } = vehicleManagementData;
+
 
   const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const { handlePrint } = usePrint();
@@ -102,7 +106,7 @@ export default function TripProfilePage() {
         return;
     }
     
-    const foundTrip = trips.find(t => t.id === id);
+    const foundTrip = trips.find((t: Trip) => t.id === id);
     
     if (foundTrip) {
         setTrip(foundTrip);
@@ -113,17 +117,17 @@ export default function TripProfilePage() {
 
   const { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses } = useMemo(() => {
     if (!trip) return {};
-    const vehicle = vehicles.find(v => v.id === trip.vehicleId);
-    const driver = drivers.find(d => d.id === trip.driverId);
-    const purpose = purposes.find(p => p.id === trip.purposeId);
-    const startLocation = locations.find(l => l.id === trip.startLocationId);
-    const endLocation = locations.find(l => l.id === trip.destinationLocationId);
+    const vehicle = vehicles.find((v: Vehicle) => v.id === trip.vehicleId);
+    const driver = drivers.find((d: Driver) => d.id === trip.driverId);
+    const purpose = purposes.find((p: TripPurpose) => p.id === trip.purposeId);
+    const startLocation = locations.find((l: Location) => l.id === trip.startLocationId);
+    const endLocation = locations.find((l: Location) => l.id === trip.destinationLocationId);
     const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
     const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     return { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses };
   }, [trip, vehicles, drivers, purposes, locations]);
   
-  const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
+  const getExpenseTypeName = (id: string) => expenseTypes.find((et: ExpenseType) => et.id === id)?.name || 'N/A';
 
   if (trip === undefined) {
       return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
@@ -230,3 +234,5 @@ export default function TripProfilePage() {
     </div>
   );
 }
+
+    

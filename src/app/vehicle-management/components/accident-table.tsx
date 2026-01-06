@@ -33,15 +33,18 @@ interface AccidentTableProps {
     setAccidents: React.Dispatch<React.SetStateAction<Accident[]>>;
 }
 
-export function AccidentTable({ accidents: initialAccidents, setAccidents: setInitialAccidents }: AccidentTableProps) {
+export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
   const { toast } = useToast();
-  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
-  const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
-  const [routes] = useLocalStorage<Route[]>('routes', []);
-  const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
+  
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const {
+      vehicles = [],
+      drivers = [],
+      accidentTypes = [],
+      severityLevels = [],
+      routes = [],
+      faultStatuses = [],
+  } = vehicleManagementData;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -63,9 +66,9 @@ export function AccidentTable({ accidents: initialAccidents, setAccidents: setIn
     return () => clearTimeout(timer);
   }, []);
 
-  const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
-  const getAccidentTypeName = (typeId: string) => accidentTypes.find(t => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => vehicles.find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
 
   const filteredAccidents = useMemo(() => {
     return accidents.filter(acc => {
@@ -190,12 +193,12 @@ export function AccidentTable({ accidents: initialAccidents, setAccidents: setIn
                 </div>
             </div>
             <div className="flex flex-wrap gap-2">
-                <Select value={vehicleFilter} onValueChange={setVehicleFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vehicles</SelectItem>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select>
-                <Select value={driverFilter} onValueChange={setDriverFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger><SelectContent><SelectItem value="all">All Drivers</SelectItem>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{accidentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={severityFilter} onValueChange={setSeverityFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Severity..." /></SelectTrigger><SelectContent><SelectItem value="all">All Severity Levels</SelectItem>{severityLevels.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={routeFilter} onValueChange={setRouteFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Route..." /></SelectTrigger><SelectContent><SelectItem value="all">All Routes</SelectItem>{routes.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={faultStatusFilter} onValueChange={setFaultStatusFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Fault..." /></SelectTrigger><SelectContent><SelectItem value="all">All Fault Statuses</SelectItem>{faultStatuses.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={vehicleFilter} onValueChange={setVehicleFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vehicles</SelectItem>{vehicles.map((v:Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select>
+                <Select value={driverFilter} onValueChange={setDriverFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger><SelectContent><SelectItem value="all">All Drivers</SelectItem>{drivers.map((d:Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{accidentTypes.map((t:AccidentType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={severityFilter} onValueChange={setSeverityFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Severity..." /></SelectTrigger><SelectContent><SelectItem value="all">All Severity Levels</SelectItem>{severityLevels.map((s:SeverityLevel) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={routeFilter} onValueChange={setRouteFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Route..." /></SelectTrigger><SelectContent><SelectItem value="all">All Routes</SelectItem>{routes.map((r:Route) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={faultStatusFilter} onValueChange={setFaultStatusFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Fault..." /></SelectTrigger><SelectContent><SelectItem value="all">All Fault Statuses</SelectItem>{faultStatuses.map((f:FaultStatus) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
                 <Button variant="ghost" onClick={clearFilters}><X className="mr-2 h-4 w-4" /> Clear</Button>
             </div>
         </div>
@@ -260,3 +263,5 @@ export function AccidentTable({ accidents: initialAccidents, setAccidents: setIn
     </TooltipProvider>
   );
 }
+
+    

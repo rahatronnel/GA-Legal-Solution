@@ -40,25 +40,105 @@ import type { FaultStatus } from "./components/fault-status-table";
 import type { VehicleType } from "./components/vehicle-type-table";
 import type { VehicleBrand } from "./components/vehicle-brand-table";
 
+type VehicleManagementData = {
+    locations: Location[];
+    drivers: Driver[];
+    vehicles: Vehicle[];
+    trips: Trip[];
+    routes: Route[];
+    tripPurposes: TripPurpose[];
+    expenseTypes: ExpenseType[];
+    maintenanceRecords: MaintenanceRecord[];
+    maintenanceTypes: MaintenanceType[];
+    maintenanceExpenseTypes: MaintenanceExpenseType[];
+    parts: Part[];
+    serviceCenters: ServiceCenter[];
+    accidents: Accident[];
+    accidentTypes: AccidentType[];
+    severityLevels: SeverityLevel[];
+    faultStatuses: FaultStatus[];
+    vehicleTypes: VehicleType[];
+    vehicleBrands: VehicleBrand[];
+}
+
+const initialData: VehicleManagementData = {
+    locations: [],
+    drivers: [],
+    vehicles: [],
+    trips: [],
+    routes: [],
+    tripPurposes: [],
+    expenseTypes: [],
+    maintenanceRecords: [],
+    maintenanceTypes: [],
+    maintenanceExpenseTypes: [],
+    parts: [],
+    serviceCenters: [],
+    accidents: [],
+    accidentTypes: [],
+    severityLevels: [],
+    faultStatuses: [],
+    vehicleTypes: [],
+    vehicleBrands: []
+};
+
 export default function VehicleManagementPage() {
-  const [locations, setLocations] = useLocalStorage<Location[]>('locations', []);
-  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
-  const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
-  const [tripPurposes, setTripPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
-  const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
-  const [maintenanceRecords, setMaintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
-  const [parts, setParts] = useLocalStorage<Part[]>('parts', []);
-  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [accidentTypes, setAccidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
-  const [severityLevels, setSeverityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
-  const [faultStatuses, setFaultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
-  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>("vehicleTypes", []);
-  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>("vehicleBrands", []);
+  const [data, setData] = useLocalStorage<VehicleManagementData>('vehicleManagementData', initialData);
+
+  const setDrivers = (drivers: React.SetStateAction<Driver[]>) => {
+    setData(prev => ({...prev, drivers: typeof drivers === 'function' ? drivers(prev.drivers) : drivers}));
+  }
+  const setVehicles = (vehicles: React.SetStateAction<Vehicle[]>) => {
+    setData(prev => ({...prev, vehicles: typeof vehicles === 'function' ? vehicles(prev.vehicles) : vehicles}));
+  }
+  const setLocations = (locations: React.SetStateAction<Location[]>) => {
+    setData(prev => ({...prev, locations: typeof locations === 'function' ? locations(prev.locations) : locations}));
+  }
+  const setRoutes = (routes: React.SetStateAction<Route[]>) => {
+    setData(prev => ({...prev, routes: typeof routes === 'function' ? routes(prev.routes) : routes}));
+  }
+  const setTrips = (trips: React.SetStateAction<Trip[]>) => {
+    setData(prev => ({...prev, trips: typeof trips === 'function' ? trips(prev.trips) : trips}));
+  }
+  const setTripPurposes = (purposes: React.SetStateAction<TripPurpose[]>) => {
+    setData(prev => ({...prev, tripPurposes: typeof purposes === 'function' ? purposes(prev.tripPurposes) : purposes}));
+  }
+  const setExpenseTypes = (types: React.SetStateAction<ExpenseType[]>) => {
+    setData(prev => ({...prev, expenseTypes: typeof types === 'function' ? types(prev.expenseTypes) : types}));
+  }
+  const setMaintenanceRecords = (records: React.SetStateAction<MaintenanceRecord[]>) => {
+    setData(prev => ({...prev, maintenanceRecords: typeof records === 'function' ? records(prev.maintenanceRecords) : records}));
+  }
+  const setMaintenanceTypes = (types: React.SetStateAction<MaintenanceType[]>) => {
+    setData(prev => ({...prev, maintenanceTypes: typeof types === 'function' ? types(prev.maintenanceTypes) : types}));
+  }
+  const setMaintenanceExpenseTypes = (types: React.SetStateAction<MaintenanceExpenseType[]>) => {
+    setData(prev => ({...prev, maintenanceExpenseTypes: typeof types === 'function' ? types(prev.maintenanceExpenseTypes) : types}));
+  }
+  const setParts = (parts: React.SetStateAction<Part[]>) => {
+    setData(prev => ({...prev, parts: typeof parts === 'function' ? parts(prev.parts) : parts}));
+  }
+  const setServiceCenters = (centers: React.SetStateAction<ServiceCenter[]>) => {
+    setData(prev => ({...prev, serviceCenters: typeof centers === 'function' ? centers(prev.serviceCenters) : centers}));
+  }
+  const setAccidents = (accidents: React.SetStateAction<Accident[]>) => {
+    setData(prev => ({...prev, accidents: typeof accidents === 'function' ? accidents(prev.accidents) : accidents}));
+  }
+  const setAccidentTypes = (types: React.SetStateAction<AccidentType[]>) => {
+    setData(prev => ({...prev, accidentTypes: typeof types === 'function' ? types(prev.accidentTypes) : types}));
+  }
+  const setSeverityLevels = (levels: React.SetStateAction<SeverityLevel[]>) => {
+    setData(prev => ({...prev, severityLevels: typeof levels === 'function' ? levels(prev.severityLevels) : levels}));
+  }
+  const setFaultStatuses = (statuses: React.SetStateAction<FaultStatus[]>) => {
+    setData(prev => ({...prev, faultStatuses: typeof statuses === 'function' ? statuses(prev.faultStatuses) : statuses}));
+  }
+  const setVehicleTypes = (types: React.SetStateAction<VehicleType[]>) => {
+    setData(prev => ({...prev, vehicleTypes: typeof types === 'function' ? types(prev.vehicleTypes) : types}));
+  }
+  const setVehicleBrands = (brands: React.SetStateAction<VehicleBrand[]>) => {
+    setData(prev => ({...prev, vehicleBrands: typeof brands === 'function' ? brands(prev.vehicleBrands) : brands}));
+  }
 
   return (
     <>
@@ -82,7 +162,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage all vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable trips={trips} setTrips={setTrips} />
+                    <TripTable trips={data.trips} setTrips={setTrips} />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -96,7 +176,7 @@ export default function VehicleManagementPage() {
                   <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable drivers={drivers} setDrivers={setDrivers} vehicles={vehicles} />
+                  <DriverTable drivers={data.drivers} setDrivers={setDrivers} vehicles={data.vehicles} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -108,7 +188,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceRecordTable records={maintenanceRecords} setRecords={setMaintenanceRecords} />
+                        <MaintenanceRecordTable records={data.maintenanceRecords} setRecords={setMaintenanceRecords} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -117,7 +197,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PartTable parts={parts} setParts={setParts} />
+                        <PartTable parts={data.parts} setParts={setParts} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -126,7 +206,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage your approved service centers and garages.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ServiceCenterTable serviceCenters={serviceCenters} setServiceCenters={setServiceCenters} />
+                        <ServiceCenterTable serviceCenters={data.serviceCenters} setServiceCenters={setServiceCenters} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -135,7 +215,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceTypeTable maintenanceTypes={maintenanceTypes} setMaintenanceTypes={setMaintenanceTypes} />
+                        <MaintenanceTypeTable maintenanceTypes={data.maintenanceTypes} setMaintenanceTypes={setMaintenanceTypes} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -144,7 +224,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceExpenseTypeTable expenseTypes={maintenanceExpenseTypes} setExpenseTypes={setMaintenanceExpenseTypes}/>
+                        <MaintenanceExpenseTypeTable expenseTypes={data.maintenanceExpenseTypes} setExpenseTypes={setMaintenanceExpenseTypes}/>
                     </CardContent>
                 </Card>
             </div>
@@ -157,7 +237,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTable accidents={accidents} setAccidents={setAccidents} />
+                        <AccidentTable accidents={data.accidents} setAccidents={setAccidents} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -166,7 +246,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTypeTable accidentTypes={accidentTypes} setAccidentTypes={setAccidentTypes} />
+                        <AccidentTypeTable accidentTypes={data.accidentTypes} setAccidentTypes={setAccidentTypes} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -175,7 +255,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SeverityLevelTable severityLevels={severityLevels} setSeverityLevels={setSeverityLevels} />
+                        <SeverityLevelTable severityLevels={data.severityLevels} setSeverityLevels={setSeverityLevels} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -184,7 +264,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FaultStatusTable faultStatuses={faultStatuses} setFaultStatuses={setFaultStatuses} />
+                        <FaultStatusTable faultStatuses={data.faultStatuses} setFaultStatuses={setFaultStatuses} />
                     </CardContent>
                 </Card>
             </div>
@@ -200,7 +280,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable locations={locations} routes={routes} setRoutes={setRoutes} />
+                    <RouteTable locations={data.locations} routes={data.routes} setRoutes={setRoutes} />
                 </CardContent>
             </Card>
             <Card>
@@ -218,7 +298,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LocationTable locations={locations} setLocations={setLocations} />
+                    <LocationTable locations={data.locations} setLocations={setLocations} />
                 </CardContent>
             </Card>
             <Card>
@@ -258,3 +338,5 @@ export default function VehicleManagementPage() {
     </>
   );
 }
+
+    

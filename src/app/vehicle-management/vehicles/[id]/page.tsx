@@ -97,14 +97,17 @@ export default function VehicleProfilePage() {
   const params = useParams();
   const { id } = params;
 
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
-  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
-  const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { 
+      vehicles = [], 
+      drivers = [], 
+      vehicleTypes = [], 
+      vehicleBrands = [], 
+      maintenanceRecords = [], 
+      maintenanceTypes = [], 
+      accidents = [], 
+      accidentTypes = [] 
+  } = vehicleManagementData;
 
   const [vehicle, setVehicle] = useState<Vehicle | null | undefined>(undefined);
   const { handlePrint } = usePrint();
@@ -115,7 +118,7 @@ export default function VehicleProfilePage() {
         return;
     }
     
-    const foundVehicle = vehicles.find(v => v.id === id);
+    const foundVehicle = vehicles.find((v: Vehicle) => v.id === id);
     if (foundVehicle) {
         setVehicle(foundVehicle);
     } else {
@@ -124,22 +127,22 @@ export default function VehicleProfilePage() {
   }, [id, vehicles, notFound]);
 
   const vehicleMaintenanceHistory = useMemo(() => {
-    if (!id) return [];
-    return maintenanceRecords.filter(record => record.vehicleId === id);
+    if (!id || !maintenanceRecords) return [];
+    return maintenanceRecords.filter((record: MaintenanceRecord) => record.vehicleId === id);
   }, [id, maintenanceRecords]);
 
   const vehicleAccidentHistory = useMemo(() => {
-    if (!id) return [];
-    return accidents.filter(accident => accident.vehicleId === id);
+    if (!id || !accidents) return [];
+    return accidents.filter((accident: Accident) => accident.vehicleId === id);
   }, [id, accidents]);
 
   const currentDriver = useMemo(() => {
-    if (!vehicle || !vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+    if (!vehicle || !vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0 || !drivers) {
       return null;
     }
     const sortedHistory = [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
     const latestAssignment = sortedHistory[0];
-    return drivers.find(d => d.id === latestAssignment.driverId) || null;
+    return drivers.find((d: Driver) => d.id === latestAssignment.driverId) || null;
   }, [vehicle, drivers]);
 
 
@@ -155,8 +158,8 @@ export default function VehicleProfilePage() {
       notFound();
   }
   
-  const vehicleType = vehicleTypes.find(vt => vt.id === vehicle.vehicleTypeId);
-  const vehicleBrand = vehicleBrands.find(vb => vb.id === vehicle.brandId);
+  const vehicleType = vehicleTypes.find((vt: VehicleType) => vt.id === vehicle.vehicleTypeId);
+  const vehicleBrand = vehicleBrands.find((vb: VehicleBrand) => vb.id === vehicle.brandId);
   
   const getStatusVariant = (status: Vehicle['status']) => {
     switch (status) {
@@ -167,8 +170,8 @@ export default function VehicleProfilePage() {
     }
   };
   
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
-  const getAccidentTypeName = (typeId: string) => accidentTypes.find(t => t.id === typeId)?.name || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t: MaintenanceType) => t.id === typeId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
   const calculateMaintenanceTotalCost = (record: MaintenanceRecord) => {
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
@@ -256,7 +259,7 @@ export default function VehicleProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {vehicleMaintenanceHistory.map(record => (
+                            {vehicleMaintenanceHistory.map((record: MaintenanceRecord) => (
                                 <TableRow key={record.id}>
                                     <TableCell>{record.serviceDate}</TableCell>
                                     <TableCell>{getMaintenanceTypeName(record.maintenanceTypeId)}</TableCell>
@@ -288,11 +291,11 @@ export default function VehicleProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {vehicleAccidentHistory.map(accident => (
+                            {vehicleAccidentHistory.map((accident: Accident) => (
                                 <TableRow key={accident.id}>
                                     <TableCell>{accident.accidentDate}</TableCell>
                                     <TableCell>{getAccidentTypeName(accident.accidentTypeId)}</TableCell>
-                                    <TableCell>{drivers.find(d => d.id === accident.driverId)?.name || 'N/A'}</TableCell>
+                                    <TableCell>{drivers.find((d: Driver) => d.id === accident.driverId)?.name || 'N/A'}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" asChild>
                                             <Link href={`/vehicle-management/accidents/${accident.id}`}><AlertTriangle className="h-4 w-4 text-destructive" /></Link>
@@ -320,3 +323,5 @@ export default function VehicleProfilePage() {
     </div>
   );
 }
+
+    

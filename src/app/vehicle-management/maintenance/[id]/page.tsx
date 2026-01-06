@@ -81,46 +81,50 @@ export default function MaintenanceProfilePage() {
   const params = useParams();
   const { id } = params;
 
-  const [records] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [allParts] = useLocalStorage<PartType[]>('parts', []);
-  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [maintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const {
+      maintenanceRecords = [],
+      vehicles = [],
+      drivers = [],
+      parts = [],
+      maintenanceTypes = [],
+      serviceCenters = [],
+      employees = [],
+      maintenanceExpenseTypes = [],
+  } = vehicleManagementData;
+
 
   const [record, setRecord] = useState<MaintenanceRecord | null | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof id !== 'string' || records.length === 0) {
+    if (typeof id !== 'string' || maintenanceRecords.length === 0) {
         setRecord(undefined); // Stay in loading state
         return;
     }
     
-    const foundRecord = records.find(t => t.id === id);
+    const foundRecord = maintenanceRecords.find((t: MaintenanceRecord) => t.id === id);
     
     if (foundRecord) {
         setRecord(foundRecord);
     } else {
         notFound();
     }
-  }, [id, records, notFound]);
+  }, [id, maintenanceRecords, notFound]);
 
   const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost } = useMemo(() => {
     if (!record) return {};
-    const vehicle = vehicles.find(v => v.id === record.vehicleId);
-    const maintenanceType = maintenanceTypes.find(t => t.id === record.maintenanceTypeId);
-    const serviceCenter = serviceCenters.find(sc => sc.id === record.serviceCenterId);
-    const employee = employees.find(e => e.id === record.monitoringEmployeeId);
-    const driver = drivers.find(d => d.id === record.driverId);
+    const vehicle = vehicles.find((v: Vehicle) => v.id === record.vehicleId);
+    const maintenanceType = maintenanceTypes.find((t: MaintenanceType) => t.id === record.maintenanceTypeId);
+    const serviceCenter = serviceCenters.find((sc: ServiceCenter) => sc.id === record.serviceCenterId);
+    const employee = employees.find((e: Employee) => e.id === record.monitoringEmployeeId);
+    const driver = drivers.find((d: Driver) => d.id === record.driverId);
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     return { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost: partsCost + expensesCost };
   }, [record, vehicles, maintenanceTypes, serviceCenters, employees, drivers]);
   
-  const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find(et => et.id === id)?.name || 'N/A';
-  const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'N/A';
+  const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find((et: MaintenanceExpenseType) => et.id === id)?.name || 'N/A';
+  const getPartName = (partId: string) => parts.find((p: PartType) => p.id === partId)?.name || 'N/A';
 
   if (record === undefined) {
       return <div className="flex justify-center items-center h-full"><p>Loading maintenance record...</p></div>;
@@ -238,3 +242,5 @@ export default function MaintenanceProfilePage() {
     </div>
   );
 }
+
+    

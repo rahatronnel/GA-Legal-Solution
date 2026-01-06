@@ -83,32 +83,34 @@ export default function AccidentProfilePage() {
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [routes] = useLocalStorage<RouteType[]>('routes', []);
-  const [trips] = useLocalStorage<Trip[]>('trips', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
-  const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
-  const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
-  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const {
+      accidents = [],
+      vehicles = [],
+      drivers = [],
+      employees = [],
+      routes = [],
+      trips = [],
+      accidentTypes = [],
+      severityLevels = [],
+      faultStatuses = [],
+      serviceCenters = [],
+  } = vehicleManagementData;
+
 
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
     if (typeof id !== 'string' || accidents.length === 0) {
-        // We are not ready to search if we don't have an ID or the main data array is not yet loaded.
         setAccident(undefined); // Stay in loading state
         return;
     }
     
-    const foundRecord = accidents.find(t => t.id === id);
+    const foundRecord = accidents.find((t: Accident) => t.id === id);
     
     if (foundRecord) {
         setAccident(foundRecord);
     } else {
-        // If the main data array is loaded and we still haven't found it, it's a 404.
         notFound();
     }
   }, [id, accidents, notFound]);
@@ -117,15 +119,15 @@ export default function AccidentProfilePage() {
   const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
     if (!accident) return {};
     return {
-        vehicle: vehicles.find(v => v.id === accident.vehicleId),
-        driver: drivers.find(d => d.id === accident.driverId),
-        employee: employees.find(e => e.id === accident.employeeId),
-        route: routes.find(r => r.id === accident.routeId),
-        trip: trips.find(t => t.id === accident.tripId),
-        accidentType: accidentTypes.find(t => t.id === accident.accidentTypeId),
-        severityLevel: severityLevels.find(sl => sl.id === accident.severityLevelId),
-        faultStatus: faultStatuses.find(fs => fs.id === accident.faultStatusId),
-        repairedBy: serviceCenters.find(sc => sc.id === accident.repairedById)
+        vehicle: vehicles.find((v: Vehicle) => v.id === accident.vehicleId),
+        driver: drivers.find((d: Driver) => d.id === accident.driverId),
+        employee: employees.find((e: Employee) => e.id === accident.employeeId),
+        route: routes.find((r: RouteType) => r.id === accident.routeId),
+        trip: trips.find((t: Trip) => t.id === accident.tripId),
+        accidentType: accidentTypes.find((t: AccidentType) => t.id === accident.accidentTypeId),
+        severityLevel: severityLevels.find((sl: SeverityLevel) => sl.id === accident.severityLevelId),
+        faultStatus: faultStatuses.find((fs: FaultStatus) => fs.id === accident.faultStatusId),
+        repairedBy: serviceCenters.find((sc: ServiceCenter) => sc.id === accident.repairedById)
     };
   }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
@@ -135,8 +137,6 @@ export default function AccidentProfilePage() {
   }
   
   if (accident === null) {
-      // This state should ideally not be reached due to the notFound() call in useEffect,
-      // but it's a safe fallback.
       notFound();
   }
 
@@ -250,3 +250,5 @@ export default function AccidentProfilePage() {
     </div>
   );
 }
+
+    
