@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Upload, X } from 'lucide-react';
-
 
 type OrganizationSettings = {
   name: string;
@@ -83,7 +82,7 @@ export default function SettingsPage() {
       description: 'Organization settings have been saved.',
     });
   };
-  
+
   return (
     <div className="space-y-6">
         <Card>
