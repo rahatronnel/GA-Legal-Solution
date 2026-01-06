@@ -35,7 +35,7 @@ export type TripPurpose = {
 export function TripPurposeTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
-  const { tripPurposes: purposes } = data;
+  const { tripPurposes } = data;
 
   const setPurposes = (updater: React.SetStateAction<TripPurpose[]>) => {
     setData(prev => ({...prev, tripPurposes: typeof updater === 'function' ? updater(prev.tripPurposes || []) : updater }));
@@ -53,7 +53,7 @@ export function TripPurposeTable() {
     return () => clearTimeout(timer);
   }, []);
   
-  const safePurposes = Array.isArray(purposes) ? purposes : [];
+  const safePurposes = Array.isArray(tripPurposes) ? tripPurposes : [];
 
   const filteredPurposes = useMemo(() => {
     if (!searchTerm) return safePurposes;

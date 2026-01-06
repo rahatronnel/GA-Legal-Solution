@@ -22,10 +22,9 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
+import { VehicleManagementProvider } from './components/vehicle-management-provider';
 
 function VehicleManagementContent() {
-  const { data, setData } = useVehicleManagement();
 
   return (
     <Tabs defaultValue="trips" className="w-full">

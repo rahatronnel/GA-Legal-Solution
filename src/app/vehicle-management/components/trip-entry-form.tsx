@@ -29,7 +29,7 @@ import type { Location } from './location-table';
 import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 type UploadedFile = {
   id: string;
@@ -121,7 +121,7 @@ interface ComboboxProps<T> {
 
 function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage, disabled = false }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
-  const currentItem = items.find((item) => item.id === value);
+  const currentItem = (items || []).find((item) => item.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -145,7 +145,7 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandList>
             <CommandGroup>
-              {items.map((item) => (
+              {(items || []).map((item) => (
                 <CommandItem
                   key={item.id}
                   value={searchValue(item)}
@@ -185,12 +185,8 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
-  const [locations] = useLocalStorage<Location[]>('locations', []);
-  const [routes] = useLocalStorage<Route[]>('routes', []);
-  const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const { data: vehicleManagementData } = useVehicleManagement();
+  const { vehicles, drivers, tripPurposes, locations, routes, expenseTypes } = vehicleManagementData;
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
@@ -242,7 +238,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         setTripData(prev => ({ ...prev, [id]: newRouteId }));
 
         if (!isClearing) {
-            const selectedRoute = routes.find(r => r.id === value);
+            const selectedRoute = (routes || []).find(r => r.id === value);
             if (selectedRoute) {
                 setTripData(prev => ({
                     ...prev,
@@ -355,9 +351,9 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
             {step === 1 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2"><Label>Vehicle<MandatoryIndicator/></Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{vehicles.map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Driver<MandatoryIndicator/></Label><Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Purpose<MandatoryIndicator/></Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{purposes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Vehicle<MandatoryIndicator/></Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{(vehicles || []).map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Driver<MandatoryIndicator/></Label><Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{(drivers || []).map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>Purpose<MandatoryIndicator/></Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{(tripPurposes || []).map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                   <div className="space-y-2"><Label>Trip Status<MandatoryIndicator/></Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
                 </div>
 
@@ -372,7 +368,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                     <div className="space-y-2">
                         <Label>Route</Label>
                         <Combobox
-                            items={routes}
+                            items={routes || []}
                             value={tripData.routeId}
                             onSelect={handleComboboxSelect('routeId')}
                             displayValue={(route) => route.name}
@@ -384,7 +380,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                    <div className="space-y-2">
                         <Label>Start Location</Label>
                         <Combobox
-                            items={locations}
+                            items={locations || []}
                             value={tripData.startLocationId}
                             onSelect={handleComboboxSelect('startLocationId')}
                             displayValue={(loc) => loc.name}
@@ -397,7 +393,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                    <div className="space-y-2">
                        <Label>Destination</Label>
                         <Combobox
-                            items={locations}
+                            items={locations || []}
                             value={tripData.destinationLocationId}
                             onSelect={handleComboboxSelect('destinationLocationId')}
                             displayValue={(loc) => loc.name}
@@ -423,7 +419,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                                 <Select value={expense.expenseTypeId} onValueChange={(value) => updateExpense(expense.id, 'expenseTypeId', value)}>
                                     <SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger>
                                     <SelectContent>
-                                        {expenseTypes.map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}
+                                        {(expenseTypes || []).map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                                 <Input placeholder="Amount" type="number" value={expense.amount} onChange={(e) => updateExpense(expense.id, 'amount', parseFloat(e.target.value) || 0)} />
