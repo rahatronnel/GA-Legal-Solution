@@ -88,12 +88,12 @@ function TripProfileContent() {
 
   const { data } = useVehicleManagement();
   const {
-      trips,
-      vehicles,
-      drivers,
-      purposes,
-      locations,
-      expenseTypes
+      trips = [],
+      vehicles = [],
+      drivers = [],
+      purposes = [],
+      locations = [],
+      expenseTypes = []
   } = data;
 
 
@@ -101,13 +101,9 @@ function TripProfileContent() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || !trips) {
-        return; // Wait for data
-    }
-    if (trips.length > 0) {
-        const foundTrip = trips.find((t: Trip) => t.id === id);
-        setTrip(foundTrip || null);
-    }
+    if (typeof id !== 'string') return;
+    const foundTrip = trips.find((t: Trip) => t.id === id);
+    setTrip(foundTrip || null);
   }, [id, trips]);
 
   const { vehicle, driver, purpose, totalDistance, totalExpenses, itinerary } = useMemo(() => {
@@ -253,5 +249,3 @@ export default function TripProfilePage() {
         </VehicleManagementProvider>
     );
 }
-
-    
