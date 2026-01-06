@@ -1,70 +1,77 @@
 
 "use client";
 
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
 
-// This is a helper function to check if the code is running in a browser
+// Custom event to notify all instances of the hook on the same page
 const isBrowser = typeof window !== 'undefined';
-
-// This hook has been completely rewritten to be robust and reliable.
-// It now correctly persists state changes to localStorage and syncs across tabs.
+const DISPATCH_STORAGE_EVENT = 'dispatchstorages';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
-  // State to store our value
-  // Pass an inline function to useState so logic is only executed once on the client
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (!isBrowser) {
-      return initialValue;
-    }
-    try {
-      // Get from local storage by key
-      const item = window.localStorage.getItem(key);
-      // Parse stored json or if none return initialValue
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      // If error also return initialValue
-      console.error(`Error reading localStorage key “${key}”:`, error);
-      return initialValue;
-    }
-  });
-
-  // useEffect to update local storage when the state changes.
-  // The dependency array [key, storedValue] is CRITICAL.
-  // It ensures that this effect runs every time the key or the storedValue changes.
-  useEffect(() => {
-    if (!isBrowser) {
-      return;
-    }
-    try {
-      // Save state to local storage
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
-    } catch (error) {
-      console.error(`Error writing to localStorage for key “${key}”:`, error);
-    }
-  }, [key, storedValue]);
-
-  // This effect listens for changes from other tabs.
-  useEffect(() => {
-    if (!isBrowser) {
-        return;
-    }
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === key && e.newValue !== null) {
-        try {
-            setStoredValue(JSON.parse(e.newValue));
-        } catch (error) {
-            console.error(`Error parsing storage change for key “${key}”:`, error);
+    const [storedValue, setStoredValue] = useState<T>(() => {
+        if (!isBrowser) {
+            return initialValue;
         }
-      }
-    };
+        try {
+            const item = window.localStorage.getItem(key);
+            return item ? JSON.parse(item) : initialValue;
+        } catch (error) {
+            console.error(`Error reading localStorage key “${key}”:`, error);
+            return initialValue;
+        }
+    });
 
-    window.addEventListener('storage', handleStorageChange);
+    const setValue: Dispatch<SetStateAction<T>> = useCallback((value) => {
+        if (!isBrowser) {
+            return;
+        }
+        try {
+            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            setStoredValue(valueToStore);
+            window.localStorage.setItem(key, JSON.stringify(valueToStore));
+            // Dispatch a custom event to notify other instances of this hook on the same page
+            window.dispatchEvent(new CustomEvent(DISPATCH_STORAGE_EVENT, { detail: { key } }));
+        } catch (error) {
+            console.error(`Error setting localStorage key “${key}”:`, error);
+        }
+    }, [key, storedValue]);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [key]);
 
-  return [storedValue, setStoredValue];
+    useEffect(() => {
+        if (!isBrowser) {
+            return;
+        }
+        
+        const handleStorageChange = (event: StorageEvent | CustomEvent) => {
+            let eventKey: string | null = null;
+            if (event instanceof StorageEvent) {
+                eventKey = event.key;
+            } else if (event instanceof CustomEvent && event.detail) {
+                eventKey = event.detail.key;
+            }
+
+            if (eventKey === key) {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    if (item !== null) {
+                        setStoredValue(JSON.parse(item));
+                    }
+                } catch (error) {
+                    console.error(`Error handling storage change for key “${key}”:`, error);
+                }
+            }
+        };
+
+        // Listen for changes from other tabs
+        window.addEventListener('storage', handleStorageChange);
+        // Listen for changes from the same tab
+        window.addEventListener(DISPATCH_STORAGE_EVENT, handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener(DISPATCH_STORAGE_EVENT, handleStorageChange);
+        };
+    }, [key]);
+
+    return [storedValue, setValue];
 }
