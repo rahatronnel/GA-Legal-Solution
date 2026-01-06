@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type MaintenanceType = {
   id: string;
@@ -32,13 +33,15 @@ export type MaintenanceType = {
   code: string;
 };
 
-interface MaintenanceTypeTableProps {
-  maintenanceTypes: MaintenanceType[];
-  setMaintenanceTypes: React.Dispatch<React.SetStateAction<MaintenanceType[]>>;
-}
-
-export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: MaintenanceTypeTableProps) {
+export function MaintenanceTypeTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { maintenanceTypes } = data;
+  
+  const setMaintenanceTypes = (updater: React.SetStateAction<MaintenanceType[]>) => {
+    setData(prev => ({...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentMaintenanceType, setCurrentMaintenanceType] = useState<Partial<MaintenanceType> | null>(null);
@@ -51,14 +54,16 @@ export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: 
     return () => clearTimeout(timer);
   }, []);
 
+  const safeMaintenanceTypes = Array.isArray(maintenanceTypes) ? maintenanceTypes : [];
+
   const filteredMaintenanceTypes = useMemo(() => {
-    if (!searchTerm) return maintenanceTypes;
+    if (!searchTerm) return safeMaintenanceTypes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return maintenanceTypes.filter(p => 
+    return safeMaintenanceTypes.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [maintenanceTypes, searchTerm]);
+  }, [safeMaintenanceTypes, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -88,7 +93,7 @@ export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: 
 
   const confirmDelete = () => {
     if (currentMaintenanceType?.id) {
-        setMaintenanceTypes(prev => prev.filter(p => p.id !== currentMaintenanceType.id));
+        setMaintenanceTypes(prev => (prev || []).filter(p => p.id !== currentMaintenanceType.id));
         toast({ title: 'Success', description: 'Maintenance type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -102,11 +107,11 @@ export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: 
     }
 
     if (currentMaintenanceType?.id) {
-      setMaintenanceTypes(prev => prev.map(p => p.id === currentMaintenanceType.id ? { ...p, ...maintenanceTypeData } : p));
+      setMaintenanceTypes(prev => (prev || []).map(p => p.id === currentMaintenanceType.id ? { ...p, ...maintenanceTypeData } : p));
       toast({ title: 'Success', description: 'Maintenance type updated successfully.' });
     } else {
       const newMaintenanceType = { id: Date.now().toString(), ...maintenanceTypeData };
-      setMaintenanceTypes(prev => [...prev, newMaintenanceType]);
+      setMaintenanceTypes(prev => [...(prev || []), newMaintenanceType]);
       toast({ title: 'Success', description: 'Maintenance type added successfully.' });
     }
 
@@ -146,7 +151,7 @@ export function MaintenanceTypeTable({ maintenanceTypes, setMaintenanceTypes }: 
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setMaintenanceTypes(prev => [...prev, ...newItems]);
+            setMaintenanceTypes(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Maintenance types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid maintenance types found in the file.' });

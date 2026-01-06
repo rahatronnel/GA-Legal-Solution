@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 import type { Vehicle } from './vehicle-table';
 import type { MaintenanceType } from './maintenance-type-table';
@@ -149,7 +149,7 @@ function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue
           <CommandEmpty>{emptyMessage}</CommandEmpty>
           <CommandList>
             <CommandGroup>
-              {items.map((item) => (
+              {(items || []).map((item) => (
                 <CommandItem
                   key={item.id}
                   value={searchValue(item)}
@@ -195,6 +195,24 @@ const QuickAddDialog: React.FC<{
 
 export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: MaintenanceEntryFormProps) {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const {
+      vehicles = [],
+      drivers = [],
+      employees = [],
+      parts: allParts = [],
+      maintenanceTypes = [],
+      serviceCenters = [],
+      maintenanceExpenseTypes = [],
+  } = data;
+  
+  const setMaintenanceTypes = (updater: React.SetStateAction<MaintenanceType[]>) => {
+    setData(prev => ({...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes || []) : updater }));
+  }
+  const setServiceCenters = (updater: React.SetStateAction<ServiceCenter[]>) => {
+    setData(prev => ({...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters || []) : updater }));
+  }
+
   const [step, setStep] = useState(1);
   const [maintenanceData, setMaintenanceData] = useState(initialMaintenanceData);
   const [parts, setParts] = useState<Part[]>([]);
@@ -203,14 +221,6 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   
   const [serviceDate, setServiceDate] = useState<Date | undefined>();
   const [upcomingServiceDate, setUpcomingServiceDate] = useState<Date | undefined>();
-
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [allParts] = useLocalStorage<PartType[]>('parts', []);
-  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [maintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
 
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<string | null>(null);
   const [quickAddData, setQuickAddData] = useState<any>({});

@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type MaintenanceExpenseType = {
   id: string;
@@ -32,13 +33,15 @@ export type MaintenanceExpenseType = {
   code: string;
 };
 
-interface MaintenanceExpenseTypeTableProps {
-  expenseTypes: MaintenanceExpenseType[];
-  setExpenseTypes: React.Dispatch<React.SetStateAction<MaintenanceExpenseType[]>>;
-}
-
-export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: MaintenanceExpenseTypeTableProps) {
+export function MaintenanceExpenseTypeTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { maintenanceExpenseTypes: expenseTypes } = data;
+
+  const setExpenseTypes = (updater: React.SetStateAction<MaintenanceExpenseType[]>) => {
+    setData(prev => ({...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<MaintenanceExpenseType> | null>(null);
@@ -51,14 +54,16 @@ export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: M
     return () => clearTimeout(timer);
   }, []);
 
+  const safeExpenseTypes = Array.isArray(expenseTypes) ? expenseTypes : [];
+
   const filteredExpenseTypes = useMemo(() => {
-    if (!searchTerm) return expenseTypes;
+    if (!searchTerm) return safeExpenseTypes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return expenseTypes.filter(p => 
+    return safeExpenseTypes.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [expenseTypes, searchTerm]);
+  }, [safeExpenseTypes, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -88,7 +93,7 @@ export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: M
 
   const confirmDelete = () => {
     if (currentExpenseType?.id) {
-        setExpenseTypes(prev => prev.filter(p => p.id !== currentExpenseType.id));
+        setExpenseTypes(prev => (prev || []).filter(p => p.id !== currentExpenseType.id));
         toast({ title: 'Success', description: 'Maintenance expense type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -102,11 +107,11 @@ export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: M
     }
 
     if (currentExpenseType?.id) {
-      setExpenseTypes(prev => prev.map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
+      setExpenseTypes(prev => (prev || []).map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
       toast({ title: 'Success', description: 'Maintenance expense type updated successfully.' });
     } else {
       const newExpenseType = { id: Date.now().toString(), ...expenseTypeData };
-      setExpenseTypes(prev => [...prev, newExpenseType]);
+      setExpenseTypes(prev => [...(prev || []), newExpenseType]);
       toast({ title: 'Success', description: 'Maintenance expense type added successfully.' });
     }
 
@@ -146,7 +151,7 @@ export function MaintenanceExpenseTypeTable({ expenseTypes, setExpenseTypes }: M
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setExpenseTypes(prev => [...prev, ...newItems]);
+            setExpenseTypes(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Maintenance expense types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid expense types found in the file.' });

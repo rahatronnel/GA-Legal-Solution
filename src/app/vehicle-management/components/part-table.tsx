@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type Part = {
   id: string;
@@ -41,13 +42,15 @@ const initialData = {
     price: 0,
 }
 
-interface PartTableProps {
-  parts: Part[];
-  setParts: React.Dispatch<React.SetStateAction<Part[]>>;
-}
-
-export function PartTable({ parts, setParts }: PartTableProps) {
+export function PartTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { parts } = data;
+
+  const setParts = (updater: React.SetStateAction<Part[]>) => {
+    setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Part> | null>(null);
@@ -60,15 +63,17 @@ export function PartTable({ parts, setParts }: PartTableProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeParts = Array.isArray(parts) ? parts : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return parts;
+    if (!searchTerm) return safeParts;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return parts.filter(item => 
+    return safeParts.filter(item => 
         item.name.toLowerCase().includes(lowercasedTerm) ||
         item.code.toLowerCase().includes(lowercasedTerm) ||
         item.brand.toLowerCase().includes(lowercasedTerm)
     );
-  }, [parts, searchTerm]);
+  }, [safeParts, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
@@ -98,7 +103,7 @@ export function PartTable({ parts, setParts }: PartTableProps) {
 
   const confirmDelete = () => {
     if (currentItem?.id) {
-        setParts(prev => prev.filter(p => p.id !== currentItem.id));
+        setParts(prev => (prev || []).filter(p => p.id !== currentItem.id));
         toast({ title: 'Success', description: 'Part deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -112,11 +117,11 @@ export function PartTable({ parts, setParts }: PartTableProps) {
     }
 
     if (currentItem?.id) {
-      setParts(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setParts(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
       toast({ title: 'Success', description: 'Part updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
-      setParts(prev => [...prev, newItem]);
+      setParts(prev => [...(prev || []), newItem]);
       toast({ title: 'Success', description: 'Part added successfully.' });
     }
 
@@ -158,7 +163,7 @@ export function PartTable({ parts, setParts }: PartTableProps) {
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setParts(prev => [...prev, ...newItems]);
+            setParts(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: `${newItems.length} parts uploaded successfully.` });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid parts found in the file.' });

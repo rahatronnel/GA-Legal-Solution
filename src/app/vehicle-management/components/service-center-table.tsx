@@ -26,6 +26,7 @@ import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type ServiceCenter = {
   id: string;
@@ -44,13 +45,15 @@ const initialData = {
     ownerName: '',
 }
 
-interface ServiceCenterTableProps {
-  serviceCenters: ServiceCenter[];
-  setServiceCenters: React.Dispatch<React.SetStateAction<ServiceCenter[]>>;
-}
-
-export function ServiceCenterTable({ serviceCenters, setServiceCenters }: ServiceCenterTableProps) {
+export function ServiceCenterTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { serviceCenters } = data;
+
+  const setServiceCenters = (updater: React.SetStateAction<ServiceCenter[]>) => {
+    setData(prev => ({...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<ServiceCenter> | null>(null);
@@ -63,16 +66,18 @@ export function ServiceCenterTable({ serviceCenters, setServiceCenters }: Servic
     return () => clearTimeout(timer);
   }, []);
 
+  const safeServiceCenters = Array.isArray(serviceCenters) ? serviceCenters : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return serviceCenters;
+    if (!searchTerm) return safeServiceCenters;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return serviceCenters.filter(item => 
+    return safeServiceCenters.filter(item => 
         item.name.toLowerCase().includes(lowercasedTerm) ||
         item.code.toLowerCase().includes(lowercasedTerm) ||
         item.ownerName.toLowerCase().includes(lowercasedTerm) ||
         item.mobileNumber.toLowerCase().includes(lowercasedTerm)
     );
-  }, [serviceCenters, searchTerm]);
+  }, [safeServiceCenters, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -102,7 +107,7 @@ export function ServiceCenterTable({ serviceCenters, setServiceCenters }: Servic
 
   const confirmDelete = () => {
     if (currentItem?.id) {
-        setServiceCenters(prev => prev.filter(p => p.id !== currentItem.id));
+        setServiceCenters(prev => (prev || []).filter(p => p.id !== currentItem.id));
         toast({ title: 'Success', description: 'Service Center deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -116,11 +121,11 @@ export function ServiceCenterTable({ serviceCenters, setServiceCenters }: Servic
     }
 
     if (currentItem?.id) {
-      setServiceCenters(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setServiceCenters(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
       toast({ title: 'Success', description: 'Service Center updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
-      setServiceCenters(prev => [...prev, newItem]);
+      setServiceCenters(prev => [...(prev || []), newItem]);
       toast({ title: 'Success', description: 'Service Center added successfully.' });
     }
 
@@ -163,7 +168,7 @@ export function ServiceCenterTable({ serviceCenters, setServiceCenters }: Servic
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setServiceCenters(prev => [...prev, ...newItems]);
+            setServiceCenters(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: `${newItems.length} service centers uploaded successfully.` });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid service centers found in the file.' });

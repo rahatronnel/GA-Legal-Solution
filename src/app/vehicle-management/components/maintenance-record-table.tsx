@@ -28,12 +28,7 @@ import type { Driver } from './driver-entry-form';
 import type { ServiceCenter } from './service-center-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 
-interface MaintenanceRecordTableProps {
-  records: MaintenanceRecord[];
-  setRecords: React.Dispatch<React.SetStateAction<MaintenanceRecord[]>>;
-}
-
-export function MaintenanceRecordTable({ records: initialRecords, setRecords: setInitialRecords }: MaintenanceRecordTableProps) {
+export function MaintenanceRecordTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
   const { maintenanceRecords: records, vehicles, maintenanceTypes, drivers, serviceCenters } = data;
@@ -60,8 +55,8 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
     return () => clearTimeout(timer);
   }, []);
   
-  const getVehicleReg = (vehicleId: string) => vehicles.find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t:any) => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => (vehicles || []).find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes || []).find((t:any) => t.id === typeId)?.name || 'N/A';
   const calculateTotalCost = (record: MaintenanceRecord) => {
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
@@ -69,8 +64,9 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
   }
 
   const filteredRecords = useMemo(() => {
-    if (!records) return [];
-    return records.filter(record => {
+    const safeRecords = Array.isArray(records) ? records : [];
+    if (!safeRecords) return [];
+    return safeRecords.filter(record => {
         const searchTermMatch = searchTerm === '' || 
             getVehicleReg(record.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
             getMaintenanceTypeName(record.maintenanceTypeId).toLowerCase().includes(searchTerm.toLowerCase());
@@ -104,7 +100,7 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
 
   const handleSave = (data: Omit<MaintenanceRecord, 'id'>, id?: string) => {
     if (id) {
-        setRecords(prev => prev.map(rec => (rec.id === id ? { ...rec, ...data } as MaintenanceRecord : rec)));
+        setRecords(prev => (prev || []).map(rec => (rec.id === id ? { ...rec, ...data } as MaintenanceRecord : rec)));
         toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
     } else {
         const newRecord: MaintenanceRecord = { 
@@ -114,7 +110,7 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
             expenses: data.expenses || [],
             documents: data.documents || {},
         } as MaintenanceRecord;
-        setRecords(prev => [...prev, newRecord]);
+        setRecords(prev => [...(prev || []), newRecord]);
         toast({ title: 'Success', description: 'Maintenance record added successfully.' });
     }
   };
@@ -126,7 +122,7 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
 
   const confirmDelete = () => {
     if (currentItem?.id) {
-        setRecords(prev => prev.filter(t => t.id !== currentItem.id));
+        setRecords(prev => (prev || []).filter(t => t.id !== currentItem.id));
         toast({ title: 'Success', description: 'Maintenance record deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -165,28 +161,28 @@ export function MaintenanceRecordTable({ records: initialRecords, setRecords: se
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Vehicles</SelectItem>
-                        {vehicles.map((v:any) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}
+                        {(vehicles || []).map((v:any) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Type..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Types</SelectItem>
-                        {maintenanceTypes.map((t:any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                        {(maintenanceTypes || []).map((t:any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={driverFilter} onValueChange={setDriverFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Drivers</SelectItem>
-                        {drivers.map((d:any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                        {(drivers || []).map((d:any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <Select value={serviceCenterFilter} onValueChange={setServiceCenterFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Garage..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Garages</SelectItem>
-                        {serviceCenters.map((sc:any) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
+                        {(serviceCenters || []).map((sc:any) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
