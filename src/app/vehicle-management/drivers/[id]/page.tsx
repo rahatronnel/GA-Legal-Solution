@@ -167,22 +167,14 @@ function DriverProfileContent() {
         if(isValid(parsedDate)) {
             return format(parsedDate, 'PPP'); // Format as Oct 21, 2023
         }
-        return dateString; // Return original if not in expected format
+        // Try parsing dd-MM-yyyy as a fallback
+        const parsedDate2 = parse(dateString, 'dd-MM-yyyy', new Date());
+        if(isValid(parsedDate2)) {
+            return format(parsedDate2, 'PPP');
+        }
+        return dateString; // Return original if not in a known format
     } catch(e) {
         return dateString; // Return original on error
-    }
-  }
-
-  const formatDateDDMMYYYY = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-        const parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
-        if(isValid(parsedDate)) {
-            return format(parsedDate, 'dd-MM-yyyy'); // Format as 21-10-2023
-        }
-        return dateString;
-    } catch(e) {
-        return dateString;
     }
   }
 
@@ -231,7 +223,7 @@ function DriverProfileContent() {
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Personal Information</h3>
                     <ul className="space-y-4 text-sm">
                         <InfoItem icon={UserSquare2} label="Father's/Guardian's Name" value={driver.fatherOrGuardianName} />
-                        <InfoItem icon={Cake} label="Date of Birth" value={formatDateDDMMYYYY(driver.dateOfBirth)} />
+                        <InfoItem icon={Cake} label="Date of Birth" value={formatDate(driver.dateOfBirth)} />
                         <InfoItem icon={VenetianMask} label="Gender" value={driver.gender} />
                         <InfoItem icon={FileText} label="National ID / Passport" value={driver.nationalIdOrPassport} />
                     </ul>

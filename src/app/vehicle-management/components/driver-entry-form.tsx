@@ -17,11 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, User, CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Upload, X, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 import { format, parse, isValid } from 'date-fns';
 import type { Vehicle } from './vehicle-table';
 
@@ -100,10 +97,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [driverData, setDriverData] = useState(initialDriverData);
-
-  const [licenseIssueDate, setLicenseIssueDate] = useState<Date | undefined>(undefined);
-  const [licenseExpiryDate, setLicenseExpiryDate] = useState<Date | undefined>(undefined);
-  const [joiningDate, setJoiningDate] = useState<Date | undefined>(undefined);
   
   // Store file objects temporarily
   const [docFiles, setDocFiles] = useState({ drivingLicense: null as File | null, nid: null as File | null, other: null as File | null });
@@ -117,34 +110,39 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const progress = Math.round((step / 4) * 100);
   const isEditing = driver && driver.id;
 
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+        // Handle both yyyy-MM-dd and dd-MM-yyyy initial formats
+        const parsedDate = isValid(parse(dateString, 'yyyy-MM-dd', new Date())) 
+            ? parse(dateString, 'yyyy-MM-dd', new Date()) 
+            : parse(dateString, 'dd-MM-yyyy', new Date());
+
+        if (isValid(parsedDate)) {
+            return format(parsedDate, 'dd-MM-yyyy');
+        }
+    } catch (e) {}
+    return dateString; // Return original if parsing fails
+  }
+
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       if (isEditing && driver) {
         const initialData = { ...initialDriverData, ...driver };
         
-        let dobDisplay = initialData.dateOfBirth;
-        if (dobDisplay) {
-            try {
-                const parsedDate = parse(dobDisplay, 'yyyy-MM-dd', new Date());
-                if (isValid(parsedDate)) {
-                    dobDisplay = format(parsedDate, 'dd-MM-yyyy');
-                }
-            } catch (e) {}
-        }
-        setDriverData({ ...initialData, dateOfBirth: dobDisplay });
-
-        setLicenseIssueDate(initialData.licenseIssueDate ? new Date(initialData.licenseIssueDate) : undefined);
-        setLicenseExpiryDate(initialData.licenseExpiryDate ? new Date(initialData.licenseExpiryDate) : undefined);
-        setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
-
+        setDriverData({
+            ...initialData,
+            dateOfBirth: formatDateForDisplay(initialData.dateOfBirth),
+            licenseIssueDate: formatDateForDisplay(initialData.licenseIssueDate),
+            licenseExpiryDate: formatDateForDisplay(initialData.licenseExpiryDate),
+            joiningDate: formatDateForDisplay(initialData.joiningDate),
+        });
+        
         setProfilePicPreview(initialData.profilePicture || null);
         setDocPreviews(initialData.documents || { drivingLicense: '', nid: '', other: '' });
       } else {
         setDriverData(initialDriverData);
-        setLicenseIssueDate(undefined);
-        setLicenseExpiryDate(undefined);
-        setJoiningDate(undefined);
         setProfilePicPreview(null);
         setDocPreviews({ drivingLicense: '', nid: '', other: '' });
       }
@@ -158,8 +156,9 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const input = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { id, value } = e.target;
+      const input = value.replace(/\D/g, ''); // Remove non-digit characters
       let formattedInput = input;
   
       if (input.length > 4) {
@@ -167,7 +166,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
       } else if (input.length > 2) {
         formattedInput = `${input.slice(0, 2)}-${input.slice(2, 4)}`;
       }
-      setDriverData(prev => ({ ...prev, dateOfBirth: formattedInput }));
+      setDriverData(prev => ({ ...prev, [id]: formattedInput }));
   };
 
   const handleSelectChange = (id: keyof Driver) => (value: string) => {
@@ -178,11 +177,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
     }
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
-  
-  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Omit<Driver, 'dateOfBirth'>) => (date: Date | undefined) => {
-      setter(date);
-      setDriverData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
-  }
   
   const fileToDataUrl = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
@@ -246,38 +240,51 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
 
   const prevStep = () => setStep(s => s - 1);
 
+  const parseAndFormatDateForSave = (dateString: string, fieldName: string) => {
+    if (!dateString) return '';
+    try {
+        const parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
+        if (!isValid(parsedDate)) {
+            throw new Error(`Invalid date format for ${fieldName}. Please use DD-MM-YYYY.`);
+        }
+        return format(parsedDate, 'yyyy-MM-dd');
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Invalid Date', description: error.message });
+        throw error;
+    }
+  }
+
   const handleSave = async () => {
-     if (!validateStep(1)) {
+    if (!validateStep(1)) {
         return;
     }
 
-    let dobToSave = '';
-    if (driverData.dateOfBirth) {
-        try {
-            const parsedDate = parse(driverData.dateOfBirth, 'dd-MM-yyyy', new Date());
-            if (!isValid(parsedDate)) {
-                 throw new Error('Invalid date');
-            }
-            dobToSave = format(parsedDate, 'yyyy-MM-dd');
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'Invalid Date', description: 'Please enter the Date of Birth in a valid DD-MM-YYYY format.' });
-            return;
-        }
+    try {
+        const dobToSave = parseAndFormatDateForSave(driverData.dateOfBirth, 'Date of Birth');
+        const licenseIssueDateToSave = parseAndFormatDateForSave(driverData.licenseIssueDate, 'License Issue Date');
+        const licenseExpiryDateToSave = parseAndFormatDateForSave(driverData.licenseExpiryDate, 'License Expiry Date');
+        const joiningDateToSave = parseAndFormatDateForSave(driverData.joiningDate, 'Joining Date');
+
+        const dataToSave: Omit<Driver, 'id'> = {
+            ...driverData,
+            dateOfBirth: dobToSave,
+            licenseIssueDate: licenseIssueDateToSave,
+            licenseExpiryDate: licenseExpiryDateToSave,
+            joiningDate: joiningDateToSave,
+            profilePicture: profilePicPreview || driverData.profilePicture,
+            documents: {
+                drivingLicense: docPreviews.drivingLicense || driverData.documents.drivingLicense,
+                nid: docPreviews.nid || driverData.documents.nid,
+                other: docPreviews.other || driverData.documents.other
+            },
+        };
+
+        onSave(dataToSave, driver?.id);
+        setIsOpen(false);
+    } catch (error) {
+        // Toast is already shown in the parsing function
+        return;
     }
-
-    const dataToSave: Omit<Driver, 'id'> = {
-        ...driverData,
-        dateOfBirth: dobToSave, // Store in yyyy-MM-dd format
-        profilePicture: profilePicPreview || driverData.profilePicture,
-        documents: {
-            drivingLicense: docPreviews.drivingLicense || driverData.documents.drivingLicense,
-            nid: docPreviews.nid || driverData.documents.nid,
-            other: docPreviews.other || driverData.documents.other
-        },
-    };
-
-    onSave(dataToSave, driver?.id);
-    setIsOpen(false);
   };
   
   const getDocumentName = (docType: 'drivingLicense' | 'nid' | 'other') => {
@@ -337,7 +344,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             <Input
                                 id="dateOfBirth"
                                 value={driverData.dateOfBirth}
-                                onChange={handleDobChange}
+                                onChange={handleDateChange}
                                 placeholder="DD-MM-YYYY"
                                 maxLength={10}
                             />
@@ -401,27 +408,23 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="licenseIssueDate">License Issue Date</Label>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !licenseIssueDate && "text-muted-foreground")}>
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {licenseIssueDate ? format(licenseIssueDate, "PPP") : <span>Pick a date</span>}
-                              </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={licenseIssueDate} onSelect={handleDateChange(setLicenseIssueDate, 'licenseIssueDate')} initialFocus/></PopoverContent>
-                      </Popover>
+                      <Input
+                          id="licenseIssueDate"
+                          value={driverData.licenseIssueDate}
+                          onChange={handleDateChange}
+                          placeholder="DD-MM-YYYY"
+                          maxLength={10}
+                      />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="licenseExpiryDate">License Expiry Date</Label>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !licenseExpiryDate && "text-muted-foreground")}>
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {licenseExpiryDate ? format(licenseExpiryDate, "PPP") : <span>Pick a date</span>}
-                              </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={licenseExpiryDate} onSelect={handleDateChange(setLicenseExpiryDate, 'licenseExpiryDate')} initialFocus/></PopoverContent>
-                      </Popover>
+                      <Input
+                          id="licenseExpiryDate"
+                          value={driverData.licenseExpiryDate}
+                          onChange={handleDateChange}
+                          placeholder="DD-MM-YYYY"
+                          maxLength={10}
+                      />
                   </div>
                   <div className="space-y-2 col-span-2">
                       <Label htmlFor="issuingAuthority">Issuing Authority</Label>
@@ -437,15 +440,13 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="joiningDate">Joining Date</Label>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !joiningDate && "text-muted-foreground")}>
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {joiningDate ? format(joiningDate, "PPP") : <span>Pick a date</span>}
-                              </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={joiningDate} onSelect={handleDateChange(setJoiningDate, 'joiningDate')} initialFocus/></PopoverContent>
-                      </Popover>
+                      <Input
+                          id="joiningDate"
+                          value={driverData.joiningDate}
+                          onChange={handleDateChange}
+                          placeholder="DD-MM-YYYY"
+                          maxLength={10}
+                      />
                   </div>
                   <div className="space-y-2">
                       <Label htmlFor="employmentType">Employment Type</Label>
