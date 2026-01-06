@@ -325,10 +325,12 @@ function DriverProfileContent() {
   );
 }
 
-export default function DriverProfilePage() {
+export default function DriverProfilePageWrapper() {
     return (
         <VehicleManagementProvider>
             <DriverProfileContent />
         </VehicleManagementProvider>
     )
 }
+
+    

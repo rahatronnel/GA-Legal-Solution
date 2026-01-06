@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -22,8 +22,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
-import { useVehicleManagement } from './vehicle-management-provider';
 import type { Vehicle } from './vehicle-table';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export function DriverTable() {
   const { toast } = useToast();
@@ -342,3 +342,5 @@ export function DriverTable() {
     </TooltipProvider>
   );
 }
+
+    

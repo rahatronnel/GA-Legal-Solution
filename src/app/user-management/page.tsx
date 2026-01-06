@@ -7,6 +7,7 @@ import { SectionTable, type Section } from "./components/section-table";
 import { DesignationTable, type Designation } from "./components/designation-table";
 import { EmployeeTable, type Employee } from "./components/employee-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useState } from "react";
 
 export default function UserManagementPage() {
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
@@ -65,3 +66,5 @@ export default function UserManagementPage() {
     </>
   );
 }
+
+    
