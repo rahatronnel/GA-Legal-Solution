@@ -44,7 +44,7 @@ export function RouteTable() {
   const { routes, locations } = data;
   
   const setRoutes = (updater: React.SetStateAction<Route[]>) => {
-    setData(prev => ({...prev, routes: typeof updater === 'function' ? updater(prev.routes) : updater }));
+    setData(prev => ({...prev, routes: typeof updater === 'function' ? updater(prev.routes || []) : updater }));
   }
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -59,7 +59,8 @@ export function RouteTable() {
     return () => clearTimeout(timer);
   }, []);
 
-  const getLocationName = (locationId: string) => locations.find((l: Location) => l.id === locationId)?.name || 'N/A';
+  const safeLocations = Array.isArray(locations) ? locations : [];
+  const getLocationName = (locationId: string) => safeLocations.find((l: Location) => l.id === locationId)?.name || 'N/A';
 
   const filteredItems = useMemo(() => {
     const safeRoutes = Array.isArray(routes) ? routes : [];
@@ -105,7 +106,7 @@ export function RouteTable() {
 
   const confirmDelete = () => {
     if (currentItem?.id) {
-        setRoutes(prev => prev.filter(p => p.id !== currentItem.id));
+        setRoutes(prev => (prev || []).filter(p => p.id !== currentItem.id));
         toast({ title: 'Success', description: 'Route deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -119,11 +120,11 @@ export function RouteTable() {
     }
 
     if (currentItem?.id) {
-      setRoutes(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as Route : p));
+      setRoutes(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } as Route : p));
       toast({ title: 'Success', description: 'Route updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
-      setRoutes(prev => [...prev, newItem]);
+      setRoutes(prev => [...(prev || []), newItem]);
       toast({ title: 'Success', description: 'Route added successfully.' });
     }
 
@@ -156,8 +157,8 @@ export function RouteTable() {
 
           const newItems = json
             .map((item: any) => {
-                const startLoc = locations.find(l => l.locationCode === String(item.startLocationCode || '').trim());
-                const endLoc = locations.find(l => l.locationCode === String(item.endLocationCode || '').trim());
+                const startLoc = safeLocations.find(l => l.locationCode === String(item.startLocationCode || '').trim());
+                const endLoc = safeLocations.find(l => l.locationCode === String(item.endLocationCode || '').trim());
                 return {
                     name: String(item.name || '').trim(),
                     routeCode: String(item.routeCode || '').trim(),
@@ -169,7 +170,7 @@ export function RouteTable() {
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setRoutes(prev => [...prev, ...newItems]);
+            setRoutes(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Routes uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid routes found or location codes could not be matched.' });
@@ -283,14 +284,14 @@ export function RouteTable() {
               <Label>Start Location</Label>
               <Select value={formData.startLocationId} onValueChange={handleSelectChange('startLocationId')}>
                   <SelectTrigger><SelectValue placeholder="Select start location" /></SelectTrigger>
-                  <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{safeLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
              <div className="space-y-2">
               <Label>End Location</Label>
               <Select value={formData.endLocationId} onValueChange={handleSelectChange('endLocationId')}>
                   <SelectTrigger><SelectValue placeholder="Select end location" /></SelectTrigger>
-                  <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{safeLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
