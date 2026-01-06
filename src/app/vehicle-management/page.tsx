@@ -8,7 +8,7 @@ import { VehicleTable } from "./components/vehicle-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TripPurposeTable } from "./components/trip-purpose-table";
 import { LocationTable, type Location } from "./components/location-table";
-import { RouteTable } from "./components/route-table";
+import { RouteTable, type Route } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
 import { ExpenseTypeTable } from "./components/expense-type-table";
 import { MaintenanceTypeTable } from "./components/maintenance-type-table";
@@ -23,11 +23,9 @@ import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useState } from "react";
 import type { Driver } from "./components/driver-entry-form";
 import type { Vehicle } from "./components/vehicle-entry-form";
 import type { Trip } from "./components/trip-entry-form";
-import type { Route } from "./components/route-table";
 import type { TripPurpose } from "./components/trip-purpose-table";
 import type { ExpenseType } from "./components/expense-type-table";
 import type { MaintenanceRecord } from "./components/maintenance-entry-form";
@@ -39,15 +37,29 @@ import type { Accident } from "./components/accident-entry-form";
 import type { AccidentType } from "./components/accident-type-table";
 import type { SeverityLevel } from "./components/severity-level-table";
 import type { FaultStatus } from "./components/fault-status-table";
-
+import type { VehicleType } from "./components/vehicle-type-table";
+import type { VehicleBrand } from "./components/vehicle-brand-table";
 
 export default function VehicleManagementPage() {
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  
+  const [locations, setLocations] = useLocalStorage<Location[]>('locations', []);
+  const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [trips, setTrips] = useLocalStorage<Trip[]>('trips', []);
+  const [routes, setRoutes] = useLocalStorage<Route[]>('routes', []);
+  const [tripPurposes, setTripPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const [maintenanceRecords, setMaintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+  const [maintenanceTypes, setMaintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+  const [maintenanceExpenseTypes, setMaintenanceExpenseTypes] = useLocalStorage<MaintenanceExpenseType[]>('maintenanceExpenseTypes', []);
+  const [parts, setParts] = useLocalStorage<Part[]>('parts', []);
+  const [serviceCenters, setServiceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
+  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
+  const [accidentTypes, setAccidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [severityLevels, setSeverityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
+  const [faultStatuses, setFaultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
+  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>("vehicleTypes", []);
+  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>("vehicleBrands", []);
+
   return (
     <>
       <Tabs defaultValue="trips" className="w-full">
@@ -96,7 +108,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceRecordTable records={[]} setRecords={() => {}} />
+                        <MaintenanceRecordTable records={maintenanceRecords} setRecords={setMaintenanceRecords} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -105,7 +117,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PartTable parts={[]} setParts={() => {}} />
+                        <PartTable parts={parts} setParts={setParts} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -114,7 +126,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage your approved service centers and garages.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ServiceCenterTable serviceCenters={[]} setServiceCenters={() => {}} />
+                        <ServiceCenterTable serviceCenters={serviceCenters} setServiceCenters={setServiceCenters} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -123,7 +135,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceTypeTable maintenanceTypes={[]} setMaintenanceTypes={() => {}} />
+                        <MaintenanceTypeTable maintenanceTypes={maintenanceTypes} setMaintenanceTypes={setMaintenanceTypes} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -132,7 +144,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MaintenanceExpenseTypeTable expenseTypes={[]} setExpenseTypes={() => {}}/>
+                        <MaintenanceExpenseTypeTable expenseTypes={maintenanceExpenseTypes} setExpenseTypes={setMaintenanceExpenseTypes}/>
                     </CardContent>
                 </Card>
             </div>
@@ -145,7 +157,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTable accidents={[]} setAccidents={() => {}} />
+                        <AccidentTable accidents={accidents} setAccidents={setAccidents} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -154,7 +166,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTypeTable accidentTypes={[]} setAccidentTypes={() => {}} />
+                        <AccidentTypeTable accidentTypes={accidentTypes} setAccidentTypes={setAccidentTypes} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -163,7 +175,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SeverityLevelTable severityLevels={[]} setSeverityLevels={() => {}} />
+                        <SeverityLevelTable severityLevels={severityLevels} setSeverityLevels={setSeverityLevels} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -172,7 +184,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FaultStatusTable faultStatuses={[]} setFaultStatuses={() => {}} />
+                        <FaultStatusTable faultStatuses={faultStatuses} setFaultStatuses={setFaultStatuses} />
                     </CardContent>
                 </Card>
             </div>
@@ -197,7 +209,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripPurposeTable purposes={[]} setPurposes={() => {}} />
+                    <TripPurposeTable />
                 </CardContent>
             </Card>
             <Card>
@@ -215,7 +227,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined types for trip expenses.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ExpenseTypeTable expenseTypes={[]} setExpenseTypes={() => {}} />
+                    <ExpenseTypeTable />
                 </CardContent>
             </Card>
           </div>

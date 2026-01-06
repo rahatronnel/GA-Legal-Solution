@@ -32,6 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface TripTableProps {
     trips: Trip[];
@@ -40,12 +41,9 @@ interface TripTableProps {
 
 export function TripTable({ trips, setTrips }: TripTableProps) {
   const { toast } = useToast();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [purposes, setPurposes] = useState<TripPurpose[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+  const [routes] = useLocalStorage<Route[]>('routes', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -85,7 +83,7 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
 
       return searchMatch && driverMatch && routeMatch && dateMatch;
     });
-  }, [trips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles]);
+  }, [trips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles, drivers, routes]);
 
 
   const handleAdd = () => {
