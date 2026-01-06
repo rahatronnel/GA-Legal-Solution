@@ -65,6 +65,8 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   documents: { nid: '', other: '' }
 };
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
 interface EmployeeEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -209,7 +211,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Employee' : 'Add New Employee'}</DialogTitle>
           <DialogDescription>
@@ -218,22 +220,22 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Employee Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-1 space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="userIdCode">User ID / Code</Label>
+                            <Label htmlFor="userIdCode">User ID / Code<MandatoryIndicator/></Label>
                             <Input id="userIdCode" value={employeeData.userIdCode} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="fullName">Full Name</Label>
+                            <Label htmlFor="fullName">Full Name<MandatoryIndicator/></Label>
                             <Input id="fullName" value={employeeData.fullName} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="mobileNumber">Mobile Number</Label>
+                            <Label htmlFor="mobileNumber">Mobile Number<MandatoryIndicator/></Label>
                             <Input id="mobileNumber" value={employeeData.mobileNumber} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
@@ -243,7 +245,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                     </div>
                     <div className="md:col-span-1 space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="role">User Role</Label>
+                            <Label htmlFor="role">User Role<MandatoryIndicator/></Label>
                             <Select value={employeeData.role} onValueChange={handleSelectChange('role')}>
                                 <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                                 <SelectContent>
@@ -255,7 +257,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                             </Select>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="status">Status</Label>
+                            <Label htmlFor="status">Status<MandatoryIndicator/></Label>
                             <Select value={employeeData.status} onValueChange={handleSelectChange('status')}>
                                 <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                 <SelectContent>
@@ -265,7 +267,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="username">Username / Login ID</Label>
+                            <Label htmlFor="username">Username / Login ID<MandatoryIndicator/></Label>
                             <Input id="username" value={employeeData.username} onChange={handleInputChange} />
                         </div>
                          <div className="space-y-2">
@@ -371,16 +373,20 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             )}
         </div>
 
-        <DialogFooter className="flex justify-between w-full">
-            {step > 1 ? (
-                <Button variant="outline" onClick={prevStep}>Previous</Button>
-            ) : <div></div>}
+        <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (
+                  <Button variant="outline" onClick={prevStep}>Previous</Button>
+              )}
+            </div>
             
-            {step < 2 ? (
-                 <Button onClick={nextStep}>Next</Button>
-            ) : (
-                 <Button onClick={handleSave}>{isEditing ? 'Update Employee' : 'Save Employee'}</Button>
-            )}
+            <div>
+              {step < 2 ? (
+                  <Button onClick={nextStep}>Next</Button>
+              ) : (
+                  <Button onClick={handleSave}>{isEditing ? 'Update Employee' : 'Save Employee'}</Button>
+              )}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

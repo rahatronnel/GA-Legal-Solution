@@ -137,6 +137,8 @@ const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
   insuranceCompany: '',
 };
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
 // Combobox Component
 interface ComboboxProps<T> {
   items: T[];
@@ -359,7 +361,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   
   const validateStep = (currentStep: number) => {
     if (currentStep === 1) {
-        return accidentData.vehicleId && accidentData.driverId && accidentData.accidentDate;
+        return accidentData.vehicleId && accidentData.accidentDate && accidentData.accidentTime && accidentData.location;
     }
     return true;
   }
@@ -391,20 +393,20 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? `Edit Accident: ${accident?.accidentId}` : 'Add Accident Record'}</DialogTitle>
           <DialogDescription>Follow the steps to log a vehicle accident.</DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Accident Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Vehicle ID</Label>
+                    <Label>Vehicle<MandatoryIndicator/></Label>
                     <Combobox items={vehicles} value={accidentData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.vehicleIdCode} searchValue={(v) => `${v.vehicleIdCode} ${v.registrationNumber}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found." />
                   </div>
                   <div className="space-y-2">
@@ -419,14 +421,14 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label>Accident Date</Label>
+                        <Label>Accident Date<MandatoryIndicator/></Label>
                         <Popover>
                             <PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
-                    <div className="space-y-2"><Label>Accident Time</Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
-                    <div className="space-y-2"><Label>Accident Location</Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label>Accident Time<MandatoryIndicator/></Label><Input id="accidentTime" type="time" value={accidentData.accidentTime} onChange={handleInputChange}/></div>
+                    <div className="space-y-2"><Label>Accident Location<MandatoryIndicator/></Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -564,9 +566,13 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
             )}
         </div>
 
-        <DialogFooter className="flex justify-between w-full pt-4">
-            {step > 1 ? (<Button variant="outline" onClick={prevStep}>Previous</Button>) : <div></div>}
-            {step < 5 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
+        <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
+            </div>
+            <div>
+              {step < 5 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
