@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
-import type { Route } from './route-table';
+import type { Location } from './location-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -34,7 +34,7 @@ import { useVehicleManagement } from './vehicle-management-provider';
 export function TripTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
-  const { trips, vehicles, drivers, routes } = data;
+  const { trips, vehicles, drivers, locations } = data;
   const { handlePrint } = usePrint();
 
   const setTrips = (updater: React.SetStateAction<Trip[]>) => {
@@ -49,7 +49,6 @@ export function TripTable() {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [driverFilter, setDriverFilter] = useState('all');
-  const [routeFilter, setRouteFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>();
 
   useEffect(() => {
@@ -60,7 +59,17 @@ export function TripTable() {
   
   const getVehicleReg = (vehicleId: string) => (vehicles || []).find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
   const getDriverName = (driverId: string) => (drivers || []).find(d => d.id === driverId)?.name || 'N/A';
-  const getRouteName = (routeId: string) => (routes || []).find(r => r.id === routeId)?.name || 'N/A';
+  const getLocationName = (locationId: string) => (locations || []).find(l => l.id === locationId)?.name || 'N/A';
+
+  const getRouteName = (stops: Trip['stops']) => {
+    if (!stops || stops.length < 2) return 'N/A';
+    const start = getLocationName(stops[0].locationId);
+    const end = getLocationName(stops[stops.length - 1].locationId);
+    if (stops.length > 2) {
+      return `${start} -> ... -> ${end}`;
+    }
+    return `${start} -> ${end}`;
+  };
 
   const safeTrips = Array.isArray(trips) ? trips : [];
 
@@ -75,12 +84,11 @@ export function TripTable() {
         (vehicle?.vehicleIdCode && vehicle.vehicleIdCode.toLowerCase().includes(lowercasedTerm));
 
       const driverMatch = driverFilter === 'all' || trip.driverId === driverFilter;
-      const routeMatch = routeFilter === 'all' || trip.routeId === routeFilter;
       const dateMatch = !dateFilter || trip.startDate === format(dateFilter, 'yyyy-MM-dd');
 
-      return searchMatch && driverMatch && routeMatch && dateMatch;
+      return searchMatch && driverMatch && dateMatch;
     });
-  }, [safeTrips, searchTerm, driverFilter, routeFilter, dateFilter, vehicles, drivers, routes]);
+  }, [safeTrips, searchTerm, driverFilter, dateFilter, vehicles, drivers]);
 
 
   const handleAdd = () => {
@@ -102,6 +110,7 @@ export function TripTable() {
             id: Date.now().toString(),
             tripId: `TRIP-${Date.now()}`,
             ...data,
+            stops: data.stops || [],
             expenses: data.expenses || [],
             documents: data.documents || {},
         } as Trip;
@@ -135,23 +144,10 @@ export function TripTable() {
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ 
-      vehicleRegNo: '',
-      driverIdCode: '',
-      purposeName: '',
-      routeCode: '',
-      startDate: 'YYYY-MM-DD',
-      startTime: 'HH:MM',
-      endDate: 'YYYY-MM-DD',
-      endTime: 'HH:MM',
-      startingMeter: 0,
-      endingMeter: 0,
-      remarks: '',
-      tripStatus: 'Planned/Ongoing/Completed/Cancelled'
-    }]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Trips');
-    XLSX.writeFile(wb, 'TripTemplate.xlsx');
+    toast({
+        title: 'Info',
+        description: 'Trip template download is complex due to multi-stop and will be implemented later.',
+    });
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,13 +191,6 @@ export function TripTable() {
                         {(drivers || []).map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
-                 <Select value={routeFilter} onValueChange={setRouteFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Route..." /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Routes</SelectItem>
-                        {(routes || []).map(route => <SelectItem key={route.id} value={route.id}>{route.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
                  <Popover>
                     <PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full sm:w-[240px] justify-start text-left font-normal", !dateFilter && "text-muted-foreground")}>
@@ -213,11 +202,10 @@ export function TripTable() {
                         <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} initialFocus />
                     </PopoverContent>
                 </Popover>
-                {(searchTerm || driverFilter !== 'all' || routeFilter !== 'all' || dateFilter) && (
+                {(searchTerm || driverFilter !== 'all' || dateFilter) && (
                     <Button variant="ghost" onClick={() => {
                         setSearchTerm('');
                         setDriverFilter('all');
-                        setRouteFilter('all');
                         setDateFilter(undefined);
                     }}>
                         <X className="mr-2 h-4 w-4"/>
@@ -248,7 +236,7 @@ export function TripTable() {
                     <TableCell>{t.tripId}</TableCell>
                     <TableCell>{getVehicleReg(t.vehicleId)}</TableCell>
                     <TableCell>{getDriverName(t.driverId)}</TableCell>
-                    <TableCell>{getRouteName(t.routeId)}</TableCell>
+                    <TableCell>{getRouteName(t.stops)}</TableCell>
                     <TableCell>{t.startDate}</TableCell>
                     <TableCell><Badge variant={getStatusVariant(t.tripStatus)}>{t.tripStatus || 'N/A'}</Badge></TableCell>
                     <TableCell className="text-right">
@@ -290,3 +278,5 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+
+    

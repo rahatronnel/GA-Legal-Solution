@@ -12,7 +12,7 @@ import { type TripPurpose } from '@/app/vehicle-management/components/trip-purpo
 import { type Location } from '@/app/vehicle-management/components/location-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Info, Hash } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Info, Hash, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -110,16 +110,16 @@ function TripProfileContent() {
     }
   }, [id, trips]);
 
-  const { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses } = useMemo(() => {
+  const { vehicle, driver, purpose, totalDistance, totalExpenses, itinerary } = useMemo(() => {
     if (!trip) return {};
     const vehicle = vehicles.find((v: Vehicle) => v.id === trip.vehicleId);
     const driver = drivers.find((d: Driver) => d.id === trip.driverId);
     const purpose = purposes.find((p: TripPurpose) => p.id === trip.purposeId);
-    const startLocation = locations.find((l: Location) => l.id === trip.startLocationId);
-    const endLocation = locations.find((l: Location) => l.id === trip.destinationLocationId);
     const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
     const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-    return { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses };
+    const itinerary = trip.stops?.map(stop => locations.find(l => l.id === stop.locationId)?.name).filter(Boolean);
+    
+    return { vehicle, driver, purpose, totalDistance, totalExpenses, itinerary };
   }, [trip, vehicles, drivers, purposes, locations]);
   
   const getExpenseTypeName = (id: string) => expenseTypes.find((et: ExpenseType) => et.id === id)?.name || 'N/A';
@@ -174,13 +174,29 @@ function TripProfileContent() {
                     </ul>
                 </div>
                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Route & Distance</h3>
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Distance</h3>
                      <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Route} label="Route" value={`${startLocation?.name || 'N/A'} to ${endLocation?.name || 'N/A'}`} />
                         <InfoItem icon={Milestone} label="Starting Meter" value={`${trip.startingMeter} km`} />
                         <InfoItem icon={Milestone} label="Ending Meter" value={`${trip.endingMeter} km`} />
                         <InfoItem icon={Hash} label="Total Distance" value={`${totalDistance} km`} />
                     </ul>
+                </div>
+                <div className="lg:col-span-3 space-y-4">
+                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Itinerary</h3>
+                    {itinerary && itinerary.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {itinerary.map((locationName, index) => (
+                                <React.Fragment key={index}>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">{locationName}</Badge>
+                                    </div>
+                                    {index < itinerary.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    ): (
+                        <p className="text-sm text-muted-foreground">No itinerary defined.</p>
+                    )}
                 </div>
               </div>
                {trip.expenses && trip.expenses.length > 0 && (
@@ -237,3 +253,5 @@ export default function TripProfilePage() {
         </VehicleManagementProvider>
     );
 }
+
+    

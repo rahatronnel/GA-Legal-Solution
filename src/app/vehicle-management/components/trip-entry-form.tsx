@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon, GripVertical } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +26,6 @@ import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
-import type { Route } from './route-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
 import { useVehicleManagement } from './vehicle-management-provider';
@@ -52,19 +51,22 @@ const documentLabels: Record<DocType, string> = {
     specialApprove: 'Special Approval Document',
 }
 
+type Stop = {
+  id: string;
+  locationId: string;
+}
+
 export type Trip = {
   id: string;
   tripId: string;
   vehicleId: string;
   driverId: string;
   purposeId: string;
-  routeId: string;
+  stops: Stop[];
   startDate: string;
   startTime: string;
   endDate: string;
   endTime: string;
-  startLocationId: string;
-  destinationLocationId: string;
   startingMeter: number;
   endingMeter: number;
   remarks: string;
@@ -80,17 +82,14 @@ type Expense = {
   date: string;
 };
 
-const initialTripData: Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses'> = {
+const initialTripData: Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses' | 'stops'> = {
   vehicleId: '',
   driverId: '',
   purposeId: '',
-  routeId: '',
   startDate: '',
   startTime: '',
   endDate: '',
   endTime: '',
-  startLocationId: '',
-  destinationLocationId: '',
   startingMeter: 0,
   endingMeter: 0,
   remarks: '',
@@ -178,6 +177,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState(initialTripData);
+  const [stops, setStops] = useState<Stop[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [documents, setDocuments] = useState(initialDocuments);
   
@@ -186,7 +186,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [endDate, setEndDate] = useState<Date | undefined>();
 
   const { data: vehicleManagementData } = useVehicleManagement();
-  const { vehicles, drivers, tripPurposes, locations, routes, expenseTypes } = vehicleManagementData;
+  const { vehicles, drivers, tripPurposes, locations, expenseTypes } = vehicleManagementData;
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
@@ -203,12 +203,14 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
       if (isEditing && trip) {
         const initialData = { ...initialTripData, ...trip };
         setTripData(initialData);
+        setStops(trip.stops || []);
         setExpenses(trip.expenses || []);
         setDocuments(trip.documents || initialDocuments);
         setStartDate(trip.startDate ? new Date(trip.startDate) : undefined);
         setEndDate(trip.endDate ? new Date(trip.endDate) : undefined);
       } else {
         setTripData(initialTripData);
+        setStops([{id: Date.now().toString(), locationId: ''}, {id: (Date.now()+1).toString(), locationId: ''}]);
         setExpenses([]);
         setDocuments(initialDocuments);
         setStartDate(undefined);
@@ -223,36 +225,34 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   };
 
   const handleTimeChange = (id: 'startTime' | 'endTime') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    setTripData(prev => ({ ...prev, [id]: value }));
+    let value = e.target.value;
+    const timeParts = value.split(" ");
+    let time = timeParts[0];
+    let ampm = timeParts[1] || '';
+  
+    // Auto-insert colon
+    const nums = time.replace(/:/g, '');
+    if (nums.length > 2) {
+      time = `${nums.slice(0, 2)}:${nums.slice(2, 4)}`;
+    } else {
+      time = nums;
+    }
+  
+    // Handle AM/PM
+    if (ampm.toUpperCase().startsWith('A')) {
+      ampm = 'AM';
+    } else if (ampm.toUpperCase().startsWith('P')) {
+      ampm = 'PM';
+    } else if (!ampm) {
+      ampm = 'PM'; // Default to PM
+    }
+  
+    setTripData(prev => ({ ...prev, [id]: `${time} ${ampm}`.trim() }));
   };
 
   const handleSelectChange = (id: keyof Trip) => (value: string) => {
     setTripData(prev => ({ ...prev, [id]: value }));
   };
-
-  const handleComboboxSelect = (id: keyof Trip) => (value: string) => {
-     if (id === 'routeId') {
-        const isClearing = !value;
-        const newRouteId = isClearing ? '' : value;
-        setTripData(prev => ({ ...prev, [id]: newRouteId }));
-
-        if (!isClearing) {
-            const selectedRoute = (routes || []).find(r => r.id === value);
-            if (selectedRoute) {
-                setTripData(prev => ({
-                    ...prev,
-                    startLocationId: selectedRoute.startLocationId,
-                    destinationLocationId: selectedRoute.endLocationId
-                }));
-            }
-        } else {
-             setTripData(prev => ({...prev, startLocationId: '', destinationLocationId: ''}));
-        }
-    } else {
-        setTripData(prev => ({ ...prev, [id]: value }));
-    }
-  }
 
   const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Trip) => (date: Date | undefined) => {
       setter(date);
@@ -293,7 +293,22 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         [docType]: prev[docType].filter(doc => doc.id !== fileId)
     }));
   };
-  
+
+  // Itinerary handlers
+  const addStop = () => {
+    setStops(prev => [...prev, {id: Date.now().toString(), locationId: ''}]);
+  }
+  const removeStop = (id: string) => {
+    if (stops.length <= 2) {
+      toast({variant: 'destructive', title: 'Error', description: 'A trip must have at least a start and end point.'});
+      return;
+    }
+    setStops(prev => prev.filter(stop => stop.id !== id));
+  }
+  const updateStopLocation = (stopId: string, locationId: string) => {
+    setStops(prev => prev.map(stop => stop.id === stopId ? {...stop, locationId} : stop));
+  }
+
   // Expense handlers
   const addExpense = () => {
     setExpenses(prev => [...prev, { id: Date.now().toString(), expenseTypeId: '', amount: 0, date: format(new Date(), 'yyyy-MM-dd') }]);
@@ -308,12 +323,14 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   };
 
   const validateStep1 = () => {
-    return tripData.vehicleId && tripData.driverId && tripData.purposeId && tripData.startDate && tripData.tripStatus;
+    if (!tripData.vehicleId || !tripData.driverId || !tripData.purposeId || !tripData.startDate || !tripData.tripStatus) return false;
+    if (stops.length < 2 || stops.some(s => !s.locationId)) return false;
+    return true;
   }
   
   const nextStep = () => {
     if (!validateStep1()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields in this step.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields, including at least two stops in the itinerary.' });
         return;
     }
     setStep(s => s + 1);
@@ -328,6 +345,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
 
     const completeTripData = {
         ...tripData,
+        stops,
         expenses,
         documents,
     };
@@ -359,51 +377,33 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2"><Label>Start Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>Start Time</Label><Input id="startTime" type="time" value={tripData.startTime} onChange={handleTimeChange('startTime')}/></div>
+                  <div className="space-y-2"><Label>Start Time</Label><Input id="startTime" value={tripData.startTime} onChange={handleTimeChange('startTime')} placeholder="HH:MM AM/PM" /></div>
                   <div className="space-y-2"><Label>End Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!endDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{endDate?format(endDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={handleDateChange(setEndDate,'endDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>End Time</Label><Input id="endTime" type="time" value={tripData.endTime} onChange={handleTimeChange('endTime')}/></div>
+                  <div className="space-y-2"><Label>End Time</Label><Input id="endTime" value={tripData.endTime} onChange={handleTimeChange('endTime')} placeholder="HH:MM AM/PM"/></div>
+                </div>
+                
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Itinerary<MandatoryIndicator/></h3><Button variant="outline" size="sm" onClick={addStop}><PlusCircle className="mr-2 h-4 w-4"/>Add Stop</Button></div>
+                    <div className="space-y-2">
+                        {stops.map((stop, index) => (
+                           <div key={stop.id} className="flex items-center gap-2">
+                                <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                <Label className="w-24">{index === 0 ? 'Origin' : (index === stops.length -1 ? 'Destination' : `Stop ${index}`)}:</Label>
+                                <Combobox
+                                    items={locations || []}
+                                    value={stop.locationId}
+                                    onSelect={(value) => updateStopLocation(stop.id, value)}
+                                    displayValue={(loc) => loc.name}
+                                    searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
+                                    placeholder="Select Location..."
+                                    emptyMessage="No location found."
+                                />
+                                <Button variant="ghost" size="icon" onClick={() => removeStop(stop.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                           </div>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div className="space-y-2">
-                        <Label>Route</Label>
-                        <Combobox
-                            items={routes || []}
-                            value={tripData.routeId}
-                            onSelect={handleComboboxSelect('routeId')}
-                            displayValue={(route) => route.name}
-                            searchValue={(route) => `${route.name} ${route.routeCode}`}
-                            placeholder="Select Route..."
-                            emptyMessage="No route found."
-                        />
-                    </div>
-                   <div className="space-y-2">
-                        <Label>Start Location</Label>
-                        <Combobox
-                            items={locations || []}
-                            value={tripData.startLocationId}
-                            onSelect={handleComboboxSelect('startLocationId')}
-                            displayValue={(loc) => loc.name}
-                            searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
-                            placeholder="Select Start..."
-                            emptyMessage="No location found."
-                            disabled={!!tripData.routeId}
-                        />
-                   </div>
-                   <div className="space-y-2">
-                       <Label>Destination</Label>
-                        <Combobox
-                            items={locations || []}
-                            value={tripData.destinationLocationId}
-                            onSelect={handleComboboxSelect('destinationLocationId')}
-                            displayValue={(loc) => loc.name}
-                            searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
-                            placeholder="Select Destination..."
-                            emptyMessage="No location found."
-                            disabled={!!tripData.routeId}
-                        />
-                   </div>
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2"><Label htmlFor="startingMeter">Starting Meter (km)</Label><Input id="startingMeter" type="number" value={tripData.startingMeter} onChange={handleInputChange} /></div>
@@ -485,3 +485,5 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     </Dialog>
   );
 }
+
+    

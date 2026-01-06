@@ -9,6 +9,7 @@ import type { Location } from './location-table';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import type { ExpenseType } from './expense-type-table';
+import { ArrowRight } from 'lucide-react';
 
 interface TripPrintLayoutProps {
   trip: Trip;
@@ -95,11 +96,12 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
     const vehicle = vehicles.find(v => v.id === trip.vehicleId);
     const driver = drivers.find(d => d.id === trip.driverId);
     const purpose = purposes.find(p => p.id === trip.purposeId);
-    const startLocation = locations.find(l => l.id === trip.startLocationId);
-    const endLocation = locations.find(l => l.id === trip.destinationLocationId);
     const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
     const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     const getExpenseTypeName = (id: string) => expenseTypes.find(et => et.id === id)?.name || 'N/A';
+    
+    const itinerary = trip.stops?.map(stop => locations.find(l => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
+
 
     return (
         <div className="bg-white">
@@ -118,7 +120,7 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
                         <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Trip Details</h4>
                         <div className="grid grid-cols-2 gap-x-6">
                             <InfoRow label="Purpose" value={purpose?.name} />
-                            <InfoRow label="Route" value={`${startLocation?.name || 'N/A'} to ${endLocation?.name || 'N/A'}`} />
+                            <InfoRow label="Itinerary" value={itinerary} />
                             <InfoRow label="Start" value={`${trip.startDate} ${trip.startTime}`} />
                             <InfoRow label="End" value={`${trip.endDate} ${trip.endTime}`} />
                             <InfoRow label="Remarks" value={trip.remarks} fullWidth />
@@ -161,3 +163,5 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
         </div>
     );
 };
+
+    
