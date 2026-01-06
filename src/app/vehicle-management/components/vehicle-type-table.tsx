@@ -124,19 +124,29 @@ export function VehicleTypeTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json: { name: string, vehicleTypeCode: string }[] = XLSX.utils.sheet_to_json(worksheet);
+          const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
           if (!json[0] || !('name' in json[0]) || !('vehicleTypeCode' in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "vehicleTypeCode".');
           }
 
           const newTypes = json
-            .filter(item => item.name && item.name.trim() && item.vehicleTypeCode && item.vehicleTypeCode.trim())
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim(), vehicleTypeCode: item.vehicleTypeCode.trim() }));
+            .map((item: any) => ({
+                name: String(item.name || '').trim(),
+                vehicleTypeCode: String(item.vehicleTypeCode || '').trim()
+            }))
+            .filter(item => item.name && item.vehicleTypeCode)
+            .map(item => ({ 
+              id: Date.now().toString() + item.name, 
+              name: item.name, 
+              vehicleTypeCode: item.vehicleTypeCode 
+            }));
           
           if(newTypes.length > 0) {
             setVehicleTypes(prev => [...(prev || []), ...newTypes]);
             toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
+          } else {
+            toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid vehicle types found in the file.' });
           }
 
         } catch (error: any) {
