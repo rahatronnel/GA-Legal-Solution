@@ -47,16 +47,18 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeDrivers = Array.isArray(drivers) ? drivers : [];
+
   const filteredDrivers = useMemo(() => {
-    if (!searchTerm) return drivers;
+    if (!searchTerm) return safeDrivers;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return drivers.filter(driver => 
+    return safeDrivers.filter(driver => 
       (driver.name && driver.name.toLowerCase().includes(lowercasedTerm)) ||
       (driver.driverIdCode && driver.driverIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (driver.mobileNumber && driver.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
       (driver.drivingLicenseNumber && driver.drivingLicenseNumber.toLowerCase().includes(lowercasedTerm))
     );
-  }, [drivers, searchTerm]);
+  }, [safeDrivers, searchTerm]);
 
   const handleAdd = () => {
     setCurrentDriver(null);
@@ -70,7 +72,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setDrivers(prev => prev.map(d => {
+        setDrivers(prev => (Array.isArray(prev) ? prev : []).map(d => {
             if (d.id === id) {
                 return { id, ...data } as Driver;
             }
@@ -82,7 +84,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
             id: Date.now().toString(), 
             ...data
         };
-        setDrivers(prev => [...prev, newDriver]);
+        setDrivers(prev => [...(Array.isArray(prev) ? prev : []), newDriver]);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -94,7 +96,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
 
   const confirmDelete = () => {
     if (currentDriver?.id) {
-        setDrivers(prev => prev.filter(d => d.id !== currentDriver.id));
+        setDrivers(prev => (Array.isArray(prev) ? prev : []).filter(d => d.id !== currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -183,7 +185,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
             }));
           
           if(newDrivers.length > 0) {
-            setDrivers(prev => [...prev, ...newDrivers]);
+            setDrivers(prev => [...(Array.isArray(prev) ? prev : []), ...newDrivers]);
             toast({ title: 'Success', description: `${newDrivers.length} drivers uploaded successfully.` });
           }
 
@@ -219,7 +221,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
             <Input id="upload-excel-drivers" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
              <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={drivers.length === 0}>
+                    <Button variant="destructive" disabled={safeDrivers.length === 0}>
                         <Trash className="mr-2 h-4 w-4" /> Delete All
                     </Button>
                 </AlertDialogTrigger>
@@ -227,7 +229,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all {drivers.length} driver records.
+                            This action cannot be undone. This will permanently delete all {safeDrivers.length} driver records.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -256,7 +258,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
               <TableRow>
                 <TableCell colSpan={5} className="text-center">Loading...</TableCell>
               </TableRow>
-            ) : filteredDrivers && filteredDrivers.length > 0 ? (
+            ) : filteredDrivers.length > 0 ? (
               filteredDrivers.map((driver) => (
                 <TableRow key={driver.id}>
                   <TableCell className="flex items-center gap-2">
@@ -348,5 +350,3 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
     </TooltipProvider>
   );
 }
-
-    
