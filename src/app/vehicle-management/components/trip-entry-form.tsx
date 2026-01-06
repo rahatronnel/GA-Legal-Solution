@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon, GripVertical } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon, GripVertical, User } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +29,8 @@ import type { Location } from './location-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import type { ExpenseType } from './expense-type-table';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 type UploadedFile = {
   id: string;
@@ -102,7 +104,7 @@ const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...a
 interface TripEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (data: Omit<Trip, 'id'>, id?: string) => void;
+  onSave: (data: Partial<Trip>) => void;
   trip: Partial<Trip> | null;
 }
 
@@ -176,7 +178,7 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryFormProps) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [tripData, setTripData] = useState(initialTripData);
+  const [tripData, setTripData] = useState<Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses' | 'stops'>>(initialTripData);
   const [stops, setStops] = useState<Stop[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [documents, setDocuments] = useState(initialDocuments);
@@ -185,8 +187,8 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  const { data: vehicleManagementData } = useVehicleManagement();
-  const { vehicles, drivers, tripPurposes, locations, expenseTypes } = vehicleManagementData;
+  const { data: vehicleManagementData, setData } = useVehicleManagement();
+  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [] } = vehicleManagementData;
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
@@ -197,6 +199,32 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     return end > start ? end - start : 0;
   }, [tripData.startingMeter, tripData.endingMeter]);
 
+  const selectedDriver = useMemo(() => drivers.find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
+
+  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
+    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
+      return '';
+    }
+
+    const sortedHistory = [...vehicle.driverAssignmentHistory]
+        .filter(h => new Date(h.effectiveDate) <= date)
+        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+
+    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
+  };
+  
+  const updateDriverBasedOnVehicleAndDate = (vehicleId: string, date: Date | undefined) => {
+      if(vehicleId && date) {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if(vehicle) {
+            const driverId = getDriverForDate(vehicle, date);
+            if(driverId) {
+                setTripData(prev => ({...prev, driverId}));
+            }
+        }
+    }
+  }
+
   useEffect(() => {
     if (isOpen) {
       setStep(1);
@@ -206,8 +234,10 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         setStops(trip.stops || []);
         setExpenses(trip.expenses || []);
         setDocuments(trip.documents || initialDocuments);
-        setStartDate(trip.startDate ? new Date(trip.startDate) : undefined);
+        const sDate = trip.startDate ? new Date(trip.startDate) : undefined;
+        setStartDate(sDate);
         setEndDate(trip.endDate ? new Date(trip.endDate) : undefined);
+        updateDriverBasedOnVehicleAndDate(initialData.vehicleId, sDate);
       } else {
         setTripData(initialTripData);
         setStops([{id: Date.now().toString(), locationId: ''}, {id: (Date.now()+1).toString(), locationId: ''}]);
@@ -243,20 +273,37 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
       ampm = 'AM';
     } else if (ampm.toUpperCase().startsWith('P')) {
       ampm = 'PM';
-    } else if (!ampm) {
-      ampm = 'PM'; // Default to PM
     }
   
     setTripData(prev => ({ ...prev, [id]: `${time} ${ampm}`.trim() }));
   };
 
-  const handleSelectChange = (id: keyof Trip) => (value: string) => {
-    setTripData(prev => ({ ...prev, [id]: value }));
+  const handleVehicleChange = (vehicleId: string) => {
+    setTripData(prev => ({ ...prev, vehicleId, driverId: '' }));
+    updateDriverBasedOnVehicleAndDate(vehicleId, startDate);
+  };
+  
+  const handleStartDateChange = (date: Date | undefined) => {
+    setStartDate(date);
+    setTripData(prev => ({ ...prev, startDate: date ? format(date, 'yyyy-MM-dd') : '', driverId: '' }));
+    updateDriverBasedOnVehicleAndDate(tripData.vehicleId, date);
+  }
+
+  const handleSelectChange = (id: keyof Omit<Trip, 'id' | 'stops' | 'expenses' | 'documents'>) => (value: string) => {
+    if (id === 'vehicleId') {
+      handleVehicleChange(value);
+    } else {
+      setTripData(prev => ({ ...prev, [id]: value }));
+    }
   };
 
-  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Trip) => (date: Date | undefined) => {
-      setter(date);
-      setTripData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Omit<Trip, 'id' | 'stops' | 'expenses' | 'documents'>) => (date: Date | undefined) => {
+      if (field === 'startDate') {
+        handleStartDateChange(date);
+      } else {
+        setter(date);
+        setTripData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+      }
   }
 
   const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -343,7 +390,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
       return;
     }
 
-    const completeTripData = {
+    const completeTripData: Partial<Trip> = {
         ...tripData,
         stops,
         expenses,
@@ -370,10 +417,33 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2"><Label>Vehicle<MandatoryIndicator/></Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{(vehicles || []).map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Driver<MandatoryIndicator/></Label><Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select Driver"/></SelectTrigger><SelectContent>{(drivers || []).map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2 md:col-span-2"><Label>Driver<MandatoryIndicator/></Label>
+                    <Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}>
+                        <SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger>
+                        <SelectContent>{(drivers || []).map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2"><Label>Purpose<MandatoryIndicator/></Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{(tripPurposes || []).map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label>Trip Status<MandatoryIndicator/></Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
                 </div>
+
+                {selectedDriver && (
+                    <div className="p-4 border rounded-lg space-y-3 grid grid-cols-1 md:grid-cols-2 items-start">
+                        <div className="flex items-center gap-4">
+                            <Avatar>
+                                <AvatarImage src={selectedDriver.profilePicture} alt={selectedDriver.name} />
+                                <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold">{selectedDriver.name}</p>
+                                <p className="text-xs text-muted-foreground">ID: {selectedDriver.driverIdCode}</p>
+                            </div>
+                        </div>
+                        <div className="text-xs space-y-1">
+                            <p><strong>Joining Date:</strong> {selectedDriver.joiningDate}</p>
+                            <p><strong>License No:</strong> {selectedDriver.drivingLicenseNumber}</p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2"><Label>Start Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
@@ -405,10 +475,11 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                 </div>
 
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                   <div className="space-y-2"><Label htmlFor="startingMeter">Starting Meter (km)</Label><Input id="startingMeter" type="number" value={tripData.startingMeter} onChange={handleInputChange} /></div>
                   <div className="space-y-2"><Label htmlFor="endingMeter">Ending Meter (km)</Label><Input id="endingMeter" type="number" value={tripData.endingMeter} onChange={handleInputChange} /></div>
                   <div className="space-y-2"><Label>Total Distance (km)</Label><Input value={totalDistance} readOnly disabled /></div>
+                  <div className="space-y-2"><Label>Trip Status<MandatoryIndicator/></Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
                 </div>
                 
                  <div className="space-y-4">
