@@ -134,7 +134,6 @@ export default function SettingsPage() {
                 throw new Error("Invalid or empty backup file.");
             }
 
-            // Clear existing data and restore
             // This is a destructive action, so it's wrapped in an alert dialog
             ALL_LOCALSTORAGE_KEYS.forEach(key => {
                 if (backupData[key]) {
