@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon } from 'lucide-react';
+import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon, User } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +33,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import type { MaintenanceExpenseType } from './maintenance-expense-type-table';
 import type { Driver } from './driver-entry-form';
 import type { Part as PartType } from './part-table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 type Part = {
@@ -109,7 +111,7 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 interface MaintenanceEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (record: Omit<MaintenanceRecord, 'id'>, id?: string) => void;
+  onSave: (record: Partial<MaintenanceRecord>) => void;
   record: Partial<MaintenanceRecord> | null;
 }
 
@@ -227,6 +229,8 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   
   const isEditing = record && record.id;
   const progress = Math.round((step / 3) * 100);
+
+  const selectedDriver = React.useMemo(() => drivers.find(d => d.id === maintenanceData.driverId), [maintenanceData.driverId, drivers]);
 
   const getDriverForDate = (vehicle: Vehicle, date: Date) => {
     if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
@@ -438,13 +442,16 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
         return;
     }
-    const dataToSave: Omit<MaintenanceRecord, 'id'> = {
+    const dataToSave: Partial<MaintenanceRecord> = {
         ...maintenanceData,
         parts,
         expenses,
         documents
     };
-    onSave(dataToSave, record?.id);
+    if (isEditing) {
+        dataToSave.id = record.id;
+    }
+    onSave(dataToSave as Omit<MaintenanceRecord, 'id'>, record?.id);
     setIsOpen(false);
   };
 
@@ -458,7 +465,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
+        <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Main Information</h3>
@@ -523,7 +530,10 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                             </PopoverContent>
                         </Popover>
                     </div>
-                    
+
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                     <div className="space-y-2">
                         <Label>Driver (Auto-fetched)</Label>
                         <Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')}>
@@ -531,7 +541,26 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
                             <SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
+                    {selectedDriver && (
+                        <div className="p-4 border rounded-lg space-y-3">
+                            <div className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={selectedDriver.profilePicture} alt={selectedDriver.name} />
+                                    <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{selectedDriver.name}</p>
+                                    <p className="text-xs text-muted-foreground">ID: {selectedDriver.driverIdCode}</p>
+                                </div>
+                            </div>
+                            <div className="text-xs space-y-1">
+                                <p><strong>Joining Date:</strong> {selectedDriver.joiningDate}</p>
+                                <p><strong>License No:</strong> {selectedDriver.drivingLicenseNumber}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description">Description / Remarks</Label>
                   <Textarea id="description" value={maintenanceData.description} onChange={handleInputChange} />
@@ -661,3 +690,5 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
     </>
   );
 }
+
+    
