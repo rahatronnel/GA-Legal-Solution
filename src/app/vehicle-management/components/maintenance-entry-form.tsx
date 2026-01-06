@@ -104,6 +104,8 @@ const initialMaintenanceData: Omit<MaintenanceRecord, 'id' | 'parts' | 'expenses
   driverId: '',
 };
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
 interface MaintenanceEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -439,30 +441,86 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
   return (
     <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Maintenance Record' : 'Add Maintenance Record'}</DialogTitle>
           <DialogDescription>Follow the steps to log a vehicle maintenance activity.</DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Main Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Vehicle</Label><Combobox items={vehicles} value={maintenanceData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.registrationNumber} searchValue={(v) => `${v.registrationNumber} ${v.make} ${v.model}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found."/></div>
+                    <div className="space-y-2">
+                        <Label>Vehicle<MandatoryIndicator/></Label>
+                        <Combobox items={vehicles} value={maintenanceData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.registrationNumber} searchValue={(v) => `${v.registrationNumber} ${v.make} ${v.model}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found."/>
+                    </div>
                     
-                    <div className="space-y-2"><Label>Maintenance Type</Label><div className="flex gap-2"><Select value={maintenanceData.maintenanceTypeId} onValueChange={handleSelectChange('maintenanceTypeId')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent>{maintenanceTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('maintenanceType')}><PlusCircle className="h-4 w-4" /></Button></div></div>
+                    <div className="space-y-2">
+                        <Label>Maintenance Type<MandatoryIndicator/></Label>
+                        <div className="flex gap-2">
+                            <Select value={maintenanceData.maintenanceTypeId} onValueChange={handleSelectChange('maintenanceTypeId')}>
+                                <SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger>
+                                <SelectContent>{maintenanceTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('maintenanceType')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                    </div>
                     
-                    <div className="space-y-2"><Label>Service Center / Garage</Label><div className="flex gap-2"><Select value={maintenanceData.serviceCenterId} onValueChange={handleSelectChange('serviceCenterId')}><SelectTrigger><SelectValue placeholder="Select Center"/></SelectTrigger><SelectContent>{serviceCenters.map(sc=><SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('serviceCenter')}><PlusCircle className="h-4 w-4" /></Button></div></div>
+                    <div className="space-y-2">
+                        <Label>Service Center / Garage<MandatoryIndicator/></Label>
+                        <div className="flex gap-2">
+                            <Select value={maintenanceData.serviceCenterId} onValueChange={handleSelectChange('serviceCenterId')}>
+                                <SelectTrigger><SelectValue placeholder="Select Center"/></SelectTrigger>
+                                <SelectContent>{serviceCenters.map(sc=><SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <Button type="button" variant="outline" size="icon" onClick={() => openQuickAdd('serviceCenter')}><PlusCircle className="h-4 w-4" /></Button>
+                        </div>
+                    </div>
 
-                    <div className="space-y-2"><Label>Monitoring Employee</Label><Combobox items={employees} value={maintenanceData.monitoringEmployeeId} onSelect={handleSelectChange('monitoringEmployeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found."/></div>
+                    <div className="space-y-2">
+                        <Label>Monitoring Employee</Label>
+                        <Combobox items={employees} value={maintenanceData.monitoringEmployeeId} onSelect={handleSelectChange('monitoringEmployeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found."/>
+                    </div>
                     
-                    <div className="space-y-2"><Label>Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{serviceDate?format(serviceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/></PopoverContent></Popover></div>
-                    <div className="space-y-2"><Label>Upcoming Service Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/></PopoverContent></Popover></div>
+                    <div className="space-y-2">
+                        <Label>Service Date<MandatoryIndicator/></Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!serviceDate&&"text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4"/>
+                                    {serviceDate?format(serviceDate,"PPP"):"Pick a date"}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={serviceDate} onSelect={handleDateChange(setServiceDate, 'serviceDate')} initialFocus/>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Upcoming Service Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!upcomingServiceDate&&"text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4"/>
+                                    {upcomingServiceDate?format(upcomingServiceDate,"PPP"):"Pick a date"}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={upcomingServiceDate} onSelect={handleDateChange(setUpcomingServiceDate, 'upcomingServiceDate')} initialFocus/>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                     
-                    <div className="space-y-2"><Label>Driver (Auto-fetched)</Label><Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="space-y-2">
+                        <Label>Driver (Auto-fetched)</Label>
+                        <Select value={maintenanceData.driverId} onValueChange={handleSelectChange('driverId')}>
+                            <SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger>
+                            <SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description / Remarks</Label>
@@ -554,9 +612,13 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
             )}
         </div>
 
-        <DialogFooter className="flex justify-between w-full pt-4">
-            {step > 1 ? (<Button variant="outline" onClick={prevStep}>Previous</Button>) : <div></div>}
-            {step < 3 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
+        <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
+            </div>
+            <div>
+              {step < 3 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

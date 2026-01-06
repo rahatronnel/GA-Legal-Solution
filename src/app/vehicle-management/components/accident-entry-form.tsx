@@ -578,5 +578,3 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     </Dialog>
   );
 }
-
-    

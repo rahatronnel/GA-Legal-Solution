@@ -96,6 +96,8 @@ const documentLabels: Record<DocType, string> = {
   other: "Other Document"
 };
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
 const QuickAddDialog: React.FC<{
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -286,7 +288,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   return (
     <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
           <DialogDescription>
@@ -295,7 +297,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
                 <div className="space-y-6">
                  <h3 className="font-semibold text-lg">Step 1: Vehicle Information</h3>
@@ -303,11 +305,11 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                     {/* Column 1 */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleIdCode">Vehicle ID / Code</Label>
+                            <Label htmlFor="vehicleIdCode">Vehicle ID / Code<MandatoryIndicator/></Label>
                             <Input id="vehicleIdCode" value={vehicleData.vehicleIdCode} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="registrationNumber">Registration Number</Label>
+                            <Label htmlFor="registrationNumber">Registration Number<MandatoryIndicator/></Label>
                             <Input id="registrationNumber" value={vehicleData.registrationNumber} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
@@ -323,7 +325,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                     {/* Column 2 */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label htmlFor="vehicleTypeId">Vehicle Category</Label>
+                           <Label htmlFor="vehicleTypeId">Vehicle Category<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
                                     <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
@@ -337,7 +339,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </div>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="brandId">Brand</Label>
+                            <Label htmlFor="brandId">Brand<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.brandId} onValueChange={handleSelectChange('brandId')}>
                                     <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
@@ -351,7 +353,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="model">Model</Label>
+                            <Label htmlFor="model">Model<MandatoryIndicator/></Label>
                             <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
@@ -380,7 +382,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             <Input id="capacity" value={vehicleData.capacity} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="ownership">Ownership</Label>
+                            <Label htmlFor="ownership">Ownership<MandatoryIndicator/></Label>
                             <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
                                 <SelectTrigger><SelectValue placeholder="Select ownership" /></SelectTrigger>
                                 <SelectContent>
@@ -390,7 +392,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="status">Vehicle Status</Label>
+                            <Label htmlFor="status">Vehicle Status<MandatoryIndicator/></Label>
                             <Select value={vehicleData.status} onValueChange={handleSelectChange('status')}>
                                 <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                 <SelectContent>
@@ -415,7 +417,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                     {driverAssignments.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime()).map((assignment) => (
                         <div key={assignment.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center p-2 rounded-md border">
                             <div className="space-y-1">
-                                <Label className="text-xs">Driver</Label>
+                                <Label className="text-xs">Driver<MandatoryIndicator/></Label>
                                 <Select value={assignment.driverId} onValueChange={(value) => updateDriverAssignment(assignment.id, 'driverId', value)}>
                                     <SelectTrigger><SelectValue placeholder="Select driver"/></SelectTrigger>
                                     <SelectContent>
@@ -424,7 +426,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs">Effective Date</Label>
+                                <Label className="text-xs">Effective Date<MandatoryIndicator/></Label>
                                 <Input type="date" value={assignment.effectiveDate} onChange={(e) => updateDriverAssignment(assignment.id, 'effectiveDate', e.target.value)} />
                             </div>
                             <Button variant="ghost" size="icon" className="self-end" onClick={() => removeDriverAssignment(assignment.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
@@ -470,16 +472,13 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
             )}
         </div>
 
-         <DialogFooter className="flex justify-between w-full pt-4">
-            {step > 1 ? (
-                <Button variant="outline" onClick={prevStep}>Previous</Button>
-            ) : <div></div>}
-            
-            {step < 3 ? (
-                 <Button onClick={nextStep}>Next</Button>
-            ) : (
-                 <Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>
-            )}
+         <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
+            </div>
+            <div>
+              {step < 3 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>)}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
