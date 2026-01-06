@@ -118,13 +118,11 @@ function DriverProfileContent() {
     if (drivers.length > 0) {
       const foundDriver = drivers.find((d: Driver) => d.id === id);
       setDriver(foundDriver || null); // Set to null if not found after data is loaded
-    } else {
-      // This case handles when drivers array is loaded but empty.
-      // We can assume the driver is not found.
-      const timer = setTimeout(() => setDriver(null), 500); // Delay to prevent flicker
+    } else if (data) { // This handles when data is loaded but drivers array is empty.
+      const timer = setTimeout(() => setDriver(null), 200); // Delay to prevent flicker
       return () => clearTimeout(timer);
     }
-  }, [id, drivers]);
+  }, [id, drivers, data]);
 
 
   const driverAccidentHistory = useMemo(() => {
@@ -166,9 +164,9 @@ function DriverProfileContent() {
     return new Date(dateString).toLocaleDateString();
   }
 
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t: MaintenanceType) => t.id === typeId)?.name || 'N/A';
-  const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
-  const getVehicleRegFromId = (vehicleId: string) => vehicles.find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes || []).find((t: MaintenanceType) => t.id === typeId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => (accidentTypes || []).find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
+  const getVehicleRegFromId = (vehicleId: string) => (vehicles || []).find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
 
 
   return (
