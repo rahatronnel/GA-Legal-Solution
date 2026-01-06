@@ -25,7 +25,7 @@ import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 type VehicleType = {
   id: string;
@@ -50,10 +50,13 @@ const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
 
 export function VehicleTable() {
   const { toast } = useToast();
-  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
-  const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
+  const { data, setData } = useVehicleManagement();
+  const { vehicles, drivers, vehicleTypes, vehicleBrands } = data;
+  
+  const setVehicles = (updater: React.SetStateAction<Vehicle[]>) => {
+    setData(prev => ({ ...prev, vehicles: typeof updater === 'function' ? updater(prev.vehicles || []) : updater }));
+  };
+
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -75,8 +78,11 @@ export function VehicleTable() {
   }, []);
   
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter(vehicle => {
-      const currentDriver = getCurrentDriver(vehicle, drivers);
+    const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+    const safeDrivers = Array.isArray(drivers) ? drivers : [];
+
+    return safeVehicles.filter(vehicle => {
+      const currentDriver = getCurrentDriver(vehicle, safeDrivers);
       const lowercasedTerm = searchTerm.toLowerCase();
 
       if (ownershipFilter !== 'all' && vehicle.ownership !== ownershipFilter) {
@@ -115,7 +121,7 @@ export function VehicleTable() {
   const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
     if (id) {
         // Update existing vehicle
-        setVehicles(prev => prev.map(v => (v.id === id ? { ...v, ...data } as Vehicle : v)));
+        setVehicles(prev => (prev || []).map(v => (v.id === id ? { ...v, ...data } as Vehicle : v)));
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
         // Create new vehicle with complete structure
@@ -136,7 +142,7 @@ export function VehicleTable() {
             driverAssignmentHistory: data.driverAssignmentHistory || [],
             documents: data.documents || { registration: '', insurance: '', fitness: '', taxToken: '', routePermit: '', other: '' },
         };
-        setVehicles(prev => [...prev, newVehicle]);
+        setVehicles(prev => [...(prev || []), newVehicle]);
         toast({ title: 'Success', description: 'Vehicle added successfully.' });
     }
   };
@@ -148,7 +154,7 @@ export function VehicleTable() {
 
   const confirmDelete = () => {
     if (currentVehicle?.id) {
-        setVehicles(prev => prev.filter(v => v.id !== currentVehicle.id));
+        setVehicles(prev => (prev || []).filter(v => v.id !== currentVehicle.id));
         toast({ title: 'Success', description: 'Vehicle deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -205,8 +211,8 @@ export function VehicleTable() {
           const newVehicles: Vehicle[] = json
             .filter(item => item.vehicleIdCode && item.registrationNumber)
             .map(item => {
-              const vehicleType = vehicleTypes.find(vt => vt.name === item.vehicleCategory);
-              const vehicleBrand = vehicleBrands.find(b => b.name === item.brandName);
+              const vehicleType = (vehicleTypes || []).find(vt => vt.name === item.vehicleCategory);
+              const vehicleBrand = (vehicleBrands || []).find(b => b.name === item.brandName);
 
               return {
                 id: Date.now().toString() + item.vehicleIdCode, 
@@ -235,7 +241,7 @@ export function VehicleTable() {
             });
           
           if(newVehicles.length > 0) {
-            setVehicles(prev => [...prev, ...newVehicles]);
+            setVehicles(prev => [...(prev || []), ...newVehicles]);
             toast({ title: 'Success', description: `${newVehicles.length} vehicles uploaded successfully.` });
           }
 
@@ -291,14 +297,14 @@ export function VehicleTable() {
                   <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Drivers</SelectItem>
-                    {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                    {(drivers || []).map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Category..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {vehicleTypes.map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
+                    {(vehicleTypes || []).map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -330,55 +336,58 @@ export function VehicleTable() {
                     <TableCell colSpan={6} className="text-center">Loading...</TableCell>
                     </TableRow>
                 ) : filteredVehicles && filteredVehicles.length > 0 ? (
-                    filteredVehicles.map((v) => (
-                    <TableRow key={v.id}>
-                        <TableCell>{v.vehicleIdCode}</TableCell>
-                        <TableCell>{v.registrationNumber}</TableCell>
-                        <TableCell>{vehicleBrands.find(b => b.id === v.brandId)?.name} {v.model}</TableCell>
-                        <TableCell>{getCurrentDriver(v, drivers)?.name || 'N/A'}</TableCell>
-                        <TableCell>
-                           <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                  <Link href={`/vehicle-management/vehicles/${v.id}`}>
-                                    <Eye className="h-4 w-4" />
-                                  </Link>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>View Vehicle</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit Vehicle</TooltipContent>
-                            </Tooltip>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(v, 'vehicle')}>
-                                    <Printer className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Print</TooltipContent>
-                              </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(v)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete Vehicle</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                    </TableRow>
-                    ))
+                    filteredVehicles.map((v) => {
+                      const brand = (vehicleBrands || []).find(b => b.id === v.brandId);
+                      return (
+                        <TableRow key={v.id}>
+                            <TableCell>{v.vehicleIdCode}</TableCell>
+                            <TableCell>{v.registrationNumber}</TableCell>
+                            <TableCell>{brand?.name} {v.model}</TableCell>
+                            <TableCell>{getCurrentDriver(v, (drivers || []))?.name || 'N/A'}</TableCell>
+                            <TableCell>
+                               <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                      <Link href={`/vehicle-management/vehicles/${v.id}`}>
+                                        <Eye className="h-4 w-4" />
+                                      </Link>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>View Vehicle</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}>
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Edit Vehicle</TooltipContent>
+                                </Tooltip>
+                                 <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(v, 'vehicle')}>
+                                        <Printer className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Print</TooltipContent>
+                                  </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(v)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Delete Vehicle</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TableCell>
+                        </TableRow>
+                      )
+                    })
                 ) : (
                     <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">

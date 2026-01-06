@@ -15,15 +15,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
+import { Upload, X, PlusCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Driver as DriverType } from './driver-entry-form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useVehicleManagement } from './vehicle-management-provider';
+
+import type { Driver as DriverType } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
+import type { VehicleType } from './vehicle-type-table';
 
 type DriverAssignment = {
     id: string;
@@ -55,9 +54,6 @@ export type Vehicle = {
         other: string; // data URL
     };
 };
-
-type Driver = { id: string; name: string; };
-type VehicleType = { id: string; name: string; vehicleTypeCode: string; };
 
 const initialVehicleData: Omit<Vehicle, 'id' | 'documents' | 'driverAssignmentHistory' > = {
     vehicleIdCode: '',
@@ -148,16 +144,21 @@ const QuickAddDialog: React.FC<{
 
 export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: VehicleEntryFormProps) {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { drivers, vehicleTypes, vehicleBrands } = data;
+
+  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
+    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater }))
+  }
+  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
+    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater }))
+  }
   
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const [docPreviews, setDocPreviews] = useState(initialDocuments);
   const [driverAssignments, setDriverAssignments] = useState<DriverAssignment[]>([]);
   
-  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
-  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
-  const [drivers, setDrivers] = useLocalStorage<DriverType[]>('drivers', []);
-
   const [isAddTypeOpen, setIsAddTypeOpen] = useState(false);
   const [isAddBrandOpen, setIsAddBrandOpen] = useState(false);
   
@@ -262,13 +263,13 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   };
 
   const handleQuickAddType = (newType: VehicleType) => {
-    setVehicleTypes(prev => [...prev, newType]);
+    setVehicleTypes(prev => [...(prev || []), newType]);
     setVehicleData(prev => ({ ...prev, vehicleTypeId: newType.id }));
     toast({ title: 'Success', description: `Category "${newType.name}" added and selected.` });
   };
   
    const handleQuickAddBrand = (newBrand: VehicleBrand) => {
-    setVehicleBrands(prev => [...prev, newBrand]);
+    setVehicleBrands(prev => [...(prev || []), newBrand]);
     setVehicleData(prev => ({ ...prev, brandId: newBrand.id }));
     toast({ title: 'Success', description: `Brand "${newBrand.name}" added and selected.` });
   };
@@ -327,7 +328,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                 <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
                                     <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                                     <SelectContent>
-                                        {vehicleTypes.map(type => (
+                                        {(vehicleTypes || []).map(type => (
                                             <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -341,7 +342,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                 <Select value={vehicleData.brandId} onValueChange={handleSelectChange('brandId')}>
                                     <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
                                     <SelectContent>
-                                        {vehicleBrands.map(brand => (
+                                        {(vehicleBrands || []).map(brand => (
                                             <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -418,7 +419,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                 <Select value={assignment.driverId} onValueChange={(value) => updateDriverAssignment(assignment.id, 'driverId', value)}>
                                     <SelectTrigger><SelectValue placeholder="Select driver"/></SelectTrigger>
                                     <SelectContent>
-                                        {drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                                        {(drivers || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
