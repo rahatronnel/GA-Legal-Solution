@@ -23,16 +23,15 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface DriverTableProps {
   drivers: Driver[];
   setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
+  vehicles: Vehicle[];
 }
 
-export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
+export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps) {
   const { toast } = useToast();
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
