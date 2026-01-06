@@ -23,6 +23,7 @@ import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+
 import type { Driver } from "./components/driver-entry-form";
 import type { Trip } from "./components/trip-entry-form";
 import type { Route } from "./components/route-table";
@@ -42,99 +43,99 @@ import type { VehicleBrand } from "./components/vehicle-brand-table";
 import type { VehicleType } from "./components/vehicle-type-table";
 
 const initialData = {
-    locations: [],
-    drivers: [],
-    trips: [],
-    routes: [],
-    tripPurposes: [],
-    expenseTypes: [],
-    maintenanceRecords: [],
-    parts: [],
-    serviceCenters: [],
-    maintenanceTypes: [],
-    maintenanceExpenseTypes: [],
-    accidents: [],
-    accidentTypes: [],
-    severityLevels: [],
-    faultStatuses: [],
-    vehicles: [],
-    vehicleBrands: [],
-    vehicleTypes: [],
+    locations: [] as Location[],
+    drivers: [] as Driver[],
+    trips: [] as Trip[],
+    routes: [] as Route[],
+    tripPurposes: [] as TripPurpose[],
+    expenseTypes: [] as ExpenseType[],
+    maintenanceRecords: [] as MaintenanceRecord[],
+    parts: [] as Part[],
+    serviceCenters: [] as ServiceCenter[],
+    maintenanceTypes: [] as MaintenanceType[],
+    maintenanceExpenseTypes: [] as MaintenanceExpenseType[],
+    accidents: [] as Accident[],
+    accidentTypes: [] as AccidentType[],
+    severityLevels: [] as SeverityLevel[],
+    faultStatuses: [] as FaultStatus[],
+    vehicles: [] as Vehicle[],
+    vehicleBrands: [] as VehicleBrand[],
+    vehicleTypes: [] as VehicleType[],
 };
 
 export default function VehicleManagementPage() {
-  const [data, setData] = useLocalStorage<typeof initialData>('vehicleManagementData', initialData);
+  const [data, setData] = useLocalStorage('vehicleManagementData', initialData);
 
-  const setDrivers = (newDrivers: Driver[] | ((prev: Driver[]) => Driver[])) => {
-    setData(prev => ({...prev, drivers: typeof newDrivers === 'function' ? newDrivers(prev.drivers) : newDrivers}));
+  const setDrivers = (updater: React.SetStateAction<Driver[]>) => {
+    setData(prev => ({...prev, drivers: typeof updater === 'function' ? updater(prev.drivers || []) : updater}));
   };
 
-  const setLocations = (newLocations: Location[] | ((prev: Location[]) => Location[])) => {
-    setData(prev => ({...prev, locations: typeof newLocations === 'function' ? newLocations(prev.locations) : newLocations}));
+  const setLocations = (updater: React.SetStateAction<Location[]>) => {
+    setData(prev => ({...prev, locations: typeof updater === 'function' ? updater(prev.locations || []) : updater}));
   }
 
-  const setRoutes = (newRoutes: Route[] | ((prev: Route[]) => Route[])) => {
-    setData(prev => ({...prev, routes: typeof newRoutes === 'function' ? newRoutes(prev.routes) : newRoutes}));
+  const setRoutes = (updater: React.SetStateAction<Route[]>) => {
+    setData(prev => ({...prev, routes: typeof updater === 'function' ? updater(prev.routes || []) : updater}));
   }
   
-  const setTrips = (newTrips: Trip[] | ((prev: Trip[]) => Trip[])) => {
-    setData(prev => ({...prev, trips: typeof newTrips === 'function' ? newTrips(prev.trips) : newTrips}));
+  const setTrips = (updater: React.SetStateAction<Trip[]>) => {
+    setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips || []) : updater}));
   }
 
-  const setTripPurposes = (newPurposes: TripPurpose[] | ((prev: TripPurpose[]) => TripPurpose[])) => {
-    setData(prev => ({...prev, tripPurposes: typeof newPurposes === 'function' ? newPurposes(prev.tripPurposes) : newPurposes}));
+  const setTripPurposes = (updater: React.SetStateAction<TripPurpose[]>) => {
+    setData(prev => ({...prev, tripPurposes: typeof updater === 'function' ? updater(prev.tripPurposes || []) : updater}));
   }
   
-  const setExpenseTypes = (newTypes: ExpenseType[] | ((prev: ExpenseType[]) => ExpenseType[])) => {
-    setData(prev => ({...prev, expenseTypes: typeof newTypes === 'function' ? newTypes(prev.expenseTypes) : newTypes}));
+  const setExpenseTypes = (updater: React.SetStateAction<ExpenseType[]>) => {
+    setData(prev => ({...prev, expenseTypes: typeof updater === 'function' ? updater(prev.expenseTypes || []) : updater}));
   }
 
-  const setMaintenanceRecords = (newRecords: MaintenanceRecord[] | ((prev: MaintenanceRecord[]) => MaintenanceRecord[])) => {
-    setData(prev => ({...prev, maintenanceRecords: typeof newRecords === 'function' ? newRecords(prev.maintenanceRecords) : newRecords}));
+  const setMaintenanceRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
+    setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater}));
   }
 
-  const setParts = (newParts: Part[] | ((prev: Part[]) => Part[])) => {
-    setData(prev => ({...prev, parts: typeof newParts === 'function' ? newParts(prev.parts) : newParts}));
+  const setParts = (updater: React.SetStateAction<Part[]>) => {
+    setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts || []) : updater}));
   }
 
-  const setServiceCenters = (newCenters: ServiceCenter[] | ((prev: ServiceCenter[]) => ServiceCenter[])) => {
-    setData(prev => ({...prev, serviceCenters: typeof newCenters === 'function' ? newCenters(prev.serviceCenters) : newCenters}));
+  const setServiceCenters = (updater: React.SetStateAction<ServiceCenter[]>) => {
+    setData(prev => ({...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters || []) : updater}));
   }
 
-  const setMaintenanceTypes = (newTypes: MaintenanceType[] | ((prev: MaintenanceType[]) => MaintenanceType[])) => {
-    setData(prev => ({...prev, maintenanceTypes: typeof newTypes === 'function' ? newTypes(prev.maintenanceTypes) : newTypes}));
+  const setMaintenanceTypes = (updater: React.SetStateAction<MaintenanceType[]>) => {
+    setData(prev => ({...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes || []) : updater}));
   }
 
-  const setMaintenanceExpenseTypes = (newTypes: MaintenanceExpenseType[] | ((prev: MaintenanceExpenseType[]) => MaintenanceExpenseType[])) => {
-    setData(prev => ({...prev, maintenanceExpenseTypes: typeof newTypes === 'function' ? newTypes(prev.maintenanceExpenseTypes) : newTypes}));
+  const setMaintenanceExpenseTypes = (updater: React.SetStateAction<MaintenanceExpenseType[]>) => {
+    setData(prev => ({...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes || []) : updater}));
   }
 
-  const setAccidents = (newAccidents: Accident[] | ((prev: Accident[]) => Accident[])) => {
-    setData(prev => ({...prev, accidents: typeof newAccidents === 'function' ? newAccidents(prev.accidents) : newAccidents}));
+  const setAccidents = (updater: React.SetStateAction<Accident[]>) => {
+    setData(prev => ({...prev, accidents: typeof updater === 'function' ? updater(prev.accidents || []) : updater}));
   }
 
-  const setAccidentTypes = (newTypes: AccidentType[] | ((prev: AccidentType[]) => AccidentType[])) => {
-    setData(prev => ({...prev, accidentTypes: typeof newTypes === 'function' ? newTypes(prev.accidentTypes) : newTypes}));
+  const setAccidentTypes = (updater: React.SetStateAction<AccidentType[]>) => {
+    setData(prev => ({...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes || []) : updater}));
   }
 
-  const setSeverityLevels = (newLevels: SeverityLevel[] | ((prev: SeverityLevel[]) => SeverityLevel[])) => {
-    setData(prev => ({...prev, severityLevels: typeof newLevels === 'function' ? newLevels(prev.severityLevels) : newLevels}));
+  const setSeverityLevels = (updater: React.SetStateAction<SeverityLevel[]>) => {
+    setData(prev => ({...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels || []) : updater}));
   }
   
-  const setFaultStatuses = (newStatuses: FaultStatus[] | ((prev: FaultStatus[]) => FaultStatus[])) => {
-    setData(prev => ({...prev, faultStatuses: typeof newStatuses === 'function' ? newStatuses(prev.faultStatuses) : newStatuses}));
+  const setFaultStatuses = (updater: React.SetStateAction<FaultStatus[]>) => {
+    setData(prev => ({...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses || []) : updater}));
   }
 
-  const setVehicles = (newVehicles: Vehicle[] | ((prev: Vehicle[]) => Vehicle[])) => {
-    setData(prev => ({...prev, vehicles: typeof newVehicles === 'function' ? newVehicles(prev.vehicles) : newVehicles}));
+  const setVehicles = (updater: React.SetStateAction<Vehicle[]>) => {
+    setData(prev => ({...prev, vehicles: typeof updater === 'function' ? updater(prev.vehicles || []) : updater}));
   }
 
-  const setVehicleBrands = (newBrands: VehicleBrand[] | ((prev: VehicleBrand[]) => VehicleBrand[])) => {
-    setData(prev => ({...prev, vehicleBrands: typeof newBrands === 'function' ? newBrands(prev.vehicleBrands) : newBrands}));
+  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
+    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater}));
   }
 
-  const setVehicleTypes = (newTypes: VehicleType[] | ((prev: VehicleType[]) => VehicleType[])) => {
-    setData(prev => ({...prev, vehicleTypes: typeof newTypes === 'function' ? newTypes(prev.vehicleTypes) : newTypes}));
+  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
+    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater}));
   }
 
 
@@ -160,7 +161,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage all vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable trips={data.trips} setTrips={setTrips} />
+                    <TripTable trips={data.trips || []} setTrips={setTrips} />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -174,7 +175,7 @@ export default function VehicleManagementPage() {
                   <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable drivers={data.drivers} setDrivers={setDrivers} vehicles={data.vehicles} />
+                  <DriverTable drivers={data.drivers || []} setDrivers={setDrivers} vehicles={data.vehicles || []} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -187,7 +188,7 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceRecordTable 
-                            records={data.maintenanceRecords} 
+                            records={data.maintenanceRecords || []} 
                             setRecords={setMaintenanceRecords} 
                         />
                     </CardContent>
@@ -198,7 +199,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PartTable parts={data.parts} setParts={setParts} />
+                        <PartTable parts={data.parts || []} setParts={setParts} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -208,7 +209,7 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <ServiceCenterTable 
-                            serviceCenters={data.serviceCenters} 
+                            serviceCenters={data.serviceCenters || []} 
                             setServiceCenters={setServiceCenters} 
                         />
                     </CardContent>
@@ -220,7 +221,7 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceTypeTable 
-                            maintenanceTypes={data.maintenanceTypes} 
+                            maintenanceTypes={data.maintenanceTypes || []} 
                             setMaintenanceTypes={setMaintenanceTypes} 
                         />
                     </CardContent>
@@ -232,7 +233,7 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceExpenseTypeTable 
-                            expenseTypes={data.maintenanceExpenseTypes} 
+                            expenseTypes={data.maintenanceExpenseTypes || []} 
                             setExpenseTypes={setMaintenanceExpenseTypes}
                         />
                     </CardContent>
@@ -247,7 +248,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTable accidents={data.accidents} setAccidents={setAccidents} />
+                        <AccidentTable accidents={data.accidents || []} setAccidents={setAccidents} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -256,7 +257,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTypeTable accidentTypes={data.accidentTypes} setAccidentTypes={setAccidentTypes} />
+                        <AccidentTypeTable accidentTypes={data.accidentTypes || []} setAccidentTypes={setAccidentTypes} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -265,7 +266,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SeverityLevelTable severityLevels={data.severityLevels} setSeverityLevels={setSeverityLevels} />
+                        <SeverityLevelTable severityLevels={data.severityLevels || []} setSeverityLevels={setSeverityLevels} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -274,7 +275,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FaultStatusTable faultStatuses={data.faultStatuses} setFaultStatuses={setFaultStatuses} />
+                        <FaultStatusTable faultStatuses={data.faultStatuses || []} setFaultStatuses={setFaultStatuses} />
                     </CardContent>
                 </Card>
             </div>
@@ -290,7 +291,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable locations={data.locations} />
+                    <RouteTable locations={data.locations || []} />
                 </CardContent>
             </Card>
             <Card>
@@ -308,7 +309,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LocationTable locations={data.locations} setLocations={setLocations} />
+                    <LocationTable locations={data.locations || []} setLocations={setLocations} />
                 </CardContent>
             </Card>
             <Card>
@@ -348,3 +349,5 @@ export default function VehicleManagementPage() {
     </>
   );
 }
+
+    

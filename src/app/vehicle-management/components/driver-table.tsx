@@ -26,7 +26,7 @@ import type { Vehicle } from './vehicle-table';
 
 interface DriverTableProps {
   drivers: Driver[];
-  setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
+  setDrivers: (updater: React.SetStateAction<Driver[]>) => void;
   vehicles: Vehicle[];
 }
 
@@ -71,7 +71,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setDrivers(prev => (prev || []).map(d => d.id === id ? { id, ...data } as Driver : d));
+        setDrivers(prev => (prev || []).map(d => (d.id === id ? { id, ...data } as Driver : d)));
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
         const newDriver: Driver = { 
@@ -344,3 +344,5 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
     </TooltipProvider>
   );
 }
+
+    
