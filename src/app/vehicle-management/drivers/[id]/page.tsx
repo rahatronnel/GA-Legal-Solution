@@ -22,6 +22,7 @@ import type { Accident } from '../../components/accident-entry-form';
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { AccidentType } from '../../components/accident-type-table';
+import { format, parse, isValid } from 'date-fns';
 
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
@@ -154,14 +155,35 @@ function DriverProfileContent() {
   }
   
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
   }
 
   const assignedVehicle = vehicles && driver.assignedVehicleId ? vehicles.find((v: Vehicle) => v.id === driver.assignedVehicleId) : null;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    try {
+        const parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+        if(isValid(parsedDate)) {
+            return format(parsedDate, 'PPP'); // Format as Oct 21, 2023
+        }
+        return dateString; // Return original if not in expected format
+    } catch(e) {
+        return dateString; // Return original on error
+    }
+  }
+
+  const formatDateDDMMYYYY = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+        const parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+        if(isValid(parsedDate)) {
+            return format(parsedDate, 'dd-MM-yyyy'); // Format as 21-10-2023
+        }
+        return dateString;
+    } catch(e) {
+        return dateString;
+    }
   }
 
   const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes || []).find((t: MaintenanceType) => t.id === typeId)?.name || 'N/A';
@@ -209,7 +231,7 @@ function DriverProfileContent() {
                     <h3 className="font-semibold text-lg text-primary border-b pb-2">Personal Information</h3>
                     <ul className="space-y-4 text-sm">
                         <InfoItem icon={UserSquare2} label="Father's/Guardian's Name" value={driver.fatherOrGuardianName} />
-                        <InfoItem icon={Cake} label="Date of Birth" value={formatDate(driver.dateOfBirth)} />
+                        <InfoItem icon={Cake} label="Date of Birth" value={formatDateDDMMYYYY(driver.dateOfBirth)} />
                         <InfoItem icon={VenetianMask} label="Gender" value={driver.gender} />
                         <InfoItem icon={FileText} label="National ID / Passport" value={driver.nationalIdOrPassport} />
                     </ul>

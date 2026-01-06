@@ -22,7 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { format, parse } from 'date-fns';
+import { format, parse, isValid } from 'date-fns';
 import type { Vehicle } from './vehicle-table';
 
 export type Driver = {
@@ -30,7 +30,7 @@ export type Driver = {
   driverIdCode: string;
   name: string;
   fatherOrGuardianName: string;
-  dateOfBirth: string;
+  dateOfBirth: string; // Stored as DD-MM-YYYY
   gender: 'Male' | 'Female' | 'Other' | '';
   mobileNumber: string;
   alternateMobileNumber: string;
@@ -40,12 +40,12 @@ export type Driver = {
   nationalIdOrPassport: string;
   drivingLicenseNumber: string;
   licenseType: 'Light' | 'Heavy' | 'Professional' | '';
-  licenseIssueDate: string;
-  licenseExpiryDate: string;
+  licenseIssueDate: string; // Stored as yyyy-MM-dd
+  licenseExpiryDate: string; // Stored as yyyy-MM-dd
   issuingAuthority: string;
   presentAddress: string;
   permanentAddress: string;
-  joiningDate: string;
+  joiningDate: string; // Stored as yyyy-MM-dd
   employmentType: 'Permanent' | 'Contract' | 'Temporary' | '';
   department: string;
   dutyShift: string;
@@ -85,6 +85,9 @@ const initialDriverData: Omit<Driver, 'id'> = {
   documents: { drivingLicense: '', nid: '', other: '' }
 };
 
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
+
+
 interface DriverEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -119,7 +122,18 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
       setStep(1);
       if (isEditing && driver) {
         const initialData = { ...initialDriverData, ...driver };
-        setDriverData(initialData);
+        
+        let dobDisplay = initialData.dateOfBirth;
+        if (dobDisplay) {
+            try {
+                const parsedDate = parse(dobDisplay, 'yyyy-MM-dd', new Date());
+                if (isValid(parsedDate)) {
+                    dobDisplay = format(parsedDate, 'dd-MM-yyyy');
+                }
+            } catch (e) {}
+        }
+        setDriverData({ ...initialData, dateOfBirth: dobDisplay });
+
         setLicenseIssueDate(initialData.licenseIssueDate ? new Date(initialData.licenseIssueDate) : undefined);
         setLicenseExpiryDate(initialData.licenseExpiryDate ? new Date(initialData.licenseExpiryDate) : undefined);
         setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
@@ -145,9 +159,15 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   };
   
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    // Store user's input directly
-    setDriverData(prev => ({ ...prev, dateOfBirth: value }));
+      const input = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+      let formattedInput = input;
+  
+      if (input.length > 4) {
+        formattedInput = `${input.slice(0, 2)}-${input.slice(2, 4)}-${input.slice(4, 8)}`;
+      } else if (input.length > 2) {
+        formattedInput = `${input.slice(0, 2)}-${input.slice(2, 4)}`;
+      }
+      setDriverData(prev => ({ ...prev, dateOfBirth: formattedInput }));
   };
 
   const handleSelectChange = (id: keyof Driver) => (value: string) => {
@@ -159,7 +179,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Driver) => (date: Date | undefined) => {
+  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Omit<Driver, 'dateOfBirth'>) => (date: Date | undefined) => {
       setter(date);
       setDriverData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
   }
@@ -206,7 +226,11 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const validateStep = (currentStep: number) => {
     switch(currentStep) {
       case 1:
-        return driverData.driverIdCode && driverData.name && driverData.mobileNumber;
+        if (!driverData.driverIdCode || !driverData.name || !driverData.mobileNumber) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Driver ID, Name, and Mobile Number are required.' });
+            return false;
+        }
+        return true;
       // Add more validations for other steps if needed
       default:
         return true;
@@ -215,7 +239,6 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   
   const nextStep = () => {
     if (!validateStep(step)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields for this step.' });
         return;
     }
     setStep(s => s + 1);
@@ -224,23 +247,27 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
   const prevStep = () => setStep(s => s - 1);
 
   const handleSave = async () => {
-    let finalDob = '';
+     if (!validateStep(1)) {
+        return;
+    }
+
+    let dobToSave = '';
     if (driverData.dateOfBirth) {
         try {
             const parsedDate = parse(driverData.dateOfBirth, 'dd-MM-yyyy', new Date());
-            if (isNaN(parsedDate.getTime())) {
-                throw new Error('Invalid date');
+            if (!isValid(parsedDate)) {
+                 throw new Error('Invalid date');
             }
-            finalDob = format(parsedDate, 'yyyy-MM-dd');
+            dobToSave = format(parsedDate, 'yyyy-MM-dd');
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Invalid Date', description: 'Please enter the Date of Birth in DD-MM-YYYY format.' });
+            toast({ variant: 'destructive', title: 'Invalid Date', description: 'Please enter the Date of Birth in a valid DD-MM-YYYY format.' });
             return;
         }
     }
 
     const dataToSave: Omit<Driver, 'id'> = {
         ...driverData,
-        dateOfBirth: finalDob,
+        dateOfBirth: dobToSave, // Store in yyyy-MM-dd format
         profilePicture: profilePicPreview || driverData.profilePicture,
         documents: {
             drivingLicense: docPreviews.drivingLicense || driverData.documents.drivingLicense,
@@ -261,7 +288,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Driver' : 'Add New Driver'}</DialogTitle>
           <DialogDescription>
@@ -270,12 +297,12 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 1: Personal & Contact Information</h3>
-                <div className="grid grid-cols-3 gap-6">
-                    <div className="col-span-1 flex flex-col items-center gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 flex flex-col items-center gap-4">
                         <Label htmlFor="profile-pic-upload" className="cursor-pointer">
                             <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
                                 {profilePicPreview ? (
@@ -292,13 +319,13 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             <Label htmlFor="profile-pic-upload" className="text-sm text-primary cursor-pointer">Upload Picture</Label>
                         )}
                     </div>
-                    <div className="col-span-2 grid grid-cols-2 gap-4">
+                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="driverIdCode">Driver ID / Code</Label>
+                            <Label htmlFor="driverIdCode">Driver ID / Code<MandatoryIndicator/></Label>
                             <Input id="driverIdCode" value={driverData.driverIdCode} onChange={handleInputChange} />
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="name">Driver Name</Label>
+                            <Label htmlFor="name">Driver Name<MandatoryIndicator/></Label>
                              <Input id="name" value={driverData.name} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
@@ -312,6 +339,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                                 value={driverData.dateOfBirth}
                                 onChange={handleDobChange}
                                 placeholder="DD-MM-YYYY"
+                                maxLength={10}
                             />
                         </div>
                          <div className="space-y-2">
@@ -326,7 +354,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             </Select>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="mobileNumber">Mobile Number</Label>
+                            <Label htmlFor="mobileNumber">Mobile Number<MandatoryIndicator/></Label>
                             <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
@@ -338,7 +366,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             <Input id="nationalIdOrPassport" value={driverData.nationalIdOrPassport} onChange={handleInputChange} />
                         </div>
                     </div>
-                    <div className="col-span-3 grid grid-cols-2 gap-4">
+                    <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                           <Label htmlFor="presentAddress">Present Address</Label>
                           <Textarea id="presentAddress" value={driverData.presentAddress} onChange={handleInputChange} />
@@ -355,7 +383,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
             {step === 2 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 2: License Details</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="drivingLicenseNumber">Driving License Number</Label>
                       <Input id="drivingLicenseNumber" value={driverData.drivingLicenseNumber} onChange={handleInputChange} />
@@ -406,7 +434,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
             {step === 3 && (
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg">Step 3: Employment Details</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                       <Label htmlFor="joiningDate">Joining Date</Label>
                       <Popover>
@@ -496,16 +524,20 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
             )}
         </div>
 
-        <DialogFooter className="flex justify-between w-full">
-            {step > 1 ? (
-                <Button variant="outline" onClick={prevStep}>Previous</Button>
-            ) : <div></div>}
+        <DialogFooter className="flex justify-between w-full pt-4 border-t">
+            <div>
+              {step > 1 && (
+                  <Button variant="outline" onClick={prevStep}>Previous</Button>
+              )}
+            </div>
             
-            {step < 4 ? (
-                 <Button onClick={nextStep}>Next</Button>
-            ) : (
-                 <Button onClick={handleSave}>{isEditing ? 'Update Driver' : 'Save Driver'}</Button>
-            )}
+            <div>
+              {step < 4 ? (
+                  <Button onClick={nextStep}>Next</Button>
+              ) : (
+                  <Button onClick={handleSave}>{isEditing ? 'Update Driver' : 'Save Driver'}</Button>
+              )}
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
