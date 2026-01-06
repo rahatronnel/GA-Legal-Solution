@@ -48,7 +48,7 @@ function VehicleManagementContent() {
                   <CardDescription>Manage all vehicle trips.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <TripTable trips={data.trips} setTrips={(updater) => setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips) : updater}))} />
+                  <TripTable />
               </CardContent>
           </Card>
       </TabsContent>
@@ -62,10 +62,7 @@ function VehicleManagementContent() {
                 <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
             </CardHeader>
             <CardContent>
-                <DriverTable 
-                  drivers={data.drivers} 
-                  setDrivers={(updater) => setData(prev => ({ ...prev, drivers: typeof updater === 'function' ? updater(prev.drivers) : updater }))} 
-                />
+                <DriverTable />
             </CardContent>
         </Card>
       </TabsContent>
@@ -77,10 +74,7 @@ function VehicleManagementContent() {
                       <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <MaintenanceRecordTable 
-                          records={data.maintenanceRecords} 
-                          setRecords={(updater) => setData(prev => ({ ...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords) : updater }))} 
-                      />
+                      <MaintenanceRecordTable />
                   </CardContent>
               </Card>
                <Card>
@@ -89,7 +83,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <PartTable parts={data.parts} setParts={(updater) => setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts) : updater}))} />
+                      <PartTable />
                   </CardContent>
               </Card>
                <Card>
@@ -98,10 +92,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage your approved service centers and garages.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <ServiceCenterTable 
-                          serviceCenters={data.serviceCenters} 
-                          setServiceCenters={(updater) => setData(prev => ({ ...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters) : updater }))} 
-                      />
+                      <ServiceCenterTable />
                   </CardContent>
               </Card>
               <Card>
@@ -110,10 +101,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <MaintenanceTypeTable 
-                          maintenanceTypes={data.maintenanceTypes} 
-                          setMaintenanceTypes={(updater) => setData(prev => ({ ...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes) : updater }))} 
-                      />
+                      <MaintenanceTypeTable />
                   </CardContent>
               </Card>
               <Card>
@@ -122,10 +110,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <MaintenanceExpenseTypeTable 
-                          expenseTypes={data.maintenanceExpenseTypes}
-                          setExpenseTypes={(updater) => setData(prev => ({ ...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes) : updater }))}
-                      />
+                      <MaintenanceExpenseTypeTable />
                   </CardContent>
               </Card>
           </div>
@@ -138,7 +123,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <AccidentTable accidents={data.accidents} setAccidents={(updater) => setData(prev => ({ ...prev, accidents: typeof updater === 'function' ? updater(prev.accidents) : updater }))} />
+                      <AccidentTable />
                   </CardContent>
               </Card>
               <Card>
@@ -147,7 +132,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <AccidentTypeTable accidentTypes={data.accidentTypes} setAccidentTypes={(updater) => setData(prev => ({ ...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes) : updater }))} />
+                      <AccidentTypeTable />
                   </CardContent>
               </Card>
                <Card>
@@ -156,7 +141,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <SeverityLevelTable severityLevels={data.severityLevels} setSeverityLevels={(updater) => setData(prev => ({ ...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels) : updater }))} />
+                      <SeverityLevelTable />
                   </CardContent>
               </Card>
                <Card>
@@ -165,7 +150,7 @@ function VehicleManagementContent() {
                       <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <FaultStatusTable faultStatuses={data.faultStatuses} setFaultStatuses={(updater) => setData(prev => ({ ...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses) : updater }))} />
+                      <FaultStatusTable />
                   </CardContent>
               </Card>
           </div>
@@ -199,7 +184,7 @@ function VehicleManagementContent() {
                   <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <LocationTable locations={data.locations} setLocations={(updater) => setData(prev => ({ ...prev, locations: typeof updater === 'function' ? updater(prev.locations) : updater }))} />
+                  <LocationTable />
               </CardContent>
           </Card>
           <Card>

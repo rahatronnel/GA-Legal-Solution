@@ -23,27 +23,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
-import type { TripPurpose } from './trip-purpose-table';
-import type { Location } from './location-table';
 import type { Route } from './route-table';
-import type { ExpenseType } from './expense-type-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
-interface TripTableProps {
-    trips: Trip[];
-    setTrips: React.Dispatch<React.SetStateAction<Trip[]>>;
-}
-
-export function TripTable({ trips, setTrips }: TripTableProps) {
+export function TripTable() {
   const { toast } = useToast();
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [routes] = useLocalStorage<Route[]>('routes', []);
+  const { data, setData } = useVehicleManagement();
+  const { trips, vehicles, drivers, routes } = data;
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -63,16 +54,16 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
     return () => clearTimeout(timer);
   }, []);
   
-  const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
-  const getRouteName = (routeId: string) => routes.find(r => r.id === routeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => (vehicles || []).find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getDriverName = (driverId: string) => (drivers || []).find(d => d.id === driverId)?.name || 'N/A';
+  const getRouteName = (routeId: string) => (routes || []).find(r => r.id === routeId)?.name || 'N/A';
 
   const safeTrips = Array.isArray(trips) ? trips : [];
 
   const filteredTrips = useMemo(() => {
     return safeTrips.filter(trip => {
       const lowercasedTerm = searchTerm.toLowerCase();
-      const vehicle = vehicles.find(v => v.id === trip.vehicleId);
+      const vehicle = (vehicles || []).find(v => v.id === trip.vehicleId);
 
       const searchMatch = searchTerm === '' || 
         (trip.tripId && trip.tripId.toLowerCase().includes(lowercasedTerm)) ||
@@ -100,7 +91,7 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
 
   const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
     if (id) {
-        setTrips(prev => prev.map(t => (t.id === id ? { ...t, ...data } as Trip : t)));
+        setData(prev => ({...prev, trips: (prev.trips || []).map(t => (t.id === id ? { ...t, ...data } as Trip : t))}));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         const newTrip: Trip = {
@@ -110,7 +101,7 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
             expenses: data.expenses || [],
             documents: data.documents || {},
         } as Trip;
-        setTrips(prev => [...prev, newTrip]);
+        setData(prev => ({...prev, trips: [...(prev.trips || []), newTrip]}));
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
@@ -123,7 +114,7 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
 
   const confirmDelete = () => {
     if (currentTrip?.id) {
-        setTrips(prev => prev.filter(t => t.id !== currentTrip.id));
+        setData(prev => ({...prev, trips: (prev.trips || []).filter(t => t.id !== currentTrip.id)}));
         toast({ title: 'Success', description: 'Trip deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -140,7 +131,6 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
   };
 
   const handleDownloadTemplate = () => {
-    // This is complex due to relations. For now, we provide a simple template.
     const ws = XLSX.utils.json_to_sheet([{ 
       vehicleRegNo: '',
       driverIdCode: '',
@@ -161,9 +151,6 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // Due to the complexity of relations (vehicles, drivers, routes),
-    // a robust Excel upload requires more complex logic to map codes/names back to IDs.
-    // For now, we show a toast message indicating this is a future feature.
     toast({
         title: 'Feature Coming Soon',
         description: 'Uploading trips via Excel is a complex operation and will be implemented in a future update.',
@@ -201,14 +188,14 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Drivers</SelectItem>
-                        {drivers.map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                        {(drivers || []).map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={routeFilter} onValueChange={setRouteFilter}>
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Route..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Routes</SelectItem>
-                        {routes.map(route => <SelectItem key={route.id} value={route.id}>{route.name}</SelectItem>)}
+                        {(routes || []).map(route => <SelectItem key={route.id} value={route.id}>{route.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Popover>
@@ -299,5 +286,3 @@ export function TripTable({ trips, setTrips }: TripTableProps) {
     </TooltipProvider>
   );
 }
-
-    

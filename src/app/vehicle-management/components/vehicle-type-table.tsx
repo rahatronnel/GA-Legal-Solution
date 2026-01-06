@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 type VehicleType = {
   id: string;
@@ -35,7 +35,13 @@ type VehicleType = {
 
 export function VehicleTypeTable() {
   const { toast } = useToast();
-  const [vehicleTypes, setVehicleTypes] = useLocalStorage<VehicleType[]>('vehicleTypes', []);
+  const { data, setData } = useVehicleManagement();
+  const { vehicleTypes } = data;
+
+  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
+    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
@@ -43,7 +49,6 @@ export function VehicleTypeTable() {
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
-    // Faking a loading state
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
@@ -76,7 +81,7 @@ export function VehicleTypeTable() {
 
   const confirmDelete = () => {
     if (currentVehicleType?.id) {
-        setVehicleTypes(prev => prev.filter(vt => vt.id !== currentVehicleType.id));
+        setVehicleTypes(prev => (prev || []).filter(vt => vt.id !== currentVehicleType.id));
         toast({ title: 'Success', description: 'Vehicle type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -90,13 +95,11 @@ export function VehicleTypeTable() {
     }
 
     if (currentVehicleType?.id) {
-      // Update
-      setVehicleTypes(prev => prev.map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } as VehicleType : vt));
+      setVehicleTypes(prev => (prev || []).map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } as VehicleType : vt));
       toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
     } else {
-      // Create
       const newVehicleType = { id: Date.now().toString(), ...typeData };
-      setVehicleTypes(prev => [...prev, newVehicleType]);
+      setVehicleTypes(prev => [...(prev || []), newVehicleType]);
       toast({ title: 'Success', description: 'Vehicle type added successfully.' });
     }
 
@@ -132,7 +135,7 @@ export function VehicleTypeTable() {
             .map(item => ({ id: Date.now().toString() + item.name, name: item.name.trim(), vehicleTypeCode: item.vehicleTypeCode.trim() }));
           
           if(newTypes.length > 0) {
-            setVehicleTypes(prev => [...prev, ...newTypes]);
+            setVehicleTypes(prev => [...(prev || []), ...newTypes]);
             toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
           }
 
@@ -142,7 +145,6 @@ export function VehicleTypeTable() {
       };
       reader.readAsArrayBuffer(file);
     }
-    // Reset file input to allow uploading the same file again
     event.target.value = '';
   };
 
@@ -207,7 +209,6 @@ export function VehicleTypeTable() {
             </Table>
         </div>
       
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -237,7 +238,6 @@ export function VehicleTypeTable() {
         </DialogContent>
       </Dialog>
 
-       {/* Delete Confirmation Dialog */}
        <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>
           <DialogHeader>

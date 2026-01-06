@@ -22,6 +22,7 @@ import type { FaultStatus } from "./fault-status-table";
 import type { Vehicle } from "./vehicle-entry-form";
 import type { VehicleBrand } from "./vehicle-brand-table";
 import type { VehicleType } from "./vehicle-type-table";
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 const initialData = {
     locations: [] as Location[],
@@ -42,22 +43,28 @@ const initialData = {
     vehicles: [] as Vehicle[],
     vehicleBrands: [] as VehicleBrand[],
     vehicleTypes: [] as VehicleType[],
+    employees: [] as Employee[],
 };
 
+export type VehicleManagementData = typeof initialData;
+
 type VehicleManagementDataContextType = {
-    data: typeof initialData;
-    setData: React.Dispatch<React.SetStateAction<typeof initialData>>;
+    data: VehicleManagementData;
+    setData: React.Dispatch<React.SetStateAction<VehicleManagementData>>;
 };
 
 const VehicleManagementContext = createContext<VehicleManagementDataContextType | undefined>(undefined);
 
 export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
     const [data, setData] = useLocalStorage('vehicleManagementData', initialData);
+    
+    // Fallback to initialData if localStorage returns null or undefined
+    const contextData = useMemo(() => data || initialData, [data]);
 
     const value = useMemo(() => ({
-        data: data || initialData, // Ensure data is never null/undefined
+        data: contextData,
         setData,
-    }), [data, setData]);
+    }), [contextData, setData]);
 
     return (
         <VehicleManagementContext.Provider value={value}>

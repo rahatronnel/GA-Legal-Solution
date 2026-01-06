@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type TripPurpose = {
   id: string;
@@ -34,7 +34,13 @@ export type TripPurpose = {
 
 export function TripPurposeTable() {
   const { toast } = useToast();
-  const [purposes, setPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
+  const { data, setData } = useVehicleManagement();
+  const { tripPurposes: purposes } = data;
+
+  const setPurposes = (updater: React.SetStateAction<TripPurpose[]>) => {
+    setData(prev => ({...prev, tripPurposes: typeof updater === 'function' ? updater(prev.tripPurposes || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentPurpose, setCurrentPurpose] = useState<Partial<TripPurpose> | null>(null);
@@ -46,12 +52,14 @@ export function TripPurposeTable() {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+  
+  const safePurposes = Array.isArray(purposes) ? purposes : [];
 
   const filteredPurposes = useMemo(() => {
-    if (!searchTerm) return purposes;
+    if (!searchTerm) return safePurposes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return purposes.filter(p => p.name.toLowerCase().includes(lowercasedTerm));
-  }, [purposes, searchTerm]);
+    return safePurposes.filter(p => p.name.toLowerCase().includes(lowercasedTerm));
+  }, [safePurposes, searchTerm]);
   
   const resetForm = () => {
     setCurrentPurpose(null);
@@ -76,7 +84,7 @@ export function TripPurposeTable() {
 
   const confirmDelete = () => {
     if (currentPurpose?.id) {
-        setPurposes(prev => prev.filter(p => p.id !== currentPurpose.id));
+        setPurposes(prev => (prev || []).filter(p => p.id !== currentPurpose.id));
         toast({ title: 'Success', description: 'Trip purpose deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -90,11 +98,11 @@ export function TripPurposeTable() {
     }
 
     if (currentPurpose?.id) {
-      setPurposes(prev => prev.map(p => p.id === currentPurpose.id ? { ...p, name: purposeName } : p));
+      setPurposes(prev => (prev || []).map(p => p.id === currentPurpose.id ? { ...p, name: purposeName } : p));
       toast({ title: 'Success', description: 'Trip purpose updated successfully.' });
     } else {
       const newPurpose = { id: Date.now().toString(), name: purposeName };
-      setPurposes(prev => [...prev, newPurpose]);
+      setPurposes(prev => [...(prev || []), newPurpose]);
       toast({ title: 'Success', description: 'Trip purpose added successfully.' });
     }
 
@@ -131,7 +139,7 @@ export function TripPurposeTable() {
             .map(item => ({ id: Date.now().toString() + item.name, name: item.name }));
           
           if(newItems.length > 0) {
-            setPurposes(prev => [...prev, ...newItems]);
+            setPurposes(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Trip purposes uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid purposes found in the file.' });

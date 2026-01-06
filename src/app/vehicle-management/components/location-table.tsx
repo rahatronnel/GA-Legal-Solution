@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type Location = {
   id: string;
@@ -32,13 +33,15 @@ export type Location = {
   locationCode: string;
 };
 
-interface LocationTableProps {
-  locations: Location[];
-  setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
-}
-
-export function LocationTable({ locations, setLocations }: LocationTableProps) {
+export function LocationTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { locations } = data;
+
+  const setLocations = (updater: React.SetStateAction<Location[]>) => {
+    setData(prev => ({...prev, locations: typeof updater === 'function' ? updater(prev.locations || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Partial<Location> | null>(null);
@@ -51,14 +54,16 @@ export function LocationTable({ locations, setLocations }: LocationTableProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeLocations = Array.isArray(locations) ? locations : [];
+
   const filteredLocations = useMemo(() => {
-    if (!searchTerm) return locations;
+    if (!searchTerm) return safeLocations;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return locations.filter(loc => 
+    return safeLocations.filter(loc => 
         loc.name.toLowerCase().includes(lowercasedTerm) ||
         loc.locationCode.toLowerCase().includes(lowercasedTerm)
     );
-  }, [locations, searchTerm]);
+  }, [safeLocations, searchTerm]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -88,7 +93,7 @@ export function LocationTable({ locations, setLocations }: LocationTableProps) {
 
   const confirmDelete = () => {
     if (currentLocation?.id) {
-        setLocations(prev => prev.filter(l => l.id !== currentLocation.id));
+        setLocations(prev => (prev || []).filter(l => l.id !== currentLocation.id));
         toast({ title: 'Success', description: 'Location deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -102,11 +107,11 @@ export function LocationTable({ locations, setLocations }: LocationTableProps) {
     }
 
     if (currentLocation?.id) {
-      setLocations(prev => prev.map(l => l.id === currentLocation.id ? { ...l, ...locationData } as Location : l));
+      setLocations(prev => (prev || []).map(l => l.id === currentLocation.id ? { ...l, ...locationData } as Location : l));
       toast({ title: 'Success', description: 'Location updated successfully.' });
     } else {
       const newLocation = { id: Date.now().toString(), ...locationData };
-      setLocations(prev => [...prev, newLocation]);
+      setLocations(prev => [...(prev || []), newLocation]);
       toast({ title: 'Success', description: 'Location added successfully.' });
     }
 
@@ -150,7 +155,7 @@ export function LocationTable({ locations, setLocations }: LocationTableProps) {
             }));
           
           if(newItems.length > 0) {
-            setLocations(prev => [...prev, ...newItems]);
+            setLocations(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Locations uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid locations found in the file.' });

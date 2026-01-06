@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type ExpenseType = {
   id: string;
@@ -35,7 +35,13 @@ export type ExpenseType = {
 
 export function ExpenseTypeTable() {
   const { toast } = useToast();
-  const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+  const { data, setData } = useVehicleManagement();
+  const { expenseTypes } = data;
+
+  const setExpenseTypes = (updater: React.SetStateAction<ExpenseType[]>) => {
+    setData(prev => ({...prev, expenseTypes: typeof updater === 'function' ? updater(prev.expenseTypes || []) : updater }));
+  }
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<ExpenseType> | null>(null);
@@ -48,14 +54,16 @@ export function ExpenseTypeTable() {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeExpenseTypes = Array.isArray(expenseTypes) ? expenseTypes : [];
+
   const filteredExpenseTypes = useMemo(() => {
-    if (!searchTerm) return expenseTypes;
+    if (!searchTerm) return safeExpenseTypes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return expenseTypes.filter(p => 
+    return safeExpenseTypes.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [expenseTypes, searchTerm]);
+  }, [safeExpenseTypes, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -85,7 +93,7 @@ export function ExpenseTypeTable() {
 
   const confirmDelete = () => {
     if (currentExpenseType?.id) {
-        setExpenseTypes(prev => prev.filter(p => p.id !== currentExpenseType.id));
+        setExpenseTypes(prev => (prev || []).filter(p => p.id !== currentExpenseType.id));
         toast({ title: 'Success', description: 'Expense type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -99,11 +107,11 @@ export function ExpenseTypeTable() {
     }
 
     if (currentExpenseType?.id) {
-      setExpenseTypes(prev => prev.map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
+      setExpenseTypes(prev => (prev || []).map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
       toast({ title: 'Success', description: 'Expense type updated successfully.' });
     } else {
       const newExpenseType = { id: Date.now().toString(), ...expenseTypeData };
-      setExpenseTypes(prev => [...prev, newExpenseType]);
+      setExpenseTypes(prev => [...(prev || []), newExpenseType]);
       toast({ title: 'Success', description: 'Expense type added successfully.' });
     }
 
@@ -143,7 +151,7 @@ export function ExpenseTypeTable() {
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setExpenseTypes(prev => [...prev, ...newItems]);
+            setExpenseTypes(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Expense types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid expense types found in the file.' });

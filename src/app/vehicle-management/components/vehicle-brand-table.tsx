@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type VehicleBrand = {
   id: string;
@@ -35,7 +35,13 @@ export type VehicleBrand = {
 
 export function VehicleBrandTable() {
   const { toast } = useToast();
-  const [vehicleBrands, setVehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
+  const { data, setData } = useVehicleManagement();
+  const { vehicleBrands } = data;
+
+  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
+    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<VehicleBrand> | null>(null);
@@ -48,14 +54,16 @@ export function VehicleBrandTable() {
     return () => clearTimeout(timer);
   }, []);
 
+  const safeVehicleBrands = Array.isArray(vehicleBrands) ? vehicleBrands : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return vehicleBrands;
+    if (!searchTerm) return safeVehicleBrands;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return vehicleBrands.filter(p => 
+    return safeVehicleBrands.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [vehicleBrands, searchTerm]);
+  }, [safeVehicleBrands, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -85,7 +93,7 @@ export function VehicleBrandTable() {
 
   const confirmDelete = () => {
     if (currentItem?.id) {
-        setVehicleBrands(prev => prev.filter(p => p.id !== currentItem.id));
+        setVehicleBrands(prev => (prev || []).filter(p => p.id !== currentItem.id));
         toast({ title: 'Success', description: 'Vehicle brand deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -99,11 +107,11 @@ export function VehicleBrandTable() {
     }
 
     if (currentItem?.id) {
-      setVehicleBrands(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as VehicleBrand : p));
+      setVehicleBrands(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } as VehicleBrand : p));
       toast({ title: 'Success', description: 'Vehicle brand updated successfully.' });
     } else {
       const newItem = { id: Date.now().toString(), ...formData };
-      setVehicleBrands(prev => [...prev, newItem]);
+      setVehicleBrands(prev => [...(prev || []), newItem]);
       toast({ title: 'Success', description: 'Vehicle brand added successfully.' });
     }
 
@@ -143,7 +151,7 @@ export function VehicleBrandTable() {
             .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setVehicleBrands(prev => [...prev, ...newItems]);
+            setVehicleBrands(prev => [...(prev || []), ...newItems]);
             toast({ title: 'Success', description: 'Vehicle brands uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid vehicle brands found in the file.' });
