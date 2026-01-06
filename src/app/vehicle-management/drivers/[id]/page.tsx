@@ -157,7 +157,7 @@ function DriverProfileContent() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
-  const assignedVehicle = vehicles.find((v: Vehicle) => v.id === driver.assignedVehicleId);
+  const assignedVehicle = vehicles && driver.assignedVehicleId ? vehicles.find((v: Vehicle) => v.id === driver.assignedVehicleId) : null;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
