@@ -98,16 +98,12 @@ function MaintenanceProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !maintenanceRecords) {
-        setRecord(undefined);
-        return;
+        return; // Wait for data
     }
     
-    const foundRecord = maintenanceRecords.find((t: MaintenanceRecord) => t.id === id);
-    
-    if (foundRecord) {
-        setRecord(foundRecord);
-    } else {
-        notFound();
+    if (maintenanceRecords.length > 0) {
+        const foundRecord = maintenanceRecords.find((t: MaintenanceRecord) => t.id === id);
+        setRecord(foundRecord || null);
     }
   }, [id, maintenanceRecords]);
 

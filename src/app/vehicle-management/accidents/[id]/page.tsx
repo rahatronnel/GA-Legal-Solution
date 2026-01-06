@@ -102,16 +102,12 @@ function AccidentProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !accidents) {
-        setAccident(undefined);
-        return;
+        return; // Wait for data
     }
-    
-    const foundRecord = accidents.find((t: Accident) => t.id === id);
-    
-    if (foundRecord) {
-        setAccident(foundRecord);
-    } else {
-        notFound();
+
+    if (accidents.length > 0) {
+        const foundRecord = accidents.find((t: Accident) => t.id === id);
+        setAccident(foundRecord || null);
     }
   }, [id, accidents]);
 

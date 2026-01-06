@@ -102,16 +102,11 @@ function TripProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !trips) {
-        setTrip(undefined);
-        return;
+        return; // Wait for data
     }
-    
-    const foundTrip = trips.find((t: Trip) => t.id === id);
-    
-    if (foundTrip) {
-        setTrip(foundTrip);
-    } else {
-        notFound();
+    if (trips.length > 0) {
+        const foundTrip = trips.find((t: Trip) => t.id === id);
+        setTrip(foundTrip || null);
     }
   }, [id, trips]);
 

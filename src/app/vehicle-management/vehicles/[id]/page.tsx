@@ -114,15 +114,12 @@ function VehicleProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !vehicles) {
-        setVehicle(undefined);
-        return;
+        return; // Wait for data
     }
     
-    const foundVehicle = vehicles.find((v: Vehicle) => v.id === id);
-    if (foundVehicle) {
-        setVehicle(foundVehicle);
-    } else {
-        notFound();
+    if (vehicles.length > 0) {
+        const foundVehicle = vehicles.find((v: Vehicle) => v.id === id);
+        setVehicle(foundVehicle || null);
     }
   }, [id, vehicles]);
 

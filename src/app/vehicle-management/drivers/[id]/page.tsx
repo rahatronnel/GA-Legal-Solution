@@ -111,18 +111,15 @@ function DriverProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !drivers) {
-        setDriver(undefined);
-        return;
+      return; // Wait for data to be available
     }
-    
-    const foundDriver = drivers.find((d: Driver) => d.id === id);
 
-    if (foundDriver) {
-        setDriver(foundDriver);
-    } else {
-        notFound();
+    if (drivers.length > 0) {
+      const foundDriver = drivers.find((d: Driver) => d.id === id);
+      setDriver(foundDriver || null); // Set to null if not found after data is loaded
     }
   }, [id, drivers]);
+
 
   const driverAccidentHistory = useMemo(() => {
     if (!id) return [];
