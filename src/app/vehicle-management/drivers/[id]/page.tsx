@@ -111,23 +111,29 @@ function DriverProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !drivers) {
-      return; // Wait for data to be available
+      setDriver(undefined); // Still loading
+      return;
     }
 
     if (drivers.length > 0) {
       const foundDriver = drivers.find((d: Driver) => d.id === id);
       setDriver(foundDriver || null); // Set to null if not found after data is loaded
+    } else {
+      // This case handles when drivers array is loaded but empty.
+      // We can assume the driver is not found.
+      const timer = setTimeout(() => setDriver(null), 500); // Delay to prevent flicker
+      return () => clearTimeout(timer);
     }
   }, [id, drivers]);
 
 
   const driverAccidentHistory = useMemo(() => {
-    if (!id) return [];
+    if (!id || !accidents) return [];
     return accidents.filter((accident: Accident) => accident.driverId === id);
   }, [id, accidents]);
 
   const driverMaintenanceHistory = useMemo(() => {
-      if (!id) return [];
+      if (!id || !vehicles || !maintenanceRecords) return [];
       const assignedVehicleIds = vehicles.filter((v: Vehicle) => {
           const currentDriver = v.driverAssignmentHistory?.sort((a,b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime())[0];
           return currentDriver?.driverId === id;
