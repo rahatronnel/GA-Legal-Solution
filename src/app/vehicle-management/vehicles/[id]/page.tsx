@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-entry-form';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { type VehicleType } from '@/app/vehicle-management/components/vehicle-type-table';
@@ -92,28 +92,28 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </li>
 );
 
-export default function VehicleProfilePage() {
+function VehicleProfileContent() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data } = useVehicleManagement();
   const { 
-      vehicles = [], 
-      drivers = [], 
-      vehicleTypes = [], 
-      vehicleBrands = [], 
-      maintenanceRecords = [], 
-      maintenanceTypes = [], 
-      accidents = [], 
-      accidentTypes = [] 
-  } = vehicleManagementData;
+      vehicles, 
+      drivers, 
+      vehicleTypes, 
+      vehicleBrands, 
+      maintenanceRecords, 
+      maintenanceTypes, 
+      accidents, 
+      accidentTypes 
+  } = data;
 
   const [vehicle, setVehicle] = useState<Vehicle | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || vehicles.length === 0) {
+    if (typeof id !== 'string' || !vehicles) {
         setVehicle(undefined);
         return;
     }
@@ -124,7 +124,7 @@ export default function VehicleProfilePage() {
     } else {
         notFound();
     }
-  }, [id, vehicles, notFound]);
+  }, [id, vehicles]);
 
   const vehicleMaintenanceHistory = useMemo(() => {
     if (!id || !maintenanceRecords) return [];
@@ -324,4 +324,10 @@ export default function VehicleProfilePage() {
   );
 }
 
-    
+export default function VehicleProfilePage() {
+    return (
+        <VehicleManagementProvider>
+            <VehicleProfileContent />
+        </VehicleManagementProvider>
+    );
+}

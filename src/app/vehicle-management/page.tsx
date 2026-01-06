@@ -7,7 +7,7 @@ import { DriverTable } from "./components/driver-table";
 import { VehicleTable } from "./components/vehicle-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TripPurposeTable } from "./components/trip-purpose-table";
-import { LocationTable, type Location } from "./components/location-table";
+import { LocationTable } from "./components/location-table";
 import { RouteTable } from "./components/route-table";
 import { TripTable } from "./components/trip-table";
 import { ExpenseTypeTable } from "./components/expense-type-table";
@@ -22,332 +22,224 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
 
-import type { Driver } from "./components/driver-entry-form";
-import type { Trip } from "./components/trip-entry-form";
-import type { Route } from "./components/route-table";
-import type { TripPurpose } from "./components/trip-purpose-table";
-import type { ExpenseType } from "./components/expense-type-table";
-import type { MaintenanceRecord } from "./components/maintenance-entry-form";
-import type { Part } from "./components/part-table";
-import type { ServiceCenter } from "./components/service-center-table";
-import type { MaintenanceType } from "./components/maintenance-type-table";
-import type { MaintenanceExpenseType } from "./components/maintenance-expense-type-table";
-import type { Accident } from "./components/accident-entry-form";
-import type { AccidentType } from "./components/accident-type-table";
-import type { SeverityLevel } from "./components/severity-level-table";
-import type { FaultStatus } from "./components/fault-status-table";
-import type { Vehicle } from "./components/vehicle-entry-form";
-import type { VehicleBrand } from "./components/vehicle-brand-table";
-import type { VehicleType } from "./components/vehicle-type-table";
-
-const initialData = {
-    locations: [] as Location[],
-    drivers: [] as Driver[],
-    trips: [] as Trip[],
-    routes: [] as Route[],
-    tripPurposes: [] as TripPurpose[],
-    expenseTypes: [] as ExpenseType[],
-    maintenanceRecords: [] as MaintenanceRecord[],
-    parts: [] as Part[],
-    serviceCenters: [] as ServiceCenter[],
-    maintenanceTypes: [] as MaintenanceType[],
-    maintenanceExpenseTypes: [] as MaintenanceExpenseType[],
-    accidents: [] as Accident[],
-    accidentTypes: [] as AccidentType[],
-    severityLevels: [] as SeverityLevel[],
-    faultStatuses: [] as FaultStatus[],
-    vehicles: [] as Vehicle[],
-    vehicleBrands: [] as VehicleBrand[],
-    vehicleTypes: [] as VehicleType[],
-};
-
-export default function VehicleManagementPage() {
-  const [data, setData] = useLocalStorage('vehicleManagementData', initialData);
-
-  const setDrivers = (updater: React.SetStateAction<Driver[]>) => {
-    setData(prev => ({...prev, drivers: typeof updater === 'function' ? updater(prev.drivers || []) : updater}));
-  };
-
-  const setLocations = (updater: React.SetStateAction<Location[]>) => {
-    setData(prev => ({...prev, locations: typeof updater === 'function' ? updater(prev.locations || []) : updater}));
-  }
-
-  const setRoutes = (updater: React.SetStateAction<Route[]>) => {
-    setData(prev => ({...prev, routes: typeof updater === 'function' ? updater(prev.routes || []) : updater}));
-  }
-  
-  const setTrips = (updater: React.SetStateAction<Trip[]>) => {
-    setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips || []) : updater}));
-  }
-
-  const setTripPurposes = (updater: React.SetStateAction<TripPurpose[]>) => {
-    setData(prev => ({...prev, tripPurposes: typeof updater === 'function' ? updater(prev.tripPurposes || []) : updater}));
-  }
-  
-  const setExpenseTypes = (updater: React.SetStateAction<ExpenseType[]>) => {
-    setData(prev => ({...prev, expenseTypes: typeof updater === 'function' ? updater(prev.expenseTypes || []) : updater}));
-  }
-
-  const setMaintenanceRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
-    setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater}));
-  }
-
-  const setParts = (updater: React.SetStateAction<Part[]>) => {
-    setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts || []) : updater}));
-  }
-
-  const setServiceCenters = (updater: React.SetStateAction<ServiceCenter[]>) => {
-    setData(prev => ({...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters || []) : updater}));
-  }
-
-  const setMaintenanceTypes = (updater: React.SetStateAction<MaintenanceType[]>) => {
-    setData(prev => ({...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes || []) : updater}));
-  }
-
-  const setMaintenanceExpenseTypes = (updater: React.SetStateAction<MaintenanceExpenseType[]>) => {
-    setData(prev => ({...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes || []) : updater}));
-  }
-
-  const setAccidents = (updater: React.SetStateAction<Accident[]>) => {
-    setData(prev => ({...prev, accidents: typeof updater === 'function' ? updater(prev.accidents || []) : updater}));
-  }
-
-  const setAccidentTypes = (updater: React.SetStateAction<AccidentType[]>) => {
-    setData(prev => ({...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes || []) : updater}));
-  }
-
-  const setSeverityLevels = (updater: React.SetStateAction<SeverityLevel[]>) => {
-    setData(prev => ({...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels || []) : updater}));
-  }
-  
-  const setFaultStatuses = (updater: React.SetStateAction<FaultStatus[]>) => {
-    setData(prev => ({...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses || []) : updater}));
-  }
-
-  const setVehicles = (updater: React.SetStateAction<Vehicle[]>) => {
-    setData(prev => ({...prev, vehicles: typeof updater === 'function' ? updater(prev.vehicles || []) : updater}));
-  }
-
-  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
-    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater}));
-  }
-
-  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
-    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater}));
-  }
-
+function VehicleManagementContent() {
+  const { data, setData } = useVehicleManagement();
 
   return (
-    <>
-      <Tabs defaultValue="trips" className="w-full">
-        <div className="flex items-center">
-          <TabsList>
-            <TabsTrigger value="trips">Trips</TabsTrigger>
-            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-            <TabsTrigger value="drivers">Drivers</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="accidents">Accidents</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
-            <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
-          </TabsList>
-        </div>
-         <TabsContent value="trips">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Trips</CardTitle>
-                    <CardDescription>Manage all vehicle trips.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <TripTable trips={data.trips || []} setTrips={setTrips} />
-                </CardContent>
-            </Card>
-        </TabsContent>
-        <TabsContent value="vehicles">
-           <VehicleTable />
-        </TabsContent>
-        <TabsContent value="drivers">
+    <Tabs defaultValue="trips" className="w-full">
+      <div className="flex items-center">
+        <TabsList>
+          <TabsTrigger value="trips">Trips</TabsTrigger>
+          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+          <TabsTrigger value="drivers">Drivers</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="accidents">Accidents</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
+          <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
+        </TabsList>
+      </div>
+       <TabsContent value="trips">
           <Card>
               <CardHeader>
-                  <CardTitle>Drivers</CardTitle>
-                  <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
+                  <CardTitle>Trips</CardTitle>
+                  <CardDescription>Manage all vehicle trips.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable drivers={data.drivers || []} setDrivers={setDrivers} vehicles={data.vehicles || []} />
+                  <TripTable trips={data.trips} setTrips={(updater) => setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips) : updater}))} />
               </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="maintenance">
-            <div className="grid gap-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Maintenance Records</CardTitle>
-                        <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <MaintenanceRecordTable 
-                            records={data.maintenanceRecords || []} 
-                            setRecords={setMaintenanceRecords} 
-                        />
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Parts</CardTitle>
-                        <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <PartTable parts={data.parts || []} setParts={setParts} />
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Service Centers / Garages</CardTitle>
-                        <CardDescription>Manage your approved service centers and garages.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ServiceCenterTable 
-                            serviceCenters={data.serviceCenters || []} 
-                            setServiceCenters={setServiceCenters} 
-                        />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Maintenance Types</CardTitle>
-                        <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <MaintenanceTypeTable 
-                            maintenanceTypes={data.maintenanceTypes || []} 
-                            setMaintenanceTypes={setMaintenanceTypes} 
-                        />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Maintenance Expense Types</CardTitle>
-                        <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <MaintenanceExpenseTypeTable 
-                            expenseTypes={data.maintenanceExpenseTypes || []} 
-                            setExpenseTypes={setMaintenanceExpenseTypes}
-                        />
-                    </CardContent>
-                </Card>
-            </div>
-        </TabsContent>
-        <TabsContent value="accidents">
-            <div className="grid gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Accident Records</CardTitle>
-                        <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <AccidentTable accidents={data.accidents || []} setAccidents={setAccidents} />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Accident Types</CardTitle>
-                        <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <AccidentTypeTable accidentTypes={data.accidentTypes || []} setAccidentTypes={setAccidentTypes} />
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Severity Levels</CardTitle>
-                        <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <SeverityLevelTable severityLevels={data.severityLevels || []} setSeverityLevels={setSeverityLevels} />
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Fault Status</CardTitle>
-                        <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <FaultStatusTable faultStatuses={data.faultStatuses || []} setFaultStatuses={setFaultStatuses} />
-                    </CardContent>
-                </Card>
-            </div>
-        </TabsContent>
-        <TabsContent value="reports">
-            <ReportsPage />
-        </TabsContent>
-        <TabsContent value="trip-master">
+      </TabsContent>
+      <TabsContent value="vehicles">
+         <VehicleTable />
+      </TabsContent>
+      <TabsContent value="drivers">
+        <Card>
+            <CardHeader>
+                <CardTitle>Drivers</CardTitle>
+                <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <DriverTable drivers={data.drivers} setDrivers={(updater) => setData(prev => ({ ...prev, drivers: typeof updater === 'function' ? updater(prev.drivers) : updater }))} vehicles={data.vehicles} />
+            </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="maintenance">
           <div className="grid gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Routes</CardTitle>
-                    <CardDescription>Define routes by selecting a start and end location.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <RouteTable locations={data.locations || []} />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Trip Purposes</CardTitle>
-                    <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <TripPurposeTable />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Locations</CardTitle>
-                    <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <LocationTable locations={data.locations || []} setLocations={setLocations} />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Expense Types</CardTitle>
-                    <CardDescription>Manage predefined types for trip expenses.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ExpenseTypeTable />
-                </CardContent>
-            </Card>
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Maintenance Records</CardTitle>
+                      <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <MaintenanceRecordTable 
+                          records={data.maintenanceRecords} 
+                          setRecords={(updater) => setData(prev => ({ ...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords) : updater }))} 
+                      />
+                  </CardContent>
+              </Card>
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Parts</CardTitle>
+                      <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <PartTable parts={data.parts} setParts={(updater) => setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts) : updater}))} />
+                  </CardContent>
+              </Card>
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Service Centers / Garages</CardTitle>
+                      <CardDescription>Manage your approved service centers and garages.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <ServiceCenterTable 
+                          serviceCenters={data.serviceCenters} 
+                          setServiceCenters={(updater) => setData(prev => ({ ...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters) : updater }))} 
+                      />
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Maintenance Types</CardTitle>
+                      <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <MaintenanceTypeTable 
+                          maintenanceTypes={data.maintenanceTypes} 
+                          setMaintenanceTypes={(updater) => setData(prev => ({ ...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes) : updater }))} 
+                      />
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Maintenance Expense Types</CardTitle>
+                      <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <MaintenanceExpenseTypeTable 
+                          expenseTypes={data.maintenanceExpenseTypes}
+                          setExpenseTypes={(updater) => setData(prev => ({ ...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes) : updater }))}
+                      />
+                  </CardContent>
+              </Card>
           </div>
-        </TabsContent>
-        <TabsContent value="vehicle-master">
-           <div className="grid gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Vehicle Brands</CardTitle>
-                        <CardDescription>Manage the different brands of vehicles.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VehicleBrandTable />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Vehicle Categories</CardTitle>
-                        <CardDescription>Manage the different categories of vehicles available.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VehicleTypeTable />
-                    </CardContent>
-                </Card>
-           </div>
-        </TabsContent>
-      </Tabs>
-    </>
+      </TabsContent>
+      <TabsContent value="accidents">
+          <div className="grid gap-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Accident Records</CardTitle>
+                      <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <AccidentTable accidents={data.accidents} setAccidents={(updater) => setData(prev => ({ ...prev, accidents: typeof updater === 'function' ? updater(prev.accidents) : updater }))} />
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Accident Types</CardTitle>
+                      <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <AccidentTypeTable accidentTypes={data.accidentTypes} setAccidentTypes={(updater) => setData(prev => ({ ...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes) : updater }))} />
+                  </CardContent>
+              </Card>
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Severity Levels</CardTitle>
+                      <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <SeverityLevelTable severityLevels={data.severityLevels} setSeverityLevels={(updater) => setData(prev => ({ ...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels) : updater }))} />
+                  </CardContent>
+              </Card>
+               <Card>
+                  <CardHeader>
+                      <CardTitle>Fault Status</CardTitle>
+                      <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <FaultStatusTable faultStatuses={data.faultStatuses} setFaultStatuses={(updater) => setData(prev => ({ ...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses) : updater }))} />
+                  </CardContent>
+              </Card>
+          </div>
+      </TabsContent>
+      <TabsContent value="reports">
+          <ReportsPage />
+      </TabsContent>
+      <TabsContent value="trip-master">
+        <div className="grid gap-6">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Routes</CardTitle>
+                  <CardDescription>Define routes by selecting a start and end location.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <RouteTable locations={data.locations} />
+              </CardContent>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Trip Purposes</CardTitle>
+                  <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <TripPurposeTable />
+              </CardContent>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Locations</CardTitle>
+                  <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <LocationTable locations={data.locations} setLocations={(updater) => setData(prev => ({ ...prev, locations: typeof updater === 'function' ? updater(prev.locations) : updater }))} />
+              </CardContent>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Expense Types</CardTitle>
+                  <CardDescription>Manage predefined types for trip expenses.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <ExpenseTypeTable />
+              </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+      <TabsContent value="vehicle-master">
+         <div className="grid gap-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Vehicle Brands</CardTitle>
+                      <CardDescription>Manage the different brands of vehicles.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <VehicleBrandTable />
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Vehicle Categories</CardTitle>
+                      <CardDescription>Manage the different categories of vehicles available.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <VehicleTypeTable />
+                  </CardContent>
+              </Card>
+         </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
-    
+export default function VehicleManagementPage() {
+    return (
+        <VehicleManagementProvider>
+            <VehicleManagementContent />
+        </VehicleManagementProvider>
+    )
+}

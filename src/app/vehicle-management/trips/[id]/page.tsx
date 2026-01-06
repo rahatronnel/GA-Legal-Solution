@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Trip } from '@/app/vehicle-management/components/trip-entry-form';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-table';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
@@ -81,28 +81,28 @@ const getStatusVariant = (status: Trip['tripStatus']) => {
     }
 };
 
-export default function TripProfilePage() {
+function TripProfileContent() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data } = useVehicleManagement();
   const {
-      trips = [],
-      vehicles = [],
-      drivers = [],
-      purposes = [],
-      locations = [],
-      expenseTypes = []
-  } = vehicleManagementData;
+      trips,
+      vehicles,
+      drivers,
+      purposes,
+      locations,
+      expenseTypes
+  } = data;
 
 
   const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || trips.length === 0) {
-        setTrip(undefined); // Stay in loading state
+    if (typeof id !== 'string' || !trips) {
+        setTrip(undefined);
         return;
     }
     
@@ -113,7 +113,7 @@ export default function TripProfilePage() {
     } else {
         notFound();
     }
-  }, [id, trips, notFound]);
+  }, [id, trips]);
 
   const { vehicle, driver, purpose, startLocation, endLocation, totalDistance, totalExpenses } = useMemo(() => {
     if (!trip) return {};
@@ -235,4 +235,10 @@ export default function TripProfilePage() {
   );
 }
 
-    
+export default function TripProfilePage() {
+    return (
+        <VehicleManagementProvider>
+            <TripProfileContent />
+        </VehicleManagementProvider>
+    );
+}

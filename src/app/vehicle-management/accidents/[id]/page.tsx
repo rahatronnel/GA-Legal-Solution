@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion, Printer } from 'lucide-react';
@@ -77,32 +77,32 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
 );
 
 
-export default function AccidentProfilePage() {
+function AccidentProfileContent() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data } = useVehicleManagement();
   const {
-      accidents = [],
-      vehicles = [],
-      drivers = [],
-      employees = [],
-      routes = [],
-      trips = [],
-      accidentTypes = [],
-      severityLevels = [],
-      faultStatuses = [],
-      serviceCenters = [],
-  } = vehicleManagementData;
+      accidents,
+      vehicles,
+      drivers,
+      employees,
+      routes,
+      trips,
+      accidentTypes,
+      severityLevels,
+      faultStatuses,
+      serviceCenters,
+  } = data;
 
 
   const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof id !== 'string' || accidents.length === 0) {
-        setAccident(undefined); // Stay in loading state
+    if (typeof id !== 'string' || !accidents) {
+        setAccident(undefined);
         return;
     }
     
@@ -113,7 +113,7 @@ export default function AccidentProfilePage() {
     } else {
         notFound();
     }
-  }, [id, accidents, notFound]);
+  }, [id, accidents]);
 
 
   const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
@@ -239,7 +239,7 @@ export default function AccidentProfilePage() {
                              <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
                         )
                     ))}
-                    {Object.values(accident.documents).every(arr => arr.length === 0) && (
+                    {Object.values(accident.documents).every(arr => !arr || arr.length === 0) && (
                          <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                     )}
                 </div>
@@ -251,4 +251,10 @@ export default function AccidentProfilePage() {
   );
 }
 
-    
+export default function AccidentProfilePage() {
+    return (
+        <VehicleManagementProvider>
+            <AccidentProfileContent />
+        </VehicleManagementProvider>
+    );
+}

@@ -99,7 +99,7 @@ export default function EmployeeProfilePage() {
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || employees.length === 0) {
+    if (typeof id !== 'string' || !employees || employees.length === 0) {
         setEmployee(undefined);
         return;
     }
@@ -108,7 +108,9 @@ export default function EmployeeProfilePage() {
     if (foundEmployee) {
         setEmployee(foundEmployee);
     } else {
-        notFound();
+        // We delay the notFound call slightly to ensure data has had a chance to load on client.
+        const timer = setTimeout(() => notFound(), 500);
+        return () => clearTimeout(timer);
     }
   }, [id, employees, notFound]);
 

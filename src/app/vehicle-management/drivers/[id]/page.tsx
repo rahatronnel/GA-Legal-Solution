@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,26 +91,26 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </li>
 );
 
-export default function DriverProfilePage() {
+function DriverProfileContent() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data } = useVehicleManagement();
   const { 
-      drivers = [],
-      vehicles = [],
-      accidents = [],
-      maintenanceRecords = [],
-      maintenanceTypes = [],
-      accidentTypes = []
-  } = vehicleManagementData;
+      drivers,
+      vehicles,
+      accidents,
+      maintenanceRecords,
+      maintenanceTypes,
+      accidentTypes
+  } = data;
   
   const [driver, setDriver] = useState<Driver | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string') {
+    if (typeof id !== 'string' || !drivers) {
         setDriver(undefined);
         return;
     }
@@ -122,7 +122,7 @@ export default function DriverProfilePage() {
     } else {
         notFound();
     }
-  }, [id, drivers, notFound]);
+  }, [id, drivers]);
 
   const driverAccidentHistory = useMemo(() => {
     if (!id) return [];
@@ -322,4 +322,12 @@ export default function DriverProfilePage() {
       </Card>
     </div>
   );
+}
+
+export default function DriverProfilePage() {
+    return (
+        <VehicleManagementProvider>
+            <DriverProfileContent />
+        </VehicleManagementProvider>
+    )
 }

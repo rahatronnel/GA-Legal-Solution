@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, DollarSign, Text } from 'lucide-react';
@@ -76,29 +76,29 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
 );
 
 
-export default function MaintenanceProfilePage() {
+function MaintenanceProfileContent() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
+  const { data } = useVehicleManagement();
   const {
-      maintenanceRecords = [],
-      vehicles = [],
-      drivers = [],
-      parts = [],
-      maintenanceTypes = [],
-      serviceCenters = [],
-      employees = [],
-      maintenanceExpenseTypes = [],
-  } = vehicleManagementData;
+      maintenanceRecords,
+      vehicles,
+      drivers,
+      parts,
+      maintenanceTypes,
+      serviceCenters,
+      employees,
+      maintenanceExpenseTypes,
+  } = data;
 
 
   const [record, setRecord] = useState<MaintenanceRecord | null | undefined>(undefined);
 
   useEffect(() => {
-    if (typeof id !== 'string' || maintenanceRecords.length === 0) {
-        setRecord(undefined); // Stay in loading state
+    if (typeof id !== 'string' || !maintenanceRecords) {
+        setRecord(undefined);
         return;
     }
     
@@ -109,7 +109,7 @@ export default function MaintenanceProfilePage() {
     } else {
         notFound();
     }
-  }, [id, maintenanceRecords, notFound]);
+  }, [id, maintenanceRecords]);
 
   const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost } = useMemo(() => {
     if (!record) return {};
@@ -243,4 +243,11 @@ export default function MaintenanceProfilePage() {
   );
 }
 
+export default function MaintenanceProfilePage() {
+    return (
+        <VehicleManagementProvider>
+            <MaintenanceProfileContent />
+        </VehicleManagementProvider>
+    )
+}
     
