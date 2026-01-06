@@ -23,15 +23,16 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-table';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 interface DriverTableProps {
   drivers: Driver[];
   setDrivers: React.Dispatch<React.SetStateAction<Driver[]>>;
-  vehicles: Vehicle[];
 }
 
-export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps) {
+export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
   const { toast } = useToast();
+  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -46,18 +47,16 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
     return () => clearTimeout(timer);
   }, []);
 
-  const safeDrivers = Array.isArray(drivers) ? drivers : [];
-
   const filteredDrivers = useMemo(() => {
-    if (!searchTerm) return safeDrivers;
+    if (!searchTerm) return drivers;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return safeDrivers.filter(driver => 
+    return drivers.filter(driver => 
       (driver.name && driver.name.toLowerCase().includes(lowercasedTerm)) ||
       (driver.driverIdCode && driver.driverIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (driver.mobileNumber && driver.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
       (driver.drivingLicenseNumber && driver.drivingLicenseNumber.toLowerCase().includes(lowercasedTerm))
     );
-  }, [safeDrivers, searchTerm]);
+  }, [drivers, searchTerm]);
 
   const handleAdd = () => {
     setCurrentDriver(null);
@@ -71,7 +70,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setDrivers(prev => (Array.isArray(prev) ? prev : []).map(d => {
+        setDrivers(prev => prev.map(d => {
             if (d.id === id) {
                 return { id, ...data } as Driver;
             }
@@ -83,7 +82,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
             id: Date.now().toString(), 
             ...data
         };
-        setDrivers(prev => [...(Array.isArray(prev) ? prev : []), newDriver]);
+        setDrivers(prev => [...prev, newDriver]);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -95,7 +94,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
 
   const confirmDelete = () => {
     if (currentDriver?.id) {
-        setDrivers(prev => (Array.isArray(prev) ? prev : []).filter(d => d.id !== currentDriver.id));
+        setDrivers(prev => prev.filter(d => d.id !== currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -184,7 +183,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
             }));
           
           if(newDrivers.length > 0) {
-            setDrivers(prev => [...(Array.isArray(prev) ? prev : []), ...newDrivers]);
+            setDrivers(prev => [...prev, ...newDrivers]);
             toast({ title: 'Success', description: `${newDrivers.length} drivers uploaded successfully.` });
           }
 
@@ -220,7 +219,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
             <Input id="upload-excel-drivers" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
              <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
                 <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={safeDrivers.length === 0}>
+                    <Button variant="destructive" disabled={drivers.length === 0}>
                         <Trash className="mr-2 h-4 w-4" /> Delete All
                     </Button>
                 </AlertDialogTrigger>
@@ -228,7 +227,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete all {safeDrivers.length} driver records.
+                            This action cannot be undone. This will permanently delete all {drivers.length} driver records.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -257,7 +256,7 @@ export function DriverTable({ drivers, setDrivers, vehicles }: DriverTableProps)
               <TableRow>
                 <TableCell colSpan={5} className="text-center">Loading...</TableCell>
               </TableRow>
-            ) : filteredDrivers.length > 0 ? (
+            ) : filteredDrivers && filteredDrivers.length > 0 ? (
               filteredDrivers.map((driver) => (
                 <TableRow key={driver.id}>
                   <TableCell className="flex items-center gap-2">
