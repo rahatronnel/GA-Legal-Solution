@@ -32,6 +32,7 @@ export default function VehicleManagementPage() {
       vehicles: [],
       vehicleTypes: [],
       vehicleBrands: [],
+      drivers: [],
       trips: [],
       routes: [],
       locations: [],
@@ -47,9 +48,6 @@ export default function VehicleManagementPage() {
       severityLevels: [],
       faultStatuses: [],
   });
-
-  // Manage drivers in a temporary, non-persistent state
-  const [drivers, setDrivers] = React.useState<Driver[]>([]);
 
   const setData = (key: string, value: any) => {
     setVehicleManagementData((prev: any) => ({
@@ -94,7 +92,7 @@ export default function VehicleManagementPage() {
                   <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable drivers={drivers} setDrivers={setDrivers} vehicles={vehicleManagementData.vehicles || []} />
+                  <DriverTable drivers={vehicleManagementData.drivers || []} setDrivers={(newVal) => setData('drivers', newVal)} vehicles={vehicleManagementData.vehicles || []} />
               </CardContent>
           </Card>
         </TabsContent>

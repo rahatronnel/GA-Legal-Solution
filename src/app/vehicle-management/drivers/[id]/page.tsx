@@ -91,26 +91,14 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </li>
 );
 
-// A simple in-memory store for non-persistent data
-const tempDriverStore: { drivers: Driver[] } = {
-    drivers: []
-};
-
-// This is a temporary solution to get data for the profile page
-// without using localStorage for drivers.
-if (typeof window !== 'undefined') {
-    // @ts-ignore
-    window.tempDriverStore = tempDriverStore;
-}
-
 export default function DriverProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  // Read other data from localStorage as it's still persistent
   const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {});
   const { 
+      drivers = [],
       vehicles = [],
       accidents = [],
       maintenanceRecords = [],
@@ -127,18 +115,14 @@ export default function DriverProfilePage() {
         return;
     }
     
-    // Read from the temporary in-memory store
-    const drivers = (window as any).tempDriverStore?.drivers || [];
     const foundDriver = drivers.find((d: Driver) => d.id === id);
 
     if (foundDriver) {
         setDriver(foundDriver);
     } else {
-        // If not found, it might mean a page refresh happened.
-        // We can't recover the data, so we show not found.
         notFound();
     }
-  }, [id, notFound]);
+  }, [id, drivers, notFound]);
 
   const driverAccidentHistory = useMemo(() => {
     if (!id) return [];
