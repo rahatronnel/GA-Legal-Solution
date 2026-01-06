@@ -28,12 +28,7 @@ import type { Route } from './route-table';
 import type { FaultStatus } from './fault-status-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 
-interface AccidentTableProps {
-    accidents: Accident[];
-    setAccidents: React.Dispatch<React.SetStateAction<Accident[]>>;
-}
-
-export function AccidentTable({ accidents: initialAccidents, setAccidents: setInitialAccidents }: AccidentTableProps) {
+export function AccidentTable() {
   const { toast } = useToast();
   
   const { data, setData } = useVehicleManagement();
@@ -75,9 +70,10 @@ export function AccidentTable({ accidents: initialAccidents, setAccidents: setIn
   const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
   const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
 
+  const safeAccidents = Array.isArray(accidents) ? accidents : [];
+
   const filteredAccidents = useMemo(() => {
-    if (!accidents) return [];
-    return accidents.filter(acc => {
+    return safeAccidents.filter(acc => {
         const searchTermMatch = searchTerm === '' ||
             getVehicleReg(acc.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
             getDriverName(acc.driverId).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,7 +90,7 @@ export function AccidentTable({ accidents: initialAccidents, setAccidents: setIn
 
         return searchTermMatch && vehicleMatch && driverMatch && typeMatch && severityMatch && routeMatch && faultStatusMatch;
     });
-  }, [accidents, searchTerm, vehicleFilter, driverFilter, typeFilter, severityFilter, routeFilter, faultStatusFilter, vehicles, drivers, accidentTypes]);
+  }, [safeAccidents, searchTerm, vehicleFilter, driverFilter, typeFilter, severityFilter, routeFilter, faultStatusFilter, vehicles, drivers, accidentTypes]);
 
 
   const handleAdd = () => {

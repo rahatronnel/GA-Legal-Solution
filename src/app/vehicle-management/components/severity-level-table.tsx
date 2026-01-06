@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type SeverityLevel = {
   id: string;
@@ -32,13 +33,15 @@ export type SeverityLevel = {
   code: string;
 };
 
-interface SeverityLevelTableProps {
-    severityLevels: SeverityLevel[];
-    setSeverityLevels: React.Dispatch<React.SetStateAction<SeverityLevel[]>>;
-}
-
-export function SeverityLevelTable({ severityLevels, setSeverityLevels }: SeverityLevelTableProps) {
+export function SeverityLevelTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { severityLevels } = data;
+
+  const setSeverityLevels = (updater: React.SetStateAction<SeverityLevel[]>) => {
+    setData(prev => ({...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<SeverityLevel> | null>(null);
@@ -51,14 +54,16 @@ export function SeverityLevelTable({ severityLevels, setSeverityLevels }: Severi
     return () => clearTimeout(timer);
   }, []);
 
+  const safeSeverityLevels = Array.isArray(severityLevels) ? severityLevels : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return severityLevels;
+    if (!searchTerm) return safeSeverityLevels;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return severityLevels.filter(p => 
+    return safeSeverityLevels.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [severityLevels, searchTerm]);
+  }, [safeSeverityLevels, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;

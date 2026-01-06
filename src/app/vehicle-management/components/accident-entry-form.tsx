@@ -16,13 +16,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, File as FileIcon } from 'lucide-react';
+import { Upload, X, CalendarIcon, File as FileIcon, PlusCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
@@ -205,22 +205,25 @@ interface AccidentEntryFormProps {
 
 export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: AccidentEntryFormProps) {
   const { toast } = useToast();
+  const { data } = useVehicleManagement();
+  const { 
+    vehicles,
+    drivers,
+    employees,
+    routes,
+    trips,
+    accidentTypes,
+    severityLevels,
+    faultStatuses,
+    serviceCenters
+  } = data;
+  
   const [step, setStep] = useState(1);
   const [accidentData, setAccidentData] = useState(initialAccidentData);
   const [documents, setDocuments] = useState<Record<AccidentDocumentType, UploadedFile[]>>(initialDocuments);
   
   const [accidentDate, setAccidentDate] = useState<Date | undefined>();
 
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [routes] = useLocalStorage<Route[]>('routes', []);
-  const [trips] = useLocalStorage<Trip[]>('trips', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
-  const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
-  const [faultStatuses] = useLocalStorage<FaultStatus[]>('faultStatuses', []);
-  const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-  
   const isEditing = accident && accident.id;
   const progress = Math.round((step / 5) * 100);
 

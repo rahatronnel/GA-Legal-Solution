@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type FaultStatus = {
   id: string;
@@ -32,13 +33,15 @@ export type FaultStatus = {
   code: string;
 };
 
-interface FaultStatusTableProps {
-    faultStatuses: FaultStatus[];
-    setFaultStatuses: React.Dispatch<React.SetStateAction<FaultStatus[]>>;
-}
-
-export function FaultStatusTable({ faultStatuses, setFaultStatuses }: FaultStatusTableProps) {
+export function FaultStatusTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { faultStatuses } = data;
+
+  const setFaultStatuses = (updater: React.SetStateAction<FaultStatus[]>) => {
+    setData(prev => ({...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<FaultStatus> | null>(null);
@@ -51,14 +54,16 @@ export function FaultStatusTable({ faultStatuses, setFaultStatuses }: FaultStatu
     return () => clearTimeout(timer);
   }, []);
 
+  const safeFaultStatuses = Array.isArray(faultStatuses) ? faultStatuses : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return faultStatuses;
+    if (!searchTerm) return safeFaultStatuses;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return faultStatuses.filter(p => 
+    return safeFaultStatuses.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [faultStatuses, searchTerm]);
+  }, [safeFaultStatuses, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;

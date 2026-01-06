@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVehicleManagement } from './vehicle-management-provider';
 
 export type AccidentType = {
   id: string;
@@ -32,13 +33,15 @@ export type AccidentType = {
   code: string;
 };
 
-interface AccidentTypeTableProps {
-    accidentTypes: AccidentType[];
-    setAccidentTypes: React.Dispatch<React.SetStateAction<AccidentType[]>>;
-}
-
-export function AccidentTypeTable({ accidentTypes, setAccidentTypes }: AccidentTypeTableProps) {
+export function AccidentTypeTable() {
   const { toast } = useToast();
+  const { data, setData } = useVehicleManagement();
+  const { accidentTypes } = data;
+  
+  const setAccidentTypes = (updater: React.SetStateAction<AccidentType[]>) => {
+      setData(prev => ({...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes || []) : updater }));
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<AccidentType> | null>(null);
@@ -51,14 +54,16 @@ export function AccidentTypeTable({ accidentTypes, setAccidentTypes }: AccidentT
     return () => clearTimeout(timer);
   }, []);
 
+  const safeAccidentTypes = Array.isArray(accidentTypes) ? accidentTypes : [];
+
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return accidentTypes;
+    if (!searchTerm) return safeAccidentTypes;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return accidentTypes.filter(p => 
+    return safeAccidentTypes.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
         p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [accidentTypes, searchTerm]);
+  }, [safeAccidentTypes, searchTerm]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
