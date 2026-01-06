@@ -26,8 +26,6 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { Driver } from "./components/driver-entry-form";
 import type { Trip } from "./components/trip-entry-form";
 import type { Route } from "./components/route-table";
-import type { TripPurpose } from "./components/trip-purpose-table";
-import type { ExpenseType } from "./components/expense-type-table";
 import type { MaintenanceRecord } from "./components/maintenance-entry-form";
 import type { Part } from "./components/part-table";
 import type { ServiceCenter } from "./components/service-center-table";
@@ -61,29 +59,13 @@ export default function VehicleManagementPage() {
     vehicleBrands: []
   });
 
-  const setDrivers = (newDrivers: Driver[] | ((prev: Driver[]) => Driver[])) => {
-    if (typeof newDrivers === 'function') {
-        setData((prev: any) => ({ ...prev, drivers: newDrivers(prev.drivers || []) }));
-    } else {
-        setData((prev: any) => ({ ...prev, drivers: newDrivers }));
-    }
+  const updateData = (key: string, value: any) => {
+    setData((prev: any) => ({ ...prev, [key]: value }));
   };
-  const setTrips = (trips: Trip[]) => setData((prev: any) => ({ ...prev, trips }));
-  const setRoutes = (routes: Route[]) => setData((prev: any) => ({ ...prev, routes }));
-  const setLocations = (locations: Location[]) => setData((prev: any) => ({ ...prev, locations }));
-  const setAccidents = (accidents: Accident[]) => setData((prev: any) => ({ ...prev, accidents }));
-  const setAccidentTypes = (accidentTypes: AccidentType[]) => setData((prev: any) => ({...prev, accidentTypes}));
-  const setSeverityLevels = (severityLevels: SeverityLevel[]) => setData((prev: any) => ({...prev, severityLevels}));
-  const setFaultStatuses = (faultStatuses: FaultStatus[]) => setData((prev: any) => ({...prev, faultStatuses}));
-  const setMaintenanceRecords = (maintenanceRecords: MaintenanceRecord[]) => setData((prev: any) => ({ ...prev, maintenanceRecords }));
-  const setParts = (parts: Part[]) => setData((prev: any) => ({...prev, parts}));
-  const setServiceCenters = (serviceCenters: ServiceCenter[]) => setData((prev: any) => ({...prev, serviceCenters}));
-  const setMaintenanceTypes = (maintenanceTypes: MaintenanceType[]) => setData((prev: any) => ({...prev, maintenanceTypes}));
-  const setMaintenanceExpenseTypes = (maintenanceExpenseTypes: MaintenanceExpenseType[]) => setData((prev: any) => ({...prev, maintenanceExpenseTypes}));
 
   return (
     <>
-      <Tabs defaultValue="trips" className="w-full">
+      <Tabs defaultValue="drivers" className="w-full">
         <div className="flex items-center">
           <TabsList>
             <TabsTrigger value="trips">Trips</TabsTrigger>
@@ -103,7 +85,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage all vehicle trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable trips={data.trips} setTrips={setTrips} />
+                    <TripTable trips={data.trips || []} setTrips={(newTrips) => updateData('trips', newTrips)} />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -117,7 +99,7 @@ export default function VehicleManagementPage() {
                   <CardDescription>Manage your organization's drivers and their documents.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DriverTable drivers={data.drivers || []} setDrivers={setDrivers} />
+                  <DriverTable drivers={data.drivers || []} setDrivers={(newDrivers) => updateData('drivers', newDrivers)} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -130,8 +112,8 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceRecordTable 
-                            records={data.maintenanceRecords} 
-                            setRecords={setMaintenanceRecords} 
+                            records={data.maintenanceRecords || []} 
+                            setRecords={(newRecords) => updateData('maintenanceRecords', newRecords)} 
                         />
                     </CardContent>
                 </Card>
@@ -141,7 +123,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PartTable parts={data.parts} setParts={setParts} />
+                        <PartTable parts={data.parts || []} setParts={(newParts) => updateData('parts', newParts)} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -151,8 +133,8 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <ServiceCenterTable 
-                            serviceCenters={data.serviceCenters} 
-                            setServiceCenters={setServiceCenters} 
+                            serviceCenters={data.serviceCenters || []} 
+                            setServiceCenters={(newCenters) => updateData('serviceCenters', newCenters)} 
                         />
                     </CardContent>
                 </Card>
@@ -163,8 +145,8 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceTypeTable 
-                            maintenanceTypes={data.maintenanceTypes} 
-                            setMaintenanceTypes={setMaintenanceTypes} 
+                            maintenanceTypes={data.maintenanceTypes || []} 
+                            setMaintenanceTypes={(newTypes) => updateData('maintenanceTypes', newTypes)} 
                         />
                     </CardContent>
                 </Card>
@@ -175,8 +157,8 @@ export default function VehicleManagementPage() {
                     </CardHeader>
                     <CardContent>
                         <MaintenanceExpenseTypeTable 
-                            expenseTypes={data.maintenanceExpenseTypes} 
-                            setExpenseTypes={setMaintenanceExpenseTypes}
+                            expenseTypes={data.maintenanceExpenseTypes || []} 
+                            setExpenseTypes={(newTypes) => updateData('maintenanceExpenseTypes', newTypes)}
                         />
                     </CardContent>
                 </Card>
@@ -190,7 +172,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTable accidents={data.accidents} setAccidents={setAccidents} />
+                        <AccidentTable accidents={data.accidents || []} setAccidents={(newAccidents) => updateData('accidents', newAccidents)} />
                     </CardContent>
                 </Card>
                 <Card>
@@ -199,7 +181,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AccidentTypeTable accidentTypes={data.accidentTypes} setAccidentTypes={setAccidentTypes} />
+                        <AccidentTypeTable accidentTypes={data.accidentTypes || []} setAccidentTypes={(newTypes) => updateData('accidentTypes', newTypes)} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -208,7 +190,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <SeverityLevelTable severityLevels={data.severityLevels} setSeverityLevels={setSeverityLevels} />
+                        <SeverityLevelTable severityLevels={data.severityLevels || []} setSeverityLevels={(newLevels) => updateData('severityLevels', newLevels)} />
                     </CardContent>
                 </Card>
                  <Card>
@@ -217,7 +199,7 @@ export default function VehicleManagementPage() {
                         <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <FaultStatusTable faultStatuses={data.faultStatuses} setFaultStatuses={setFaultStatuses} />
+                        <FaultStatusTable faultStatuses={data.faultStatuses || []} setFaultStatuses={(newStatuses) => updateData('faultStatuses', newStatuses)} />
                     </CardContent>
                 </Card>
             </div>
@@ -233,7 +215,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Define routes by selecting a start and end location.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RouteTable locations={data.locations} routes={data.routes} setRoutes={setRoutes} />
+                    <RouteTable locations={data.locations || []} routes={data.routes || []} setRoutes={(newRoutes) => updateData('routes', newRoutes)} />
                 </CardContent>
             </Card>
             <Card>
@@ -251,7 +233,7 @@ export default function VehicleManagementPage() {
                     <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <LocationTable locations={data.locations} setLocations={setLocations} />
+                    <LocationTable locations={data.locations || []} setLocations={(newLocations) => updateData('locations', newLocations)} />
                 </CardContent>
             </Card>
             <Card>

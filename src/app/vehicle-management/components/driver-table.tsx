@@ -72,12 +72,7 @@ export function DriverTable({ drivers, setDrivers }: DriverTableProps) {
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setDrivers(prev => (prev || []).map(d => {
-            if (d.id === id) {
-                return { id, ...data } as Driver;
-            }
-            return d;
-        }));
+        setDrivers(prev => (prev || []).map(d => d.id === id ? { id, ...data } as Driver : d));
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
         const newDriver: Driver = { 
