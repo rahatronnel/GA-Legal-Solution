@@ -95,44 +95,60 @@ export default function DriverProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
-  const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-  const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-  const [accidents] = useLocalStorage<Accident[]>('accidents', []);
-  const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-  const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-  const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
+  const [vehicleManagementData] = useLocalStorage<any>('vehicleManagementData', {
+    vehicles: [],
+    drivers: [],
+    vehicleTypes: [],
+    vehicleBrands: [],
+    trips: [],
+    tripPurposes: [],
+    locations: [],
+    routes: [],
+    expenseTypes: [],
+    maintenanceRecords: [],
+    maintenanceTypes: [],
+    maintenanceExpenseTypes: [],
+    parts: [],
+    serviceCenters: [],
+    accidents: [],
+    accidentTypes: [],
+    severityLevels: [],
+    faultStatuses: [],
+  });
 
+  const { drivers, vehicles, accidents, maintenanceRecords, maintenanceTypes, accidentTypes } = vehicleManagementData;
   const [driver, setDriver] = useState<Driver | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
   useEffect(() => {
-    if (typeof id !== 'string' || drivers.length === 0) {
+    if (typeof id !== 'string' || !drivers) {
         setDriver(undefined);
         return;
     }
     
-    const foundDriver = drivers.find(d => d.id === id);
+    const foundDriver = drivers.find((d: Driver) => d.id === id);
     if (foundDriver) {
         setDriver(foundDriver);
     } else {
+        // If the main data array is loaded and we still haven't found it, it's a 404.
         notFound();
     }
   }, [id, drivers, notFound]);
 
   const driverAccidentHistory = useMemo(() => {
     if (!id) return [];
-    return accidents.filter(accident => accident.driverId === id);
+    return accidents.filter((accident: Accident) => accident.driverId === id);
   }, [id, accidents]);
 
   const driverMaintenanceHistory = useMemo(() => {
       if (!id) return [];
-      const assignedVehicleIds = vehicles.filter(v => {
+      const assignedVehicleIds = vehicles.filter((v: Vehicle) => {
           const currentDriver = v.driverAssignmentHistory?.sort((a,b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime())[0];
           return currentDriver?.driverId === id;
-      }).map(v => v.id);
+      }).map((v: Vehicle) => v.id);
 
       if (assignedVehicleIds.length === 0) return [];
-      return maintenanceRecords.filter(record => assignedVehicleIds.includes(record.vehicleId));
+      return maintenanceRecords.filter((record: MaintenanceRecord) => assignedVehicleIds.includes(record.vehicleId));
   }, [id, vehicles, maintenanceRecords]);
 
   if (driver === undefined) {
@@ -151,16 +167,16 @@ export default function DriverProfilePage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
-  const assignedVehicle = vehicles.find(v => v.id === driver.assignedVehicleId);
+  const assignedVehicle = vehicles.find((v: Vehicle) => v.id === driver.assignedVehicleId);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   }
 
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
-  const getAccidentTypeName = (typeId: string) => accidentTypes.find(t => t.id === typeId)?.name || 'N/A';
-  const getVehicleRegFromId = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t: MaintenanceType) => t.id === typeId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
+  const getVehicleRegFromId = (vehicleId: string) => vehicles.find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
 
 
   return (
@@ -256,7 +272,7 @@ export default function DriverProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {driverAccidentHistory.map(accident => (
+                            {driverAccidentHistory.map((accident: Accident) => (
                                 <TableRow key={accident.id}>
                                     <TableCell>{accident.accidentDate}</TableCell>
                                     <TableCell>{getVehicleRegFromId(accident.vehicleId)}</TableCell>
@@ -287,7 +303,7 @@ export default function DriverProfilePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {driverMaintenanceHistory.map(record => (
+                            {driverMaintenanceHistory.map((record: MaintenanceRecord) => (
                                 <TableRow key={record.id}>
                                     <TableCell>{record.serviceDate}</TableCell>
                                     <TableCell>{getVehicleRegFromId(record.vehicleId)}</TableCell>
