@@ -33,8 +33,9 @@ interface MaintenanceRecordTableProps {
   setRecords: React.Dispatch<React.SetStateAction<MaintenanceRecord[]>>;
 }
 
-export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecordTableProps) {
+export function MaintenanceRecordTable({ records: initialRecords, setRecords: setInitialRecords }: MaintenanceRecordTableProps) {
   const { toast } = useToast();
+  const [records, setRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
@@ -252,5 +253,3 @@ export function MaintenanceRecordTable({ records, setRecords }: MaintenanceRecor
     </TooltipProvider>
   );
 }
-
-    

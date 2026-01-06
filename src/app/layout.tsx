@@ -10,12 +10,40 @@ import { Header } from '@/components/header';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
 import React from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useToast } from '@/hooks/use-toast';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
+  const [lastBackupDate, setLastBackupDate] = useLocalStorage<string>('lastBackupDate', '');
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const checkBackupReminder = () => {
+      const today = new Date().toISOString().split('T')[0];
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      if (!lastBackupDate || lastBackupDate < sevenDaysAgo) {
+          toast({
+              title: 'Backup Reminder',
+              description: "It's been a while since your last backup. Consider downloading a backup in Settings.",
+              duration: 8000,
+          });
+          // Update the date to prevent spamming the user
+          setLastBackupDate(today);
+      }
+    };
+    
+    // Check on initial load after a delay
+    const timer = setTimeout(checkBackupReminder, 5000);
+
+    return () => clearTimeout(timer);
+  }, [lastBackupDate, setLastBackupDate, toast]);
+
 
   return (
     <html lang="en" suppressHydrationWarning>

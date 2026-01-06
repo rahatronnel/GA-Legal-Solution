@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export type ExpenseType = {
   id: string;
@@ -32,13 +33,9 @@ export type ExpenseType = {
   code: string;
 };
 
-interface ExpenseTypeTableProps {
-  expenseTypes: ExpenseType[];
-  setExpenseTypes: React.Dispatch<React.SetStateAction<ExpenseType[]>>;
-}
-
-export function ExpenseTypeTable({ expenseTypes, setExpenseTypes }: ExpenseTypeTableProps) {
+export function ExpenseTypeTable() {
   const { toast } = useToast();
+  const [expenseTypes, setExpenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<ExpenseType> | null>(null);

@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Download, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 type OrganizationSettings = {
@@ -82,6 +83,63 @@ export default function SettingsPage() {
       title: 'Success',
       description: 'Organization settings have been saved.',
     });
+  };
+
+  const handleDownloadBackup = () => {
+    const backupData: { [key: string]: any } = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+            backupData[key] = localStorage.getItem(key);
+        }
+    }
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ga_legal_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({
+        title: 'Success',
+        description: 'Backup has been downloaded.',
+    });
+  };
+  
+  const handleRestoreBackup = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backupData = JSON.parse(e.target?.result as string);
+                localStorage.clear();
+                for (const key in backupData) {
+                    if (Object.prototype.hasOwnProperty.call(backupData, key)) {
+                        localStorage.setItem(key, backupData[key]);
+                    }
+                }
+                toast({
+                    title: 'Success!',
+                    description: 'Backup restored. The application will now reload.',
+                });
+                // Use a timeout to allow the toast to be seen before reload
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+
+            } catch (error) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Restore Failed',
+                    description: 'The selected file is not a valid backup file.',
+                });
+            }
+        };
+        reader.readAsText(file);
+    }
+    // Clear the input value to allow re-uploading the same file
+    event.target.value = '';
   };
   
   return (
@@ -157,6 +215,30 @@ export default function SettingsPage() {
               <Button onClick={handleSave}>Save Settings</Button>
             </div>
           </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Data Backup & Restore</CardTitle>
+                <CardDescription>Download a backup of all application data or restore it from a file.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Warning</AlertTitle>
+                    <AlertDescription>
+                        Restoring from a backup will completely overwrite all current application data. This action cannot be undone.
+                    </AlertDescription>
+                </Alert>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <Button onClick={handleDownloadBackup} className="w-full sm:w-auto">
+                        <Download className="mr-2 h-4 w-4" /> Download Backup
+                    </Button>
+                     <Label htmlFor="restore-backup-input" className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                        <Upload className="mr-2 h-4 w-4" /> Restore from Backup
+                    </Label>
+                    <Input id="restore-backup-input" type="file" accept=".json" className="hidden" onChange={handleRestoreBackup} />
+                </div>
+            </CardContent>
         </Card>
     </div>
   );

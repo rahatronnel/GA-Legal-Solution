@@ -33,8 +33,9 @@ interface AccidentTableProps {
     setAccidents: React.Dispatch<React.SetStateAction<Accident[]>>;
 }
 
-export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
+export function AccidentTable({ accidents: initialAccidents, setAccidents: setInitialAccidents }: AccidentTableProps) {
   const { toast } = useToast();
+  const [accidents, setAccidents] = useLocalStorage<Accident[]>('accidents', []);
   const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
   const [drivers] = useLocalStorage<Driver[]>('drivers', []);
   const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
@@ -259,5 +260,3 @@ export function AccidentTable({ accidents, setAccidents }: AccidentTableProps) {
     </TooltipProvider>
   );
 }
-
-    

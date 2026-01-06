@@ -3,15 +3,14 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionTable } from "./components/section-table";
-import { DesignationTable } from "./components/designation-table";
-import { EmployeeTable } from "./components/employee-table";
+import { SectionTable, type Section } from "./components/section-table";
+import { DesignationTable, type Designation } from "./components/designation-table";
+import { EmployeeTable, type Employee } from "./components/employee-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { Employee } from "./components/employee-entry-form";
-import type { Section } from "./components/section-table";
-import type { Designation } from "./components/designation-table";
 
 export default function UserManagementPage() {
+  // Each table component will manage its own state internally
+  // We provide them with empty arrays initially as they will fetch from their own local storage.
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
   const [sections, setSections] = useLocalStorage<Section[]>('sections', []);
   const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);

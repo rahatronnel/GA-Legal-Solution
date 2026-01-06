@@ -25,19 +25,16 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export type TripPurpose = {
   id: string;
   name: string;
 };
 
-interface TripPurposeTableProps {
-  purposes: TripPurpose[];
-  setPurposes: React.Dispatch<React.SetStateAction<TripPurpose[]>>;
-}
-
-export function TripPurposeTable({ purposes, setPurposes }: TripPurposeTableProps) {
+export function TripPurposeTable() {
   const { toast } = useToast();
+  const [purposes, setPurposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentPurpose, setCurrentPurpose] = useState<Partial<TripPurpose> | null>(null);
