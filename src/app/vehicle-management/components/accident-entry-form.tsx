@@ -36,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ChevronsUpDown, Check } from 'lucide-react';
+import { TimeInput } from './time-input';
 
 type UploadedFile = {
   id: string;
@@ -301,19 +302,8 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     setAccidentData(prev => ({ ...prev, [id]: isNumber ? parseFloat(value) || 0 : value }));
   };
 
-   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    const cleaned = value.replace(/[^0-9]/g, '');
-    let formatted = cleaned;
-
-    if (cleaned.length > 2) {
-      formatted = `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}`;
-    }
-    
-    // Add AM/PM logic if needed, here we just format HH:MM from 24h input
-    const finalValue = value.includes(' PM') || value.includes(' AM') ? value : formatted;
-    
-    setAccidentData(prev => ({ ...prev, [id]: finalValue }));
+  const handleTimeChange = (value: string) => {
+    setAccidentData(prev => ({ ...prev, accidentTime: value }));
   };
 
   const handleSelectChange = (id: keyof typeof accidentData) => (value: string) => {
@@ -447,12 +437,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                     </div>
                     <div className="space-y-2">
                       <Label>Accident Time<MandatoryIndicator/></Label>
-                      <Input
-                          id="accidentTime"
-                          type="time"
-                          value={accidentData.accidentTime}
-                          onChange={handleInputChange}
-                      />
+                      <TimeInput value={accidentData.accidentTime} onChange={handleTimeChange} />
                     </div>
                     <div className="space-y-2"><Label>Accident Location<MandatoryIndicator/></Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
                 </div>

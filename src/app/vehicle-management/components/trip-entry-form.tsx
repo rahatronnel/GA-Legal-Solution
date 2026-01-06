@@ -30,6 +30,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import type { ExpenseType } from './expense-type-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TimeInput } from './time-input';
 
 
 type UploadedFile = {
@@ -254,16 +255,8 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     setTripData(prev => ({ ...prev, [id]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
 
-  const handleTimeChange = (id: 'startTime' | 'endTime') => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    const nums = value.replace(/[^0-9]/g, '');
-    let formatted = nums;
-
-    if (nums.length > 2) {
-      formatted = `${nums.slice(0, 2)}:${nums.slice(2, 4)}`;
-    }
-    
-    setTripData(prev => ({ ...prev, [id]: formatted }));
+  const handleTimeChange = (id: 'startTime' | 'endTime') => (value: string) => {
+    setTripData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleVehicleChange = (vehicleId: string) => {
@@ -435,9 +428,9 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2"><Label>Start Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>Start Time</Label><Input id="startTime" value={tripData.startTime} onChange={handleTimeChange('startTime')} placeholder="HH:MM" maxLength={5} /></div>
+                  <div className="space-y-2"><Label>Start Time</Label><TimeInput value={tripData.startTime} onChange={handleTimeChange('startTime')} /></div>
                   <div className="space-y-2"><Label>End Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!endDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{endDate?format(endDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={handleDateChange(setEndDate,'endDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>End Time</Label><Input id="endTime" value={tripData.endTime} onChange={handleTimeChange('endTime')} placeholder="HH:MM" maxLength={5}/></div>
+                  <div className="space-y-2"><Label>End Time</Label><TimeInput value={tripData.endTime} onChange={handleTimeChange('endTime')} /></div>
                 </div>
                 
                 <div className="space-y-4">
@@ -544,7 +537,3 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     </Dialog>
   );
 }
-
-    
-
-    
