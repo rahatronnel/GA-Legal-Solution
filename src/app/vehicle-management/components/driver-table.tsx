@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -22,7 +22,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
-import type { Vehicle } from './vehicle-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 
 export function DriverTable() {
@@ -31,6 +30,10 @@ export function DriverTable() {
   const { vehicles, drivers } = data;
   const { handlePrint } = usePrint();
   
+  const setDrivers = (updater: React.SetStateAction<Driver[]>) => {
+    setData(prev => ({...prev, drivers: typeof updater === 'function' ? updater(prev.drivers || []) : updater }));
+  }
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
@@ -69,14 +72,14 @@ export function DriverTable() {
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
     if (id) {
-        setData(prev => ({...prev, drivers: (prev.drivers || []).map(d => (d.id === id ? { id, ...data } as Driver : d))}));
+        setDrivers(prev => (prev || []).map(d => (d.id === id ? { id, ...data } as Driver : d)));
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
         const newDriver: Driver = { 
             id: Date.now().toString(), 
             ...data
         };
-        setData(prev => ({...prev, drivers: [...(prev.drivers || []), newDriver]}));
+        setDrivers(prev => [...(prev || []), newDriver]);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -88,7 +91,7 @@ export function DriverTable() {
 
   const confirmDelete = () => {
     if (currentDriver?.id) {
-        setData(prev => ({...prev, drivers: (prev.drivers || []).filter(d => d.id !== currentDriver.id)}));
+        setDrivers(prev => (prev || []).filter(d => d.id !== currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -96,7 +99,7 @@ export function DriverTable() {
   };
   
   const confirmDeleteAll = () => {
-    setData(prev => ({...prev, drivers: []}));
+    setDrivers([]);
     toast({ title: 'Success', description: 'All driver records have been deleted.' });
     setIsDeleteAllConfirmOpen(false);
   };
@@ -177,7 +180,7 @@ export function DriverTable() {
             }));
           
           if(newDrivers.length > 0) {
-            setData(prev => ({...prev, drivers: [...(prev.drivers || []), ...newDrivers]}));
+            setDrivers(prev => [...(prev || []), ...newDrivers]);
             toast({ title: 'Success', description: `${newDrivers.length} drivers uploaded successfully.` });
           }
 
@@ -342,5 +345,3 @@ export function DriverTable() {
     </TooltipProvider>
   );
 }
-
-    
