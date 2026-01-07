@@ -27,7 +27,7 @@ import { useVehicleManagement } from './vehicle-management-provider';
 export function MaintenanceRecordTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
-  const { maintenanceRecords: records, vehicles = [], maintenanceTypes = [], drivers = [], serviceCenters = [] } = data;
+  const { maintenanceRecords: records, vehicles = [], maintenanceTypes = [], drivers = [], serviceCenters = [], employees = [] } = data;
   
   const setRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
     setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater }));
@@ -242,6 +242,7 @@ export function MaintenanceRecordTable() {
         setIsOpen={setIsFormOpen}
         onSave={handleSave}
         record={currentItem}
+        employees={employees}
       />
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
@@ -259,3 +260,4 @@ export function MaintenanceRecordTable() {
     </TooltipProvider>
   );
 }
+

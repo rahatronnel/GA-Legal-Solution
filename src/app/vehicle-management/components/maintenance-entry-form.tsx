@@ -111,8 +111,9 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 interface MaintenanceEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (record: Partial<MaintenanceRecord>) => void;
+  onSave: (record: Partial<MaintenanceRecord>, id?: string) => void;
   record: Partial<MaintenanceRecord> | null;
+  employees: Employee[];
 }
 
 // Combobox Component
@@ -195,13 +196,12 @@ const QuickAddDialog: React.FC<{
 };
 
 
-export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: MaintenanceEntryFormProps) {
+export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employees }: MaintenanceEntryFormProps) {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
   const {
       vehicles = [],
       drivers = [],
-      employees = [],
       parts: allParts = [],
       maintenanceTypes = [],
       serviceCenters = [],
@@ -410,13 +410,13 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record }: Main
     switch(isQuickAddOpen) {
         case 'maintenanceType':
             const newType = { id: newItemId, name, code };
-            setMaintenanceTypes(prev => [...prev, newType]);
+            setMaintenanceTypes(prev => [...(prev || []), newType]);
             setMaintenanceData(prev => ({ ...prev, maintenanceTypeId: newItemId }));
             toast({ title: 'Success', description: `Maintenance Type "${name}" added and selected.` });
             break;
         case 'serviceCenter':
             const newCenter = { id: newItemId, name, code, ...quickAddData };
-            setServiceCenters(prev => [...prev, newCenter]);
+            setServiceCenters(prev => [...(prev || []), newCenter]);
             setMaintenanceData(prev => ({ ...prev, serviceCenterId: newItemId }));
             toast({ title: 'Success', description: `Service Center "${name}" added and selected.` });
             break;
