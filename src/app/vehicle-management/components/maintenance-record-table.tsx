@@ -18,20 +18,16 @@ import { MaintenanceEntryForm, type MaintenanceRecord } from './maintenance-entr
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Vehicle } from './vehicle-table';
-import type { MaintenanceType } from './maintenance-type-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
-import type { Driver } from './driver-entry-form';
-import type { ServiceCenter } from './service-center-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 
 export function MaintenanceRecordTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
-  const { maintenanceRecords: records, vehicles, maintenanceTypes, drivers, serviceCenters } = data;
+  const { maintenanceRecords: records, vehicles = [], maintenanceTypes = [], drivers = [], serviceCenters = [] } = data;
   
   const setRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
     setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater }));
@@ -55,16 +51,17 @@ export function MaintenanceRecordTable() {
     return () => clearTimeout(timer);
   }, []);
   
-  const getVehicleReg = (vehicleId: string) => (vehicles || []).find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes || []).find((t:any) => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => vehicles.find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t:any) => t.id === typeId)?.name || 'N/A';
   const calculateTotalCost = (record: MaintenanceRecord) => {
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     return partsCost + expensesCost;
   }
 
+  const safeRecords = Array.isArray(records) ? records : [];
+
   const filteredRecords = useMemo(() => {
-    const safeRecords = Array.isArray(records) ? records : [];
     if (!safeRecords) return [];
     return safeRecords.filter(record => {
         const searchTermMatch = searchTerm === '' || 
@@ -98,13 +95,14 @@ export function MaintenanceRecordTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<MaintenanceRecord, 'id'>, id?: string) => {
+  const handleSave = (data: Partial<MaintenanceRecord>, id?: string) => {
     if (id) {
         setRecords(prev => (prev || []).map(rec => (rec.id === id ? { ...rec, ...data } as MaintenanceRecord : rec)));
         toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
     } else {
         const newRecord: MaintenanceRecord = { 
             id: Date.now().toString(), 
+            ...initialMaintenanceData,
             ...data,
             parts: data.parts || [],
             expenses: data.expenses || [],
@@ -113,6 +111,17 @@ export function MaintenanceRecordTable() {
         setRecords(prev => [...(prev || []), newRecord]);
         toast({ title: 'Success', description: 'Maintenance record added successfully.' });
     }
+  };
+
+  const initialMaintenanceData = {
+    vehicleId: '',
+    maintenanceTypeId: '',
+    serviceCenterId: '',
+    serviceDate: '',
+    upcomingServiceDate: '',
+    description: '',
+    monitoringEmployeeId: '',
+    driverId: '',
   };
 
   const handleDelete = (record: MaintenanceRecord) => {

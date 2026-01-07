@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 import type { Location } from "./location-table";
@@ -43,10 +43,11 @@ const initialData = {
     vehicles: [] as Vehicle[],
     vehicleBrands: [] as VehicleBrand[],
     vehicleTypes: [] as VehicleType[],
-    employees: [] as Employee[],
 };
 
-export type VehicleManagementData = typeof initialData;
+export type VehicleManagementData = Omit<typeof initialData, 'employees'> & {
+    employees: Employee[];
+};
 
 type VehicleManagementDataContextType = {
     data: VehicleManagementData;
@@ -56,7 +57,22 @@ type VehicleManagementDataContextType = {
 const VehicleManagementContext = createContext<VehicleManagementDataContextType | undefined>(undefined);
 
 export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
-    const [data, setData] = useLocalStorage<VehicleManagementData>('vehicleManagementData', initialData);
+    const [vehicleData, setVehicleData] = useLocalStorage<Omit<VehicleManagementData, 'employees'>>('vehicleManagementData', initialData);
+    const [employees] = useLocalStorage<Employee[]>('employees', []);
+
+    const data = useMemo(() => ({
+        ...vehicleData,
+        employees,
+    }), [vehicleData, employees]);
+
+    const setData = (updater: React.SetStateAction<any>) => {
+       setVehicleData(prev => {
+            const newState = typeof updater === 'function' ? updater(prev) : updater;
+            // We don't want to save employees back into the vehicleManagementData key
+            const { employees, ...rest } = newState;
+            return rest;
+       });
+    };
 
     const value = useMemo(() => ({
         data,
