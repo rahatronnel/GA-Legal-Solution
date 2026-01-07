@@ -101,7 +101,7 @@ export function TripTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Trip, 'id'>, id?: string) => {
+  const handleSave = (data: Partial<Trip>, id?: string) => {
     if (id) {
         setTrips(prev => (prev || []).map(t => (t.id === id ? { ...t, ...data } as Trip : t)));
         toast({ title: 'Success', description: 'Trip updated successfully.' });
@@ -109,11 +109,21 @@ export function TripTable() {
         const newTrip: Trip = {
             id: Date.now().toString(),
             tripId: `TRIP-${Date.now()}`,
-            ...data,
+            vehicleId: data.vehicleId || '',
+            driverId: data.driverId || '',
+            purposeId: data.purposeId || '',
+            startDate: data.startDate || '',
+            startTime: data.startTime || '',
+            endDate: data.endDate || '',
+            endTime: data.endTime || '',
+            startingMeter: data.startingMeter || 0,
+            endingMeter: data.endingMeter || 0,
+            remarks: data.remarks || '',
+            tripStatus: data.tripStatus || 'Planned',
             stops: data.stops || [],
             expenses: data.expenses || [],
             documents: data.documents || {},
-        } as Trip;
+        };
         setTrips(prev => [...(prev || []), newTrip]);
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }
@@ -278,5 +288,7 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
+
+    
 
     
