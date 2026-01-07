@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, Car, FileText, Download, Printer, Users, Wrench,
-    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, User as UserIcon
+    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, User as UserIcon, Phone
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
