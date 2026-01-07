@@ -37,6 +37,10 @@ export function TripTable() {
   const { trips, vehicles, drivers, locations } = data;
   const { handlePrint } = usePrint();
 
+  const setTrips = (updater: React.SetStateAction<Trip[]>) => {
+    setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips || []) : updater }));
+  };
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentTrip, setCurrentTrip] = useState<Partial<Trip> | null>(null);
@@ -98,39 +102,35 @@ export function TripTable() {
   };
 
   const handleSave = (tripData: Partial<Trip>) => {
-    setData(prevData => {
-        const currentTrips = prevData.trips || [];
-        if (tripData.id) {
-            // Update existing trip
-            const updatedTrips = currentTrips.map(t =>
-                t.id === tripData.id ? { ...t, ...tripData } as Trip : t
-            );
-            toast({ title: 'Success', description: 'Trip updated successfully.' });
-            return { ...prevData, trips: updatedTrips };
-        } else {
-            // Create new trip
-            const newTrip: Trip = {
-                id: Date.now().toString(),
-                tripId: `TRIP-${Date.now()}`,
-                vehicleId: tripData.vehicleId || '',
-                driverId: tripData.driverId || '',
-                purposeId: tripData.purposeId || '',
-                startDate: tripData.startDate || '',
-                startTime: tripData.startTime || '',
-                endDate: tripData.endDate || '',
-                endTime: tripData.endTime || '',
-                startingMeter: tripData.startingMeter || 0,
-                endingMeter: tripData.endingMeter || 0,
-                remarks: tripData.remarks || '',
-                tripStatus: tripData.tripStatus || 'Planned',
-                stops: tripData.stops || [],
-                expenses: tripData.expenses || [],
-                documents: tripData.documents || {},
-            };
-            toast({ title: 'Success', description: 'Trip added successfully.' });
-            return { ...prevData, trips: [...currentTrips, newTrip] };
-        }
-    });
+    if (tripData.id) {
+        // Update existing trip
+        setTrips(prev => 
+            prev.map(t => (t.id === tripData.id ? { ...t, ...tripData } as Trip : t))
+        );
+        toast({ title: 'Success', description: 'Trip updated successfully.' });
+    } else {
+        // Create new trip
+        const newTrip: Trip = {
+            id: Date.now().toString(),
+            tripId: `TRIP-${Date.now()}`,
+            vehicleId: tripData.vehicleId || '',
+            driverId: tripData.driverId || '',
+            purposeId: tripData.purposeId || '',
+            startDate: tripData.startDate || '',
+            startTime: tripData.startTime || '',
+            endDate: tripData.endDate || '',
+            endTime: tripData.endTime || '',
+            startingMeter: tripData.startingMeter || 0,
+            endingMeter: tripData.endingMeter || 0,
+            remarks: tripData.remarks || '',
+            tripStatus: tripData.tripStatus || 'Planned',
+            stops: tripData.stops || [],
+            expenses: tripData.expenses || [],
+            documents: tripData.documents || {},
+        };
+        setTrips(prev => [...prev, newTrip]);
+        toast({ title: 'Success', description: 'Trip added successfully.' });
+    }
   };
 
   const handleDelete = (trip: Trip) => {
@@ -140,10 +140,7 @@ export function TripTable() {
 
   const confirmDelete = () => {
     if (currentTrip?.id) {
-      setData(prevData => ({
-        ...prevData,
-        trips: (prevData.trips || []).filter(t => t.id !== currentTrip.id)
-      }));
+      setTrips(prev => prev.filter(t => t.id !== currentTrip.id));
       toast({ title: 'Success', description: 'Trip deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
