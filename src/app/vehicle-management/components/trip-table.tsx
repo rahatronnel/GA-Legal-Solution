@@ -97,13 +97,13 @@ export function TripTable() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (tripData: Partial<Trip>, id?: string) => {
+  const handleSave = (tripData: Partial<Trip>) => {
     setData(prevData => {
         const currentTrips = prevData.trips || [];
-        if (id) {
+        if (tripData.id) {
             // Update existing trip
             const updatedTrips = currentTrips.map(t =>
-                t.id === id ? { ...t, ...tripData } as Trip : t
+                t.id === tripData.id ? { ...t, ...tripData } as Trip : t
             );
             toast({ title: 'Success', description: 'Trip updated successfully.' });
             return { ...prevData, trips: updatedTrips };
@@ -294,7 +294,3 @@ export function TripTable() {
     </TooltipProvider>
   );
 }
-
-    
-
-    
