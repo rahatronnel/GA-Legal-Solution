@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Upload, X } from 'lucide-react';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type OrganizationSettings = {
   name: string;
@@ -38,15 +40,22 @@ const initialSettings: OrganizationSettings = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useLocalStorage<OrganizationSettings>('organizationSettings', initialSettings);
+  const firestore = useFirestore();
+  
+  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+  const { data: remoteSettings, isLoading } = useDoc<OrganizationSettings>(settingsDocRef);
+
+  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (settings.logo) {
-      setLogoPreview(settings.logo);
+    if (remoteSettings) {
+      setSettings(remoteSettings);
+      if (remoteSettings.logo) {
+        setLogoPreview(remoteSettings.logo);
+      }
     }
-  }, [settings.logo]);
-
+  }, [remoteSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -77,13 +86,34 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    // Data is saved to localStorage via the useLocalStorage hook automatically.
-    // This button just provides user feedback.
-    toast({
-      title: 'Settings Saved',
-      description: 'Your organization settings have been saved successfully.',
-    });
+    if (settingsDocRef) {
+      setDocumentNonBlocking(settingsDocRef, settings, { merge: true });
+      toast({
+        title: 'Settings Saved',
+        description: 'Your organization settings have been saved successfully.',
+      });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not connect to the database to save settings.',
+        });
+    }
   };
+  
+  if (isLoading) {
+      return (
+          <Card>
+              <CardHeader>
+                  <Skeleton className="h-8 w-1/2" />
+                  <Skeleton className="h-4 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                  <Skeleton className="h-96 w-full" />
+              </CardContent>
+          </Card>
+      )
+  }
 
   return (
     <div className="space-y-6">

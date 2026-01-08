@@ -1,5 +1,22 @@
 {
   "entities": {
+    "OrganizationSettings": {
+      "title": "Organization Settings",
+      "type": "object",
+      "description": "A singleton entity to store application-wide organization settings.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the organization." },
+        "slogan": { "type": "string", "description": "The organization's slogan." },
+        "address": { "type": "string", "description": "The physical address of the organization." },
+        "contactNumber": { "type": "string", "description": "Primary contact phone number." },
+        "telephone": { "type": "string", "description": "Secondary telephone number." },
+        "email": { "type": "string", "format": "email", "description": "Contact email address." },
+        "fax": { "type": "string", "description": "Fax number." },
+        "registrationNumber": { "type": "string", "description": "Official registration number." },
+        "logo": { "type": "string", "description": "Data URL of the organization's logo." }
+      },
+      "required": ["name", "email"]
+    },
     "Property": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Property",
@@ -102,6 +119,14 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/settings/organization",
+        "definition": {
+          "entityName": "OrganizationSettings",
+          "schema": { "$ref": "#/backend/entities/OrganizationSettings" },
+          "description": "Stores the single, global configuration for the organization. There is only one document in this collection."
+        }
+      },
       {
         "path": "/properties/{propertyId}",
         "definition": {
