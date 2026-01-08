@@ -17,6 +17,16 @@
       },
       "required": ["name", "email"]
     },
+    "Section": {
+      "title": "Section",
+      "type": "object",
+      "description": "Represents a department or section within the organization.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the section." },
+        "sectionCode": { "type": "string", "description": "The unique code for the section." }
+      },
+      "required": ["name", "sectionCode"]
+    },
     "Property": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Property",
@@ -125,6 +135,14 @@
           "entityName": "OrganizationSettings",
           "schema": { "$ref": "#/backend/entities/OrganizationSettings" },
           "description": "Stores the single, global configuration for the organization. There is only one document in this collection."
+        }
+      },
+      {
+        "path": "/sections/{sectionId}",
+        "definition": {
+            "entityName": "Section",
+            "schema": { "$ref": "#/backend/entities/Section" },
+            "description": "Stores organization sections or departments."
         }
       },
       {

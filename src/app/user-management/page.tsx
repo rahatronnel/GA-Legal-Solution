@@ -3,15 +3,21 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionTable, type Section } from "./components/section-table";
+import { SectionTable } from "./components/section-table";
 import { DesignationTable, type Designation } from "./components/designation-table";
 import { EmployeeTable, type Employee } from "./components/employee-table";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import type { Section } from "./components/section-table";
 
 export default function UserManagementPage() {
   const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
-  const [sections, setSections] = useLocalStorage<Section[]>('sections', []);
   const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);
+  
+  const firestore = useFirestore();
+  const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
 
   return (
     <>
@@ -33,7 +39,7 @@ export default function UserManagementPage() {
                     <EmployeeTable 
                       employees={employees}
                       setEmployees={setEmployees}
-                      sections={sections}
+                      sections={sections || []}
                       designations={designations}
                     />
                 </CardContent>
@@ -46,7 +52,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the different sections within your organization.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <SectionTable sections={sections} setSections={setSections} />
+                  <SectionTable sections={sections || []} isLoading={isLoadingSections} />
               </CardContent>
           </Card>
         </TabsContent>

@@ -80,6 +80,14 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isAuthenticated();
     }
+    
+    // -------------------------------------------------------------------------
+    // Collection: /sections
+    // -------------------------------------------------------------------------
+    match /sections/{sectionId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
 
 
     // -------------------------------------------------------------------------

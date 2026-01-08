@@ -25,6 +25,10 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export type Section = {
   id: string;
@@ -34,21 +38,18 @@ export type Section = {
 
 interface SectionTableProps {
   sections: Section[];
-  setSections: React.Dispatch<React.SetStateAction<Section[]>>;
+  isLoading: boolean;
 }
 
-export function SectionTable({ sections, setSections }: SectionTableProps) {
+export function SectionTable({ sections, isLoading }: SectionTableProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const sectionsRef = firestore ? collection(firestore, 'sections') : null;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<Partial<Section> | null>(null);
   const [sectionData, setSectionData] = useState({ name: '', sectionCode: '' });
-  const [isLoading, setIsLoading] = useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -77,8 +78,9 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
   };
 
   const confirmDelete = () => {
-    if (currentSection?.id) {
-        setSections(prev => prev.filter(s => s.id !== currentSection.id));
+    if (currentSection?.id && sectionsRef) {
+        const docRef = doc(sectionsRef, currentSection.id);
+        deleteDocumentNonBlocking(docRef);
         toast({ title: 'Success', description: 'Section deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -91,12 +93,17 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
       return;
     }
 
+    if (!sectionsRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database connection not available.' });
+        return;
+    }
+
     if (currentSection?.id) {
-      setSections(prev => prev.map(s => s.id === currentSection.id ? { ...s, ...sectionData } as Section : s));
+      const docRef = doc(sectionsRef, currentSection.id);
+      setDocumentNonBlocking(docRef, sectionData, { merge: true });
       toast({ title: 'Success', description: 'Section updated successfully.' });
     } else {
-      const newSection = { id: Date.now().toString(), ...sectionData };
-      setSections(prev => [...prev, newSection]);
+      addDocumentNonBlocking(sectionsRef, sectionData);
       toast({ title: 'Success', description: 'Section added successfully.' });
     }
 
@@ -113,7 +120,7 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && sectionsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -132,16 +139,13 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
               name: String(item.name || '').trim(),
               sectionCode: String(item.sectionCode || '').trim()
             }))
-            .filter(item => item.name && item.sectionCode)
-            .map(item => ({
-              id: Date.now().toString() + item.name,
-              name: item.name,
-              sectionCode: item.sectionCode
-            }));
+            .filter(item => item.name && item.sectionCode);
           
           if(newItems.length > 0) {
-            setSections(prev => [...prev, ...newItems]);
-            toast({ title: 'Success', description: 'Sections uploaded successfully.' });
+            newItems.forEach(item => {
+                addDocumentNonBlocking(sectionsRef, item);
+            });
+            toast({ title: 'Success', description: `${newItems.length} sections uploaded successfully.` });
           } else {
              toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid sections found in the file.' });
           }
@@ -177,9 +181,13 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : sections && sections.length > 0 ? (
                     sections.map((item) => (
                     <TableRow key={item.id}>
@@ -209,7 +217,7 @@ export function SectionTable({ sections, setSections }: SectionTableProps) {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center">No sections found.</TableCell>
+                    <TableCell colSpan={3} className="text-center h-24">No sections found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
