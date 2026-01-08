@@ -26,6 +26,9 @@ import type { Driver } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+
 
 type VehicleType = {
   id: string;
@@ -52,9 +55,11 @@ export function VehicleTable() {
   const { toast } = useToast();
   const { data, setData } = useVehicleManagement();
   const { vehicles, drivers, vehicleTypes, vehicleBrands } = data;
+  const firestore = useFirestore();
+  const vehiclesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vehicles') : null, [firestore]);
   
   const setVehicles = (updater: React.SetStateAction<Vehicle[]>) => {
-    setData(prev => ({ ...prev, vehicles: typeof updater === 'function' ? updater(prev.vehicles || []) : updater }));
+    // This is a dummy function now, real updates go to Firestore.
   };
 
   const { handlePrint } = usePrint();
@@ -119,30 +124,20 @@ export function VehicleTable() {
   };
 
   const handleSave = (data: Omit<Vehicle, 'id'>, id?: string) => {
+    if(!vehiclesRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database connection not available.' });
+        return;
+    }
     if (id) {
-        // Update existing vehicle
-        setVehicles(prev => (prev || []).map(v => (v.id === id ? { ...v, ...data } as Vehicle : v)));
+        setDocumentNonBlocking(doc(vehiclesRef, id), data, { merge: true });
         toast({ title: 'Success', description: 'Vehicle updated successfully.' });
     } else {
-        // Create new vehicle with complete structure
-        const newVehicle: Vehicle = {
-            id: Date.now().toString(),
-            vehicleIdCode: data.vehicleIdCode,
-            vehicleTypeId: data.vehicleTypeId,
-            registrationNumber: data.registrationNumber,
-            engineNumber: data.engineNumber,
-            chassisNumber: data.chassisNumber,
-            brandId: data.brandId,
-            model: data.model,
-            manufactureYear: data.manufactureYear,
-            fuelType: data.fuelType,
-            capacity: data.capacity,
-            ownership: data.ownership,
-            status: data.status,
+        const newVehicle: Omit<Vehicle, 'id'> = {
+            ...data,
             driverAssignmentHistory: data.driverAssignmentHistory || [],
             documents: data.documents || { registration: '', insurance: '', fitness: '', taxToken: '', routePermit: '', other: '' },
         };
-        setVehicles(prev => [...(prev || []), newVehicle]);
+        addDocumentNonBlocking(vehiclesRef, newVehicle);
         toast({ title: 'Success', description: 'Vehicle added successfully.' });
     }
   };
@@ -153,8 +148,8 @@ export function VehicleTable() {
   };
 
   const confirmDelete = () => {
-    if (currentVehicle?.id) {
-        setVehicles(prev => (prev || []).filter(v => v.id !== currentVehicle.id));
+    if (currentVehicle?.id && vehiclesRef) {
+        deleteDocumentNonBlocking(doc(vehiclesRef, currentVehicle.id));
         toast({ title: 'Success', description: 'Vehicle deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -192,7 +187,7 @@ export function VehicleTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && vehiclesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -208,14 +203,13 @@ export function VehicleTable() {
              throw new Error('Invalid Excel file format. Expecting columns: vehicleIdCode, registrationNumber, brandName, model.');
           }
 
-          const newVehicles: Vehicle[] = json
+          const newVehicles: Omit<Vehicle, 'id'>[] = json
             .filter(item => item.vehicleIdCode && item.registrationNumber)
             .map(item => {
               const vehicleType = (vehicleTypes || []).find(vt => vt.name === item.vehicleCategory);
               const vehicleBrand = (vehicleBrands || []).find(b => b.name === item.brandName);
 
               return {
-                id: Date.now().toString() + item.vehicleIdCode, 
                 vehicleIdCode: item.vehicleIdCode?.toString() || '',
                 registrationNumber: item.registrationNumber?.toString() || '',
                 vehicleTypeId: vehicleType?.id || '',
@@ -237,11 +231,11 @@ export function VehicleTable() {
                     routePermit: '',
                     other: ''
                 }
-              } as Vehicle
+              } as Omit<Vehicle, 'id'>
             });
           
           if(newVehicles.length > 0) {
-            setVehicles(prev => [...(prev || []), ...newVehicles]);
+            newVehicles.forEach(vehicle => addDocumentNonBlocking(vehiclesRef, vehicle));
             toast({ title: 'Success', description: `${newVehicles.length} vehicles uploaded successfully.` });
           }
 
