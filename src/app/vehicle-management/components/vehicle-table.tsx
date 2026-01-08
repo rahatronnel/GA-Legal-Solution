@@ -14,9 +14,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, Printer, Search } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, Printer, Search, Trash } from 'lucide-react';
 import { VehicleEntryForm, type Vehicle } from './vehicle-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -66,6 +67,7 @@ export function VehicleTable() {
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Partial<Vehicle> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -82,8 +84,9 @@ export function VehicleTable() {
     return () => clearTimeout(timer);
   }, []);
   
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+
   const filteredVehicles = useMemo(() => {
-    const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
     const safeDrivers = Array.isArray(drivers) ? drivers : [];
 
     return safeVehicles.filter(vehicle => {
@@ -155,6 +158,15 @@ export function VehicleTable() {
     setIsDeleteConfirmOpen(false);
     setCurrentVehicle(null);
   };
+
+  const confirmDeleteAll = () => {
+    if (!vehiclesRef) return;
+    safeVehicles.forEach(vehicle => {
+        deleteDocumentNonBlocking(doc(vehiclesRef, vehicle.id));
+    });
+   toast({ title: 'Success', description: 'All vehicle records are being deleted.' });
+   setIsDeleteAllConfirmOpen(false);
+ };
   
   const getStatusVariant = (status: Vehicle['status']) => {
     switch (status) {
@@ -269,13 +281,34 @@ export function VehicleTable() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 flex-wrap">
                   <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
                   <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
                   <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
                       <Upload className="mr-2 h-4 w-4" /> Upload
                   </label>
                   <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+                  <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={safeVehicles.length === 0}>
+                            <Trash className="mr-2 h-4 w-4" /> Delete All
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete all {safeVehicles.length} vehicle records.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDeleteAll}>
+                                Yes, delete all
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -419,3 +452,5 @@ export function VehicleTable() {
     </TooltipProvider>
   );
 }
+
+    
