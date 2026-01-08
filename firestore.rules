@@ -11,104 +11,96 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // Collection: /settings
+    // Singleton & Public Master Data
+    // These collections contain general configuration or master list data.
+    // It's safe for anyone to read this data, but only authenticated
+    // users can make changes.
     // -------------------------------------------------------------------------
     match /settings/{docId} {
         allow read: if true;
         allow write: if isAuthenticated();
     }
-    
-    // -------------------------------------------------------------------------
-    // User Management Collections
-    // -------------------------------------------------------------------------
-    match /sections/{sectionId} {
-      allow read: if isAuthenticated();
+    match /vehicleTypes/{docId} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+    }
+    match /vehicleBrands/{docId} {
+      allow read: if true;
       allow write: if isAuthenticated();
     }
-    match /designations/{designationId} {
-      allow read: if isAuthenticated();
+    match /locations/{docId} {
+      allow read: if true;
       allow write: if isAuthenticated();
     }
-    match /employees/{employeeId} {
-      allow read: if isAuthenticated();
+    match /routes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /tripPurposes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /expenseTypes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /maintenanceTypes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /maintenanceExpenseTypes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /parts/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /serviceCenters/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /accidentTypes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /severityLevels/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /faultStatuses/{docId} {
+      allow read: if true;
       allow write: if isAuthenticated();
     }
 
     // -------------------------------------------------------------------------
-    // Vehicle Management Collections
+    // Protected User & Operational Data
+    // All of these collections require the user to be authenticated for
+    // any read or write operations.
     // -------------------------------------------------------------------------
-    match /vehicleTypes/{vehicleTypeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+    match /sections/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /vehicleBrands/{vehicleBrandId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+    match /designations/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /locations/{locationId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+    match /employees/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /routes/{routeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+    match /vehicles/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /tripPurposes/{tripPurposeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+     match /drivers/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /expenseTypes/{expenseTypeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+     match /trips/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /maintenanceTypes/{maintenanceTypeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+    match /maintenanceRecords/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /maintenanceExpenseTypes/{maintenanceExpenseTypeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+     match /accidents/{docId} {
+      allow read, write: if isAuthenticated();
     }
-    match /parts/{partId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /serviceCenters/{serviceCenterId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /accidentTypes/{accidentTypeId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /severityLevels/{severityLevelId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /faultStatuses/{faultStatusId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /vehicles/{vehicleId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-     match /drivers/{driverId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-     match /trips/{tripId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-    match /maintenanceRecords/{recordId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-     match /accidents/{accidentId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
   }
 }
