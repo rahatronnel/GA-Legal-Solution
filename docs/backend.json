@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "Property": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Property",
+      "type": "object",
+      "description": "Represents a real estate property (plot or flat).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Property entity."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of property (e.g., 'plot', 'flat').",
+          "format": "string"
+        },
+        "location": {
+          "type": "string",
+          "description": "Geographic coordinates (latitude, longitude) of the property."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the property."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "URLs of images showcasing the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "roadProximity": {
+          "type": "string",
+          "description": "Proximity to the nearest road (e.g., 'adjacent', '50m', '100m')."
+        },
+        "contactInformation": {
+          "type": "string",
+          "description": "Contact details for inquiries about the property."
+        },
+        "uploadId": {
+          "type": "array",
+          "description": "References to Upload. (Relationship: Upload 1:N Property)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "location",
+        "description",
+        "imageUrls",
+        "roadProximity",
+        "contactInformation"
+      ]
+    },
+    "Upload": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Upload",
+      "type": "object",
+      "description": "Represents uploaded images and associated metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Upload entity."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the uploaded image."
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the image was uploaded.",
+          "format": "date-time"
+        },
+        "propertyId": {
+          "type": "array",
+          "description": "References to Property. (Relationship: Property 1:N Upload)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aiGeneratedLabels": {
+          "type": "string",
+          "description": "AI-generated labels for this image, that help determine whether additional clarification or manual labeling is needed."
+        }
+      },
+      "required": [
+        "id",
+        "imageUrl",
+        "uploadTimestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/properties/{propertyId}",
+        "definition": {
+          "entityName": "Property",
+          "schema": {
+            "$ref": "#/backend/entities/Property"
+          },
+          "description": "Stores property details. Includes a unique ID, type, location, description, image URLs, road proximity, contact information, and references to Upload documents.  Admin-manageable.",
+          "params": [
+            {
+              "name": "propertyId",
+              "description": "Unique identifier for the property."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/properties/{propertyId}/uploads/{uploadId}",
+        "definition": {
+          "entityName": "Upload",
+          "schema": {
+            "$ref": "#/backend/entities/Upload"
+          },
+          "description": "Stores upload metadata for each property. Includes image URL, upload timestamp, and AI-generated labels. 'propertyId' is denormalized for association with the parent property. Admin-manageable.",
+          "params": [
+            {
+              "name": "propertyId",
+              "description": "Unique identifier for the associated property."
+            },
+            {
+              "name": "uploadId",
+              "description": "Unique identifier for the uploaded image."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage real estate property data, uploads, and user-related information. It prioritizes authorization independence by avoiding `get()` calls in security rules through denormalization and structural segregation.\n\n*   **Properties Collection:** Stores the main property details. There is no owner here, so we assume all properties are visible and manageable by admins.\n*   **Uploads Subcollection:** Each `Property` can have multiple `Upload` documents. This approach ensures proper data isolation and supports more granular security rules if needed in the future. The `propertyId` is used to link uploads to properties and is denormalized.\n\nThe structure supports QAPs by segregating data with different access needs into separate collections.  Property information and uploads can be listed without requiring filtering based on authorization, as all properties and uploads are readable, and only admins can manage them.  If private property drafts were needed, they would be stored in `/users/{userId}/drafts`."
+  }
+}
