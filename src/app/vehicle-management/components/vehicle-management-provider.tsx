@@ -106,7 +106,7 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     ]);
 
     const value = useMemo(() => ({
-        data: data as VehicleManagementData,
+        data,
         isLoading,
     }), [data, isLoading]);
 
@@ -130,5 +130,5 @@ export function useVehicleManagement() {
     if (!context) {
         throw new Error('useVehicleManagement must be used within a VehicleManagementProvider');
     }
-    return context;
+    return { data: context.data, isLoading: context.isLoading };
 }
