@@ -1,36 +1,4 @@
-/**
- * @file firestore.rules
- * @description Security rules for a real estate property management application.
- *
- * @version 1.0
- *
- * @philosophy
- * This ruleset enforces a public read-only model for all property and upload data.
- * All write operations (creating, updating, deleting) are restricted and intended for
- * administrative users only. Because an admin identification system is not yet defined,
- * all writes are currently disabled as a secure default.
- *
- * @data_structure
- * The data is organized into a top-level `/properties` collection. Each document
- * in this collection can contain a nested `/uploads` subcollection for its images.
- * This structure is simple and designed for public browsing.
- *
- * @security_decisions
- * - Public Access: All data in the `/properties` collection and its subcollections
- *   is publicly readable by anyone, including unauthenticated users. This is suitable
- *   for a public-facing property listing application.
- * - Admin-Only Writes: All write operations are locked down. The rules include a
- *   placeholder `isAdmin()` function that currently returns `false`. To enable writes,
- *   this function must be implemented to correctly identify administrative users
- *   (e.g., by checking a custom claim or a document in a separate `admins` collection).
- * - No User Ownership: There is no concept of user-owned properties. The model assumes
- *   a central authority (admins) manages all data.
- *
- * @denormalization
- * The schema indicates that an `upload` document may contain a `propertyId`. While this
- * is good practice for client-side queries, it is not used for security rule decisions
- * in this version, as the nested collection path already provides the necessary context.
- */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -38,40 +6,9 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     // Helper Functions
     // -------------------------------------------------------------------------
-
-    /**
-     * @function isAdmin
-     * @description Checks if the requesting user has administrative privileges.
-     *
-     * @returns {Boolean} - True if the user is an admin, false otherwise.
-     *
-     * @dev_note
-     * This is a placeholder function. To enable write access, you MUST implement
-     * a real admin check. For example, checking for a custom claim:
-     * `return request.auth.token.admin == true;`
-     */
-    function isAdmin() {
-      // TODO: Implement a mechanism to identify administrative users.
-      // All writes are currently blocked as a secure default.
-      return false;
-    }
-    
     function isAuthenticated() {
         return request.auth != null;
     }
-
-    /**
-     * @function isAdminAndExists
-     * @description Ensures a user is an admin and the document already exists.
-     *              This is a standard security check for all update and delete
-     *              operations to prevent acting on non-existent data.
-     *
-     * @returns {Boolean} - True if the user is an admin and the document exists.
-     */
-    function isAdminAndExists() {
-      return isAdmin() && resource != null;
-    }
-
 
     // -------------------------------------------------------------------------
     // Collection: /settings
@@ -89,45 +26,63 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
-
     // -------------------------------------------------------------------------
-    // Collection: /properties
+    // Vehicle Management Collections
     // -------------------------------------------------------------------------
-
-    /**
-     * @description Defines access control for the main property listings.
-     *              Properties are public to everyone but can only be managed by admins.
-     * @path /properties/{propertyId}
-     * @allow (get) Any user, authenticated or not, can view a specific property.
-     * @deny (create) A non-admin user cannot create a new property listing.
-     * @principle Public read with restricted writes.
-     */
-    match /properties/{propertyId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdminAndExists();
-      allow delete: if isAdminAndExists();
+    match /vehicleTypes/{vehicleTypeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /vehicleBrands/{vehicleBrandId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /locations/{locationId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /routes/{routeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /tripPurposes/{tripPurposeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /expenseTypes/{expenseTypeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /maintenanceTypes/{maintenanceTypeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /maintenanceExpenseTypes/{maintenanceExpenseTypeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /parts/{partId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /serviceCenters/{serviceCenterId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /accidentTypes/{accidentTypeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /severityLevels/{severityLevelId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /faultStatuses/{faultStatusId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
-    // -------------------------------------------------------------------------
-    // Subcollection: /properties/{propertyId}/uploads
-    // -------------------------------------------------------------------------
-
-    /**
-     * @description Defines access control for image uploads associated with a property.
-     *              Uploads are public to everyone but can only be managed by admins.
-     * @path /properties/{propertyId}/uploads/{uploadId}
-     * @allow (get) Any user, authenticated or not, can view a specific upload.
-     * @deny (create) A non-admin user cannot add an upload to a property.
-     * @principle Inherits parent's security model: public read, admin-only writes.
-     */
-    match /properties/{propertyId}/uploads/{uploadId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdminAndExists();
-      allow delete: if isAdminAndExists();
-    }
   }
 }
+
+    
