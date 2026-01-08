@@ -20,7 +20,7 @@ import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, Fil
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
@@ -293,18 +293,17 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
       const newFiles: UploadedFile[] = [];
 
       for (const file of files) {
-        const reader = new FileReader();
-        const filePromise = new Promise<UploadedFile>(resolve => {
-          reader.onload = () => {
-            resolve({
-              id: Date.now().toString() + Math.random(),
-              name: file.name,
-              file: reader.result as string,
-            });
-          };
-        });
-        reader.readAsDataURL(file);
-        newFiles.push(await filePromise);
+        try {
+          const dataUrl = await imageToDataUrl(file);
+          newFiles.push({
+            id: Date.now().toString() + Math.random(),
+            name: file.name,
+            file: dataUrl,
+          });
+        } catch (error) {
+           console.error("Error processing document:", error);
+           toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
+        }
       }
 
       setDocuments(prev => ({
@@ -499,7 +498,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                                   <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
                                       Add File(s)
                                   </Label>
-                                  <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple onChange={handleFileChange(docType)} />
+                                  <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
                               </div>
                               <div className="space-y-1">
                                   {documents[docType]?.length > 0 ? (

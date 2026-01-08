@@ -23,6 +23,7 @@ import { useVehicleManagement } from './vehicle-management-provider';
 import type { Driver as DriverType } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
 import type { VehicleType } from './vehicle-type-table';
+import { imageToDataUrl } from '@/lib/utils';
 
 type DriverAssignment = {
     id: string;
@@ -192,20 +193,16 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setVehicleData(prev => ({ ...prev, [id]: value }));
   };
 
-  const fileToDataUrl = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-      });
-  }
-
   const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const dataUrl = await fileToDataUrl(file);
-      setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
+      try {
+        const dataUrl = await imageToDataUrl(file);
+        setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
+      } catch (error) {
+        console.error("Error processing document:", error);
+        toast({ variant: 'destructive', title: 'File Error', description: 'Could not process the uploaded file.' });
+      }
     }
   };
 
@@ -462,7 +459,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                                 Click to upload
                                             </span>
                                         </span>
-                                        <Input id={`file-upload-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
+                                        <Input id={`file-upload-${docType}`} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange(docType)} />
                                     </Label>
                                 )}
                             </div>

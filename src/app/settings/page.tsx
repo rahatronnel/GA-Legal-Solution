@@ -13,6 +13,8 @@ import { Upload, X } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { imageToDataUrl } from '@/lib/utils';
+
 
 export type OrganizationSettings = {
   name: string;
@@ -62,21 +64,21 @@ export default function SettingsPage() {
     setSettings(prev => ({ ...prev, [id]: value }));
   };
 
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-  };
-
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const dataUrl = await fileToDataUrl(file);
-      setLogoPreview(dataUrl);
-      setSettings(prev => ({ ...prev, logo: dataUrl }));
+      try {
+        const dataUrl = await imageToDataUrl(file);
+        setLogoPreview(dataUrl);
+        setSettings(prev => ({ ...prev, logo: dataUrl }));
+      } catch (error) {
+        console.error("Error processing image:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Image Error',
+          description: 'Could not process the uploaded image. Please try another file.'
+        });
+      }
     }
   };
 

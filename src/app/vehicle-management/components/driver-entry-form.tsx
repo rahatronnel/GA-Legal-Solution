@@ -21,6 +21,7 @@ import { Upload, X, User } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parse, isValid } from 'date-fns';
 import type { Vehicle } from './vehicle-table';
+import { imageToDataUrl } from '@/lib/utils';
 
 export type Driver = {
   id: string;
@@ -177,31 +178,32 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
     }
     setDriverData(prev => ({ ...prev, [id]: value }));
   };
-  
-  const fileToDataUrl = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-      });
-  }
 
   const handleFileChange = (docType: 'drivingLicense' | 'nid' | 'other') => async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setDocFiles(prev => ({ ...prev, [docType]: file }));
-      const dataUrl = await fileToDataUrl(file);
-      setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
+      try {
+        setDocFiles(prev => ({ ...prev, [docType]: file }));
+        const dataUrl = await imageToDataUrl(file);
+        setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
+      } catch (error) {
+         console.error("Error processing document:", error);
+        toast({ variant: 'destructive', title: 'File Error', description: 'Could not process the uploaded file.' });
+      }
     }
   };
 
   const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        setProfilePicFile(file);
-        const dataUrl = await fileToDataUrl(file);
-        setProfilePicPreview(dataUrl);
+        try {
+          setProfilePicFile(file);
+          const dataUrl = await imageToDataUrl(file);
+          setProfilePicPreview(dataUrl);
+        } catch (error) {
+          console.error("Error processing image:", error);
+          toast({ variant: 'destructive', title: 'Image Error', description: 'Could not process the uploaded image.' });
+        }
     }
   };
 
