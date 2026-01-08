@@ -103,6 +103,26 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     };
   }, [firebaseApp, firestore, auth, userAuthState]);
 
+  if (contextValue.isUserLoading) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <p>Loading...</p>
+        </div>
+    );
+  }
+
+  if (!contextValue.user) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center p-4 text-center">
+            <div>
+                <h1 className="text-2xl font-bold">Authentication Required</h1>
+                <p className="text-muted-foreground">You must be logged in to access this application.</p>
+                {/* In the future, a login form would go here. */}
+            </div>
+        </div>
+    );
+  }
+
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
