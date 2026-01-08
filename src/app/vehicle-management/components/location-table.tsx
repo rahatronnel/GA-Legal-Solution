@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type Location = {
   id: string;
@@ -35,26 +37,17 @@ export type Location = {
 
 export function LocationTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { locations } = data;
-
-  const setLocations = (updater: React.SetStateAction<Location[]>) => {
-    setData(prev => ({...prev, locations: typeof updater === 'function' ? updater(prev.locations || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const locationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'locations') : null, [firestore]);
+  const { data: locations, isLoading } = useCollection<Location>(locationsRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<Partial<Location> | null>(null);
   const [locationData, setLocationData] = useState({ name: '', locationCode: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeLocations = Array.isArray(locations) ? locations : [];
+  const safeLocations = useMemo(() => Array.isArray(locations) ? locations : [], [locations]);
 
   const filteredLocations = useMemo(() => {
     if (!searchTerm) return safeLocations;
@@ -92,8 +85,8 @@ export function LocationTable() {
   };
 
   const confirmDelete = () => {
-    if (currentLocation?.id) {
-        setLocations(prev => (prev || []).filter(l => l.id !== currentLocation.id));
+    if (currentLocation?.id && locationsRef) {
+        deleteDocumentNonBlocking(doc(locationsRef, currentLocation.id));
         toast({ title: 'Success', description: 'Location deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +98,13 @@ export function LocationTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
+    if (!locationsRef) return;
 
     if (currentLocation?.id) {
-      setLocations(prev => (prev || []).map(l => l.id === currentLocation.id ? { ...l, ...locationData } as Location : l));
+      setDocumentNonBlocking(doc(locationsRef, currentLocation.id), locationData, { merge: true });
       toast({ title: 'Success', description: 'Location updated successfully.' });
     } else {
-      const newLocation = { id: Date.now().toString(), ...locationData };
-      setLocations(prev => [...(prev || []), newLocation]);
+      addDocumentNonBlocking(locationsRef, locationData);
       toast({ title: 'Success', description: 'Location added successfully.' });
     }
 
@@ -128,7 +121,7 @@ export function LocationTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && locationsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -139,7 +132,7 @@ export function LocationTable() {
           const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
           if (!json[0] || !('name' in json[0]) || !('locationCode' in json[0])) {
-             throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "locationCode".');
+             throw new Error('Invalid Excel file format. Expecting columns "name" and "locationCode".');
           }
 
           const newItems = json
@@ -147,15 +140,10 @@ export function LocationTable() {
               name: String(item.name || '').trim(),
               locationCode: String(item.locationCode || '').trim()
             }))
-            .filter(item => item.name && item.locationCode)
-            .map(item => ({
-              id: Date.now().toString() + item.name,
-              name: item.name,
-              locationCode: item.locationCode
-            }));
+            .filter(item => item.name && item.locationCode);
           
           if(newItems.length > 0) {
-            setLocations(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(locationsRef, item));
             toast({ title: 'Success', description: 'Locations uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid locations found in the file.' });
@@ -205,9 +193,13 @@ export function LocationTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredLocations && filteredLocations.length > 0 ? (
                     filteredLocations.map((item) => (
                     <TableRow key={item.id}>

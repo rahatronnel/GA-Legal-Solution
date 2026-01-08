@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
@@ -50,7 +50,7 @@ export type VehicleManagementData = {
 
 type VehicleManagementDataContextType = {
     data: Partial<VehicleManagementData>;
-    setData: (newData: Partial<VehicleManagementData>) => void;
+    setData: (updater: React.SetStateAction<any>) => void;
     isLoading: boolean;
 };
 
@@ -59,7 +59,7 @@ const VehicleManagementContext = createContext<VehicleManagementDataContextType 
 export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
     const firestore = useFirestore();
     
-    // Most data is small and can be fetched once. For larger collections, consider pagination or specific queries.
+    // Firestore-backed data
     const { data: locations, isLoading: l1 } = useCollection<Location>(useMemoFirebase(() => firestore ? collection(firestore, 'locations') : null, [firestore]));
     const { data: routes, isLoading: l2 } = useCollection<Route>(useMemoFirebase(() => firestore ? collection(firestore, 'routes') : null, [firestore]));
     const { data: tripPurposes, isLoading: l3 } = useCollection<TripPurpose>(useMemoFirebase(() => firestore ? collection(firestore, 'tripPurposes') : null, [firestore]));
@@ -74,7 +74,7 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     const { data: vehicleBrands, isLoading: l12 } = useCollection<VehicleBrand>(useMemoFirebase(() => firestore ? collection(firestore, 'vehicleBrands') : null, [firestore]));
     const { data: vehicleTypes, isLoading: l13 } = useCollection<VehicleType>(useMemoFirebase(() => firestore ? collection(firestore, 'vehicleTypes') : null, [firestore]));
 
-    // Data still in localStorage (to be migrated if necessary)
+    // Data still in localStorage (to be migrated if necessary or kept for performance)
     const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
     const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
     const [drivers, setDrivers] = useLocalStorage<Driver[]>('drivers', []);
@@ -111,8 +111,9 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     ]);
 
     const setData = (updater: React.SetStateAction<any>) => {
-       // This is complex because data is coming from two different sources (Firestore and localStorage)
-       // For now, we only support updating the localStorage parts.
+       // This is complex because data is coming from multiple sources.
+       // We only support updating the localStorage parts for now.
+       // The Firestore collections will update automatically via their hooks.
        const newState = typeof updater === 'function' ? updater(data) : updater;
        
        if (newState.employees) setEmployees(newState.employees);

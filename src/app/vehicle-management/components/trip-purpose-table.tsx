@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type TripPurpose = {
   id: string;
@@ -34,26 +36,17 @@ export type TripPurpose = {
 
 export function TripPurposeTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { tripPurposes } = data;
-
-  const setPurposes = (updater: React.SetStateAction<TripPurpose[]>) => {
-    setData(prev => ({...prev, tripPurposes: typeof updater === 'function' ? updater(prev.tripPurposes || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const purposesRef = useMemoFirebase(() => firestore ? collection(firestore, 'tripPurposes') : null, [firestore]);
+  const { data: tripPurposes, isLoading } = useCollection<TripPurpose>(purposesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentPurpose, setCurrentPurpose] = useState<Partial<TripPurpose> | null>(null);
   const [purposeName, setPurposeName] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  const safePurposes = Array.isArray(tripPurposes) ? tripPurposes : [];
+  const safePurposes = useMemo(() => Array.isArray(tripPurposes) ? tripPurposes : [], [tripPurposes]);
 
   const filteredPurposes = useMemo(() => {
     if (!searchTerm) return safePurposes;
@@ -83,8 +76,8 @@ export function TripPurposeTable() {
   };
 
   const confirmDelete = () => {
-    if (currentPurpose?.id) {
-        setPurposes(prev => (prev || []).filter(p => p.id !== currentPurpose.id));
+    if (currentPurpose?.id && purposesRef) {
+        deleteDocumentNonBlocking(doc(purposesRef, currentPurpose.id));
         toast({ title: 'Success', description: 'Trip purpose deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -96,13 +89,13 @@ export function TripPurposeTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Purpose name is required.' });
       return;
     }
+    if (!purposesRef) return;
 
     if (currentPurpose?.id) {
-      setPurposes(prev => (prev || []).map(p => p.id === currentPurpose.id ? { ...p, name: purposeName } : p));
+      setDocumentNonBlocking(doc(purposesRef, currentPurpose.id), { name: purposeName }, { merge: true });
       toast({ title: 'Success', description: 'Trip purpose updated successfully.' });
     } else {
-      const newPurpose = { id: Date.now().toString(), name: purposeName };
-      setPurposes(prev => [...(prev || []), newPurpose]);
+      addDocumentNonBlocking(purposesRef, { name: purposeName });
       toast({ title: 'Success', description: 'Trip purpose added successfully.' });
     }
 
@@ -119,7 +112,7 @@ export function TripPurposeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && purposesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -135,11 +128,10 @@ export function TripPurposeTable() {
 
           const newItems = json
             .map((item: any) => ({ name: String(item.name || '').trim() }))
-            .filter(item => item.name)
-            .map(item => ({ id: Date.now().toString() + item.name, name: item.name }));
+            .filter(item => item.name);
           
           if(newItems.length > 0) {
-            setPurposes(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(purposesRef, item));
             toast({ title: 'Success', description: 'Trip purposes uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid purposes found in the file.' });
@@ -188,9 +180,12 @@ export function TripPurposeTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={2} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredPurposes && filteredPurposes.length > 0 ? (
                     filteredPurposes.map((item) => (
                     <TableRow key={item.id}>

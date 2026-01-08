@@ -27,7 +27,9 @@ import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Location } from './location-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export type Route = {
@@ -40,30 +42,26 @@ export type Route = {
 
 export function RouteTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { routes, locations } = data;
+  const firestore = useFirestore();
+
+  const routesRef = useMemoFirebase(() => firestore ? collection(firestore, 'routes') : null, [firestore]);
+  const { data: routes, isLoading: isLoadingRoutes } = useCollection<Route>(routesRef);
   
-  const setRoutes = (updater: React.SetStateAction<Route[]>) => {
-    setData(prev => ({...prev, routes: typeof updater === 'function' ? updater(prev.routes || []) : updater }));
-  }
+  const locationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'locations') : null, [firestore]);
+  const { data: locations, isLoading: isLoadingLocations } = useCollection<Location>(locationsRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Route> | null>(null);
   const [formData, setFormData] = useState<Omit<Route, 'id'>>({ name: '', routeCode: '', startLocationId: '', endLocationId: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeLocations = Array.isArray(locations) ? locations : [];
+  const safeLocations = useMemo(() => Array.isArray(locations) ? locations : [], [locations]);
+  const safeRoutes = useMemo(() => Array.isArray(routes) ? routes : [], [routes]);
+  
   const getLocationName = (locationId: string) => safeLocations.find((l: Location) => l.id === locationId)?.name || 'N/A';
 
   const filteredItems = useMemo(() => {
-    const safeRoutes = Array.isArray(routes) ? routes : [];
     if (!searchTerm) return safeRoutes;
     const lowercasedTerm = searchTerm.toLowerCase();
     return safeRoutes.filter(item => 
@@ -72,7 +70,7 @@ export function RouteTable() {
         getLocationName(item.startLocationId).toLowerCase().includes(lowercasedTerm) ||
         getLocationName(item.endLocationId).toLowerCase().includes(lowercasedTerm)
     );
-  }, [routes, searchTerm, locations]);
+  }, [safeRoutes, searchTerm, safeLocations]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -105,8 +103,8 @@ export function RouteTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setRoutes(prev => (prev || []).filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && routesRef) {
+        deleteDocumentNonBlocking(doc(routesRef, currentItem.id));
         toast({ title: 'Success', description: 'Route deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -118,13 +116,13 @@ export function RouteTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
+    if (!routesRef) return;
 
     if (currentItem?.id) {
-      setRoutes(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } as Route : p));
+      setDocumentNonBlocking(doc(routesRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Route updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setRoutes(prev => [...(prev || []), newItem]);
+      addDocumentNonBlocking(routesRef, formData);
       toast({ title: 'Success', description: 'Route added successfully.' });
     }
 
@@ -141,7 +139,7 @@ export function RouteTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && routesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -166,11 +164,10 @@ export function RouteTable() {
                     endLocationId: endLoc?.id || ''
                 }
             })
-            .filter(item => item.name && item.routeCode && item.startLocationId && item.endLocationId)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
+            .filter(item => item.name && item.routeCode && item.startLocationId && item.endLocationId);
           
           if(newItems.length > 0) {
-            setRoutes(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(routesRef, item));
             toast({ title: 'Success', description: 'Routes uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid routes found or location codes could not be matched.' });
@@ -221,10 +218,16 @@ export function RouteTable() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                {isLoadingRoutes || isLoadingLocations ? (
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -320,5 +323,4 @@ export function RouteTable() {
     </TooltipProvider>
   );
 }
-
     
