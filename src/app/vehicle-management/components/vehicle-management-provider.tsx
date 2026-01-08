@@ -48,7 +48,7 @@ export type VehicleManagementData = {
 };
 
 type VehicleManagementDataContextType = {
-    data: Partial<VehicleManagementData>;
+    data: VehicleManagementData;
     isLoading: boolean;
 };
 
@@ -80,9 +80,25 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15 || l16 || l17 || l18 || l19;
 
     const data = useMemo(() => ({
-        locations, routes, tripPurposes, expenseTypes, vehicleTypes, vehicleBrands, employees,
-        drivers, vehicles, trips, maintenanceTypes, maintenanceExpenseTypes, parts, serviceCenters,
-        maintenanceRecords, accidentTypes, severityLevels, faultStatuses, accidents
+        locations: locations || [],
+        routes: routes || [],
+        tripPurposes: tripPurposes || [],
+        expenseTypes: expenseTypes || [],
+        vehicleTypes: vehicleTypes || [],
+        vehicleBrands: vehicleBrands || [],
+        employees: employees || [],
+        drivers: drivers || [],
+        vehicles: vehicles || [],
+        trips: trips || [],
+        maintenanceTypes: maintenanceTypes || [],
+        maintenanceExpenseTypes: maintenanceExpenseTypes || [],
+        parts: parts || [],
+        serviceCenters: serviceCenters || [],
+        maintenanceRecords: maintenanceRecords || [],
+        accidentTypes: accidentTypes || [],
+        severityLevels: severityLevels || [],
+        faultStatuses: faultStatuses || [],
+        accidents: accidents || [],
     }), [
         locations, routes, tripPurposes, expenseTypes, vehicleTypes, vehicleBrands, employees,
         drivers, vehicles, trips, maintenanceTypes, maintenanceExpenseTypes, parts, serviceCenters,
@@ -90,9 +106,17 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     ]);
 
     const value = useMemo(() => ({
-        data,
+        data: data as VehicleManagementData,
         isLoading,
     }), [data, isLoading]);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p>Loading Vehicle Management Data...</p>
+            </div>
+        );
+    }
 
     return (
         <VehicleManagementContext.Provider value={value}>
