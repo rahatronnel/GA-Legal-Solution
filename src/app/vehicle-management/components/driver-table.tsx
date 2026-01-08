@@ -153,7 +153,7 @@ export function DriverTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet, { dateNF: 'yyyy-mm-dd', cellDates: true }) as any[];
 
           const requiredHeaders = ['driverIdCode', 'name', 'mobileNumber'];
           const headers = Object.keys(json[0] || {});
