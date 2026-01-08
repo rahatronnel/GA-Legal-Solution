@@ -30,16 +30,18 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+
 
 export function TripTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
+  const firestore = useFirestore();
+  const { data } = useVehicleManagement();
   const { trips, vehicles, drivers, locations } = data;
   const { handlePrint } = usePrint();
 
-  const setTrips = (updater: React.SetStateAction<Trip[]>) => {
-    setData(prev => ({...prev, trips: typeof updater === 'function' ? updater(prev.trips || []) : updater }));
-  };
+  const tripsRef = useMemoFirebase(() => firestore ? collection(firestore, 'trips') : null, [firestore]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -102,16 +104,18 @@ export function TripTable() {
   };
 
   const handleSave = (tripData: Partial<Trip>) => {
+    if (!tripsRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database connection not available.' });
+        return;
+    }
+
     if (tripData.id) {
         // Update existing trip
-        setTrips(prev => 
-            prev.map(t => (t.id === tripData.id ? { ...t, ...tripData } as Trip : t))
-        );
+        setDocumentNonBlocking(doc(tripsRef, tripData.id), tripData, { merge: true });
         toast({ title: 'Success', description: 'Trip updated successfully.' });
     } else {
         // Create new trip
-        const newTrip: Trip = {
-            id: Date.now().toString(),
+        const newTrip: Omit<Trip, 'id'> = {
             tripId: `TRIP-${Date.now()}`,
             vehicleId: tripData.vehicleId || '',
             driverId: tripData.driverId || '',
@@ -128,7 +132,7 @@ export function TripTable() {
             expenses: tripData.expenses || [],
             documents: tripData.documents || {},
         };
-        setTrips(prev => [...prev, newTrip]);
+        addDocumentNonBlocking(tripsRef, newTrip);
         toast({ title: 'Success', description: 'Trip added successfully.' });
     }
   };
@@ -139,8 +143,8 @@ export function TripTable() {
   };
 
   const confirmDelete = () => {
-    if (currentTrip?.id) {
-      setTrips(prev => prev.filter(t => t.id !== currentTrip.id));
+    if (currentTrip?.id && tripsRef) {
+      deleteDocumentNonBlocking(doc(tripsRef, currentTrip.id));
       toast({ title: 'Success', description: 'Trip deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
