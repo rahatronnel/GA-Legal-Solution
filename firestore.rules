@@ -22,11 +22,11 @@ service cloud.firestore {
     // User Management Collections
     // -------------------------------------------------------------------------
     match /sections/{sectionId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /designations/{designationId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /employees/{employeeId} {
