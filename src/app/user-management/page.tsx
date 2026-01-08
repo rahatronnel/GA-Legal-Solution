@@ -13,16 +13,13 @@ export default function UserManagementPage() {
   const firestore = useFirestore();
   
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
-  const { data: employeesData, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
-  const employees = employeesData || [];
+  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
   
   const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
-  const { data: sectionsData, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
-  const sections = sectionsData || [];
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
   
   const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
-  const { data: designationsData, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
-  const designations = designationsData || [];
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
 
   return (
     <>
@@ -42,10 +39,10 @@ export default function UserManagementPage() {
                 </CardHeader>
                 <CardContent>
                     <EmployeeTable 
-                      employees={employees}
+                      employees={employees || []}
                       setEmployees={() => {}} // This will now be handled by firestore hooks
-                      sections={sections}
-                      designations={designations}
+                      sections={sections || []}
+                      designations={designations || []}
                     />
                 </CardContent>
             </Card>
@@ -57,7 +54,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the different sections within your organization.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <SectionTable sections={sections} isLoading={isLoadingSections} />
+                  <SectionTable sections={sections || []} isLoading={isLoadingSections} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -68,7 +65,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the job titles and designations for employees.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DesignationTable designations={designations} isLoading={isLoadingDesignations} />
+                  <DesignationTable designations={designations || []} isLoading={isLoadingDesignations} />
               </CardContent>
           </Card>
         </TabsContent>
