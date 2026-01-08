@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type MaintenanceExpenseType = {
   id: string;
@@ -35,26 +37,17 @@ export type MaintenanceExpenseType = {
 
 export function MaintenanceExpenseTypeTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { maintenanceExpenseTypes: expenseTypes } = data;
-
-  const setExpenseTypes = (updater: React.SetStateAction<MaintenanceExpenseType[]>) => {
-    setData(prev => ({...prev, maintenanceExpenseTypes: typeof updater === 'function' ? updater(prev.maintenanceExpenseTypes || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const expenseTypesRef = useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceExpenseTypes') : null, [firestore]);
+  const { data: expenseTypes, isLoading } = useCollection<MaintenanceExpenseType>(expenseTypesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentExpenseType, setCurrentExpenseType] = useState<Partial<MaintenanceExpenseType> | null>(null);
   const [expenseTypeData, setExpenseTypeData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeExpenseTypes = Array.isArray(expenseTypes) ? expenseTypes : [];
+  const safeExpenseTypes = useMemo(() => Array.isArray(expenseTypes) ? expenseTypes : [], [expenseTypes]);
 
   const filteredExpenseTypes = useMemo(() => {
     if (!searchTerm) return safeExpenseTypes;
@@ -92,8 +85,8 @@ export function MaintenanceExpenseTypeTable() {
   };
 
   const confirmDelete = () => {
-    if (currentExpenseType?.id) {
-        setExpenseTypes(prev => (prev || []).filter(p => p.id !== currentExpenseType.id));
+    if (currentExpenseType?.id && expenseTypesRef) {
+        deleteDocumentNonBlocking(doc(expenseTypesRef, currentExpenseType.id));
         toast({ title: 'Success', description: 'Maintenance expense type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +98,13 @@ export function MaintenanceExpenseTypeTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
+    if (!expenseTypesRef) return;
 
     if (currentExpenseType?.id) {
-      setExpenseTypes(prev => (prev || []).map(p => p.id === currentExpenseType.id ? { ...p, ...expenseTypeData } : p));
+      setDocumentNonBlocking(doc(expenseTypesRef, currentExpenseType.id), expenseTypeData, { merge: true });
       toast({ title: 'Success', description: 'Maintenance expense type updated successfully.' });
     } else {
-      const newExpenseType = { id: Date.now().toString(), ...expenseTypeData };
-      setExpenseTypes(prev => [...(prev || []), newExpenseType]);
+      addDocumentNonBlocking(expenseTypesRef, expenseTypeData);
       toast({ title: 'Success', description: 'Maintenance expense type added successfully.' });
     }
 
@@ -128,7 +121,7 @@ export function MaintenanceExpenseTypeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && expenseTypesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -148,10 +141,9 @@ export function MaintenanceExpenseTypeTable() {
                 code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setExpenseTypes(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(expenseTypesRef, item));
             toast({ title: 'Success', description: 'Maintenance expense types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid expense types found in the file.' });
@@ -201,9 +193,13 @@ export function MaintenanceExpenseTypeTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredExpenseTypes && filteredExpenseTypes.length > 0 ? (
                     filteredExpenseTypes.map((item) => (
                     <TableRow key={item.id}>
@@ -283,3 +279,5 @@ export function MaintenanceExpenseTypeTable() {
     </TooltipProvider>
   );
 }
+
+    

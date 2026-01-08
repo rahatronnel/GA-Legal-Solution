@@ -26,7 +26,9 @@ import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type ServiceCenter = {
   id: string;
@@ -47,26 +49,17 @@ const initialData = {
 
 export function ServiceCenterTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { serviceCenters } = data;
-
-  const setServiceCenters = (updater: React.SetStateAction<ServiceCenter[]>) => {
-    setData(prev => ({...prev, serviceCenters: typeof updater === 'function' ? updater(prev.serviceCenters || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const serviceCentersRef = useMemoFirebase(() => firestore ? collection(firestore, 'serviceCenters') : null, [firestore]);
+  const { data: serviceCenters, isLoading } = useCollection<ServiceCenter>(serviceCentersRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<ServiceCenter> | null>(null);
   const [formData, setFormData] = useState<Omit<ServiceCenter, 'id'>>(initialData);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeServiceCenters = Array.isArray(serviceCenters) ? serviceCenters : [];
+  const safeServiceCenters = useMemo(() => Array.isArray(serviceCenters) ? serviceCenters : [], [serviceCenters]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeServiceCenters;
@@ -106,8 +99,8 @@ export function ServiceCenterTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setServiceCenters(prev => (prev || []).filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && serviceCentersRef) {
+        deleteDocumentNonBlocking(doc(serviceCentersRef, currentItem.id));
         toast({ title: 'Success', description: 'Service Center deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -119,13 +112,13 @@ export function ServiceCenterTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Garage Name and Code are required.' });
       return;
     }
+    if (!serviceCentersRef) return;
 
     if (currentItem?.id) {
-      setServiceCenters(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setDocumentNonBlocking(doc(serviceCentersRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Service Center updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setServiceCenters(prev => [...(prev || []), newItem]);
+      addDocumentNonBlocking(serviceCentersRef, formData);
       toast({ title: 'Success', description: 'Service Center added successfully.' });
     }
 
@@ -142,7 +135,7 @@ export function ServiceCenterTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && serviceCentersRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -157,18 +150,17 @@ export function ServiceCenterTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
-                address: String((item as any).address || '').trim(),
-                mobileNumber: String((item as any).mobileNumber || '').trim(),
-                ownerName: String((item as any).ownerName || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
+                address: String(item.address || '').trim(),
+                mobileNumber: String(item.mobileNumber || '').trim(),
+                ownerName: String(item.ownerName || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setServiceCenters(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(serviceCentersRef, item));
             toast({ title: 'Success', description: `${newItems.length} service centers uploaded successfully.` });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid service centers found in the file.' });
@@ -220,9 +212,15 @@ export function ServiceCenterTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -316,3 +314,5 @@ export function ServiceCenterTable() {
     </TooltipProvider>
   );
 }
+
+    

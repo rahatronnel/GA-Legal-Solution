@@ -25,7 +25,10 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export type AccidentType = {
   id: string;
@@ -35,26 +38,17 @@ export type AccidentType = {
 
 export function AccidentTypeTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { accidentTypes } = data;
-  
-  const setAccidentTypes = (updater: React.SetStateAction<AccidentType[]>) => {
-      setData(prev => ({...prev, accidentTypes: typeof updater === 'function' ? updater(prev.accidentTypes || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const accidentTypesRef = useMemoFirebase(() => firestore ? collection(firestore, 'accidentTypes') : null, [firestore]);
+  const { data: accidentTypes, isLoading } = useCollection<AccidentType>(accidentTypesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<AccidentType> | null>(null);
   const [formData, setFormData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeAccidentTypes = Array.isArray(accidentTypes) ? accidentTypes : [];
+  const safeAccidentTypes = useMemo(() => Array.isArray(accidentTypes) ? accidentTypes : [], [accidentTypes]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeAccidentTypes;
@@ -92,8 +86,8 @@ export function AccidentTypeTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setAccidentTypes(prev => prev.filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && accidentTypesRef) {
+        deleteDocumentNonBlocking(doc(accidentTypesRef, currentItem.id));
         toast({ title: 'Success', description: 'Accident type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -106,12 +100,16 @@ export function AccidentTypeTable() {
       return;
     }
 
+    if (!accidentTypesRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+        return;
+    }
+
     if (currentItem?.id) {
-      setAccidentTypes(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as AccidentType : p));
+      setDocumentNonBlocking(doc(accidentTypesRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Accident type updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setAccidentTypes(prev => [...prev, newItem]);
+      addDocumentNonBlocking(accidentTypesRef, formData);
       toast({ title: 'Success', description: 'Accident type added successfully.' });
     }
 
@@ -128,7 +126,7 @@ export function AccidentTypeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && accidentTypesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -143,15 +141,14 @@ export function AccidentTypeTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
           
           if(newItems.length > 0) {
-            setAccidentTypes(prev => [...prev, ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(accidentTypesRef, item));
             toast({ title: 'Success', description: 'Accident types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid accident types found in the file.' });
@@ -201,9 +198,13 @@ export function AccidentTypeTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -283,3 +284,5 @@ export function AccidentTypeTable() {
     </TooltipProvider>
   );
 }
+
+    

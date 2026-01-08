@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type MaintenanceType = {
   id: string;
@@ -35,26 +37,17 @@ export type MaintenanceType = {
 
 export function MaintenanceTypeTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { maintenanceTypes } = data;
-  
-  const setMaintenanceTypes = (updater: React.SetStateAction<MaintenanceType[]>) => {
-    setData(prev => ({...prev, maintenanceTypes: typeof updater === 'function' ? updater(prev.maintenanceTypes || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const maintenanceTypesRef = useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceTypes') : null, [firestore]);
+  const { data: maintenanceTypes, isLoading } = useCollection<MaintenanceType>(maintenanceTypesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentMaintenanceType, setCurrentMaintenanceType] = useState<Partial<MaintenanceType> | null>(null);
   const [maintenanceTypeData, setMaintenanceTypeData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeMaintenanceTypes = Array.isArray(maintenanceTypes) ? maintenanceTypes : [];
+  const safeMaintenanceTypes = useMemo(() => Array.isArray(maintenanceTypes) ? maintenanceTypes : [], [maintenanceTypes]);
 
   const filteredMaintenanceTypes = useMemo(() => {
     if (!searchTerm) return safeMaintenanceTypes;
@@ -92,8 +85,8 @@ export function MaintenanceTypeTable() {
   };
 
   const confirmDelete = () => {
-    if (currentMaintenanceType?.id) {
-        setMaintenanceTypes(prev => (prev || []).filter(p => p.id !== currentMaintenanceType.id));
+    if (currentMaintenanceType?.id && maintenanceTypesRef) {
+        deleteDocumentNonBlocking(doc(maintenanceTypesRef, currentMaintenanceType.id));
         toast({ title: 'Success', description: 'Maintenance type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +98,13 @@ export function MaintenanceTypeTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
+    if (!maintenanceTypesRef) return;
 
     if (currentMaintenanceType?.id) {
-      setMaintenanceTypes(prev => (prev || []).map(p => p.id === currentMaintenanceType.id ? { ...p, ...maintenanceTypeData } : p));
+      setDocumentNonBlocking(doc(maintenanceTypesRef, currentMaintenanceType.id), maintenanceTypeData, { merge: true });
       toast({ title: 'Success', description: 'Maintenance type updated successfully.' });
     } else {
-      const newMaintenanceType = { id: Date.now().toString(), ...maintenanceTypeData };
-      setMaintenanceTypes(prev => [...(prev || []), newMaintenanceType]);
+      addDocumentNonBlocking(maintenanceTypesRef, maintenanceTypeData);
       toast({ title: 'Success', description: 'Maintenance type added successfully.' });
     }
 
@@ -128,7 +121,7 @@ export function MaintenanceTypeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && maintenanceTypesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -148,10 +141,9 @@ export function MaintenanceTypeTable() {
                 code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setMaintenanceTypes(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(maintenanceTypesRef, item));
             toast({ title: 'Success', description: 'Maintenance types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid maintenance types found in the file.' });
@@ -201,9 +193,13 @@ export function MaintenanceTypeTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredMaintenanceTypes && filteredMaintenanceTypes.length > 0 ? (
                     filteredMaintenanceTypes.map((item) => (
                     <TableRow key={item.id}>
@@ -283,3 +279,5 @@ export function MaintenanceTypeTable() {
     </TooltipProvider>
   );
 }
+
+    

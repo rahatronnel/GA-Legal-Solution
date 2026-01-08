@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type SeverityLevel = {
   id: string;
@@ -35,26 +37,17 @@ export type SeverityLevel = {
 
 export function SeverityLevelTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { severityLevels } = data;
-
-  const setSeverityLevels = (updater: React.SetStateAction<SeverityLevel[]>) => {
-    setData(prev => ({...prev, severityLevels: typeof updater === 'function' ? updater(prev.severityLevels || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const severityLevelsRef = useMemoFirebase(() => firestore ? collection(firestore, 'severityLevels') : null, [firestore]);
+  const { data: severityLevels, isLoading } = useCollection<SeverityLevel>(severityLevelsRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<SeverityLevel> | null>(null);
   const [formData, setFormData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeSeverityLevels = Array.isArray(severityLevels) ? severityLevels : [];
+  const safeSeverityLevels = useMemo(() => Array.isArray(severityLevels) ? severityLevels : [], [severityLevels]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeSeverityLevels;
@@ -92,8 +85,8 @@ export function SeverityLevelTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setSeverityLevels(prev => prev.filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && severityLevelsRef) {
+        deleteDocumentNonBlocking(doc(severityLevelsRef, currentItem.id));
         toast({ title: 'Success', description: 'Severity level deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +98,13 @@ export function SeverityLevelTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
+    if (!severityLevelsRef) return;
 
     if (currentItem?.id) {
-      setSeverityLevels(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as SeverityLevel : p));
+      setDocumentNonBlocking(doc(severityLevelsRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Severity level updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setSeverityLevels(prev => [...prev, newItem]);
+      addDocumentNonBlocking(severityLevelsRef, formData);
       toast({ title: 'Success', description: 'Severity level added successfully.' });
     }
 
@@ -128,7 +121,7 @@ export function SeverityLevelTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && severityLevelsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -143,15 +136,14 @@ export function SeverityLevelTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setSeverityLevels(prev => [...prev, ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(severityLevelsRef, item));
             toast({ title: 'Success', description: 'Severity levels uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid severity levels found in the file.' });
@@ -201,9 +193,13 @@ export function SeverityLevelTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -283,3 +279,5 @@ export function SeverityLevelTable() {
     </TooltipProvider>
   );
 }
+
+    

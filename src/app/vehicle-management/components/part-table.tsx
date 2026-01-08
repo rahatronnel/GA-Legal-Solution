@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type Part = {
   id: string;
@@ -44,26 +46,17 @@ const initialData = {
 
 export function PartTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { parts } = data;
-
-  const setParts = (updater: React.SetStateAction<Part[]>) => {
-    setData(prev => ({...prev, parts: typeof updater === 'function' ? updater(prev.parts || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const partsRef = useMemoFirebase(() => firestore ? collection(firestore, 'parts') : null, [firestore]);
+  const { data: parts, isLoading } = useCollection<Part>(partsRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Part> | null>(null);
   const [formData, setFormData] = useState<Omit<Part, 'id'>>(initialData);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeParts = Array.isArray(parts) ? parts : [];
+  const safeParts = useMemo(() => Array.isArray(parts) ? parts : [], [parts]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeParts;
@@ -102,8 +95,8 @@ export function PartTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setParts(prev => (prev || []).filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && partsRef) {
+        deleteDocumentNonBlocking(doc(partsRef, currentItem.id));
         toast({ title: 'Success', description: 'Part deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -115,13 +108,13 @@ export function PartTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Part Name and Code are required.' });
       return;
     }
+    if (!partsRef) return;
 
     if (currentItem?.id) {
-      setParts(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } : p));
+      setDocumentNonBlocking(doc(partsRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Part updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setParts(prev => [...(prev || []), newItem]);
+      addDocumentNonBlocking(partsRef, formData);
       toast({ title: 'Success', description: 'Part added successfully.' });
     }
 
@@ -138,7 +131,7 @@ export function PartTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && partsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -153,17 +146,16 @@ export function PartTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
-                brand: String((item as any).brand || '').trim(),
-                price: parseFloat(String((item as any).price || 0)),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
+                brand: String(item.brand || '').trim(),
+                price: parseFloat(String(item.price || 0)),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setParts(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(partsRef, item));
             toast({ title: 'Success', description: `${newItems.length} parts uploaded successfully.` });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid parts found in the file.' });
@@ -215,9 +207,15 @@ export function PartTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -307,3 +305,5 @@ export function PartTable() {
     </TooltipProvider>
   );
 }
+
+    

@@ -25,7 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type FaultStatus = {
   id: string;
@@ -35,26 +37,17 @@ export type FaultStatus = {
 
 export function FaultStatusTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { faultStatuses } = data;
-
-  const setFaultStatuses = (updater: React.SetStateAction<FaultStatus[]>) => {
-    setData(prev => ({...prev, faultStatuses: typeof updater === 'function' ? updater(prev.faultStatuses || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const faultStatusesRef = useMemoFirebase(() => firestore ? collection(firestore, 'faultStatuses') : null, [firestore]);
+  const { data: faultStatuses, isLoading } = useCollection<FaultStatus>(faultStatusesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<FaultStatus> | null>(null);
   const [formData, setFormData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeFaultStatuses = Array.isArray(faultStatuses) ? faultStatuses : [];
+  const safeFaultStatuses = useMemo(() => Array.isArray(faultStatuses) ? faultStatuses : [], [faultStatuses]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeFaultStatuses;
@@ -92,8 +85,8 @@ export function FaultStatusTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setFaultStatuses(prev => prev.filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && faultStatusesRef) {
+        deleteDocumentNonBlocking(doc(faultStatusesRef, currentItem.id));
         toast({ title: 'Success', description: 'Fault status deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +98,13 @@ export function FaultStatusTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
+    if (!faultStatusesRef) return;
 
     if (currentItem?.id) {
-      setFaultStatuses(prev => prev.map(p => p.id === currentItem.id ? { ...p, ...formData } as FaultStatus : p));
+      setDocumentNonBlocking(doc(faultStatusesRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Fault status updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setFaultStatuses(prev => [...prev, newItem]);
+      addDocumentNonBlocking(faultStatusesRef, formData);
       toast({ title: 'Success', description: 'Fault status added successfully.' });
     }
 
@@ -128,7 +121,7 @@ export function FaultStatusTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && faultStatusesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -143,15 +136,14 @@ export function FaultStatusTable() {
           }
 
           const newItems = json
-            .map(item => ({ 
-                name: String((item as any).name || '').trim(),
-                code: String((item as any).code || '').trim(),
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
             }))
             .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
-          
+
           if(newItems.length > 0) {
-            setFaultStatuses(prev => [...prev, ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(faultStatusesRef, item));
             toast({ title: 'Success', description: 'Fault statuses uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid fault statuses found in the file.' });
@@ -201,9 +193,13 @@ export function FaultStatusTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
@@ -283,3 +279,5 @@ export function FaultStatusTable() {
     </TooltipProvider>
   );
 }
+
+    
