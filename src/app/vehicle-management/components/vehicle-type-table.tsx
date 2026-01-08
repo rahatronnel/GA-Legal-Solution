@@ -25,9 +25,12 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
-type VehicleType = {
+
+export type VehicleType = {
   id: string;
   name: string;
   vehicleTypeCode: string;
@@ -35,25 +38,16 @@ type VehicleType = {
 
 export function VehicleTypeTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { vehicleTypes } = data;
-
-  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
-    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const typesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vehicleTypes') : null, [firestore]);
+  const { data: vehicleTypes, isLoading } = useCollection<VehicleType>(typesRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentVehicleType, setCurrentVehicleType] = useState<Partial<VehicleType> | null>(null);
   const [typeData, setTypeData] = useState({ name: '', vehicleTypeCode: '' });
-  const [isLoading, setIsLoading] = useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeVehicleTypes = Array.isArray(vehicleTypes) ? vehicleTypes : [];
+  
+  const safeVehicleTypes = useMemo(() => Array.isArray(vehicleTypes) ? vehicleTypes : [], [vehicleTypes]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -82,8 +76,8 @@ export function VehicleTypeTable() {
   };
 
   const confirmDelete = () => {
-    if (currentVehicleType?.id) {
-        setVehicleTypes(prev => (prev || []).filter(vt => vt.id !== currentVehicleType.id));
+    if (currentVehicleType?.id && typesRef) {
+        deleteDocumentNonBlocking(doc(typesRef, currentVehicleType.id));
         toast({ title: 'Success', description: 'Vehicle type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -95,13 +89,13 @@ export function VehicleTypeTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
+    if (!typesRef) return;
 
     if (currentVehicleType?.id) {
-      setVehicleTypes(prev => (prev || []).map(vt => vt.id === currentVehicleType.id ? { ...vt, ...typeData } as VehicleType : vt));
+      setDocumentNonBlocking(doc(typesRef, currentVehicleType.id), typeData, { merge: true });
       toast({ title: 'Success', description: 'Vehicle type updated successfully.' });
     } else {
-      const newVehicleType = { id: Date.now().toString(), ...typeData };
-      setVehicleTypes(prev => [...(prev || []), newVehicleType]);
+      addDocumentNonBlocking(typesRef, typeData);
       toast({ title: 'Success', description: 'Vehicle type added successfully.' });
     }
 
@@ -118,7 +112,7 @@ export function VehicleTypeTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && typesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -137,15 +131,10 @@ export function VehicleTypeTable() {
                 name: String(item.name || '').trim(),
                 vehicleTypeCode: String(item.vehicleTypeCode || '').trim()
             }))
-            .filter(item => item.name && item.vehicleTypeCode)
-            .map(item => ({ 
-              id: Date.now().toString() + item.name, 
-              name: item.name, 
-              vehicleTypeCode: item.vehicleTypeCode 
-            }));
+            .filter(item => item.name && item.vehicleTypeCode);
           
           if(newTypes.length > 0) {
-            setVehicleTypes(prev => [...(prev || []), ...newTypes]);
+            newTypes.forEach(item => addDocumentNonBlocking(typesRef, item));
             toast({ title: 'Success', description: 'Vehicle types uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid vehicle types found in the file.' });
@@ -182,9 +171,13 @@ export function VehicleTypeTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                     Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : safeVehicleTypes && safeVehicleTypes.length > 0 ? (
                     safeVehicleTypes.map((vt) => (
                     <TableRow key={vt.id}>
@@ -214,7 +207,7 @@ export function VehicleTypeTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center">No vehicle types found.</TableCell>
+                    <TableCell colSpan={3} className="text-center h-24">No vehicle types found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>

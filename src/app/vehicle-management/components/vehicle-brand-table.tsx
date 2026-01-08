@@ -26,6 +26,9 @@ import * as XLSX from 'xlsx';
 import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type VehicleBrand = {
   id: string;
@@ -35,26 +38,17 @@ export type VehicleBrand = {
 
 export function VehicleBrandTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { vehicleBrands } = data;
-
-  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
-    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater }));
-  }
+  const firestore = useFirestore();
+  const brandsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vehicleBrands') : null, [firestore]);
+  const { data: vehicleBrands, isLoading } = useCollection<VehicleBrand>(brandsRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<VehicleBrand> | null>(null);
   const [formData, setFormData] = useState({ name: '', code: '' });
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const safeVehicleBrands = Array.isArray(vehicleBrands) ? vehicleBrands : [];
+  const safeVehicleBrands = useMemo(() => Array.isArray(vehicleBrands) ? vehicleBrands : [], [vehicleBrands]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeVehicleBrands;
@@ -92,8 +86,8 @@ export function VehicleBrandTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setVehicleBrands(prev => (prev || []).filter(p => p.id !== currentItem.id));
+    if (currentItem?.id && brandsRef) {
+        deleteDocumentNonBlocking(doc(brandsRef, currentItem.id));
         toast({ title: 'Success', description: 'Vehicle brand deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -105,13 +99,13 @@ export function VehicleBrandTable() {
       toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
+    if (!brandsRef) return;
 
     if (currentItem?.id) {
-      setVehicleBrands(prev => (prev || []).map(p => p.id === currentItem.id ? { ...p, ...formData } as VehicleBrand : p));
+      setDocumentNonBlocking(doc(brandsRef, currentItem.id), formData, { merge: true });
       toast({ title: 'Success', description: 'Vehicle brand updated successfully.' });
     } else {
-      const newItem = { id: Date.now().toString(), ...formData };
-      setVehicleBrands(prev => [...(prev || []), newItem]);
+      addDocumentNonBlocking(brandsRef, formData);
       toast({ title: 'Success', description: 'Vehicle brand added successfully.' });
     }
 
@@ -128,7 +122,7 @@ export function VehicleBrandTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && brandsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -147,11 +141,10 @@ export function VehicleBrandTable() {
                 name: String(item.name || '').trim(),
                 code: String(item.code || '').trim(),
             }))
-            .filter(item => item.name && item.code)
-            .map(item => ({ id: Date.now().toString() + item.name, ...item }));
+            .filter(item => item.name && item.code);
           
           if(newItems.length > 0) {
-            setVehicleBrands(prev => [...(prev || []), ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(brandsRef, item));
             toast({ title: 'Success', description: 'Vehicle brands uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid vehicle brands found in the file.' });
@@ -201,9 +194,13 @@ export function VehicleBrandTable() {
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                    Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
