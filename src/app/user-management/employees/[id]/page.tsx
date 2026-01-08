@@ -4,7 +4,6 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { type Employee } from '@/app/user-management/components/employee-entry-form';
 import { type Section } from '@/app/user-management/components/section-table';
 import { type Designation } from '@/app/user-management/components/designation-table';
@@ -19,6 +18,8 @@ import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
+import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
@@ -92,29 +93,26 @@ export default function EmployeeProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
-  const [employees] = useLocalStorage<Employee[]>('employees', []);
-  const [sections] = useLocalStorage<Section[]>('sections', []);
-  const [designations] = useLocalStorage<Designation[]>('designations', []);
-  const [employee, setEmployee] = useState<Employee | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
-  useEffect(() => {
-    if (typeof id !== 'string' || !employees || employees.length === 0) {
-        setEmployee(undefined);
-        return;
-    }
+  const firestore = useFirestore();
+  const employeeDocRef = useMemoFirebase(() => (firestore && typeof id === 'string') ? doc(firestore, 'employees', id) : null, [firestore, id]);
+  const { data: employee, isLoading: isLoadingEmployee } = useDoc<Employee>(employeeDocRef);
 
-    const foundEmployee = employees.find(d => d.id === id);
-    if (foundEmployee) {
-        setEmployee(foundEmployee);
-    } else {
-        // We delay the notFound call slightly to ensure data has had a chance to load on client.
+  const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+  
+  const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+
+  useEffect(() => {
+    if (!isLoadingEmployee && !employee) {
         const timer = setTimeout(() => notFound(), 500);
         return () => clearTimeout(timer);
     }
-  }, [id, employees, notFound]);
+  }, [isLoadingEmployee, employee, notFound]);
 
-  if (employee === undefined) {
+  if (isLoadingEmployee || isLoadingSections || isLoadingDesignations) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading employee profile...</p>
@@ -122,7 +120,7 @@ export default function EmployeeProfilePage() {
     );
   }
 
-  if (employee === null) {
+  if (!employee) {
       notFound();
   }
   
@@ -130,8 +128,8 @@ export default function EmployeeProfilePage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
-  const department = sections.find(s => s.id === employee.departmentId);
-  const designation = designations.find(d => d.id === employee.designationId);
+  const department = sections?.find(s => s.id === employee.departmentId);
+  const designation = designations?.find(d => d.id === employee.designationId);
   
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';

@@ -4,20 +4,24 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionTable } from "./components/section-table";
-import { DesignationTable, type Designation } from "./components/designation-table";
+import { DesignationTable } from "./components/designation-table";
 import { EmployeeTable, type Employee } from "./components/employee-table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { Section } from "./components/section-table";
+import type { Designation } from "./components/designation-table";
 
 export default function UserManagementPage() {
-  const [employees, setEmployees] = useLocalStorage<Employee[]>('employees', []);
-  const [designations, setDesignations] = useLocalStorage<Designation[]>('designations', []);
-  
   const firestore = useFirestore();
+  
+  const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
+  
   const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
   const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+  
+  const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
 
   return (
     <>
@@ -37,10 +41,10 @@ export default function UserManagementPage() {
                 </CardHeader>
                 <CardContent>
                     <EmployeeTable 
-                      employees={employees}
-                      setEmployees={setEmployees}
+                      employees={employees || []}
+                      isLoading={isLoadingEmployees}
                       sections={sections || []}
-                      designations={designations}
+                      designations={designations || []}
                     />
                 </CardContent>
             </Card>
@@ -63,7 +67,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the job titles and designations for employees.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DesignationTable designations={designations} setDesignations={setDesignations} />
+                  <DesignationTable designations={designations || []} isLoading={isLoadingDesignations} />
               </CardContent>
           </Card>
         </TabsContent>
