@@ -39,7 +39,8 @@
     "date-fns": "^3.6.0",
     "cmdk": "^1.0.0",
     "recharts": "^2.12.7",
-    "@radix-ui/react-accordion": "^1.2.0"
+    "@radix-ui/react-accordion": "^1.2.0",
+    "firebase": "^10.12.2"
   },
   "devDependencies": {
     "@types/node": "^20",
