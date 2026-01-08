@@ -200,7 +200,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     return end > start ? end - start : 0;
   }, [tripData.startingMeter, tripData.endingMeter]);
 
-  const selectedDriver = useMemo(() => drivers.find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
+  const selectedDriver = useMemo(() => (drivers || []).find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
 
   const getDriverForDate = (vehicle: Vehicle, date: Date) => {
     if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
@@ -208,7 +208,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     }
 
     const sortedHistory = [...vehicle.driverAssignmentHistory]
-        .filter(h => new Date(h.effectiveDate) <= date)
+        .filter(h => h.effectiveDate && new Date(h.effectiveDate) <= date)
         .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
 
     return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
@@ -216,7 +216,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   
   const updateDriverBasedOnVehicleAndDate = (vehicleId: string, date: Date | undefined) => {
       if(vehicleId && date) {
-        const vehicle = vehicles.find(v => v.id === vehicleId);
+        const vehicle = (vehicles || []).find(v => v.id === vehicleId);
         if(vehicle) {
             const driverId = getDriverForDate(vehicle, date);
             if(driverId) {
@@ -248,7 +248,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         setEndDate(undefined);
       }
     }
-  }, [isOpen, trip, isEditing]);
+  }, [isOpen, trip, isEditing, vehicles]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
@@ -377,7 +377,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         documents,
     };
 
-    onSave(completeTripData, trip?.id);
+    onSave(completeTripData);
     setIsOpen(false);
   };
   
@@ -536,3 +536,5 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     </Dialog>
   );
 }
+
+    
