@@ -27,6 +27,44 @@
       },
       "required": ["name", "sectionCode"]
     },
+    "Designation": {
+      "title": "Designation",
+      "type": "object",
+      "description": "Represents a job title or designation for an employee.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the designation." },
+        "designationCode": { "type": "string", "description": "The unique code for the designation." }
+      },
+      "required": ["name", "designationCode"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "type": "object",
+      "description": "Represents an employee in the organization.",
+      "properties": {
+        "userIdCode": { "type": "string" },
+        "fullName": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Admin", "Operator", "Driver", "Viewer"] },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "username": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "designationId": { "type": "string" },
+        "joiningDate": { "type": "string", "format": "date" },
+        "address": { "type": "string" },
+        "remarks": { "type": "string" },
+        "profilePicture": { "type": "string", "description": "Data URL of the profile picture." },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "nid": { "type": "string", "description": "Data URL of the NID document." },
+            "other": { "type": "string", "description": "Data URL of the other document." }
+          }
+        }
+      },
+      "required": ["userIdCode", "fullName", "mobileNumber", "username", "role", "status"]
+    },
     "VehicleType": {
       "title": "Vehicle Type", "type": "object", "description": "Defines a type or category of a vehicle.",
       "properties": { "name": { "type": "string" }, "vehicleTypeCode": { "type": "string" } }, "required": ["name", "vehicleTypeCode"]
@@ -89,6 +127,8 @@
   "firestore": {
     "/settings/organization": { "schema": { "$ref": "#/entities/OrganizationSettings" }, "description": "Stores the single, global configuration for the organization." },
     "/sections/{sectionId}": { "schema": { "$ref": "#/entities/Section" }, "description": "Stores organization sections or departments." },
+    "/designations/{designationId}": { "schema": { "$ref": "#/entities/Designation" }, "description": "Stores job titles and designations." },
+    "/employees/{employeeId}": { "schema": { "$ref": "#/entities/Employee" }, "description": "Stores employee profiles." },
     "/vehicleTypes/{vehicleTypeId}": { "schema": { "$ref": "#/entities/VehicleType" }, "description": "Stores vehicle categories." },
     "/vehicleBrands/{vehicleBrandId}": { "schema": { "$ref": "#/entities/VehicleBrand" }, "description": "Stores vehicle brands." },
     "/locations/{locationId}": { "schema": { "$ref": "#/entities/Location" }, "description": "Stores geographic locations." },
@@ -104,5 +144,3 @@
     "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." }
   }
 }
-
-    

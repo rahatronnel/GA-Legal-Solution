@@ -19,10 +19,18 @@ service cloud.firestore {
     }
     
     // -------------------------------------------------------------------------
-    // Collection: /sections
+    // User Management Collections
     // -------------------------------------------------------------------------
     match /sections/{sectionId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /designations/{designationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
 
@@ -30,59 +38,77 @@ service cloud.firestore {
     // Vehicle Management Collections
     // -------------------------------------------------------------------------
     match /vehicleTypes/{vehicleTypeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /vehicleBrands/{vehicleBrandId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /locations/{locationId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /routes/{routeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /tripPurposes/{tripPurposeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /expenseTypes/{expenseTypeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /maintenanceTypes/{maintenanceTypeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /maintenanceExpenseTypes/{maintenanceExpenseTypeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /parts/{partId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /serviceCenters/{serviceCenterId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /accidentTypes/{accidentTypeId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /severityLevels/{severityLevelId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
     match /faultStatuses/{faultStatusId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+     match /drivers/{driverId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+     match /trips/{tripId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    match /maintenanceRecords/{recordId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+     match /accidents/{accidentId} {
+      allow read: if isAuthenticated();
       allow write: if isAuthenticated();
     }
 
   }
 }
-
-    

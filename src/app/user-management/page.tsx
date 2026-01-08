@@ -3,25 +3,26 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SectionTable } from "./components/section-table";
-import { DesignationTable } from "./components/designation-table";
+import { SectionTable, type Section } from "./components/section-table";
+import { DesignationTable, type Designation } from "./components/designation-table";
 import { EmployeeTable, type Employee } from "./components/employee-table";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
-import type { Section } from "./components/section-table";
-import type { Designation } from "./components/designation-table";
 
 export default function UserManagementPage() {
   const firestore = useFirestore();
   
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
-  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
+  const { data: employeesData, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
+  const employees = employeesData || [];
   
   const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
-  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+  const { data: sectionsData, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+  const sections = sectionsData || [];
   
   const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
-  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+  const { data: designationsData, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+  const designations = designationsData || [];
 
   return (
     <>
@@ -41,10 +42,10 @@ export default function UserManagementPage() {
                 </CardHeader>
                 <CardContent>
                     <EmployeeTable 
-                      employees={employees || []}
-                      isLoading={isLoadingEmployees}
-                      sections={sections || []}
-                      designations={designations || []}
+                      employees={employees}
+                      setEmployees={() => {}} // This will now be handled by firestore hooks
+                      sections={sections}
+                      designations={designations}
                     />
                 </CardContent>
             </Card>
@@ -56,7 +57,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the different sections within your organization.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <SectionTable sections={sections || []} isLoading={isLoadingSections} />
+                  <SectionTable sections={sections} isLoading={isLoadingSections} />
               </CardContent>
           </Card>
         </TabsContent>
@@ -67,7 +68,7 @@ export default function UserManagementPage() {
                   <CardDescription>Manage the job titles and designations for employees.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <DesignationTable designations={designations || []} isLoading={isLoadingDesignations} />
+                  <DesignationTable designations={designations} isLoading={isLoadingDesignations} />
               </CardContent>
           </Card>
         </TabsContent>

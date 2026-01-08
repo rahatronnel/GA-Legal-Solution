@@ -24,10 +24,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface EmployeeTableProps {
   employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
+  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>; // Kept for optimistic updates but Firestore is source of truth
   sections: Section[];
   designations: Designation[];
 }
@@ -35,17 +38,13 @@ interface EmployeeTableProps {
 export function EmployeeTable({ employees, setEmployees, sections, designations }: EmployeeTableProps) {
   const { toast } = useToast();
   const { handlePrint } = usePrint();
+  const firestore = useFirestore();
+  const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState<Partial<Employee> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const filteredEmployees = useMemo(() => {
     if (!searchTerm) return employees;
@@ -68,15 +67,16 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   };
 
   const handleSave = (data: Omit<Employee, 'id'>, id?: string) => {
+    if (!employeesRef) {
+        toast({ variant: "destructive", title: "Error", description: "Database not connected." });
+        return;
+    }
     if (id) {
-        setEmployees(prev => prev.map(d => d.id === id ? { id, ...data } : d));
+        setDocumentNonBlocking(doc(employeesRef, id), data, { merge: true });
         toast({ title: 'Success', description: 'Employee updated successfully.' });
     } else {
-        const newEmployee: Employee = { 
-            id: Date.now().toString(), 
-            ...data
-        };
-        setEmployees(prev => [...prev, newEmployee]);
+        const newEmployee: Omit<Employee, 'id'> = { ...data };
+        addDocumentNonBlocking(employeesRef, newEmployee);
         toast({ title: 'Success', description: 'Employee added successfully.' });
     }
   };
@@ -87,8 +87,8 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   };
 
   const confirmDelete = () => {
-    if (currentEmployee?.id) {
-        setEmployees(prev => prev.filter(d => d.id !== currentEmployee.id));
+    if (currentEmployee?.id && employeesRef) {
+        deleteDocumentNonBlocking(doc(employeesRef, currentEmployee.id));
         toast({ title: 'Success', description: 'Employee deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -117,7 +117,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && employeesRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -133,13 +133,12 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
              throw new Error('Invalid Excel file format. Expecting columns: userIdCode, fullName, mobileNumber.');
           }
 
-          const newEmployees: Employee[] = json
+          const newEmployees: Omit<Employee, 'id'>[] = json
             .filter(item => item.fullName && item.fullName.toString().trim() && item.userIdCode)
             .map(item => {
                 const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
                 const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
                 return {
-                    id: Date.now().toString() + item.userIdCode, 
                     userIdCode: item.userIdCode?.toString().trim() || '',
                     fullName: item.fullName?.toString().trim() || '',
                     mobileNumber: item.mobileNumber?.toString().trim() || '',
@@ -158,7 +157,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
             });
           
           if(newEmployees.length > 0) {
-            setEmployees(prev => [...prev, ...newEmployees]);
+            newEmployees.forEach(emp => addDocumentNonBlocking(employeesRef, emp));
             toast({ title: 'Success', description: `${newEmployees.length} employees uploaded successfully.` });
           }
 
@@ -207,7 +206,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {!employees ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center">Loading...</TableCell>
               </TableRow>

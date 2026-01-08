@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableHeader,
@@ -25,6 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { MoreHorizontal, Download, Upload, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type Designation = {
   id: string;
@@ -34,21 +37,18 @@ export type Designation = {
 
 interface DesignationTableProps {
   designations: Designation[];
-  setDesignations: React.Dispatch<React.SetStateAction<Designation[]>>;
+  isLoading: boolean;
 }
 
-export function DesignationTable({ designations, setDesignations }: DesignationTableProps) {
+export function DesignationTable({ designations, isLoading }: DesignationTableProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentDesignation, setCurrentDesignation] = useState<Partial<Designation> | null>(null);
   const [designationData, setDesignationData] = useState({ name: '', designationCode: '' });
-  const [isLoading, setIsLoading] = useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -77,8 +77,8 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
   };
 
   const confirmDelete = () => {
-    if (currentDesignation?.id) {
-        setDesignations(prev => prev.filter(d => d.id !== currentDesignation.id));
+    if (currentDesignation?.id && designationsRef) {
+        deleteDocumentNonBlocking(doc(designationsRef, currentDesignation.id));
         toast({ title: 'Success', description: 'Designation deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -90,13 +90,17 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
       toast({ variant: 'destructive', title: 'Error', description: 'All fields are required.' });
       return;
     }
+    
+    if (!designationsRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database connection not available.' });
+        return;
+    }
 
     if (currentDesignation?.id) {
-      setDesignations(prev => prev.map(d => d.id === currentDesignation.id ? { ...d, ...designationData } : d));
+      setDocumentNonBlocking(doc(designationsRef, currentDesignation.id), designationData, { merge: true });
       toast({ title: 'Success', description: 'Designation updated successfully.' });
     } else {
-      const newDesignation = { id: Date.now().toString(), ...designationData };
-      setDesignations(prev => [...prev, newDesignation]);
+      addDocumentNonBlocking(designationsRef, designationData);
       toast({ title: 'Success', description: 'Designation added successfully.' });
     }
 
@@ -113,7 +117,7 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && designationsRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -132,15 +136,10 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
               name: String(item.name || '').trim(),
               designationCode: String(item.designationCode || '').trim()
             }))
-            .filter(item => item.name && item.designationCode)
-            .map(item => ({
-              id: Date.now().toString() + item.name,
-              name: item.name,
-              designationCode: item.designationCode
-            }));
+            .filter(item => item.name && item.designationCode);
           
           if(newItems.length > 0) {
-            setDesignations(prev => [...prev, ...newItems]);
+            newItems.forEach(item => addDocumentNonBlocking(designationsRef, item));
             toast({ title: 'Success', description: 'Designations uploaded successfully.' });
           } else {
             toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid designations found in the file.' });
@@ -177,9 +176,13 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
                 </TableHeader>
                 <TableBody>
                 {isLoading ? (
-                    <TableRow>
-                    <TableCell colSpan={3} className="text-center">Loading...</TableCell>
-                    </TableRow>
+                     Array.from({length: 3}).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
+                      </TableRow>
+                    ))
                 ) : designations && designations.length > 0 ? (
                     designations.map((item) => (
                     <TableRow key={item.id}>
@@ -209,7 +212,7 @@ export function DesignationTable({ designations, setDesignations }: DesignationT
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center">No designations found.</TableCell>
+                    <TableCell colSpan={3} className="text-center h-24">No designations found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
