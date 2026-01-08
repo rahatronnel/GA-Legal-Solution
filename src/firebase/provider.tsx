@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { Auth, User, onAuthStateChanged, createUserWithEmailAndPassword } from 'firebase/auth';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -52,6 +53,35 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
+// --- Superadmin Seeding ---
+const SEED_SUPERADMIN_KEY = 'superadmin_seeded_v1';
+
+async function seedSuperadmin(auth: Auth) {
+  if (typeof window !== 'undefined' && localStorage.getItem(SEED_SUPERADMIN_KEY)) {
+    return;
+  }
+
+  try {
+    // This is a "safe" operation. If the user already exists, it will throw an error
+    // which we catch and ignore. This prevents creating the user multiple times.
+    await createUserWithEmailAndPassword(auth, 'superadmin@galsolution.com', 'superadmin2026');
+    console.log('Superadmin user created successfully.');
+  } catch (error: any) {
+    if (error.code === 'auth/email-already-in-use') {
+      // This is expected if the user already exists.
+      console.log('Superadmin user already exists.');
+    } else {
+      // Log other errors for debugging.
+      console.error('Error seeding superadmin:', error);
+    }
+  } finally {
+      if(typeof window !== 'undefined'){
+        localStorage.setItem(SEED_SUPERADMIN_KEY, 'true');
+      }
+  }
+}
+
+
 /**
  * FirebaseProvider manages and provides Firebase services and user authentication state.
  */
@@ -73,6 +103,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
+    
+    // Seed the superadmin user when auth is ready
+    seedSuperadmin(auth);
 
     setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
 
@@ -103,25 +136,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     };
   }, [firebaseApp, firestore, auth, userAuthState]);
 
-  if (contextValue.isUserLoading) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center">
-            <p>Loading...</p>
-        </div>
-    );
-  }
-
-  if (!contextValue.user) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center p-4 text-center">
-            <div>
-                <h1 className="text-2xl font-bold">Authentication Required</h1>
-                <p className="text-muted-foreground">You must be logged in to access this application.</p>
-                {/* In the future, a login form would go here. */}
-            </div>
-        </div>
-    );
-  }
 
   return (
     <FirebaseContext.Provider value={contextValue}>
