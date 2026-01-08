@@ -23,15 +23,21 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 export function DriverTable() {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const { data, setData } = useVehicleManagement();
   const { vehicles, drivers } = data;
   const { handlePrint } = usePrint();
   
+  const driversRef = useMemoFirebase(() => firestore ? collection(firestore, 'drivers') : null, [firestore]);
+
   const setDrivers = (updater: React.SetStateAction<Driver[]>) => {
-    setData(prev => ({...prev, drivers: typeof updater === 'function' ? updater(prev.drivers || []) : updater }));
+    // This is now a dummy function, as direct updates go to Firestore
+    // However, it could be used for optimistic UI updates in the future
   }
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -71,15 +77,17 @@ export function DriverTable() {
   };
 
   const handleSave = (data: Omit<Driver, 'id'>, id?: string) => {
+    if (!driversRef) {
+        toast({ variant: "destructive", title: "Error", description: "Database not connected." });
+        return;
+    }
+
     if (id) {
-        setDrivers(prev => (prev || []).map(d => (d.id === id ? { id, ...data } as Driver : d)));
+        setDocumentNonBlocking(doc(driversRef, id), data, { merge: true });
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
-        const newDriver: Driver = { 
-            id: Date.now().toString(), 
-            ...data
-        };
-        setDrivers(prev => [...(prev || []), newDriver]);
+        const newDriver: Omit<Driver, 'id'> = { ...data };
+        addDocumentNonBlocking(driversRef, newDriver);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -90,8 +98,8 @@ export function DriverTable() {
   };
 
   const confirmDelete = () => {
-    if (currentDriver?.id) {
-        setDrivers(prev => (prev || []).filter(d => d.id !== currentDriver.id));
+    if (currentDriver?.id && driversRef) {
+        deleteDocumentNonBlocking(doc(driversRef, currentDriver.id));
         toast({ title: 'Success', description: 'Driver deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -99,8 +107,11 @@ export function DriverTable() {
   };
   
   const confirmDeleteAll = () => {
-    setDrivers([]);
-    toast({ title: 'Success', description: 'All driver records have been deleted.' });
+     if (!driversRef) return;
+     safeDrivers.forEach(driver => {
+         deleteDocumentNonBlocking(doc(driversRef, driver.id));
+     });
+    toast({ title: 'Success', description: 'All driver records are being deleted.' });
     setIsDeleteAllConfirmOpen(false);
   };
 
@@ -134,7 +145,7 @@ export function DriverTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && driversRef) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
@@ -150,10 +161,9 @@ export function DriverTable() {
              throw new Error('Invalid Excel file format. Expecting columns: driverIdCode, name, mobileNumber.');
           }
 
-          const newDrivers: Driver[] = json
+          const newDrivers: Omit<Driver, 'id'>[] = json
             .filter(item => item.name && item.name.toString().trim() && item.driverIdCode)
             .map(item => ({ 
-              id: Date.now().toString() + item.driverIdCode, 
               driverIdCode: item.driverIdCode?.toString().trim() || '',
               name: item.name?.toString().trim() || '',
               fatherOrGuardianName: item.fatherOrGuardianName?.toString().trim() || '',
@@ -180,8 +190,12 @@ export function DriverTable() {
             }));
           
           if(newDrivers.length > 0) {
-            setDrivers(prev => [...(prev || []), ...newDrivers]);
+            newDrivers.forEach(driver => {
+                addDocumentNonBlocking(driversRef, driver);
+            });
             toast({ title: 'Success', description: `${newDrivers.length} drivers uploaded successfully.` });
+          } else {
+            toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid drivers found in the file.' });
           }
 
         } catch (error: any) {
