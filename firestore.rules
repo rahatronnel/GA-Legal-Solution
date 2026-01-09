@@ -11,15 +11,19 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // Singleton & Public Master Data
-    // These collections contain general configuration or master list data.
-    // It's safe for anyone to read this data, but only authenticated
-    // users can make changes.
+    // Default Security Rule
+    // By default, require authentication for any read or write access.
     // -------------------------------------------------------------------------
     match /{document=**} {
-      allow read: if true;
+      allow read, write: if isAuthenticated();
     }
 
+    // -------------------------------------------------------------------------
+    // Singleton & Public Master Data
+    // These collections contain general configuration or master list data.
+    // The default rule above already protects them, but we can have more
+    // granular rules here if needed in the future.
+    // -------------------------------------------------------------------------
     match /settings/{docId} {
         allow write: if isAuthenticated();
     }
@@ -86,8 +90,7 @@ service cloud.firestore {
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data
-    // Write access is protected, but read access is public to prevent
-    // initial load errors.
+    // The default rule protects these collections as well.
     // -------------------------------------------------------------------------
     match /sections/{docId} {
       allow write: if isAuthenticated();
