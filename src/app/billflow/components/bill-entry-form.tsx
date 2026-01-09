@@ -286,7 +286,6 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             if (!billData.billTypeId) missingFields.push('Bill Type');
             if (!billData.billDate) missingFields.push('Bill Date');
             if (!billData.billReceivedDate) missingFields.push('Bill Received Date');
-            if (!billData.entryBy) missingFields.push('Entry By information');
         }
         if (missingFields.length > 0) {
             toast({ variant: 'destructive', title: 'Missing Fields', description: `Please fill: ${missingFields.join(', ')}` });
