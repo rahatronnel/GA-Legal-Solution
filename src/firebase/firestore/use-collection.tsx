@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
+  getAuth,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -62,6 +64,15 @@ export function useCollection<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
+    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
+    // This prevents "Missing or insufficient permissions" errors on initial load.
+    const auth = getAuth();
+    if (!auth.currentUser) {
+        setIsLoading(true); // Remain in loading state until auth is resolved
+        setData(null);
+        return;
+    }
+    
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(true); // If no query, we are in a loading state until we get one

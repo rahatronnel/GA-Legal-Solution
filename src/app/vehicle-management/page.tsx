@@ -25,10 +25,15 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { VehicleManagementProvider } from './components/vehicle-management-provider';
+import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
 import { Dashboard } from "./components/Dashboard";
 
 function VehicleManagementContent() {
+  const { isLoading } = useVehicleManagement();
+
+  if (isLoading) {
+      return <div className="flex items-center justify-center h-full"><p>Loading Module Data...</p></div>
+  }
 
   return (
     <div className="space-y-4">

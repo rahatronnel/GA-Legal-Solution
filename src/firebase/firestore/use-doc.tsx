@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import {
   DocumentData,
   FirestoreError,
   DocumentSnapshot,
+  getAuth,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -48,6 +50,14 @@ export function useDoc<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
+    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
+    const auth = getAuth();
+    if (!auth.currentUser) {
+        setIsLoading(true);
+        setData(null);
+        return;
+    }
+
     if (!memoizedDocRef) {
       setData(null);
       setIsLoading(true); // If no ref, we are in a loading state until we get one
