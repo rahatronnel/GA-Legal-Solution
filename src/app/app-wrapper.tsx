@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -84,8 +84,8 @@ const ModuleDashboard = () => {
             </div>
 
             <div className="text-center mb-12">
-                 <h1 className="text-4xl font-bold tracking-tight">GA & Legal Solution</h1>
-                 <p className="text-muted-foreground">Select a module to begin</p>
+                 <h1 className="text-4xl font-bold tracking-tight">Enterprise Resource Planning</h1>
+                 <p className="text-muted-foreground">Select a module to begin your journey.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
                 {coreModules.map((mod) => (
