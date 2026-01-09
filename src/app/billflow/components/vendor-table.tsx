@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Download, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,12 +20,24 @@ import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, s
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VendorEntryForm, type Vendor } from './vendor-entry-form';
+import * as XLSX from 'xlsx';
+import type { VendorCategory } from './vendor-category-table';
+import type { VendorNatureOfBusiness } from './vendor-nature-of-business-table';
 
 export function VendorTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  
   const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
-  const { data: vendors, isLoading } = useCollection<Vendor>(vendorsRef);
+  const { data: vendors, isLoading: isLoadingVendors } = useCollection<Vendor>(vendorsRef);
+  
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]);
+  const { data: categories, isLoading: isLoadingCategories } = useCollection<VendorCategory>(categoriesRef);
+
+  const naturesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]);
+  const { data: naturesOfBusiness, isLoading: isLoadingNatures } = useCollection<VendorNatureOfBusiness>(naturesRef);
+
+  const isLoading = isLoadingVendors || isLoadingCategories || isLoadingNatures;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -85,6 +97,144 @@ export function VendorTable() {
     setCurrentItem(null);
   };
 
+  const handleDownloadTemplate = () => {
+    const wsData = [
+      {
+        vendorName: "Example Corp",
+        vendorShortName: "Example",
+        vendorType: "Company",
+        vendorCategoryCode: "CAT-001",
+        vendorSubCategory: "Sub",
+        natureOfBusinessCode: "NOB-001",
+        yearsOfExperience: 5,
+        contactPersonName: "John Doe",
+        contactPersonDesignation: "Manager",
+        mobileNumber: "1234567890",
+        alternateMobileNumber: "0987654321",
+        email: "john.doe@example.com",
+        officePhone: "111222333",
+        whatsAppNumber: "1234567890",
+        officeAddress: "123 Main St, Anytown",
+        factoryAddress: "456 Factory Rd, Anytown",
+        country: "USA",
+        city: "Anytown",
+        tradeLicenseNumber: "TL-123",
+        tradeLicenseExpiryDate: "2025-12-31",
+        tinNumber: "TIN-456",
+        vatBinNumber: "VAT-789",
+        nidOrCompanyRegNumber: "REG-101",
+        incorporationDate: "2019-01-01",
+        bankName: "Example Bank",
+        branchName: "Main Branch",
+        accountName: "Example Corp",
+        accountNumber: "123456789",
+        routingNumber: "987654321",
+        paymentMethod: "Bank",
+        mobileBankingProvider: "",
+        paymentTerms: "Net 30",
+        creditLimit: 10000,
+        currency: "USD",
+        taxDeductionApplicable: "Yes",
+        vatApplicable: "No",
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vendors');
+    XLSX.writeFile(wb, 'VendorTemplate.xlsx');
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && vendorsRef) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+          const requiredHeaders = ['vendorName', 'vendorType', 'vendorCategoryCode', 'email'];
+          const headers = Object.keys(json[0] || {});
+          if (!requiredHeaders.every(h => headers.includes(h))) {
+            throw new Error(`Invalid Excel format. Required columns are: ${requiredHeaders.join(', ')}.`);
+          }
+
+          toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
+
+          for (const item of json) {
+            if (!item.vendorName || !item.email) continue;
+            
+            const category = categories?.find(c => c.code === item.vendorCategoryCode);
+            const nature = naturesOfBusiness?.find(n => n.code === item.natureOfBusinessCode);
+
+            const newVendor: Partial<Vendor> = {
+                vendorId: `V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                vendorName: item.vendorName,
+                vendorShortName: item.vendorShortName || '',
+                vendorType: item.vendorType || 'Company',
+                vendorCategoryId: category?.id || '',
+                vendorSubCategory: item.vendorSubCategory || '',
+                natureOfBusinessId: nature?.id || '',
+                yearsOfExperience: Number(item.yearsOfExperience) || 0,
+                contactPersonName: item.contactPersonName || '',
+                contactPersonDesignation: item.contactPersonDesignation || '',
+                mobileNumber: String(item.mobileNumber || ''),
+                alternateMobileNumber: String(item.alternateMobileNumber || ''),
+                email: item.email,
+                officePhone: String(item.officePhone || ''),
+                whatsAppNumber: String(item.whatsAppNumber || ''),
+                officeAddress: item.officeAddress || '',
+                factoryAddress: item.factoryAddress || '',
+                country: item.country || '',
+                city: item.city || '',
+                tradeLicenseNumber: item.tradeLicenseNumber || '',
+                tradeLicenseExpiryDate: item.tradeLicenseExpiryDate ? new Date(item.tradeLicenseExpiryDate).toISOString().split('T')[0] : '',
+                tinNumber: item.tinNumber || '',
+                vatBinNumber: item.vatBinNumber || '',
+                nidOrCompanyRegNumber: item.nidOrCompanyRegNumber || '',
+                incorporationDate: item.incorporationDate ? new Date(item.incorporationDate).toISOString().split('T')[0] : '',
+                bankName: item.bankName || '',
+                branchName: item.branchName || '',
+                accountName: item.accountName || '',
+                accountNumber: String(item.accountNumber || ''),
+                routingNumber: String(item.routingNumber || ''),
+                paymentMethod: item.paymentMethod || '',
+                mobileBankingProvider: item.mobileBankingProvider || '',
+                paymentTerms: item.paymentTerms || '',
+                creditLimit: Number(item.creditLimit) || 0,
+                currency: item.currency || 'USD',
+                taxDeductionApplicable: ['yes', 'true', '1'].includes(String(item.taxDeductionApplicable).toLowerCase()),
+                vatApplicable: ['yes', 'true', '1'].includes(String(item.vatApplicable).toLowerCase()),
+                suppliedItems: [],
+                documents: {
+                    tradeLicense: '',
+                    bankChequeCopy: '',
+                    contractAgreement: '',
+                    vatCertificate: '',
+                    complianceCertificates: '',
+                    other: ''
+                },
+                loginId: item.email, // Use email as login ID by default
+                createdDate: new Date().toISOString(),
+            };
+            addDocumentNonBlocking(vendorsRef, newVendor);
+          }
+          
+          toast({ title: 'Success', description: `Finished processing ${json.length} vendors.` });
+
+        } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    event.target.value = '';
+  };
+
+
   return (
     <TooltipProvider>
     <div className="space-y-4">
@@ -99,8 +249,13 @@ export function VendorTable() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 flex-wrap">
                 <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vendor</Button>
+                <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+                <label htmlFor="upload-excel-vendors" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                    <Upload className="mr-2 h-4 w-4" /> Upload Excel
+                </label>
+                <Input id="upload-excel-vendors" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
             </div>
         </div>
         <div className="border rounded-lg">
