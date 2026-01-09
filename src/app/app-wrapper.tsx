@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
+import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
 
 const VehicleManagementPage = dynamic(() => import('./vehicle-management/page'));
 const UserManagementPage = dynamic(() => import('./user-management/page'));
@@ -91,7 +92,11 @@ const ModuleDashboard = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>My Account</DropdownMenuItem>
+                        <ChangePasswordDialog>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                My Account
+                            </DropdownMenuItem>
+                        </ChangePasswordDialog>
                         <DropdownMenuSeparator />
                         <AlertDialog>
                            <AlertDialogTrigger asChild>
