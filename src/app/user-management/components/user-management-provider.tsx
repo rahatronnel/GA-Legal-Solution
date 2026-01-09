@@ -22,18 +22,14 @@ type UserManagementDataContextType = {
 
 const UserManagementContext = createContext<UserManagementDataContextType | undefined>(undefined);
 
-const UserManagementDataProvider = ({ children }: { children: React.ReactNode }) => {
+const UserManagementDataContent = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
 
-    // Only fetch data if the user is authenticated
-    const shouldFetch = !isUserLoading && !!user;
-
-    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'employees') : null, [shouldFetch, firestore]));
-    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'sections') : null, [shouldFetch, firestore]));
-    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'designations') : null, [shouldFetch, firestore]));
+    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
+    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
+    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
     
-    const isLoading = isUserLoading || l1 || l2 || l3;
+    const isLoading = l1 || l2 || l3;
 
     const data = useMemo(() => ({
         employees: employees || [],
@@ -63,7 +59,7 @@ const UserManagementDataProvider = ({ children }: { children: React.ReactNode })
 
 
 export function UserManagementProvider({ children }: { children: React.ReactNode }) {
-    const { isUserLoading } = useUser();
+    const { user, isUserLoading } = useUser();
 
     if (isUserLoading) {
         return (
@@ -72,8 +68,13 @@ export function UserManagementProvider({ children }: { children: React.ReactNode
             </div>
         );
     }
+    
+    if (!user) {
+        // This case should be handled by the root layout, but as a safeguard:
+        return null;
+    }
 
-    return <UserManagementDataProvider>{children}</UserManagementDataProvider>;
+    return <UserManagementDataContent>{children}</UserManagementDataContent>;
 }
 
 export function useUserManagement() {
