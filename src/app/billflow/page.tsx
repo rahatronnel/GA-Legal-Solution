@@ -132,12 +132,6 @@ function BillFlowContent() {
 }
 
 export default function BillFlowPage() {
-    const { isUserLoading } = useUser();
-
-    if (isUserLoading) {
-        return <div className="flex items-center justify-center h-full"><p>Loading Module...</p></div>
-    }
-
   return (
     <BillFlowProvider>
       <BillFlowContent />

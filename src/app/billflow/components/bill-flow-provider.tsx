@@ -35,6 +35,7 @@ const BillDataContext = createContext<{
     employees: Employee[];
     sections: Section[];
     billItemCategories: BillItemCategory[];
+    designations: Designation[];
     isLoading: boolean;
 } | undefined>(undefined);
 
@@ -76,6 +77,7 @@ export const BillDataProvider = ({ children }: { children: React.ReactNode }) =>
     const { data: employees, isLoading: l5 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
     const { data: sections, isLoading: l6 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
     const { data: billItemCategories, isLoading: l7 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
+    const { data: designations, isLoading: l8 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
 
     const value = useMemo(() => ({
         bills: bills || [],
@@ -85,8 +87,9 @@ export const BillDataProvider = ({ children }: { children: React.ReactNode }) =>
         employees: employees || [],
         sections: sections || [],
         billItemCategories: billItemCategories || [],
-        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7,
-    }), [bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, l1, l2, l3, l4, l5, l6, l7]);
+        designations: designations || [],
+        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8,
+    }), [bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations, l1, l2, l3, l4, l5, l6, l7, l8]);
     
     return <BillDataContext.Provider value={value}>{children}</BillDataContext.Provider>;
 }
@@ -145,8 +148,7 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
     }
     
     if (!user) {
-        // This can be a redirect or a login prompt in a real app
-        return <div className="flex justify-center items-center h-full"><p>Please log in to access this module.</p></div>;
+        return null; // Don't render children if not logged in
     }
 
     return <>{children}</>;
@@ -157,17 +159,21 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
 const LegacyBillFlowContext = createContext<{ data: any, isLoading: boolean } | undefined>(undefined);
 
 export function LegacyBillFlowProvider({ children }: { children: React.ReactNode }) {
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
-    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => collection(firestore, 'vendors'), [firestore]));
-    const { data: bills, isLoading: l4 } = useCollection<Bill>(useMemoFirebase(() => collection(firestore, 'bills'), [firestore]));
-    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => collection(firestore, 'billTypes'), [firestore]));
-    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => collection(firestore, 'billCategories'), [firestore]));
-    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
-    const { data: sections, isLoading: l8 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
-    const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
-    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => collection(firestore, 'vendorCategories'), [firestore]));
-    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => collection(firestore, 'vendorNatureOfBusiness'), [firestore]));
-    const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
+    
+    const shouldFetch = !isUserLoading && !!user;
+
+    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]));
+    const { data: bills, isLoading: l4 } = useCollection<Bill>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'bills') : null, [firestore, shouldFetch]));
+    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'billTypes') : null, [firestore, shouldFetch]));
+    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'billCategories') : null, [firestore, shouldFetch]));
+    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'employees') : null, [firestore, shouldFetch]));
+    const { data: sections, isLoading: l8 } = useCollection<Section>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'sections') : null, [firestore, shouldFetch]));
+    const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'billItemCategories') : null, [firestore, shouldFetch]));
+    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendorCategories') : null, [firestore, shouldFetch]));
+    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore, shouldFetch]));
+    const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'designations') : null, [firestore, shouldFetch]));
 
     const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11;
 
@@ -185,8 +191,16 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
     }), [vendors, bills, billTypes, billCategories, employees, sections, billItemCategories, vendorCategories, vendorNatureOfBusiness, designations]);
     
     const value = useMemo(() => ({ data, isLoading }), [data, isLoading]);
+    
+    if (isUserLoading) {
+        return <div className="flex justify-center items-center h-full"><p>Verifying authentication...</p></div>;
+    }
+    
+    if (!user) {
+        return null;
+    }
 
-    if (isLoading) {
+    if (isLoading && shouldFetch) {
         return <div className="flex justify-center items-center h-full"><p>Loading BillFlow Data...</p></div>;
     }
 

@@ -94,7 +94,7 @@ function BillProfileContent() {
 
     const bill = React.useMemo(() => {
         if (isLoading || !bills) return undefined;
-        return bills.find(b => b.id === id) || null;
+        return bills.find((b:any) => b.id === id) || null;
     }, [id, bills, isLoading]);
 
     const handleApproval = (status: 'Approved' | 'Rejected') => {
@@ -127,12 +127,12 @@ function BillProfileContent() {
         notFound();
     }
     
-    const vendor = vendors.find(v => v.id === bill.vendorId);
-    const billType = billTypes.find(bt => bt.id === bill.billTypeId);
-    const billCategory = billCategories.find(bc => bc.id === bill.billCategoryId);
-    const entryBy = employees.find(e => e.id === bill.entryBy);
+    const vendor = vendors.find((v:any) => v.id === bill.vendorId);
+    const billType = billTypes.find((bt:any) => bt.id === bill.billTypeId);
+    const billCategory = billCategories.find((bc:any) => bc.id === bill.billCategoryId);
+    const entryBy = employees.find((e:any) => e.id === bill.entryBy);
     
-    const getItemCategoryName = (id: string) => billItemCategories.find(c => c.id === id)?.name || 'N/A';
+    const getItemCategoryName = (id: string) => billItemCategories.find((c:any) => c.id === id)?.name || 'N/A';
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     const formatDateTime = (dateStr: string) => {
         try { return new Date(dateStr).toLocaleString(); } catch { return 'N/A'; }
@@ -196,7 +196,7 @@ function BillProfileContent() {
                                 <Card>
                                     <CardHeader><CardTitle>Approval History</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
-                                        {bill.approvalHistory.map((entry, index) => {
+                                        {bill.approvalHistory.map((entry: any, index: number) => {
                                             const approver = employees.find((e: any) => e.id === entry.approverId);
                                             const designation = designations.find((d: any) => d.id === approver?.designationId);
                                             const statusColor = entry.status === 'Approved' ? 'text-green-500' : 'text-red-500';
@@ -241,7 +241,7 @@ function BillProfileContent() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {bill.items.map((item, index) => (
+                                            {bill.items.map((item: any, index: number) => (
                                                 <TableRow key={index}>
                                                     <TableCell>{item.name}</TableCell>
                                                     <TableCell>{getItemCategoryName(item.billItemCategoryId)}</TableCell>
@@ -258,7 +258,7 @@ function BillProfileContent() {
                                 <CardHeader><CardTitle>Financial Summary & References</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 gap-6">
                                     <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(bill.items.reduce((acc, i) => acc + i.netAmount, 0))}</span></div>
+                                        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(bill.items.reduce((acc: number, i: any) => acc + i.netAmount, 0))}</span></div>
                                         <div className="flex justify-between"><span className="text-muted-foreground">VAT ({bill.vatPercentage}%):</span><span>{formatCurrency(bill.vatAmount)}</span></div>
                                         <div className="flex justify-between"><span className="text-muted-foreground">TDS ({bill.tdsPercentage}%):</span><span>- {formatCurrency(bill.tdsAmount)}</span></div>
                                         <div className="flex justify-between"><span className="text-muted-foreground">Other Charges:</span><span>{formatCurrency(bill.otherCharges)}</span></div>
@@ -276,12 +276,12 @@ function BillProfileContent() {
                         </TabsContent>
                         <TabsContent value="documents">
                             <div className="space-y-6">
-                                {Object.entries(bill.documents || {}).map(([key, files]) => (
+                                {Object.entries(bill.documents || {}).map(([key, files]: [string, any]) => (
                                     files && files.length > 0 && (
                                         <DocumentViewer key={key} files={files} categoryLabel={documentLabels[key] || 'Other Documents'} />
                                     )
                                 ))}
-                                {Object.values(bill.documents || {}).every(arr => !arr || arr.length === 0) && (
+                                {Object.values(bill.documents || {}).every((arr: any) => !arr || arr.length === 0) && (
                                     <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this bill.</p>
                                 )}
                             </div>
