@@ -89,6 +89,16 @@ export function Dashboard() {
     }
 
     const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
+    const chartConfig = {
+      cost: {
+        label: "Cost",
+        color: "hsl(var(--chart-2))",
+      },
+      accidents: {
+        label: "Accidents",
+        color: "hsl(var(--destructive))",
+      },
+    }
 
     return (
         <div className="space-y-6">
@@ -118,17 +128,19 @@ export function Dashboard() {
                         <CardDescription>Distribution of current vehicle statuses.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                         <ResponsiveContainer width="100%" height={250}>
-                            <PieChart>
-                                <Pie data={vehicleStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                                    {vehicleStatusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<ChartTooltipContent />} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
+                         <ChartContainer config={{}} className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={vehicleStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                        {vehicleStatusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<ChartTooltipContent />} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </CardContent>
                 </Card>
                 <Card className="lg:col-span-2">
@@ -137,15 +149,17 @@ export function Dashboard() {
                         <CardDescription>Summary of total maintenance costs over the last 12 months.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                             <BarChart data={monthlyMaintenanceData}>
-                                <CartesianGrid vertical={false} />
-                                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                                <YAxis />
-                                <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                                <Bar dataKey="cost" fill="hsl(var(--chart-2))" radius={4} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={monthlyMaintenanceData}>
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                                    <YAxis />
+                                    <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                                    <Bar dataKey="cost" fill="hsl(var(--chart-2))" radius={4} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </CardContent>
                 </Card>
                  <Card className="lg:col-span-3">
@@ -154,16 +168,18 @@ export function Dashboard() {
                         <CardDescription>Number of accidents recorded over the last 12 months.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                             <LineChart data={monthlyAccidentData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="month" fontSize={12} />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip content={<ChartTooltipContent />} />
-                                <Legend />
-                                <Line type="monotone" dataKey="accidents" stroke="hsl(var(--destructive))" strokeWidth={2} activeDot={{ r: 8 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                       <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={monthlyAccidentData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="month" fontSize={12} />
+                                    <YAxis allowDecimals={false} />
+                                    <Tooltip content={<ChartTooltipContent />} />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="accidents" stroke="hsl(var(--destructive))" strokeWidth={2} activeDot={{ r: 8 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     </CardContent>
                 </Card>
             </div>
