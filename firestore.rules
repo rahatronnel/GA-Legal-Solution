@@ -99,20 +99,24 @@ service cloud.firestore {
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data
-    // All of these collections require the user to be authenticated for
-    // any read or write operations.
+    // Write access is protected, but some read access is public to prevent
+    // initial load errors.
     // -------------------------------------------------------------------------
     match /sections/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
     match /designations/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
     match /employees/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
     match /vehicles/{docId} {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
      match /drivers/{docId} {
       allow read, write: if isAuthenticated();
