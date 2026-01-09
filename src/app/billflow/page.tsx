@@ -20,26 +20,8 @@ import { useUser } from "@/firebase";
 function BillFlowContent() {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">BillFlow Management</h1>
-             <Button asChild>
-                <Link href="/">
-                    <HomeIcon className="mr-2 h-4 w-4" />
-                    Home
-                </Link>
-            </Button>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>BillFlow Management</CardTitle>
-            <CardDescription>
-              This bill represents verified expenses submitted internally, reviewed by the supervisor, approved by the reviewer, and finalized by the authorized signatory with all supporting documents attached.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-        
         <Tabs defaultValue="bills" className="w-full">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>

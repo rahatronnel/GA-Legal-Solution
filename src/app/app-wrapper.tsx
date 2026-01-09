@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Home } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -64,18 +64,12 @@ const ModuleDashboard = () => {
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    
-                    {utilityModules.map((mod) => (
-                        <Link
-                            href={mod.href}
-                            key={mod.href}
-                            className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            title={mod.name}
-                        >
-                            <mod.icon className="h-6 w-6" />
-                            <span className="sr-only">{mod.name}</span>
+                    <Button asChild variant="ghost">
+                        <Link href="/">
+                            <Home className="mr-2 h-4 w-4" />
+                            Home
                         </Link>
-                    ))}
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

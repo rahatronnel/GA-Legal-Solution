@@ -34,18 +34,8 @@ function VehicleManagementContent() {
 
   return (
     <div className="space-y-4">
-        <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Vehicle Management</h1>
-             <Button asChild>
-                <Link href="/">
-                    <HomeIcon className="mr-2 h-4 w-4" />
-                    Home
-                </Link>
-            </Button>
-        </div>
         <Tabs defaultValue="dashboard" className="w-full">
-        <div className="flex items-center">
-            <TabsList>
+        <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="trips">Trips</TabsTrigger>
             <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
@@ -55,9 +45,11 @@ function VehicleManagementContent() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="master-data">Master Data</TabsTrigger>
             </TabsList>
-        </div>
         <TabsContent value="dashboard">
-            <Dashboard />
+            <Card>
+                <CardHeader><CardTitle>Dashboard</CardTitle><CardDescription>An overview of your vehicle fleet and operations.</CardDescription></CardHeader>
+                <CardContent><Dashboard /></CardContent>
+            </Card>
         </TabsContent>
         <TabsContent value="trips">
             <Card>
