@@ -56,7 +56,7 @@ const ModuleDashboard = () => {
                     <Input
                         type="search"
                         placeholder="Search modules..."
-                        className="w-full rounded-lg bg-background pl-8"
+                        className="w-full rounded-lg bg-background pl-8 text-white"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ const ModuleDashboard = () => {
             </header>
 
             <div className="text-center mb-12">
-                 <h1 className="text-4xl font-bold tracking-tight">Enterprise Resource Planning</h1>
+                 <h1 className="text-4xl font-bold tracking-tight">GA & Legal Solution</h1>
                  <p className="text-muted-foreground">Select a module to begin your journey.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
@@ -123,6 +123,9 @@ const ModuleDashboard = () => {
                     </Link>
                 ))}
             </div>
+             <footer className="absolute bottom-4 text-xs text-muted-foreground">
+                developed and maintain by "A Dedicated Team"
+            </footer>
         </div>
     );
 };
