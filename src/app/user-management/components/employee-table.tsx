@@ -67,14 +67,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Employee, 'id'>, id?: string) => {
+  const handleSave = (data: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => {
     if (!employeesRef) {
         toast({ variant: "destructive", title: "Error", description: "Database not connected." });
         return;
     }
     if (id) {
-        const { defaultPassword, ...restOfData } = data;
-        setDocumentNonBlocking(doc(employeesRef, id), restOfData, { merge: true });
+        setDocumentNonBlocking(doc(employeesRef, id), data, { merge: true });
         toast({ title: 'Success', description: 'Employee updated successfully.' });
     } else {
         addDocumentNonBlocking(employeesRef, data);
@@ -149,7 +148,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                 continue;
             }
 
-            const newEmployee: Omit<Employee, 'id'> = {
+            const { defaultPassword, ...newEmployee }: Omit<Employee, 'id'> = {
                 userIdCode: item.userIdCode?.toString().trim() || '',
                 fullName: item.fullName?.toString().trim() || '',
                 email: item.email?.toString().trim() || '',
@@ -165,12 +164,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                 profilePicture: '',
                 signature: '',
                 documents: { nid: '', other: '' },
-                defaultPassword: password,
             };
             
             try {
                 // Create auth user first
-                initiateEmailSignUp(auth, newEmployee.email, password);
+                await initiateEmailSignUp(auth, newEmployee.email, password);
                 // Then save employee doc
                 addDocumentNonBlocking(employeesRef, newEmployee);
             } catch (authError: any) {

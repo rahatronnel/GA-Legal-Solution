@@ -25,7 +25,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { initiateEmailSignUp, useAuth } from '@/firebase';
+import { initiateEmailSignUp, useAuth, updatePasswordNonBlocking } from '@/firebase';
 
 
 export type Employee = {
@@ -51,7 +51,7 @@ export type Employee = {
   defaultPassword?: string;
 };
 
-const initialEmployeeData: Omit<Employee, 'id'> = {
+const initialEmployeeData: Omit<Employee, 'id' | 'defaultPassword'> = {
   userIdCode: '',
   fullName: '',
   mobileNumber: '',
@@ -67,7 +67,6 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   profilePicture: '',
   signature: '',
   documents: { nid: '', other: '' },
-  defaultPassword: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -75,7 +74,7 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 interface EmployeeEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (employee: Omit<Employee, 'id'>, id?: string) => void;
+  onSave: (employee: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => void;
   employee: Partial<Employee> | null;
   sections: Section[];
   designations: Designation[];
@@ -104,7 +103,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     if (isOpen) {
       setStep(1);
       if (isEditing && employee) {
-        const initialData = { ...initialEmployeeData, ...employee };
+        const { defaultPassword, ...rest } = employee;
+        const initialData = { ...initialEmployeeData, ...rest };
         setEmployeeData(initialData);
         setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
         setProfilePicPreview(initialData.profilePicture || null);
@@ -234,34 +234,28 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         return;
     }
 
-    try {
-        if (!isEditing && employeeData.defaultPassword) {
-            // This is non-blocking. The user creation happens in the background.
-            // The onAuthStateChanged listener will eventually reflect the new user state.
-            // However, for immediate user creation for a new employee, we might want to await this.
-            // For now, per existing patterns, we keep it non-blocking.
-            initiateEmailSignUp(auth, employeeData.email, employeeData.defaultPassword);
-        }
+    const { defaultPassword, ...dataToSave } = {
+        ...employeeData,
+        profilePicture: profilePicPreview || employeeData.profilePicture,
+        signature: signaturePreview || employeeData.signature,
+        documents: {
+            nid: docPreviews.nid || employeeData.documents.nid,
+            other: docPreviews.other || employeeData.documents.other
+        },
+    };
 
-        const dataToSave: Omit<Employee, 'id'> = {
-            ...employeeData,
-            profilePicture: profilePicPreview || employeeData.profilePicture,
-            signature: signaturePreview || employeeData.signature,
-            documents: {
-                nid: docPreviews.nid || employeeData.documents.nid,
-                other: docPreviews.other || employeeData.documents.other
-            },
-        };
-
+    if (defaultPassword) {
+      try {
+        await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
         onSave(dataToSave, employee?.id);
         setIsOpen(false);
-
-    } catch (error: any) {
+      } catch (error: any) {
         toast({
             variant: 'destructive',
             title: 'Login Creation Failed',
             description: error.message || 'Could not create the user in Firebase Authentication.'
         });
+      }
     }
   }
 
@@ -271,8 +265,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
         return;
     }
-
-    const dataToSave: Omit<Employee, 'id'> = {
+    
+    const { defaultPassword, ...dataToSave } = {
         ...employeeData,
         profilePicture: profilePicPreview || employeeData.profilePicture,
         signature: signaturePreview || employeeData.signature,
@@ -281,11 +275,14 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             other: docPreviews.other || employeeData.documents.other
         },
     };
-    
-    // Note: Updating Firebase Auth password for an existing user requires re-authentication,
-    // which is a complex flow not suitable for an admin panel. The best practice is to send
-    // a password reset email. For this app, we will just save the data to Firestore.
-    // The password field when editing should be treated as "set new password".
+
+    if (isEditing && defaultPassword) {
+        // This is a complex operation requiring re-authentication and is better handled
+        // via a dedicated "change password" flow for the user or an admin reset email.
+        // For simplicity, we will show a toast that this feature is not supported here.
+        // A real-world app would have an admin SDK on a server to do this.
+        toast({ title: "Password Not Changed", description: "Password updates for existing users should be done via a password reset or by the user themselves."});
+    }
 
     onSave(dataToSave, employee?.id);
     setIsOpen(false);
@@ -416,8 +413,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                     <h3 className="font-semibold text-lg">{isEditing ? 'Step 2: Change Password (Optional)' : 'Step 2: Create Login Credentials'}</h3>
                     <p className="text-sm text-muted-foreground">
                         {isEditing 
-                            ? "To change this employee's password, enter a new one below. Leave blank to keep the current password."
-                            : "Set an initial password for the new employee. They can change it later if they wish."
+                            ? "To change this employee's password, enter a new one below. This is not recommended, a password reset email is safer."
+                            : "Set an initial password for the new employee. They can change it later."
                         }
                     </p>
                      <div className="space-y-2">
