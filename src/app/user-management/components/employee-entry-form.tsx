@@ -98,7 +98,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
 
   const isEditing = employee && employee.id;
-  const totalSteps = 3; // Keep it consistent for simplicity, just skip step 2 if editing.
+  const totalSteps = isEditing ? 2 : 3;
   const progress = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -218,20 +218,20 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   }
   
   const nextStep = () => {
-    if (step === 2 && isEditing) {
-      setStep(3); // Skip password step when editing
-      return;
-    }
     if (!validateStep(step)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
     }
-    setStep(s => s + 1);
+    if (isEditing && step === 1) {
+        setStep(3); // Skip from 1 to 3
+    } else {
+        setStep(s => s + 1);
+    }
   };
 
   const prevStep = () => {
-      if (step === 3 && isEditing) {
-        setStep(1); // Skip back over password step when editing
+      if (isEditing && step === 3) {
+        setStep(1); // Go from 3 back to 1
         return;
       }
       setStep(s => s - 1)
@@ -411,7 +411,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
             {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step {isEditing ? '2' : '3'}: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
