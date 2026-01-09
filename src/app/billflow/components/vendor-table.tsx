@@ -176,7 +176,7 @@ export function VendorTable() {
             const category = categories.find(c => c.code === item.vendorCategoryCode);
             const nature = naturesOfBusiness.find(n => n.code === item.natureOfBusinessCode);
 
-            const newVendor: Partial<Vendor> = {
+            const newVendor: Partial<Omit<Vendor, 'id'>> = {
                 vendorId: `V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                 vendorName: item.vendorName,
                 vendorShortName: item.vendorShortName || '',
@@ -197,11 +197,11 @@ export function VendorTable() {
                 country: item.country || '',
                 city: item.city || '',
                 tradeLicenseNumber: item.tradeLicenseNumber || '',
-                tradeLicenseExpiryDate: item.tradeLicenseExpiryDate ? new Date(item.tradeLicenseExpiryDate).toISOString().split('T')[0] : '',
+                tradeLicenseExpiryDate: item.tradeLicenseExpiryDate instanceof Date ? item.tradeLicenseExpiryDate.toISOString().split('T')[0] : '',
                 tinNumber: item.tinNumber || '',
                 vatBinNumber: item.vatBinNumber || '',
                 nidOrCompanyRegNumber: item.nidOrCompanyRegNumber || '',
-                incorporationDate: item.incorporationDate ? new Date(item.incorporationDate).toISOString().split('T')[0] : '',
+                incorporationDate: item.incorporationDate instanceof Date ? item.incorporationDate.toISOString().split('T')[0] : '',
                 bankName: item.bankName || '',
                 branchName: item.branchName || '',
                 accountName: item.accountName || '',
@@ -215,7 +215,10 @@ export function VendorTable() {
                 taxDeductionApplicable: ['yes', 'true', '1'].includes(String(item.taxDeductionApplicable).toLowerCase()),
                 vatApplicable: ['yes', 'true', '1'].includes(String(item.vatApplicable).toLowerCase()),
                 suppliedItems: [],
-                documents: Object.keys(document).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, any[]>),
+                documents: {
+                    tradeLicense: '', bankChequeCopy: '', contractAgreement: '', 
+                    vatCertificate: '', complianceCertificates: '', other: ''
+                },
                 loginId: item.email,
                 createdDate: new Date().toISOString(),
                 vendorStatus: 'Pending',
@@ -351,3 +354,4 @@ export function VendorTable() {
     </TooltipProvider>
   );
 }
+
