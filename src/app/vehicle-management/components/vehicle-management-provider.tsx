@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 import type { Location } from "./location-table";
@@ -56,28 +56,32 @@ const VehicleManagementContext = createContext<VehicleManagementDataContextType 
 
 export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
     const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
 
-    const { data: locations, isLoading: l1 } = useCollection<Location>(useMemoFirebase(() => firestore ? collection(firestore, 'locations') : null, [firestore]));
-    const { data: routes, isLoading: l2 } = useCollection<Route>(useMemoFirebase(() => firestore ? collection(firestore, 'routes') : null, [firestore]));
-    const { data: tripPurposes, isLoading: l3 } = useCollection<TripPurpose>(useMemoFirebase(() => firestore ? collection(firestore, 'tripPurposes') : null, [firestore]));
-    const { data: expenseTypes, isLoading: l4 } = useCollection<ExpenseType>(useMemoFirebase(() => firestore ? collection(firestore, 'expenseTypes') : null, [firestore]));
-    const { data: vehicleTypes, isLoading: l5 } = useCollection<VehicleType>(useMemoFirebase(() => firestore ? collection(firestore, 'vehicleTypes') : null, [firestore]));
-    const { data: vehicleBrands, isLoading: l6 } = useCollection<VehicleBrand>(useMemoFirebase(() => firestore ? collection(firestore, 'vehicleBrands') : null, [firestore]));
-    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
-    const { data: drivers, isLoading: l8 } = useCollection<Driver>(useMemoFirebase(() => firestore ? collection(firestore, 'drivers') : null, [firestore]));
-    const { data: vehicles, isLoading: l9 } = useCollection<Vehicle>(useMemoFirebase(() => firestore ? collection(firestore, 'vehicles') : null, [firestore]));
-    const { data: trips, isLoading: l10 } = useCollection<Trip>(useMemoFirebase(() => firestore ? collection(firestore, 'trips') : null, [firestore]));
-    const { data: maintenanceTypes, isLoading: l11 } = useCollection<MaintenanceType>(useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceTypes') : null, [firestore]));
-    const { data: maintenanceExpenseTypes, isLoading: l12 } = useCollection<MaintenanceExpenseType>(useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceExpenseTypes') : null, [firestore]));
-    const { data: parts, isLoading: l13 } = useCollection<Part>(useMemoFirebase(() => firestore ? collection(firestore, 'parts') : null, [firestore]));
-    const { data: serviceCenters, isLoading: l14 } = useCollection<ServiceCenter>(useMemoFirebase(() => firestore ? collection(firestore, 'serviceCenters') : null, [firestore]));
-    const { data: maintenanceRecords, isLoading: l15 } = useCollection<MaintenanceRecord>(useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceRecords') : null, [firestore]));
-    const { data: accidentTypes, isLoading: l16 } = useCollection<AccidentType>(useMemoFirebase(() => firestore ? collection(firestore, 'accidentTypes') : null, [firestore]));
-    const { data: severityLevels, isLoading: l17 } = useCollection<SeverityLevel>(useMemoFirebase(() => firestore ? collection(firestore, 'severityLevels') : null, [firestore]));
-    const { data: faultStatuses, isLoading: l18 } = useCollection<FaultStatus>(useMemoFirebase(() => firestore ? collection(firestore, 'faultStatuses') : null, [firestore]));
-    const { data: accidents, isLoading: l19 } = useCollection<Accident>(useMemoFirebase(() => firestore ? collection(firestore, 'accidents') : null, [firestore]));
+    // Only attempt to fetch data if the user is logged in.
+    const shouldFetch = !!user;
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15 || l16 || l17 || l18 || l19;
+    const { data: locations, isLoading: l1 } = useCollection<Location>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'locations') : null, [firestore, shouldFetch]));
+    const { data: routes, isLoading: l2 } = useCollection<Route>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'routes') : null, [firestore, shouldFetch]));
+    const { data: tripPurposes, isLoading: l3 } = useCollection<TripPurpose>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'tripPurposes') : null, [firestore, shouldFetch]));
+    const { data: expenseTypes, isLoading: l4 } = useCollection<ExpenseType>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'expenseTypes') : null, [firestore, shouldFetch]));
+    const { data: vehicleTypes, isLoading: l5 } = useCollection<VehicleType>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'vehicleTypes') : null, [firestore, shouldFetch]));
+    const { data: vehicleBrands, isLoading: l6 } = useCollection<VehicleBrand>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'vehicleBrands') : null, [firestore, shouldFetch]));
+    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'employees') : null, [firestore, shouldFetch]));
+    const { data: drivers, isLoading: l8 } = useCollection<Driver>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'drivers') : null, [firestore, shouldFetch]));
+    const { data: vehicles, isLoading: l9 } = useCollection<Vehicle>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'vehicles') : null, [firestore, shouldFetch]));
+    const { data: trips, isLoading: l10 } = useCollection<Trip>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'trips') : null, [firestore, shouldFetch]));
+    const { data: maintenanceTypes, isLoading: l11 } = useCollection<MaintenanceType>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'maintenanceTypes') : null, [firestore, shouldFetch]));
+    const { data: maintenanceExpenseTypes, isLoading: l12 } = useCollection<MaintenanceExpenseType>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'maintenanceExpenseTypes') : null, [firestore, shouldFetch]));
+    const { data: parts, isLoading: l13 } = useCollection<Part>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'parts') : null, [firestore, shouldFetch]));
+    const { data: serviceCenters, isLoading: l14 } = useCollection<ServiceCenter>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'serviceCenters') : null, [firestore, shouldFetch]));
+    const { data: maintenanceRecords, isLoading: l15 } = useCollection<MaintenanceRecord>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'maintenanceRecords') : null, [firestore, shouldFetch]));
+    const { data: accidentTypes, isLoading: l16 } = useCollection<AccidentType>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'accidentTypes') : null, [firestore, shouldFetch]));
+    const { data: severityLevels, isLoading: l17 } = useCollection<SeverityLevel>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'severityLevels') : null, [firestore, shouldFetch]));
+    const { data: faultStatuses, isLoading: l18 } = useCollection<FaultStatus>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'faultStatuses') : null, [firestore, shouldFetch]));
+    const { data: accidents, isLoading: l19 } = useCollection<Accident>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'accidents') : null, [firestore, shouldFetch]));
+
+    const isLoading = isUserLoading || (shouldFetch && (l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15 || l16 || l17 || l18 || l19));
 
     const data = useMemo(() => ({
         locations: locations || [],
