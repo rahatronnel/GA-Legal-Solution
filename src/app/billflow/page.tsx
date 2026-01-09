@@ -1,5 +1,9 @@
+
 "use client";
 
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Home as HomeIcon } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -16,6 +20,15 @@ import { useUser } from "@/firebase";
 function BillFlowContent() {
     return (
       <div className="space-y-6">
+        <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">BillFlow Management</h1>
+             <Button asChild>
+                <Link href="/">
+                    <HomeIcon className="mr-2 h-4 w-4" />
+                    Home
+                </Link>
+            </Button>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>BillFlow Management</CardTitle>
