@@ -49,12 +49,6 @@ const AppHeader = () => {
     return (
          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
             <div className="flex items-center gap-4">
-                 <Link href="/">
-                    <Button variant="outline" size="icon">
-                        <Home className="h-5 w-5" />
-                        <span className="sr-only">Home</span>
-                    </Button>
-                </Link>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
@@ -78,6 +72,12 @@ const AppHeader = () => {
             <div className="flex-1" />
 
             <div className="flex items-center gap-4">
+                 <Link href="/">
+                    <Button variant="ghost" size="icon" title="Home">
+                        <Home className="h-5 w-5" />
+                        <span className="sr-only">Home</span>
+                    </Button>
+                </Link>
                  {utilityModules.map((mod) => (
                     <Link href={mod.href} key={mod.href}>
                         <Button variant="ghost" size="icon" title={mod.name}>
