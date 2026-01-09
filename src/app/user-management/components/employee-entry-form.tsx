@@ -25,7 +25,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { initiateEmailSignUp, useAuth, updatePasswordNonBlocking } from '@/firebase';
+import { initiateEmailSignUp, useAuth } from '@/firebase';
 
 
 export type Employee = {
@@ -51,7 +51,7 @@ export type Employee = {
   defaultPassword?: string;
 };
 
-const initialEmployeeData: Omit<Employee, 'id' | 'defaultPassword'> = {
+const initialEmployeeData: Omit<Employee, 'id'> = {
   userIdCode: '',
   fullName: '',
   mobileNumber: '',
@@ -67,6 +67,7 @@ const initialEmployeeData: Omit<Employee, 'id' | 'defaultPassword'> = {
   profilePicture: '',
   signature: '',
   documents: { nid: '', other: '' },
+  defaultPassword: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -96,8 +97,9 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   const [docPreviews, setDocPreviews] = useState({ nid: '', other: ''});
 
 
-  const progress = Math.round((step / 3) * 100);
   const isEditing = employee && employee.id;
+  const totalSteps = isEditing ? 2 : 3; // Fewer steps for editing
+  const progress = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
     if (isOpen) {
@@ -111,7 +113,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         setSignaturePreview(initialData.signature || null);
         setDocPreviews(initialData.documents || { nid: '', other: '' });
       } else {
-        setEmployeeData({...initialEmployeeData, defaultPassword: ''});
+        setEmployeeData(initialEmployeeData);
         setJoiningDate(undefined);
         setProfilePicPreview(null);
         setSignaturePreview(null);
@@ -207,11 +209,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        if (isEditing) {
-          // Password is optional when editing
-          return !employeeData.defaultPassword || (employeeData.defaultPassword.length >= 6);
-        }
-        // Password is required for new users
+        if (isEditing) return true; // Password step is skipped for editing
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
@@ -228,8 +226,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
   const prevStep = () => setStep(s => s - 1);
   
-  const createLoginAndSave = async () => {
-    if (!validateStep(1) || !validateStep(2)) {
+  const handleSave = async () => {
+    const finalStep = isEditing ? 2 : 3;
+    if (step !== finalStep) return;
+
+    if (!validateStep(1) || (!isEditing && !validateStep(2))) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving. Passwords must be at least 6 characters.' });
         return;
     }
@@ -244,7 +245,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         },
     };
 
-    if (defaultPassword) {
+    if (isEditing) {
+        onSave(dataToSave, employee.id);
+        setIsOpen(false);
+    } else if (defaultPassword) {
       try {
         await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
         onSave(dataToSave, employee?.id);
@@ -257,35 +261,6 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         });
       }
     }
-  }
-
-
-  const handleSave = async () => {
-    if (!validateStep(1) || !validateStep(2)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
-        return;
-    }
-    
-    const { defaultPassword, ...dataToSave } = {
-        ...employeeData,
-        profilePicture: profilePicPreview || employeeData.profilePicture,
-        signature: signaturePreview || employeeData.signature,
-        documents: {
-            nid: docPreviews.nid || employeeData.documents.nid,
-            other: docPreviews.other || employeeData.documents.other
-        },
-    };
-
-    if (isEditing && defaultPassword) {
-        // This is a complex operation requiring re-authentication and is better handled
-        // via a dedicated "change password" flow for the user or an admin reset email.
-        // For simplicity, we will show a toast that this feature is not supported here.
-        // A real-world app would have an admin SDK on a server to do this.
-        toast({ title: "Password Not Changed", description: "Password updates for existing users should be done via a password reset or by the user themselves."});
-    }
-
-    onSave(dataToSave, employee?.id);
-    setIsOpen(false);
   };
   
   const getDocumentName = (docType: 'nid' | 'other') => {
@@ -408,30 +383,25 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
               </div>
             )}
             
-            {step === 2 && (
+            {step === 2 && !isEditing && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">{isEditing ? 'Step 2: Change Password (Optional)' : 'Step 2: Create Login Credentials'}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {isEditing 
-                            ? "To change this employee's password, enter a new one below. This is not recommended, a password reset email is safer."
-                            : "Set an initial password for the new employee. They can change it later."
-                        }
-                    </p>
+                    <h3 className="font-semibold text-lg">Step 2: Create Login Credentials</h3>
+                    <p className="text-sm text-muted-foreground">Set an initial password for the new employee. They can change it later.</p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
                         <Input value={employeeData.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="defaultPassword">{isEditing ? 'New Password' : 'Initial Password'} {!isEditing && <MandatoryIndicator/>}</Label>
-                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} placeholder={isEditing ? 'Leave blank to keep current' : ''} />
+                        <Label htmlFor="defaultPassword">Initial Password<MandatoryIndicator/></Label>
+                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
                          <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
             )}
 
-            {step === 3 && (
+            {step === (isEditing ? 2 : 3) && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step {isEditing ? 2 : 3}: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
@@ -512,10 +482,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             </div>
             
             <div>
-              {step < 3 ? (
+              {step < totalSteps ? (
                   <Button onClick={nextStep}>Next</Button>
               ) : (
-                  <Button onClick={isEditing ? handleSave : createLoginAndSave}>{isEditing ? 'Update Employee' : 'Create Login & Save'}</Button>
+                  <Button onClick={handleSave}>{isEditing ? 'Update Employee' : 'Create Login & Save'}</Button>
               )}
             </div>
         </DialogFooter>
