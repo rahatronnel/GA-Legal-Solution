@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { useBillFlow } from './bill-flow-provider';
+import { useBillData, useMasterData } from './bill-flow-provider';
 import type { Vendor } from './vendor-entry-form';
 import type { BillType } from './bill-type-table';
 import type { BillCategory } from './bill-category-table';
@@ -133,8 +133,8 @@ interface BillEntryFormProps {
 export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
-    const { data } = useBillFlow();
-    const { vendors, billTypes, billCategories, employees, sections, billItemMasters, billItemCategories } = data;
+    const { vendors, billTypes, billCategories, employees, sections } = useBillData();
+    const { billItemMasters, billItemCategories } = useMasterData();
     
     const [step, setStep] = useState(1);
     const [billData, setBillData] = useState(initialBillData);

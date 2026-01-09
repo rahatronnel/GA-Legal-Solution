@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Search, Eye, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useBillFlow } from './bill-flow-provider';
+import { useBillData } from './bill-flow-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Bill } from './bill-entry-form';
@@ -29,8 +29,7 @@ export function BillTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
-  const { data } = useBillFlow();
-  const { bills, vendors, isLoading } = data;
+  const { bills, vendors, isLoading } = useBillData();
   
   const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
 

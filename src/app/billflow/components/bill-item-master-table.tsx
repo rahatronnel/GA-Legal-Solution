@@ -30,7 +30,7 @@ import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useBillFlow } from './bill-flow-provider';
+import { useMasterData } from './bill-flow-provider';
 import type { BillItemCategory } from './bill-item-category-table';
 
 export type BillItemMaster = {
@@ -45,21 +45,17 @@ export type BillItemMaster = {
 export function BillItemMasterTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data: billFlowData, isLoading: isBillFlowLoading } = useBillFlow();
-  const { billItemCategories = [] } = billFlowData;
+  const { billItemCategories, billItemMasters, isLoading } = useMasterData();
   
   const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]);
-  const { data: items, isLoading: areItemsLoading } = useCollection<BillItemMaster>(dataRef);
-
-  const isLoading = isBillFlowLoading || areItemsLoading;
-
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<BillItemMaster> | null>(null);
   const [formData, setFormData] = useState<Omit<BillItemMaster, 'id'>>({ name: '', billItemCategoryId: '', description: '', unitOfMeasure: '', unitPrice: 0 });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const safeItems = useMemo(() => Array.isArray(items) ? items : [], [items]);
+  const safeItems = useMemo(() => Array.isArray(billItemMasters) ? billItemMasters : [], [billItemMasters]);
 
   const getCategoryName = (categoryId: string) => {
       return billItemCategories.find(c => c.id === categoryId)?.name || 'N/A';

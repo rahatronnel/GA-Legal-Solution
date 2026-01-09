@@ -21,7 +21,7 @@ function BillFlowContent() {
     return (
       <div className="space-y-6">
         <div className="flex justify-end">
-            <Button size="sm" asChild className="bg-black text-white hover:bg-gray-800">
+            <Button size="sm" variant="outline" asChild>
                 <Link href="/">
                     <HomeIcon className="h-4 w-4 mr-2" /> Home
                 </Link>
@@ -41,7 +41,9 @@ function BillFlowContent() {
                         <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                      <MasterDataProvider>
                         <BillTable />
+                      </MasterDataProvider>
                     </CardContent>
                 </Card>
             </BillDataProvider>
