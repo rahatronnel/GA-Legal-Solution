@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -14,10 +14,25 @@ export function TimeInput({ value, onChange }: TimeInputProps) {
   const [time, period] = value ? value.split(' ') : ['', 'PM'];
   const [hh, mm] = time ? time.split(':') : ['', ''];
 
+  const mmRef = useRef<HTMLInputElement>(null);
+
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value: rawValue } = e.target;
-    let newTime = name === 'hh' ? `${rawValue}:${mm}` : `${hh}:${rawValue}`;
-    onChange(`${newTime} ${period}`);
+    const sanitizedValue = rawValue.replace(/\D/g, ''); // Remove non-digits
+
+    let newHh = hh;
+    let newMm = mm;
+
+    if (name === 'hh') {
+      newHh = sanitizedValue;
+      if (sanitizedValue.length === 2) {
+        mmRef.current?.focus();
+      }
+    } else {
+      newMm = sanitizedValue;
+    }
+
+    onChange(`${newHh}:${newMm} ${period}`);
   };
 
   const handlePeriodChange = (newPeriod: 'AM' | 'PM') => {
@@ -36,6 +51,7 @@ export function TimeInput({ value, onChange }: TimeInputProps) {
       />
       <span>:</span>
       <Input
+        ref={mmRef}
         name="mm"
         placeholder="MM"
         maxLength={2}

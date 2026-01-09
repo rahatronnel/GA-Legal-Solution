@@ -31,6 +31,7 @@ import type { ExpenseType } from './expense-type-table';
 import { useVehicleManagement } from './vehicle-management-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TimeInput } from './time-input';
+import type { Route } from './route-table';
 
 
 type UploadedFile = {
@@ -76,6 +77,7 @@ export type Trip = {
   tripStatus: 'Planned' | 'Ongoing' | 'Completed' | 'Cancelled' | '';
   expenses: Expense[];
   documents: Record<DocType, UploadedFile[]>;
+  routeId?: string;
 };
 
 type Expense = {
@@ -97,6 +99,7 @@ const initialTripData: Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses' | '
   endingMeter: 0,
   remarks: '',
   tripStatus: 'Planned',
+  routeId: '',
 };
 
 const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, UploadedFile[]>);
@@ -189,7 +192,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [endDate, setEndDate] = useState<Date | undefined>();
 
   const { data: vehicleManagementData, setData } = useVehicleManagement();
-  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [] } = vehicleManagementData;
+  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [], routes = [] } = vehicleManagementData;
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
@@ -249,6 +252,18 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
       }
     }
   }, [isOpen, trip, isEditing, vehicles]);
+  
+  useEffect(() => {
+      if (tripData.routeId) {
+          const selectedRoute = routes.find(r => r.id === tripData.routeId);
+          if (selectedRoute) {
+              setStops([
+                  { id: 'start', locationId: selectedRoute.startLocationId },
+                  { id: 'end', locationId: selectedRoute.endLocationId }
+              ]);
+          }
+      }
+  }, [tripData.routeId, routes]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
@@ -266,7 +281,13 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   
   const handleStartDateChange = (date: Date | undefined) => {
     setStartDate(date);
-    setTripData(prev => ({ ...prev, startDate: date ? format(date, 'yyyy-MM-dd') : '', driverId: '' }));
+    setEndDate(date); // Set end date to the same as start date
+    setTripData(prev => ({ 
+        ...prev, 
+        startDate: date ? format(date, 'yyyy-MM-dd') : '', 
+        endDate: date ? format(date, 'yyyy-MM-dd') : '',
+        driverId: '' 
+    }));
     updateDriverBasedOnVehicleAndDate(tripData.vehicleId, date);
   }
 
@@ -323,6 +344,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
 
   // Itinerary handlers
   const addStop = () => {
+    setTripData(prev => ({ ...prev, routeId: '' })); // Clear selected route
     setStops(prev => [...prev, {id: Date.now().toString(), locationId: ''}]);
   }
   const removeStop = (id: string) => {
@@ -333,6 +355,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     setStops(prev => prev.filter(stop => stop.id !== id));
   }
   const updateStopLocation = (stopId: string, locationId: string) => {
+    setTripData(prev => ({ ...prev, routeId: '' })); // Clear selected route
     setStops(prev => prev.map(stop => stop.id === stopId ? {...stop, locationId} : stop));
   }
 
@@ -432,6 +455,14 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                   <div className="space-y-2"><Label>End Time</Label><TimeInput value={tripData.endTime} onChange={handleTimeChange('endTime')} /></div>
                 </div>
                 
+                <div className="space-y-2">
+                    <Label>Route (Optional)</Label>
+                    <Select value={tripData.routeId} onValueChange={handleSelectChange('routeId')}>
+                        <SelectTrigger><SelectValue placeholder="Select a pre-defined route..."/></SelectTrigger>
+                        <SelectContent>{(routes || []).map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
+                
                 <div className="space-y-4">
                     <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Itinerary<MandatoryIndicator/></h3><Button variant="outline" size="sm" onClick={addStop}><PlusCircle className="mr-2 h-4 w-4"/>Add Stop</Button></div>
                     <div className="space-y-2">
@@ -447,8 +478,9 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                                     searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
                                     placeholder="Select Location..."
                                     emptyMessage="No location found."
+                                    disabled={!!tripData.routeId}
                                 />
-                                <Button variant="ghost" size="icon" onClick={() => removeStop(stop.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => removeStop(stop.id)} disabled={!!tripData.routeId}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                            </div>
                         ))}
                     </div>
@@ -536,5 +568,4 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     </Dialog>
   );
 }
-
     
