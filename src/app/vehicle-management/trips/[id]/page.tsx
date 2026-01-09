@@ -12,7 +12,7 @@ import { type TripPurpose } from '@/app/vehicle-management/components/trip-purpo
 import { type Location } from '@/app/vehicle-management/components/location-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Info, Hash, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Car, User, Flag, Calendar, Clock, Route, Milestone, Info, Hash, ArrowRight, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
