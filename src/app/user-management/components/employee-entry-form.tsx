@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, User, CalendarIcon, Copy } from 'lucide-react';
+import { Upload, X, User, CalendarIcon, Copy, FileSignature } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -43,6 +43,7 @@ export type Employee = {
   address: string;
   remarks: string;
   profilePicture: string; // Will store as data URL
+  signature: string; // Data URL of the employee's signature
   documents: {
     nid: string; // Will store as data URL
     other: string; // Will store as data URL
@@ -64,6 +65,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   address: '',
   remarks: '',
   profilePicture: '',
+  signature: '',
   documents: { nid: '', other: '' },
   defaultPassword: '',
 };
@@ -88,8 +90,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   
   const [docFiles, setDocFiles] = useState({ nid: null as File | null, other: null as File | null });
   const [profilePicFile, setProfilePicFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
 
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [docPreviews, setDocPreviews] = useState({ nid: '', other: ''});
 
 
@@ -104,16 +108,19 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         setEmployeeData(initialData);
         setJoiningDate(initialData.joiningDate ? new Date(initialData.joiningDate) : undefined);
         setProfilePicPreview(initialData.profilePicture || null);
+        setSignaturePreview(initialData.signature || null);
         setDocPreviews(initialData.documents || { nid: '', other: '' });
       } else {
         const password = Math.random().toString(36).slice(-8);
         setEmployeeData({...initialEmployeeData, defaultPassword: password});
         setJoiningDate(undefined);
         setProfilePicPreview(null);
+        setSignaturePreview(null);
         setDocPreviews({ nid: '', other: '' });
       }
       setDocFiles({ nid: null, other: null });
       setProfilePicFile(null);
+      setSignatureFile(null);
     }
   }, [isOpen, employee, isEditing]);
 
@@ -163,6 +170,20 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         }
     }
   };
+  
+  const handleSignatureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        try {
+          setSignatureFile(file);
+          const dataUrl = await imageToDataUrl(file);
+          setSignaturePreview(dataUrl);
+        } catch (error) {
+          console.error("Error processing signature image:", error);
+          toast({ variant: 'destructive', title: 'Image Error', description: 'Could not process the uploaded signature.' });
+        }
+    }
+  };
 
   const removeDocument = (docType: 'nid' | 'other') => {
       setDocFiles(prev => ({...prev, [docType]: null}));
@@ -174,6 +195,12 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     setProfilePicFile(null);
     setProfilePicPreview(null);
     setEmployeeData(prev => ({...prev, profilePicture: ''}));
+  }
+  
+  const removeSignature = () => {
+    setSignatureFile(null);
+    setSignaturePreview(null);
+    setEmployeeData(prev => ({...prev, signature: ''}));
   }
 
   const validateStep = (currentStep: number) => {
@@ -211,6 +238,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         const dataToSave: Omit<Employee, 'id'> = {
             ...employeeData,
             profilePicture: profilePicPreview || employeeData.profilePicture,
+            signature: signaturePreview || employeeData.signature,
             documents: {
                 nid: docPreviews.nid || employeeData.documents.nid,
                 other: docPreviews.other || employeeData.documents.other
@@ -239,6 +267,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     const dataToSave: Omit<Employee, 'id'> = {
         ...employeeData,
         profilePicture: profilePicPreview || employeeData.profilePicture,
+        signature: signaturePreview || employeeData.signature,
         documents: {
             nid: docPreviews.nid || employeeData.documents.nid,
             other: docPreviews.other || employeeData.documents.other
@@ -439,6 +468,25 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                     </div>
                                 );
                             })}
+                        </div>
+                         <div className="md:col-span-3 space-y-2">
+                                <Label>Signature</Label>
+                                {signaturePreview ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-full h-32 bg-muted rounded-md flex items-center justify-center p-2 border">
+                                            <Image src={signaturePreview} alt="Signature Preview" width={200} height={100} className="object-contain" />
+                                        </div>
+                                         <Button variant="link" size="sm" className="text-destructive" onClick={removeSignature}>Remove signature</Button>
+                                    </div>
+                                ) : (
+                                    <Label htmlFor="signature-upload" className="flex items-center justify-center w-full h-24 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
+                                        <span className="flex items-center space-x-2">
+                                            <FileSignature className="h-5 w-5 text-muted-foreground" />
+                                            <span className="font-medium text-muted-foreground">Click to upload signature</span>
+                                        </span>
+                                        <Input id="signature-upload" type="file" accept="image/*" className="hidden" onChange={handleSignatureChange} />
+                                    </Label>
+                                )}
                         </div>
                     </div>
                  </div>

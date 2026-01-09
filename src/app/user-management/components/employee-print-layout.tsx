@@ -32,19 +32,25 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     </div>
 );
 
-const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
-    <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500">
-        Page {pageNumber}
+const PrintFooter = ({ pageNumber, children }: { pageNumber: number, children?: React.ReactNode }) => (
+    <div className="absolute bottom-4 left-0 right-0 px-4">
+        <div className="flex justify-between items-end">
+            <div className="text-xs text-gray-500">Page {pageNumber}</div>
+            {children}
+            <div className="text-xs text-gray-500 text-right">
+                <p>Printed on: {new Date().toLocaleDateString()}</p>
+            </div>
+        </div>
     </div>
-)
+);
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string, footerContent?: React.ReactNode}> = ({children, pageNumber, orgSettings, className = '', footerContent}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
         <PrintHeader orgSettings={orgSettings} />
         <div className="flex-grow pt-6">
             {children}
         </div>
-        <PrintFooter pageNumber={pageNumber} />
+        <PrintFooter pageNumber={pageNumber}>{footerContent}</PrintFooter>
     </div>
 )
 
@@ -91,10 +97,25 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
     const formatDate = (dateString: string) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
     const getStatusVariant = (status: Employee['status']) => status === 'Active' ? 'default' : 'destructive';
 
+    const firstPageFooter = (
+      <div className="flex justify-center items-end" style={{width: '33%'}}>
+        {employee.signature ? (
+          <div className="text-center">
+            <Image src={employee.signature} alt="Signature" width={150} height={50} className="object-contain mx-auto" />
+            <p className="border-t-2 border-gray-800 mt-2 pt-1 text-sm font-semibold">Employee's Signature</p>
+          </div>
+        ) : (
+           <div className="pt-12 border-t-2 border-gray-800 w-48 text-center text-sm font-semibold">
+              Employee's Signature
+           </div>
+        )}
+      </div>
+    );
+
     return (
         <div className="bg-white">
             {/* Page 1: Employee Information */}
-            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings}>
+            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings} footerContent={firstPageFooter}>
                 <h2 className="text-xl font-bold text-center mb-4">Employee Information</h2>
                 
                 <div className="flex gap-6 items-start mb-4">

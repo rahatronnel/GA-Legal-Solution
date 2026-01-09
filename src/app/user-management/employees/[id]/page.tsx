@@ -203,7 +203,15 @@ export default function EmployeeProfilePage() {
                         <InfoItem icon={FileText} label="National ID (NID)" value="Available in Documents Tab" />
                     </ul>
                 </div>
-
+                
+                 {employee.signature && (
+                    <div className="space-y-4 md:col-span-3">
+                        <h3 className="font-semibold text-lg text-primary border-b pb-2">Signature</h3>
+                        <div className="p-4 border rounded-md bg-muted/50 w-fit">
+                            <Image src={employee.signature} alt="Employee Signature" width={200} height={100} className="object-contain" />
+                        </div>
+                    </div>
+                 )}
               </div>
             </TabsContent>
              <TabsContent value="documents">

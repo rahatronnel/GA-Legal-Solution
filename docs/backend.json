@@ -55,6 +55,7 @@
         "address": { "type": "string" },
         "remarks": { "type": "string" },
         "profilePicture": { "type": "string", "description": "Data URL of the profile picture." },
+        "signature": { "type": "string", "description": "Data URL of the employee's signature." },
         "documents": {
           "type": "object",
           "properties": {
