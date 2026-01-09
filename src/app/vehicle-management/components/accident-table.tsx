@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, X } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, X, Printer } from 'lucide-react';
 import { AccidentEntryForm, type Accident } from './accident-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -29,9 +29,11 @@ import type { SeverityLevel } from './severity-level-table';
 import type { Route } from './route-table';
 import type { FaultStatus } from './fault-status-table';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { usePrint } from './print-provider';
 
 export function AccidentTable() {
   const { toast } = useToast();
+  const { handlePrint } = usePrint();
   const firestore = useFirestore();
   const accidentsRef = useMemoFirebase(() => firestore ? collection(firestore, 'accidents') : null, [firestore]);
   
@@ -201,6 +203,7 @@ export function AccidentTable() {
                         <div className="flex justify-end gap-2">
                         <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/vehicle-management/accidents/${accident.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Record</TooltipContent></Tooltip>
                         <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(accident)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Record</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(accident, 'accident')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Report</TooltipContent></Tooltip>
                         <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(accident)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Record</TooltipContent></Tooltip>
                         </div>
                     </TableCell>

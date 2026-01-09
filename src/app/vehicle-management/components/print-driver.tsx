@@ -12,7 +12,7 @@ import type { VehicleType } from './vehicle-type-table';
 import { EmployeePrintLayout } from '@/app/user-management/components/employee-print-layout';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Section } from '@/app/user-management/components/section-table';
-import type { Designation, OrganizationSettings } from '@/app/user-management/components/designation-table';
+import type { Designation } from '@/app/user-management/components/designation-table';
 import type { Trip } from './trip-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
@@ -26,6 +26,7 @@ import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
 import type { ServiceCenter } from './service-center-table';
 import type { Route } from './route-table';
+import type { OrganizationSettings } from '@/app/settings/page';
 
 
 export const PrintDriver = () => {
