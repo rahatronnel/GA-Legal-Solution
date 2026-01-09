@@ -22,7 +22,7 @@ type UserManagementDataContextType = {
 
 const UserManagementContext = createContext<UserManagementDataContextType | undefined>(undefined);
 
-export function UserManagementProvider({ children }: { children: React.ReactNode }) {
+const UserManagementDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
 
@@ -46,7 +46,26 @@ export function UserManagementProvider({ children }: { children: React.ReactNode
         data,
     }), [data]);
 
-     if (isUserLoading) {
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p>Loading User Data...</p>
+            </div>
+        );
+    }
+    
+    return (
+        <UserManagementContext.Provider value={value}>
+            {children}
+        </UserManagementContext.Provider>
+    );
+};
+
+
+export function UserManagementProvider({ children }: { children: React.ReactNode }) {
+    const { isUserLoading } = useUser();
+
+    if (isUserLoading) {
         return (
             <div className="flex justify-center items-center h-full">
                 <p>Verifying authentication...</p>
@@ -54,12 +73,7 @@ export function UserManagementProvider({ children }: { children: React.ReactNode
         );
     }
 
-
-    return (
-        <UserManagementContext.Provider value={value}>
-            {children}
-        </UserManagementContext.Provider>
-    );
+    return <UserManagementDataProvider>{children}</UserManagementDataProvider>;
 }
 
 export function useUserManagement() {
@@ -69,5 +83,3 @@ export function useUserManagement() {
     }
     return { data: context.data };
 }
-
-

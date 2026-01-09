@@ -54,7 +54,8 @@ type VehicleManagementDataContextType = {
 
 const VehicleManagementContext = createContext<VehicleManagementDataContextType | undefined>(undefined);
 
-export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
+
+const VehicleManagementDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
 
@@ -113,6 +114,24 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
         isLoading,
     }), [data, isLoading]);
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p>Loading Vehicle Data...</p>
+            </div>
+        );
+    }
+    
+    return (
+        <VehicleManagementContext.Provider value={value}>
+            {children}
+        </VehicleManagementContext.Provider>
+    );
+}
+
+export function VehicleManagementProvider({ children }: { children: React.ReactNode }) {
+    const { isUserLoading } = useUser();
+
      if (isUserLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -121,11 +140,7 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
         );
     }
 
-    return (
-        <VehicleManagementContext.Provider value={value}>
-            {children}
-        </VehicleManagementContext.Provider>
-    );
+    return <VehicleManagementDataProvider>{children}</VehicleManagementDataProvider>;
 }
 
 export function useVehicleManagement() {

@@ -36,7 +36,7 @@ type BillFlowDataContextType = {
 
 const BillFlowContext = createContext<BillFlowDataContextType | undefined>(undefined);
 
-export function BillFlowProvider({ children }: { children: React.ReactNode }) {
+const BillFlowDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
 
@@ -73,14 +73,6 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
         isLoading,
     }), [data, isLoading]);
 
-    if (isUserLoading) {
-        return (
-            <div className="flex justify-center items-center h-full">
-                <p>Verifying authentication...</p>
-            </div>
-        );
-    }
-
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -94,6 +86,20 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
             {children}
         </BillFlowContext.Provider>
     );
+};
+
+export function BillFlowProvider({ children }: { children: React.ReactNode }) {
+    const { isUserLoading } = useUser();
+
+    if (isUserLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p>Verifying authentication...</p>
+            </div>
+        );
+    }
+
+    return <BillFlowDataProvider>{children}</BillFlowDataProvider>;
 }
 
 export function useBillFlow() {
