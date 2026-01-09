@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "OrganizationSettings": {
@@ -199,7 +200,12 @@
         "password": { "type": "string" },
         "createdBy": { "type": "string" },
         "createdDate": { "type": "string", "format": "date-time" },
-        "lastUpdatedBy": { "type": "string" }
+        "lastUpdatedBy": { "type": "string" },
+        "vendorStatus": { "type": "string", "enum": ["Pending", "Active", "Suspended", "Blacklisted"] },
+        "approvedBy": { "type": "string" },
+        "approvalDate": { "type": "string", "format": "date" },
+        "reviewFrequency": { "type": "string" },
+        "riskLevel": { "type": "string", "enum": ["Low", "Medium", "High"] }
       },
       "required": ["vendorId", "vendorName", "vendorType", "vendorCategoryId", "email"]
     },
@@ -248,3 +254,5 @@
     "/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" }, "description": "Stores vendor profiles for the BillFlow module." }
   }
 }
+
+    

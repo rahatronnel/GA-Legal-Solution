@@ -28,6 +28,7 @@ import { collection } from 'firebase/firestore';
 
 import type { VendorCategory } from './vendor-category-table';
 import type { VendorNatureOfBusiness } from './vendor-nature-of-business-table';
+import { Employee } from '@/app/user-management/components/employee-entry-form';
 
 
 type SuppliedItem = {
@@ -112,6 +113,12 @@ export type Vendor = {
   createdBy: string;
   createdDate: string;
   lastUpdatedBy: string;
+
+  vendorStatus: 'Pending' | 'Active' | 'Suspended' | 'Blacklisted' | '';
+  approvedBy: string;
+  approvalDate: string;
+  reviewFrequency: string;
+  riskLevel: 'Low' | 'Medium' | 'High' | '';
 };
 
 const initialVendorData: Omit<Vendor, 'id' | 'vendorId' | 'documents' | 'suppliedItems'> = {
@@ -123,7 +130,8 @@ const initialVendorData: Omit<Vendor, 'id' | 'vendorId' | 'documents' | 'supplie
   incorporationDate: '', bankName: '', branchName: '', accountName: '', accountNumber: '',
   routingNumber: '', paymentMethod: '', mobileBankingProvider: '', contractStartDate: '',
   contractEndDate: '', paymentTerms: '', creditLimit: 0, currency: 'USD', taxDeductionApplicable: false,
-  vatApplicable: false, loginId: '', createdBy: '', createdDate: '', lastUpdatedBy: ''
+  vatApplicable: false, loginId: '', createdBy: '', createdDate: '', lastUpdatedBy: '',
+  vendorStatus: 'Pending', approvedBy: '', approvalDate: '', reviewFrequency: '', riskLevel: ''
 };
 
 const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, UploadedFile[]>);
@@ -143,6 +151,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
     const firestore = useFirestore();
     const { data: categories } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
     const { data: naturesOfBusiness } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
+    const { data: employees } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
 
     const [step, setStep] = useState(1);
     const [vendorData, setVendorData] = useState(initialVendorData);
@@ -154,9 +163,10 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
     const [incorporationDate, setIncorporationDate] = useState<Date|undefined>();
     const [contractStartDate, setContractStartDate] = useState<Date|undefined>();
     const [contractEndDate, setContractEndDate] = useState<Date|undefined>();
+    const [approvalDate, setApprovalDate] = useState<Date|undefined>();
 
     const isEditing = vendor && vendor.id;
-    const totalSteps = 7;
+    const totalSteps = 8;
     const progress = Math.round((step / totalSteps) * 100);
 
     const setDateIfValid = (dateStr: string | undefined, setter: (d: Date | undefined) => void) => {
@@ -182,6 +192,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
             setDateIfValid(vendor.incorporationDate, setIncorporationDate);
             setDateIfValid(vendor.contractStartDate, setContractStartDate);
             setDateIfValid(vendor.contractEndDate, setContractEndDate);
+            setDateIfValid(vendor.approvalDate, setApprovalDate);
           } else {
             setVendorData({...initialVendorData, loginId: '', password: ''});
             setSuppliedItems([]);
@@ -190,6 +201,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
             setIncorporationDate(undefined);
             setContractStartDate(undefined);
             setContractEndDate(undefined);
+            setApprovalDate(undefined);
           }
         }
       }, [isOpen, vendor, isEditing]);
@@ -437,6 +449,50 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                             </div>
                         </div>
                     )}
+                    
+                    {/* Step 8: Approval */}
+                    {step === 8 && (
+                        <div className="space-y-6">
+                             <h3 className="font-semibold text-lg">Step 8: Approval & Internal Control</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Vendor Status</Label>
+                                    <Select value={vendorData.vendorStatus} onValueChange={handleSelectChange('vendorStatus')}><SelectTrigger><SelectValue placeholder="Select status"/></SelectTrigger><SelectContent>
+                                        <SelectItem value="Pending">Pending</SelectItem>
+                                        <SelectItem value="Active">Active</SelectItem>
+                                        <SelectItem value="Suspended">Suspended</SelectItem>
+                                        <SelectItem value="Blacklisted">Blacklisted</SelectItem>
+                                    </SelectContent></Select>
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label>Risk Level</Label>
+                                    <Select value={vendorData.riskLevel} onValueChange={handleSelectChange('riskLevel')}><SelectTrigger><SelectValue placeholder="Select risk level"/></SelectTrigger><SelectContent>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="High">High</SelectItem>
+                                    </SelectContent></Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Approved By</Label>
+                                    <Select value={vendorData.approvedBy} onValueChange={handleSelectChange('approvedBy')}>
+                                        <SelectTrigger><SelectValue placeholder="Select Employee"/></SelectTrigger>
+                                        <SelectContent>{(employees || []).map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label>Approval Date</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{approvalDate ? format(approvalDate, "PPP") : "Pick a date"}</Button></PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={approvalDate} onSelect={handleDateChange(setApprovalDate, 'approvalDate')} /></PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div className="space-y-2 md:col-span-2">
+                                    <Label>Review Frequency</Label>
+                                    <Input id="reviewFrequency" value={vendorData.reviewFrequency} onChange={handleInputChange} placeholder="e.g., Annually, Bi-annually" />
+                                </div>
+                             </div>
+                        </div>
+                    )}
                 </div>
 
                 <DialogFooter className="flex justify-between w-full pt-4 border-t">
@@ -447,3 +503,5 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
         </Dialog>
     );
 }
+
+    
