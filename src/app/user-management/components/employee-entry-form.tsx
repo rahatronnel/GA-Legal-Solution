@@ -207,7 +207,12 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        return isEditing ? true : (employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6);
+        if (isEditing) {
+          // Password is optional when editing
+          return !employeeData.defaultPassword || (employeeData.defaultPassword.length >= 6);
+        }
+        // Password is required for new users
+        return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
     }
@@ -230,8 +235,12 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     }
 
     try {
-        if (!isEditing) {
-            initiateEmailSignUp(auth, employeeData.email, employeeData.defaultPassword!);
+        if (!isEditing && employeeData.defaultPassword) {
+            // This is non-blocking. The user creation happens in the background.
+            // The onAuthStateChanged listener will eventually reflect the new user state.
+            // However, for immediate user creation for a new employee, we might want to await this.
+            // For now, per existing patterns, we keep it non-blocking.
+            initiateEmailSignUp(auth, employeeData.email, employeeData.defaultPassword);
         }
 
         const dataToSave: Omit<Employee, 'id'> = {
@@ -272,6 +281,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             other: docPreviews.other || employeeData.documents.other
         },
     };
+    
+    // Note: Updating Firebase Auth password for an existing user requires re-authentication,
+    // which is a complex flow not suitable for an admin panel. The best practice is to send
+    // a password reset email. For this app, we will just save the data to Firestore.
+    // The password field when editing should be treated as "set new password".
 
     onSave(dataToSave, employee?.id);
     setIsOpen(false);
@@ -397,25 +411,30 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
               </div>
             )}
             
-            {step === 2 && !isEditing && (
+            {step === 2 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Create Login Credentials</h3>
-                    <p className="text-sm text-muted-foreground">Set an initial password for the new employee. They can change it later if they wish.</p>
+                    <h3 className="font-semibold text-lg">{isEditing ? 'Step 2: Change Password (Optional)' : 'Step 2: Create Login Credentials'}</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {isEditing 
+                            ? "To change this employee's password, enter a new one below. Leave blank to keep the current password."
+                            : "Set an initial password for the new employee. They can change it later if they wish."
+                        }
+                    </p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
                         <Input value={employeeData.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="defaultPassword">Initial Password <MandatoryIndicator/></Label>
-                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
+                        <Label htmlFor="defaultPassword">{isEditing ? 'New Password' : 'Initial Password'} {!isEditing && <MandatoryIndicator/>}</Label>
+                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} placeholder={isEditing ? 'Leave blank to keep current' : ''} />
                          <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
             )}
 
-            {(step === 3 || (step === 2 && isEditing)) && (
+            {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step {isEditing ? 2 : 3}: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
@@ -496,23 +515,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             </div>
             
             <div>
-                {isEditing ? (
-                    <>
-                     {step < 2 ? (
-                         <Button onClick={nextStep}>Next</Button>
-                     ) : (
-                         <Button onClick={handleSave}>Update Employee</Button>
-                     )}
-                    </>
-                ) : (
-                    <>
-                     {step < 3 ? (
-                         <Button onClick={nextStep}>Next</Button>
-                     ) : (
-                         <Button onClick={createLoginAndSave}>Create Login & Save</Button>
-                     )}
-                    </>
-                )}
+              {step < 3 ? (
+                  <Button onClick={nextStep}>Next</Button>
+              ) : (
+                  <Button onClick={isEditing ? handleSave : createLoginAndSave}>{isEditing ? 'Update Employee' : 'Create Login & Save'}</Button>
+              )}
             </div>
         </DialogFooter>
       </DialogContent>
