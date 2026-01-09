@@ -22,16 +22,18 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { VehicleManagementProvider } from './components/vehicle-management-provider';
+import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
 import { useUser } from "@/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dashboard } from "./components/Dashboard";
 
 function VehicleManagementContent() {
 
   return (
-    <Tabs defaultValue="trips" className="w-full">
+    <Tabs defaultValue="dashboard" className="w-full">
       <div className="flex items-center">
         <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="trips">Trips</TabsTrigger>
           <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
           <TabsTrigger value="drivers">Drivers</TabsTrigger>
@@ -41,6 +43,9 @@ function VehicleManagementContent() {
           <TabsTrigger value="master-data">Master Data</TabsTrigger>
         </TabsList>
       </div>
+       <TabsContent value="dashboard">
+          <Dashboard />
+       </TabsContent>
        <TabsContent value="trips">
           <Card>
               <CardHeader>
