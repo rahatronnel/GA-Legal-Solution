@@ -24,10 +24,17 @@ const UserManagementContext = createContext<UserManagementDataContextType | unde
 
 const UserManagementDataContent = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
 
-    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
-    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
-    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
+    const shouldFetch = !isUserLoading && !!user;
+
+    const employeesRef = useMemoFirebase(() => shouldFetch ? collection(firestore, 'employees') : null, [firestore, shouldFetch]);
+    const sectionsRef = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sections') : null, [firestore, shouldFetch]);
+    const designationsRef = useMemoFirebase(() => shouldFetch ? collection(firestore, 'designations') : null, [firestore, shouldFetch]);
+
+    const { data: employees, isLoading: l1 } = useCollection<Employee>(employeesRef);
+    const { data: sections, isLoading: l2 } = useCollection<Section>(sectionsRef);
+    const { data: designations, isLoading: l3 } = useCollection<Designation>(designationsRef);
     
     const isLoading = l1 || l2 || l3;
 
@@ -42,7 +49,7 @@ const UserManagementDataContent = ({ children }: { children: React.ReactNode }) 
         data,
     }), [data]);
 
-    if (isLoading) {
+    if (isLoading && shouldFetch) {
         return (
             <div className="flex justify-center items-center h-full">
                 <p>Loading User Data...</p>
@@ -70,7 +77,6 @@ export function UserManagementProvider({ children }: { children: React.ReactNode
     }
     
     if (!user) {
-        // This case should be handled by the root layout, but as a safeguard:
         return null;
     }
 
