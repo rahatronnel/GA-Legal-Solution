@@ -18,13 +18,16 @@ import { useState } from 'react';
 export default function LoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
-  const [email, setEmail] = useState('superadmin@galsolution.com');
-  const [password, setPassword] = useState('superadmin2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
+      if (!email || !password) {
+        throw new Error('Email and password are required.');
+      }
       await initiateEmailSignIn(auth, email, password);
       // The onAuthStateChanged listener in FirebaseProvider will handle the redirect.
       // We don't need to do anything here upon success.
@@ -45,7 +48,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account
+            Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,6 +76,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
+                onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
               />
             </div>
             <Button onClick={handleSignIn} disabled={isLoading} className="w-full">

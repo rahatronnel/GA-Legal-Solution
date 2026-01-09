@@ -61,9 +61,10 @@
             "nid": { "type": "string", "description": "Data URL of the NID document." },
             "other": { "type": "string", "description": "Data URL of the other document." }
           }
-        }
+        },
+        "defaultPassword": { "type": "string", "description": "Default password for the new user." }
       },
-      "required": ["userIdCode", "fullName", "mobileNumber", "username", "role", "status"]
+      "required": ["userIdCode", "fullName", "mobileNumber", "username", "role", "status", "email"]
     },
     "VehicleType": {
       "title": "Vehicle Type", "type": "object", "description": "Defines a type or category of a vehicle.",

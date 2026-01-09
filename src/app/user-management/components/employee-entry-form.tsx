@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, User, CalendarIcon } from 'lucide-react';
+import { Upload, X, User, CalendarIcon, Copy } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +25,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
+import { initiateEmailSignUp, useAuth } from '@/firebase';
 
 
 export type Employee = {
@@ -46,6 +47,7 @@ export type Employee = {
     nid: string; // Will store as data URL
     other: string; // Will store as data URL
   }
+  defaultPassword?: string;
 };
 
 const initialEmployeeData: Omit<Employee, 'id'> = {
@@ -62,7 +64,8 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   address: '',
   remarks: '',
   profilePicture: '',
-  documents: { nid: '', other: '' }
+  documents: { nid: '', other: '' },
+  defaultPassword: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -77,6 +80,7 @@ interface EmployeeEntryFormProps {
 }
 
 export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, sections, designations }: EmployeeEntryFormProps) {
+  const auth = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [employeeData, setEmployeeData] = useState<Omit<Employee, 'id'>>(initialEmployeeData);
@@ -89,7 +93,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   const [docPreviews, setDocPreviews] = useState({ nid: '', other: ''});
 
 
-  const progress = Math.round((step / 2) * 100);
+  const progress = Math.round((step / 3) * 100);
   const isEditing = employee && employee.id;
 
   useEffect(() => {
@@ -102,7 +106,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         setProfilePicPreview(initialData.profilePicture || null);
         setDocPreviews(initialData.documents || { nid: '', other: '' });
       } else {
-        setEmployeeData(initialEmployeeData);
+        const password = Math.random().toString(36).slice(-8);
+        setEmployeeData({...initialEmployeeData, defaultPassword: password});
         setJoiningDate(undefined);
         setProfilePicPreview(null);
         setDocPreviews({ nid: '', other: '' });
@@ -114,7 +119,12 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    setEmployeeData(prev => ({ ...prev, [id]: value }));
+    const newEmployeeData = { ...employeeData, [id]: value };
+    // Sync username with email
+    if (id === 'email') {
+        newEmployeeData.username = value;
+    }
+    setEmployeeData(newEmployeeData);
   };
 
   const handleSelectChange = (id: keyof Employee) => (value: string) => {
@@ -169,7 +179,9 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   const validateStep = (currentStep: number) => {
     switch(currentStep) {
       case 1:
-        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status;
+        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
+      case 2:
+        return isEditing ? true : (employeeData.defaultPassword && employeeData.email);
       default:
         return true;
     }
@@ -184,9 +196,42 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   };
 
   const prevStep = () => setStep(s => s - 1);
+  
+  const createLoginAndSave = async () => {
+    if (!validateStep(1) || !validateStep(2)) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving.' });
+        return;
+    }
+
+    try {
+        if (!isEditing) {
+            initiateEmailSignUp(auth, employeeData.email, employeeData.defaultPassword!);
+        }
+
+        const dataToSave: Omit<Employee, 'id'> = {
+            ...employeeData,
+            profilePicture: profilePicPreview || employeeData.profilePicture,
+            documents: {
+                nid: docPreviews.nid || employeeData.documents.nid,
+                other: docPreviews.other || employeeData.documents.other
+            },
+        };
+
+        onSave(dataToSave, employee?.id);
+        setIsOpen(false);
+
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Login Creation Failed',
+            description: error.message || 'Could not create the user in Firebase Authentication.'
+        });
+    }
+  }
+
 
   const handleSave = async () => {
-    if (!validateStep(1)) {
+    if (!validateStep(1) || !validateStep(2)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
         return;
     }
@@ -208,6 +253,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       if (docFiles[docType]) return docFiles[docType]!.name;
       if (docPreviews[docType] || (employeeData.documents && employeeData.documents[docType])) return `${docType.toUpperCase()} Document`;
       return null;
+  }
+  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied!', description: 'Password copied to clipboard.' });
   }
 
   return (
@@ -239,8 +289,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                             <Label htmlFor="mobileNumber">Mobile Number<MandatoryIndicator/></Label>
                             <Input id="mobileNumber" value={employeeData.mobileNumber} onChange={handleInputChange} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
+                         <div className="space-y-2">
+                            <Label htmlFor="email">Email Address<MandatoryIndicator/></Label>
                             <Input id="email" type="email" value={employeeData.email} onChange={handleInputChange} />
                         </div>
                     </div>
@@ -267,9 +317,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
+                         <div className="space-y-2">
                             <Label htmlFor="username">Username / Login ID<MandatoryIndicator/></Label>
-                            <Input id="username" value={employeeData.username} onChange={handleInputChange} />
+                            <Input id="username" value={employeeData.username} onChange={handleInputChange} disabled/>
+                            <p className="text-xs text-muted-foreground">Username is synced with email address.</p>
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="joiningDate">Joining Date</Label>
@@ -317,10 +368,30 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                 </div>
               </div>
             )}
-
-            {step === 2 && (
+            
+            {step === 2 && !isEditing && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 2: Create Login Credentials</h3>
+                    <p className="text-sm text-muted-foreground">A temporary password has been generated for the new employee. Please share this with them securely. They will be prompted to change it on their first login.</p>
+                     <div className="space-y-2">
+                        <Label>Login Email</Label>
+                        <Input value={employeeData.email} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Temporary Password</Label>
+                        <div className="flex items-center gap-2">
+                            <Input value={employeeData.defaultPassword} readOnly />
+                            <Button variant="outline" size="icon" onClick={() => copyToClipboard(employeeData.defaultPassword!)}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                 </div>
+            )}
+
+            {(step === 3 || (step === 2 && isEditing)) && (
+                 <div className="space-y-6">
+                    <h3 className="font-semibold text-lg">Step {isEditing ? 2 : 3}: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
@@ -382,11 +453,23 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             </div>
             
             <div>
-              {step < 2 ? (
-                  <Button onClick={nextStep}>Next</Button>
-              ) : (
-                  <Button onClick={handleSave}>{isEditing ? 'Update Employee' : 'Save Employee'}</Button>
-              )}
+                {isEditing ? (
+                    <>
+                     {step < 2 ? (
+                         <Button onClick={nextStep}>Next</Button>
+                     ) : (
+                         <Button onClick={handleSave}>Update Employee</Button>
+                     )}
+                    </>
+                ) : (
+                    <>
+                     {step < 3 ? (
+                         <Button onClick={nextStep}>Next</Button>
+                     ) : (
+                         <Button onClick={createLoginAndSave}>Create Login & Save</Button>
+                     )}
+                    </>
+                )}
             </div>
         </DialogFooter>
       </DialogContent>

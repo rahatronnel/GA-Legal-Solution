@@ -24,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,6 +38,7 @@ interface EmployeeTableProps {
 export function EmployeeTable({ employees, setEmployees, sections, designations }: EmployeeTableProps) {
   const { toast } = useToast();
   const { handlePrint } = usePrint();
+  const auth = useAuth();
   const firestore = useFirestore();
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   
@@ -72,11 +73,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
         return;
     }
     if (id) {
-        setDocumentNonBlocking(doc(employeesRef, id), data, { merge: true });
+        const { defaultPassword, ...restOfData } = data;
+        setDocumentNonBlocking(doc(employeesRef, id), restOfData, { merge: true });
         toast({ title: 'Success', description: 'Employee updated successfully.' });
     } else {
-        const newEmployee: Omit<Employee, 'id'> = { ...data };
-        addDocumentNonBlocking(employeesRef, newEmployee);
+        addDocumentNonBlocking(employeesRef, data);
         toast({ title: 'Success', description: 'Employee added successfully.' });
     }
   };
@@ -88,8 +89,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
 
   const confirmDelete = () => {
     if (currentEmployee?.id && employeesRef) {
+        // Note: This does not delete the Firebase Auth user.
+        // That requires administrative privileges and is best handled by a server-side function.
         deleteDocumentNonBlocking(doc(employeesRef, currentEmployee.id));
-        toast({ title: 'Success', description: 'Employee deleted successfully.' });
+        toast({ title: 'Success', description: 'Employee record deleted. Auth user is not removed.' });
     }
     setIsDeleteConfirmOpen(false);
     setCurrentEmployee(null);
@@ -99,11 +102,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     const ws = XLSX.utils.json_to_sheet([{ 
       userIdCode: '',
       fullName: '',
-      mobileNumber: '',
       email: '',
+      mobileNumber: '',
       userRole: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
-      username: '',
       sectionCode: '',
       designationCode: '',
       joiningDate: 'YYYY-MM-DD',
@@ -119,7 +121,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     const file = event.target.files?.[0];
     if (file && employeesRef) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -127,39 +129,50 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-          const requiredHeaders = ['userIdCode', 'fullName', 'mobileNumber'];
+          const requiredHeaders = ['userIdCode', 'fullName', 'mobileNumber', 'email'];
           const headers = Object.keys(json[0] || {});
           if (!requiredHeaders.every(h => headers.includes(h))) {
-             throw new Error('Invalid Excel file format. Expecting columns: userIdCode, fullName, mobileNumber.');
+             throw new Error('Invalid Excel file format. Expecting columns: userIdCode, fullName, mobileNumber, email.');
           }
 
-          const newEmployees: Omit<Employee, 'id'>[] = json
-            .filter(item => item.fullName && item.fullName.toString().trim() && item.userIdCode)
-            .map(item => {
-                const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
-                const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
-                return {
-                    userIdCode: item.userIdCode?.toString().trim() || '',
-                    fullName: item.fullName?.toString().trim() || '',
-                    mobileNumber: item.mobileNumber?.toString().trim() || '',
-                    email: item.email?.toString().trim() || '',
-                    role: item.userRole?.toString().trim() || '',
-                    status: item.status?.toString().trim() || '',
-                    username: item.username?.toString().trim() || '',
-                    departmentId: section?.id || '',
-                    designationId: designation?.id || '',
-                    joiningDate: item.joiningDate?.toString().trim() || '',
-                    address: item.address?.toString().trim() || '',
-                    remarks: item.remarks?.toString().trim() || '',
-                    profilePicture: '',
-                    documents: { nid: '', other: '' },
-                }
-            });
-          
-          if(newEmployees.length > 0) {
-            newEmployees.forEach(emp => addDocumentNonBlocking(employeesRef, emp));
-            toast({ title: 'Success', description: `${newEmployees.length} employees uploaded successfully.` });
+          toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
+
+          for (const item of json) {
+            if (!item.email || !item.fullName) continue;
+
+            const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
+            const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
+            const defaultPassword = Math.random().toString(36).slice(-8);
+
+            const newEmployee: Omit<Employee, 'id'> = {
+                userIdCode: item.userIdCode?.toString().trim() || '',
+                fullName: item.fullName?.toString().trim() || '',
+                email: item.email?.toString().trim() || '',
+                username: item.email?.toString().trim() || '',
+                mobileNumber: item.mobileNumber?.toString().trim() || '',
+                role: item.userRole?.toString().trim() || 'Viewer',
+                status: item.status?.toString().trim() || 'Active',
+                departmentId: section?.id || '',
+                designationId: designation?.id || '',
+                joiningDate: item.joiningDate?.toString().trim() || '',
+                address: item.address?.toString().trim() || '',
+                remarks: item.remarks?.toString().trim() || '',
+                profilePicture: '',
+                documents: { nid: '', other: '' },
+                defaultPassword: defaultPassword
+            };
+            
+            try {
+                // Create auth user first
+                await initiateEmailSignUp(auth, newEmployee.email, defaultPassword);
+                // Then save employee doc
+                addDocumentNonBlocking(employeesRef, newEmployee);
+            } catch (authError: any) {
+                 toast({ variant: 'destructive', title: `Failed to create user ${newEmployee.email}`, description: authError.message });
+            }
           }
+          
+          toast({ title: 'Success', description: `Finished processing uploaded employees.` });
 
         } catch (error: any) {
           toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
@@ -292,7 +305,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the employee "{currentEmployee?.fullName}".
+              This action cannot be undone. This will permanently delete the employee record for "{currentEmployee?.fullName}". The authentication user will NOT be deleted automatically.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
