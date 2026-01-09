@@ -47,6 +47,34 @@ const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSet
     </div>
 );
 
+const documentLabels: Record<string, string> = {
+    vendorInvoice: 'Vendor Invoice',
+    deliveryChallan: 'Delivery Challan',
+    workCompletionCert: 'Work Completion Certificate',
+    poCopy: 'Purchase Order Copy',
+    contractCopy: 'Agreement / Contract Copy',
+    supportingDocs: 'Supporting Documents',
+    remarksDoc: 'Remarks Document',
+};
+
+const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: {name: string, file:string}, label: string, pageNumber: number, orgSettings: OrganizationSettings}) => {
+    if (!doc || !doc.file) return null;
+    const isImage = doc.file.startsWith('data:image/');
+    
+    return (
+        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} className="page-break">
+            <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
+            <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
+                 {isImage ? (
+                    <Image src={doc.file} alt={doc.name} layout="fill" className="object-contain" />
+                ) : (
+                     <p>Cannot preview this document type.</p>
+                )}
+            </div>
+        </PrintPage>
+    );
+};
+
 const InfoRow: React.FC<{ label: string, value?: React.ReactNode, fullWidth?: boolean }> = ({ label, value, fullWidth = false }) => (
     <div className={`py-1.5 border-b border-gray-200 ${fullWidth ? 'col-span-2' : ''}`}>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</p>
@@ -139,6 +167,12 @@ export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, 
                     </div>
                 </div>
             </PrintPage>
+
+            {Object.entries(bill.documents || {}).flatMap(([category, files]) => 
+                files.map(doc => (
+                    <DocumentPage key={doc.id} doc={doc} label={documentLabels[category] || 'Document'} pageNumber={pageCounter++} orgSettings={orgSettings} />
+                ))
+            )}
         </div>
     );
 };
