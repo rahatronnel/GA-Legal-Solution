@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -148,13 +148,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                 continue;
             }
 
-            const { defaultPassword, ...newEmployee }: Omit<Employee, 'id'> = {
+            const newEmployee: Omit<Employee, 'id' | 'defaultPassword'> = {
                 userIdCode: item.userIdCode?.toString().trim() || '',
                 fullName: item.fullName?.toString().trim() || '',
                 email: item.email?.toString().trim() || '',
                 username: item.email?.toString().trim() || '',
                 mobileNumber: item.mobileNumber?.toString().trim() || '',
-                role: item.userRole?.toString().trim() || 'Viewer',
+                role: item.role?.toString().trim() || 'Viewer',
                 status: item.status?.toString().trim() || 'Active',
                 departmentId: section?.id || '',
                 designationId: designation?.id || '',
