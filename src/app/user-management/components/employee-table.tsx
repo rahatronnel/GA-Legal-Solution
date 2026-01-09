@@ -103,6 +103,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       userIdCode: '',
       fullName: '',
       email: '',
+      password: '',
       mobileNumber: '',
       role: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
@@ -129,20 +130,24 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-          const requiredHeaders = ['userIdCode', 'fullName', 'mobileNumber', 'email'];
+          const requiredHeaders = ['userIdCode', 'fullName', 'mobileNumber', 'email', 'password'];
           const headers = Object.keys(json[0] || {});
           if (!requiredHeaders.every(h => headers.includes(h))) {
-             throw new Error('Invalid Excel file format. Expecting columns: userIdCode, fullName, mobileNumber, email.');
+             throw new Error('Invalid Excel file format. Required columns are: userIdCode, fullName, mobileNumber, email, password.');
           }
 
           toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
 
           for (const item of json) {
-            if (!item.email || !item.fullName) continue;
+            if (!item.email || !item.fullName || !item.password) continue;
 
             const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
             const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
-            const defaultPassword = Math.random().toString(36).slice(-8);
+            const password = String(item.password);
+             if (password.length < 6) {
+                toast({ variant: 'destructive', title: `Skipping user ${item.email}`, description: 'Password must be at least 6 characters.' });
+                continue;
+            }
 
             const newEmployee: Omit<Employee, 'id'> = {
                 userIdCode: item.userIdCode?.toString().trim() || '',
@@ -160,12 +165,12 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                 profilePicture: '',
                 signature: '',
                 documents: { nid: '', other: '' },
-                defaultPassword: defaultPassword
+                defaultPassword: password,
             };
             
             try {
                 // Create auth user first
-                initiateEmailSignUp(auth, newEmployee.email, defaultPassword);
+                initiateEmailSignUp(auth, newEmployee.email, password);
                 // Then save employee doc
                 addDocumentNonBlocking(employeesRef, newEmployee);
             } catch (authError: any) {

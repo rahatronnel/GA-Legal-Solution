@@ -111,8 +111,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         setSignaturePreview(initialData.signature || null);
         setDocPreviews(initialData.documents || { nid: '', other: '' });
       } else {
-        const password = Math.random().toString(36).slice(-8);
-        setEmployeeData({...initialEmployeeData, defaultPassword: password});
+        setEmployeeData({...initialEmployeeData, defaultPassword: ''});
         setJoiningDate(undefined);
         setProfilePicPreview(null);
         setSignaturePreview(null);
@@ -208,7 +207,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        return isEditing ? true : (employeeData.defaultPassword && employeeData.email);
+        return isEditing ? true : (employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6);
       default:
         return true;
     }
@@ -216,7 +215,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   
   const nextStep = () => {
     if (!validateStep(step)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
     }
     setStep(s => s + 1);
@@ -226,7 +225,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   
   const createLoginAndSave = async () => {
     if (!validateStep(1) || !validateStep(2)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving. Passwords must be at least 6 characters.' });
         return;
     }
 
@@ -401,19 +400,15 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             {step === 2 && !isEditing && (
                  <div className="space-y-6">
                     <h3 className="font-semibold text-lg">Step 2: Create Login Credentials</h3>
-                    <p className="text-sm text-muted-foreground">A temporary password has been generated for the new employee. Please share this with them securely. They will be prompted to change it on their first login.</p>
+                    <p className="text-sm text-muted-foreground">Set an initial password for the new employee. They can change it later if they wish.</p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
                         <Input value={employeeData.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label>Temporary Password</Label>
-                        <div className="flex items-center gap-2">
-                            <Input value={employeeData.defaultPassword} readOnly />
-                            <Button variant="outline" size="icon" onClick={() => copyToClipboard(employeeData.defaultPassword!)}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <Label htmlFor="defaultPassword">Initial Password <MandatoryIndicator/></Label>
+                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
+                         <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
             )}
