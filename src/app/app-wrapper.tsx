@@ -228,5 +228,9 @@ export function AppWrapper() {
   }
 
   // Fallback to the dashboard if no specific module matches
-  return <ModuleDashboard />;
+  return (
+    <div className="dark bg-background text-foreground">
+        <ModuleDashboard />
+    </div>
+  );
 }
