@@ -47,7 +47,7 @@ const AppHeader = () => {
     const auth = useAuth();
 
     return (
-         <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+         <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
             <div className="flex items-center gap-4">
                  <Link href="/">
                     <Button variant="outline" size="icon">
@@ -137,7 +137,7 @@ const ModuleDashboard = () => {
                     <Input
                         type="search"
                         placeholder="Search modules..."
-                        className="w-full rounded-lg bg-background/80 border-border/80 pl-8 backdrop-blur-sm"
+                        className="w-full rounded-lg bg-background pl-8"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ const ModuleDashboard = () => {
                         <Link
                             href={mod.href}
                             key={mod.href}
-                            className="p-2 rounded-full text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
+                            className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                             title={mod.name}
                         >
                             <mod.icon className="h-6 w-6" />
@@ -197,7 +197,7 @@ const ModuleDashboard = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
                 {coreModules.map((mod) => (
                     <Link href={mod.href} key={mod.href}>
-                        <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110 bg-background/60 border-border/80 backdrop-blur-sm">
+                        <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
                             <mod.icon className="h-12 w-12 text-primary mb-3" />
                             <p className="font-semibold text-sm">{mod.name}</p>
                         </Card>

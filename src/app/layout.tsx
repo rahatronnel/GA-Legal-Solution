@@ -25,7 +25,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('font-body antialiased dark')}>
+      <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
           <PrintProvider>
             <div className="app-container">
