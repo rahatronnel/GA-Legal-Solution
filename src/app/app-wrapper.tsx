@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
+import LoginPage from './login/page';
 
 const VehicleManagementPage = dynamic(() => import('./vehicle-management/page'));
 const UserManagementPage = dynamic(() => import('./user-management/page'));
@@ -146,7 +147,20 @@ const ModuleDashboard = () => {
 
 
 export function AppWrapper() {
+  const { user, isUserLoading } = useUser();
   const pathname = usePathname() || '/';
+
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
 
   const findMatchingKey = (path: string) => {
     // Exact match first
