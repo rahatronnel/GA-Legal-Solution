@@ -1,30 +1,31 @@
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { notFound } from 'next/navigation';
-import { coreModules, utilityModules } from "@/lib/modules";
 
-// A simple function to capitalize the first letter of a string
-function capitalizeFirstLetter(string: string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
+"use client";
 
-export default function ModulePage({ params }: { params: { module: string } }) {
-    const allModules = [...coreModules, ...utilityModules];
-    const currentModule = allModules.find(mod => mod.href === `/billflow`);
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { VendorCategoryTable } from "./components/vendor-category-table";
 
-    if (!currentModule) {
-        notFound();
-    }
-
-    const moduleName = currentModule.name;
+export default function BillFlowPage() {
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{moduleName}</CardTitle>
-        <CardDescription>
-          This bill represents verified expenses submitted internally, reviewed by the supervisor, approved by the reviewer, and finalized by the authorized signatory with all supporting documents attached.
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>BillFlow Management</CardTitle>
+          <CardDescription>
+            This bill represents verified expenses submitted internally, reviewed by the supervisor, approved by the reviewer, and finalized by the authorized signatory with all supporting documents attached.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <Card>
+          <CardHeader>
+              <CardTitle>Vendor Categories</CardTitle>
+              <CardDescription>Manage the categories for your vendors. This is the first step in setting up the BillFlow system.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <VendorCategoryTable />
+          </CardContent>
+      </Card>
+    </div>
   );
 }

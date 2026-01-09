@@ -118,6 +118,16 @@
     "FaultStatus": {
       "title": "Fault Status", "type": "object", "description": "Defines the fault status of an accident.",
       "properties": { "name": { "type": "string" }, "code": { "type": "string" } }, "required": ["name", "code"]
+    },
+    "VendorCategory": {
+      "title": "Vendor Category",
+      "type": "object",
+      "description": "Defines a category for a vendor or supplier.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the category." },
+        "code": { "type": "string", "description": "The unique code for the category." }
+      },
+      "required": ["name", "code"]
     }
   },
   "auth": {
@@ -143,6 +153,7 @@
     "/serviceCenters/{serviceCenterId}": { "schema": { "$ref": "#/entities/ServiceCenter" }, "description": "Stores service centers or garages." },
     "/accidentTypes/{accidentTypeId}": { "schema": { "$ref": "#/entities/AccidentType" }, "description": "Stores types of accidents." },
     "/severityLevels/{severityLevelId}": { "schema": { "$ref": "#/entities/SeverityLevel" }, "description": "Stores severity levels for accidents." },
-    "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." }
+    "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." },
+    "/vendorCategories/{vendorCategoryId}": { "schema": { "$ref": "#/entities/VendorCategory" }, "description": "Stores vendor categories for the BillFlow module." }
   }
 }
