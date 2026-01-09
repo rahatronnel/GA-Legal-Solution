@@ -9,8 +9,8 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
-  getAuth,
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
