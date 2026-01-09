@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -32,11 +33,27 @@ export default function LoginPage() {
       // We don't need to do anything here upon success.
     } catch (error: any) {
       console.error('Sign-in failed:', error);
+      let description = 'An unknown error occurred. Please try again.';
+      switch (error.code) {
+        case 'auth/user-not-found':
+        case 'auth/invalid-email':
+          description = 'No account found with this email address.';
+          break;
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+          description = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/too-many-requests':
+            description = 'Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.';
+            break;
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Sign-in Failed',
-        description: error.message || 'An unknown error occurred.',
+        description: description,
       });
+    } finally {
       setIsLoading(false);
     }
   };
