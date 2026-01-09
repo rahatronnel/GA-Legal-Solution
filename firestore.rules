@@ -110,5 +110,8 @@ service cloud.firestore {
      match /accidents/{docId} {
       allow read, write: if isAuthenticated();
     }
+    match /vendors/{docId} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }

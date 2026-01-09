@@ -138,6 +138,85 @@
         "code": { "type": "string", "description": "The unique code for the nature of business." }
       },
       "required": ["name", "code"]
+    },
+    "Vendor": {
+      "title": "Vendor",
+      "type": "object",
+      "description": "Represents a vendor or supplier for the BillFlow module.",
+      "properties": {
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "vendorShortName": { "type": "string" },
+        "vendorType": { "type": "string", "enum": ["Individual", "Company"] },
+        "vendorCategoryId": { "type": "string" },
+        "vendorSubCategory": { "type": "string" },
+        "natureOfBusinessId": { "type": "string" },
+        "yearsOfExperience": { "type": "number" },
+        "contactPersonName": { "type": "string" },
+        "contactPersonDesignation": { "type": "string" },
+        "mobileNumber": { "type": "string" },
+        "alternateMobileNumber": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "officePhone": { "type": "string" },
+        "whatsAppNumber": { "type": "string" },
+        "officeAddress": { "type": "string" },
+        "factoryAddress": { "type": "string" },
+        "country": { "type": "string" },
+        "city": { "type": "string" },
+        "tradeLicenseNumber": { "type": "string" },
+        "tradeLicenseExpiryDate": { "type": "string", "format": "date" },
+        "tinNumber": { "type": "string" },
+        "vatBinNumber": { "type": "string" },
+        "nidOrCompanyRegNumber": { "type": "string" },
+        "incorporationDate": { "type": "string", "format": "date" },
+        "bankName": { "type": "string" },
+        "branchName": { "type": "string" },
+        "accountName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "routingNumber": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["Bank", "Cheque", "Mobile Banking"] },
+        "mobileBankingProvider": { "type": "string" },
+        "contractStartDate": { "type": "string", "format": "date" },
+        "contractEndDate": { "type": "string", "format": "date" },
+        "paymentTerms": { "type": "string" },
+        "creditLimit": { "type": "number" },
+        "currency": { "type": "string" },
+        "taxDeductionApplicable": { "type": "boolean" },
+        "vatApplicable": { "type": "boolean" },
+        "suppliedItems": { "type": "array", "items": { "$ref": "#/entities/SuppliedItem" } },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "tradeLicense": { "type": "string" },
+            "bankChequeCopy": { "type": "string" },
+            "contractAgreement": { "type": "string" },
+            "vatCertificate": { "type": "string" },
+            "complianceCertificates": { "type": "string" },
+            "other": { "type": "string" }
+          }
+        },
+        "loginId": { "type": "string" },
+        "password": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdDate": { "type": "string", "format": "date-time" },
+        "lastUpdatedBy": { "type": "string" }
+      },
+      "required": ["vendorId", "vendorName", "vendorType", "vendorCategoryId", "email"]
+    },
+    "SuppliedItem": {
+      "title": "Supplied Item/Service",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "unitOfMeasure": { "type": "string" },
+        "rate": { "type": "number" },
+        "minOrderQuantity": { "type": "number" },
+        "leadTimeDays": { "type": "number" },
+        "deliveryLocation": { "type": "string" },
+        "deliveryFrequency": { "type": "string" }
+      },
+      "required": ["id", "name", "rate"]
     }
   },
   "auth": {
@@ -165,6 +244,7 @@
     "/severityLevels/{severityLevelId}": { "schema": { "$ref": "#/entities/SeverityLevel" }, "description": "Stores severity levels for accidents." },
     "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." },
     "/vendorCategories/{vendorCategoryId}": { "schema": { "$ref": "#/entities/VendorCategory" }, "description": "Stores vendor categories for the BillFlow module." },
-    "/vendorNatureOfBusiness/{vendorNatureOfBusinessId}": { "schema": { "$ref": "#/entities/VendorNatureOfBusiness" }, "description": "Stores the nature of business for vendors." }
+    "/vendorNatureOfBusiness/{vendorNatureOfBusinessId}": { "schema": { "$ref": "#/entities/VendorNatureOfBusiness" }, "description": "Stores the nature of business for vendors." },
+    "/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" }, "description": "Stores vendor profiles for the BillFlow module." }
   }
 }
