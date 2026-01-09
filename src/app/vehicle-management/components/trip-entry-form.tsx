@@ -470,16 +470,14 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                            <div key={stop.id} className="flex items-center gap-2">
                                 <GripVertical className="h-5 w-5 text-muted-foreground" />
                                 <Label className="w-24">{index === 0 ? 'Origin' : (index === stops.length -1 ? 'Destination' : `Stop ${index}`)}:</Label>
-                                <Combobox
-                                    items={locations || []}
-                                    value={stop.locationId}
-                                    onSelect={(value) => updateStopLocation(stop.id, value)}
-                                    displayValue={(loc) => loc.name}
-                                    searchValue={(loc) => `${loc.name} ${loc.locationCode}`}
-                                    placeholder="Select Location..."
-                                    emptyMessage="No location found."
-                                    disabled={!!tripData.routeId}
-                                />
+                                <Select value={stop.locationId} onValueChange={(value) => updateStopLocation(stop.id, value)} disabled={!!tripData.routeId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Location..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(locations || []).map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                                 <Button variant="ghost" size="icon" onClick={() => removeStop(stop.id)} disabled={!!tripData.routeId}><Trash2 className="h-4 w-4 text-destructive"/></Button>
                            </div>
                         ))}
