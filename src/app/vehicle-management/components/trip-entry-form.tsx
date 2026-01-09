@@ -569,3 +569,5 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   );
 }
     
+
+    
