@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
@@ -139,6 +140,8 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     }
 
     if (!user) {
+        // This can happen briefly between states. By not rendering children,
+        // we prevent premature data fetching attempts.
         return null;
     }
 

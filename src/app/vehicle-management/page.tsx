@@ -25,8 +25,7 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
-import { useUser } from "@/firebase";
+import { VehicleManagementProvider } from './components/vehicle-management-provider';
 import { Dashboard } from "./components/Dashboard";
 
 function VehicleManagementContent() {
@@ -109,7 +108,7 @@ function VehicleManagementContent() {
         </TabsContent>
         <TabsContent value="master-data" className="pt-4">
              <Tabs defaultValue="vehicle-master" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
                     <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
                     <TabsTrigger value="maintenance-master">Maintenance Master</TabsTrigger>
@@ -182,12 +181,6 @@ function VehicleManagementContent() {
 }
 
 export default function VehicleManagementPage() {
-    const { isUserLoading } = useUser();
-
-    if (isUserLoading) {
-        return <div className="flex items-center justify-center h-full"><p>Loading Module...</p></div>
-    }
-
     return (
         <VehicleManagementProvider>
             <VehicleManagementContent />
