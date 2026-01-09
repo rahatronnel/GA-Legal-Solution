@@ -1,4 +1,6 @@
 
+'use client';
+
 import { AppWrapper } from "@/app/app-wrapper";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { notFound } from 'next/navigation';
@@ -7,6 +9,8 @@ import VehicleManagementPage from "@/app/vehicle-management/page";
 import UserManagementPage from "@/app/user-management/page";
 import SettingsPage from "@/app/settings/page";
 import BillFlowPage from "@/app/billflow/page";
+import { useUser } from "@/firebase";
+
 
 // A simple function to capitalize the first letter of a string
 function capitalizeFirstLetter(string: string) {
@@ -24,6 +28,7 @@ const moduleComponents: { [key: string]: React.ComponentType } = {
 
 
 export default function ModulePage({ params }: { params: { module: string } }) {
+    const { isUserLoading } = useUser();
     const allModules = [...coreModules, ...utilityModules];
     const currentModule = allModules.find(mod => mod.href === `/${params.module}`);
 
@@ -32,6 +37,24 @@ export default function ModulePage({ params }: { params: { module: string } }) {
     }
 
     const ModuleComponent = moduleComponents[params.module];
+
+    // CRITICAL: Do not render the page content (which triggers data fetching)
+    // until we know the user's auth state is resolved. This prevents the
+    // race condition that causes permission errors.
+    if (isUserLoading) {
+        return (
+            <AppWrapper>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Loading Module...</CardTitle>
+                        <CardDescription>
+                            Please wait while we load the {currentModule.name} module.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </AppWrapper>
+        )
+    }
 
     return (
         <AppWrapper>
