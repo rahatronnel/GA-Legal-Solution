@@ -12,10 +12,10 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Search, Eye, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBillData } from './bill-flow-provider';
-import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Bill } from './bill-entry-form';
 import { BillEntryForm } from './bill-entry-form';
@@ -24,11 +24,24 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function BillTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
+  const { user } = useUser();
   const { bills, vendors, isLoading } = useBillData();
   
   const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
@@ -96,6 +109,30 @@ export function BillTable() {
     }
   };
 
+  const handleApproval = (bill: Bill, status: 'Approved' | 'Rejected') => {
+      if (!firestore || !user) return;
+      
+      const billRef = doc(firestore, 'bills', bill.id);
+      
+      const newHistoryEntry = {
+        approverId: user.uid,
+        status,
+        timestamp: new Date().toISOString(),
+        remarks: `Superadmin final ${status.toLowerCase()}`,
+        level: -1,
+      };
+
+      const updatedData = {
+        approvalStatus: status,
+        approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
+        currentApproverId: ''
+      };
+
+      setDocumentNonBlocking(billRef, updatedData, { merge: true });
+      toast({ title: 'Success', description: `Bill has been ${status.toLowerCase()}.` });
+  };
+  
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
   return (
     <TooltipProvider>
@@ -146,9 +183,31 @@ export function BillTable() {
                         <TableCell>{getVendorName(bill.vendorId)}</TableCell>
                         <TableCell>{bill.billDate}</TableCell>
                         <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                        <TableCell>Pending</TableCell>
+                        <TableCell><Badge>{bill.approvalStatus || 'Pending'}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                             {isSuperAdmin && (
+                                <>
+                                  <Tooltip><TooltipTrigger asChild>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600"><Check className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as approved.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </TooltipTrigger><TooltipContent>Approve Bill</TooltipContent></Tooltip>
+                                   <Tooltip><TooltipTrigger asChild>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><X className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                       <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as rejected.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </TooltipTrigger><TooltipContent>Reject Bill</TooltipContent></Tooltip>
+                                </>
+                              )}
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>

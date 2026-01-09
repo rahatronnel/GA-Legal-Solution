@@ -306,6 +306,22 @@
             "supportingDocs": { "type": "string" },
             "remarksDoc": { "type": "string" }
           }
+        },
+        "approvalStatus": { "type": "string", "enum": ["Pending", "Processing", "Approved", "Rejected"] },
+        "currentApproverId": { "type": "string", "description": "The ID of the employee currently assigned to approve this bill." },
+        "approvalHistory": {
+            "type": "array",
+            "description": "An audit trail of the approval process.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "level": { "type": "number" },
+                    "approverId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "remarks": { "type": "string" }
+                }
+            }
         }
       },
       "required": ["billId", "vendorId", "billTypeId", "billDate", "totalPayableAmount"]
