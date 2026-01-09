@@ -37,7 +37,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { Label } from '@/components/ui/label';
 
 interface EmployeeTableProps {
@@ -79,7 +78,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => {
+  const handleSave = (data: Omit<Employee, 'id' | 'defaultPassword' | 'newPassword'>, id?: string) => {
     if (!employeesRef) {
         toast({ variant: "destructive", title: "Error", description: "Database not connected." });
         return;
@@ -107,22 +106,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     }
     setIsDeleteConfirmOpen(false);
     setCurrentEmployee(null);
-  };
-
-  const handlePasswordReset = async (email: string) => {
-    try {
-        await sendPasswordResetEmail(auth, email);
-        toast({
-            title: 'Password Reset Email Sent',
-            description: `An email has been sent to ${email} with instructions to reset the password.`,
-        });
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Failed to Send Email',
-            description: error.message || 'An unknown error occurred.',
-        });
-    }
   };
 
   const handleDownloadTemplate = () => {
@@ -293,30 +276,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                         </TooltipTrigger>
                         <TooltipContent>Edit Employee</TooltipContent>
                       </Tooltip>
-                       <AlertDialog>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <KeyRound className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent>Reset Password</TooltipContent>
-                          </Tooltip>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Reset Password?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will send a password reset link to <span className="font-semibold">{employee.email}</span>. The employee will be able to set their own new password. Are you sure?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handlePasswordReset(employee.email)}>Send Reset Email</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                       </AlertDialog>
                        <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(employee, 'employee')}>

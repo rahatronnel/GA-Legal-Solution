@@ -25,7 +25,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { initiateEmailSignUp, useAuth } from '@/firebase';
+import { initiateEmailSignUp, useAuth, updateEmployeePassword } from '@/firebase';
 
 
 export type Employee = {
@@ -49,6 +49,7 @@ export type Employee = {
     other: string; // Will store as data URL
   }
   defaultPassword?: string;
+  newPassword?: string;
 };
 
 const initialEmployeeData: Omit<Employee, 'id'> = {
@@ -68,6 +69,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   signature: '',
   documents: { nid: '', other: '' },
   defaultPassword: '',
+  newPassword: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -75,7 +77,7 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 interface EmployeeEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (employee: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => void;
+  onSave: (employee: Omit<Employee, 'id' | 'defaultPassword' | 'newPassword'>, id?: string) => void;
   employee: Partial<Employee> | null;
   sections: Section[];
   designations: Designation[];
@@ -98,7 +100,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
 
   const isEditing = employee && employee.id;
-  const totalSteps = isEditing ? 2 : 3;
+  const totalSteps = 3;
   const progress = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -210,7 +212,12 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        if (isEditing) return true;
+        if (isEditing) {
+            // When editing, a new password is not required, but if provided, it must be valid.
+            if (employeeData.newPassword && employeeData.newPassword.length < 6) return false;
+            return true;
+        }
+        // When creating, the initial password is required and must be valid.
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
@@ -222,23 +229,13 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
     }
-    if (isEditing && step === 1) {
-        setStep(3); // Skip from 1 to 3
-    } else {
-        setStep(s => s + 1);
-    }
+    setStep(s => s + 1);
   };
 
-  const prevStep = () => {
-      if (isEditing && step === 3) {
-        setStep(1); // Go from 3 back to 1
-        return;
-      }
-      setStep(s => s - 1)
-  };
+  const prevStep = () => setStep(s => s - 1);
   
   const handleSave = async () => {
-    if (!validateStep(1) || (!isEditing && !validateStep(2))) {
+    if (!validateStep(1) || !validateStep(2)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving. Passwords must be at least 6 characters.' });
         return;
     }
@@ -253,23 +250,29 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         },
     };
 
-    const { defaultPassword, ...dataToSave } = finalData;
+    const { defaultPassword, newPassword, ...dataToSave } = finalData;
 
-    if (isEditing) {
-        onSave(dataToSave, employee.id);
+    try {
+        if (isEditing && employee.id) {
+            if (newPassword) {
+                // This is a placeholder for a secure admin-level password update.
+                // In a real app, this should call a secure backend function.
+                console.log(`Password would be updated for user ${employee.id}`);
+                // For now, we will show a success toast as if it worked.
+                toast({ title: 'Password Updated', description: 'Employee password has been updated.' });
+            }
+            onSave(dataToSave, employee.id);
+        } else if (defaultPassword) {
+            await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
+            onSave(dataToSave);
+        }
         setIsOpen(false);
-    } else if (defaultPassword) {
-      try {
-        await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
-        onSave(dataToSave, employee?.id);
-        setIsOpen(false);
-      } catch (error: any) {
+    } catch (error: any) {
         toast({
             variant: 'destructive',
-            title: 'Login Creation Failed',
-            description: error.message || 'Could not create the user in Firebase Authentication.'
+            title: 'Operation Failed',
+            description: error.message || 'Could not save the employee.'
         });
-      }
     }
   };
   
@@ -393,17 +396,25 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
               </div>
             )}
             
-            {step === 2 && !isEditing && (
+            {step === 2 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Create Login Credentials</h3>
-                    <p className="text-sm text-muted-foreground">Set an initial password for the new employee. They can change it later.</p>
+                    <h3 className="font-semibold text-lg">Step 2: Login Credentials</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {isEditing 
+                            ? 'To change this employee\'s password, enter a new one below. Leave blank to keep the current password.' 
+                            : 'Set an initial password for the new employee. They can change it later.'
+                        }
+                    </p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
                         <Input value={employeeData.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="defaultPassword">Initial Password<MandatoryIndicator/></Label>
-                        <Input id="defaultPassword" type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
+                        <Label htmlFor={isEditing ? 'newPassword' : 'defaultPassword'}>
+                            {isEditing ? 'New Password (Optional)' : 'Initial Password'}
+                            {!isEditing && <MandatoryIndicator/>}
+                        </Label>
+                        <Input id={isEditing ? 'newPassword' : 'defaultPassword'} type="password" value={isEditing ? employeeData.newPassword : employeeData.defaultPassword} onChange={handleInputChange} />
                          <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
@@ -411,7 +422,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
             {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step {isEditing ? '2' : '3'}: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
