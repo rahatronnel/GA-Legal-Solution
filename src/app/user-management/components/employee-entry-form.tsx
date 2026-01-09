@@ -98,7 +98,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
 
   const isEditing = employee && employee.id;
-  const totalSteps = isEditing ? 2 : 3; // Fewer steps for editing
+  const totalSteps = 3; // Keep it consistent for simplicity, just skip step 2 if editing.
   const progress = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -127,12 +127,13 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    const newEmployeeData = { ...employeeData, [id]: value };
-    // Sync username with email
-    if (id === 'email') {
-        newEmployeeData.username = value;
-    }
-    setEmployeeData(newEmployeeData);
+    setEmployeeData(prev => {
+        const newData = { ...prev, [id]: value };
+        if (id === 'email') {
+            newData.username = value;
+        }
+        return newData;
+    });
   };
 
   const handleSelectChange = (id: keyof Employee) => (value: string) => {
@@ -209,7 +210,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        if (isEditing) return true; // Password step is skipped for editing
+        if (isEditing) return true;
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
@@ -217,6 +218,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   }
   
   const nextStep = () => {
+    if (step === 2 && isEditing) {
+      setStep(3); // Skip password step when editing
+      return;
+    }
     if (!validateStep(step)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
@@ -224,18 +229,21 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     setStep(s => s + 1);
   };
 
-  const prevStep = () => setStep(s => s - 1);
+  const prevStep = () => {
+      if (step === 3 && isEditing) {
+        setStep(1); // Skip back over password step when editing
+        return;
+      }
+      setStep(s => s - 1)
+  };
   
   const handleSave = async () => {
-    const finalStep = isEditing ? 2 : 3;
-    if (step !== finalStep) return;
-
     if (!validateStep(1) || (!isEditing && !validateStep(2))) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving. Passwords must be at least 6 characters.' });
         return;
     }
 
-    const fullDataWithPassword = {
+    const finalData = {
         ...employeeData,
         profilePicture: profilePicPreview || employeeData.profilePicture,
         signature: signaturePreview || employeeData.signature,
@@ -245,7 +253,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         },
     };
 
-    const { defaultPassword, ...dataToSave } = fullDataWithPassword;
+    const { defaultPassword, ...dataToSave } = finalData;
 
     if (isEditing) {
         onSave(dataToSave, employee.id);
@@ -401,9 +409,9 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                  </div>
             )}
 
-            {step === (isEditing ? 2 : 3) && (
+            {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step {isEditing ? 2 : 3}: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
