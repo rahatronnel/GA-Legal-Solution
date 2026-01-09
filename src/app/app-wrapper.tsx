@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, LayoutGrid, Home } from 'lucide-react';
+import { Search, LogOut, User as UserIcon } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -28,6 +28,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Sidebar } from '@/components/sidebar';
+import { Header } from '@/components/header';
 
 // Simplified pages for routing
 import VehicleManagementPage from './vehicle-management/page';
@@ -42,89 +44,6 @@ const moduleComponents: { [key: string]: React.ComponentType } = {
     '/settings': SettingsPage,
     '/billflow': BillFlowPage,
 };
-
-const AppHeader = () => {
-    const auth = useAuth();
-
-    return (
-         <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
-            <div className="flex items-center gap-4">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline">
-                            <LayoutGrid className="mr-2 h-5 w-5" />
-                            Modules
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        {coreModules.map((mod) => (
-                            <Link href={mod.href} key={mod.href}>
-                                <DropdownMenuItem>
-                                    <mod.icon className="mr-2 h-4 w-4" />
-                                    <span>{mod.name}</span>
-                                </DropdownMenuItem>
-                            </Link>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-
-            <div className="flex-1" />
-
-            <div className="flex items-center gap-4">
-                 <Link href="/">
-                    <Button variant="ghost" size="icon" title="Home">
-                        <Home className="h-5 w-5" />
-                        <span className="sr-only">Home</span>
-                    </Button>
-                </Link>
-                 {utilityModules.map((mod) => (
-                    <Link href={mod.href} key={mod.href}>
-                        <Button variant="ghost" size="icon" title={mod.name}>
-                            <mod.icon className="h-5 w-5" />
-                            <span className="sr-only">{mod.name}</span>
-                        </Button>
-                    </Link>
-                ))}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="overflow-hidden rounded-full"
-                    >
-                      <UserIcon className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>My Account</DropdownMenuItem>
-                    <DropdownMenuSeparator/>
-                    <AlertDialog>
-                       <AlertDialogTrigger asChild>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Logout</span>
-                           </DropdownMenuItem>
-                       </AlertDialogTrigger>
-                       <AlertDialogContent>
-                           <AlertDialogHeader>
-                           <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                           <AlertDialogDescription>
-                               You will be returned to the login page.
-                           </AlertDialogDescription>
-                           </AlertDialogHeader>
-                           <AlertDialogFooter>
-                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                           <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
-                           </AlertDialogFooter>
-                       </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-        </header>
-    )
-}
 
 const ModuleDashboard = () => {    
     const auth = useAuth();
@@ -218,12 +137,15 @@ export function AppWrapper() {
   if (CurrentModuleComponentKey && moduleComponents[CurrentModuleComponentKey]) {
     const Component = moduleComponents[CurrentModuleComponentKey];
     return (
-        <div className="flex min-h-screen w-full flex-col">
-          <AppHeader />
-          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <Sidebar />
+        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+          <Header />
+          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <Component />
           </main>
         </div>
+      </div>
     );
   }
 
