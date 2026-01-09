@@ -110,14 +110,6 @@ const VehicleManagementDataContent = ({ children }: { children: React.ReactNode 
         isLoading,
     }), [data, isLoading]);
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-full">
-                <p>Loading Vehicle Data...</p>
-            </div>
-        );
-    }
-    
     return (
         <VehicleManagementContext.Provider value={value}>
             {children}
@@ -137,8 +129,6 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
     }
 
     if (!user) {
-        // This can happen briefly between states. By not rendering children,
-        // we prevent premature data fetching attempts.
         return null;
     }
 

@@ -175,9 +175,9 @@ export function AppWrapper() {
   }
   
   const currentKey = findMatchingKey(pathname);
+  const Component = currentKey ? moduleComponents[currentKey] : null;
 
-  if (currentKey && moduleComponents[currentKey]) {
-    const Component = moduleComponents[currentKey];
+  if (Component) {
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <div className="flex flex-col sm:gap-4 sm:py-4">
