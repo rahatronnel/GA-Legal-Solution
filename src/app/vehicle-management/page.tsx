@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,7 @@ import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { VehicleManagementProvider } from './components/vehicle-management-provider';
 import { useUser } from "@/firebase";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 function VehicleManagementContent() {
 
@@ -36,8 +38,7 @@ function VehicleManagementContent() {
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="accidents">Accidents</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
-          <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
+          <TabsTrigger value="master-data">Master Data</TabsTrigger>
         </TabsList>
       </div>
        <TabsContent value="trips">
@@ -66,158 +67,105 @@ function VehicleManagementContent() {
         </Card>
       </TabsContent>
       <TabsContent value="maintenance">
-          <div className="grid gap-6">
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Maintenance Records</CardTitle>
-                      <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <MaintenanceRecordTable />
-                  </CardContent>
-              </Card>
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Parts</CardTitle>
-                      <CardDescription>Manage reusable vehicle parts and their details.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <PartTable />
-                  </CardContent>
-              </Card>
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Service Centers / Garages</CardTitle>
-                      <CardDescription>Manage your approved service centers and garages.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <ServiceCenterTable />
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Maintenance Types</CardTitle>
-                      <CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <MaintenanceTypeTable />
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Maintenance Expense Types</CardTitle>
-                      <CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <MaintenanceExpenseTypeTable />
-                  </CardContent>
-              </Card>
-          </div>
+        <Card>
+          <CardHeader>
+              <CardTitle>Maintenance Records</CardTitle>
+              <CardDescription>Log and track all vehicle maintenance activities.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <MaintenanceRecordTable />
+          </CardContent>
+      </Card>
       </TabsContent>
       <TabsContent value="accidents">
-          <div className="grid gap-6">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Accident Records</CardTitle>
-                      <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <AccidentTable />
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Accident Types</CardTitle>
-                      <CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <AccidentTypeTable />
-                  </CardContent>
-              </Card>
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Severity Levels</CardTitle>
-                      <CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <SeverityLevelTable />
-                  </CardContent>
-              </Card>
-               <Card>
-                  <CardHeader>
-                      <CardTitle>Fault Status</CardTitle>
-                      <CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <FaultStatusTable />
-                  </CardContent>
-              </Card>
-          </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Accident Records</CardTitle>
+                <CardDescription>Manage and track all vehicle accident reports and history.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AccidentTable />
+            </CardContent>
+        </Card>
       </TabsContent>
       <TabsContent value="reports">
           <ReportsPage />
       </TabsContent>
-      <TabsContent value="trip-master">
-        <div className="grid gap-6">
-          <Card>
-              <CardHeader>
-                  <CardTitle>Routes</CardTitle>
-                  <CardDescription>Define routes by selecting a start and end location.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <RouteTable />
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader>
-                  <CardTitle>Trip Purposes</CardTitle>
-                  <CardDescription>Manage predefined purposes for vehicle trips.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <TripPurposeTable />
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader>
-                  <CardTitle>Locations</CardTitle>
-                  <CardDescription>Manage predefined locations and their unique codes.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <LocationTable />
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader>
-                  <CardTitle>Expense Types</CardTitle>
-                  <CardDescription>Manage predefined types for trip expenses.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <ExpenseTypeTable />
-              </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-      <TabsContent value="vehicle-master">
-         <div className="grid gap-6">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Vehicle Brands</CardTitle>
-                      <CardDescription>Manage the different brands of vehicles.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <VehicleBrandTable />
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Vehicle Categories</CardTitle>
-                      <CardDescription>Manage the different categories of vehicles available.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <VehicleTypeTable />
-                  </CardContent>
-              </Card>
-         </div>
+      <TabsContent value="master-data">
+        <Accordion type="single" collapsible className="w-full" defaultValue="vehicle-master">
+            <AccordionItem value="vehicle-master">
+                <AccordionTrigger className="text-lg font-semibold">Vehicle Master Data</AccordionTrigger>
+                <AccordionContent className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle>Vehicle Brands</CardTitle><CardDescription>Manage the different brands of vehicles.</CardDescription></CardHeader>
+                        <CardContent><VehicleBrandTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Vehicle Categories</CardTitle><CardDescription>Manage the different categories of vehicles available.</CardDescription></CardHeader>
+                        <CardContent><VehicleTypeTable /></CardContent>
+                    </Card>
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="trip-master">
+                <AccordionTrigger className="text-lg font-semibold">Trip Master Data</AccordionTrigger>
+                <AccordionContent className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle>Routes</CardTitle><CardDescription>Define routes by selecting a start and end location.</CardDescription></CardHeader>
+                        <CardContent><RouteTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Trip Purposes</CardTitle><CardDescription>Manage predefined purposes for vehicle trips.</CardDescription></CardHeader>
+                        <CardContent><TripPurposeTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Locations</CardTitle><CardDescription>Manage predefined locations and their unique codes.</CardDescription></CardHeader>
+                        <CardContent><LocationTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Trip Expense Types</CardTitle><CardDescription>Manage predefined types for trip expenses.</CardDescription></CardHeader>
+                        <CardContent><ExpenseTypeTable /></CardContent>
+                    </Card>
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="maintenance-master">
+                <AccordionTrigger className="text-lg font-semibold">Maintenance Master Data</AccordionTrigger>
+                <AccordionContent className="space-y-6">
+                    <Card>
+                        <CardHeader><CardTitle>Parts</CardTitle><CardDescription>Manage reusable vehicle parts and their details.</CardDescription></CardHeader>
+                        <CardContent><PartTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Service Centers / Garages</CardTitle><CardDescription>Manage your approved service centers and garages.</CardDescription></CardHeader>
+                        <CardContent><ServiceCenterTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Maintenance Types</CardTitle><CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription></CardHeader>
+                        <CardContent><MaintenanceTypeTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Maintenance Expense Types</CardTitle><CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription></CardHeader>
+                        <CardContent><MaintenanceExpenseTypeTable /></CardContent>
+                    </Card>
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="accident-master">
+                <AccordionTrigger className="text-lg font-semibold">Accident Master Data</AccordionTrigger>
+                <AccordionContent className="space-y-6">
+                     <Card>
+                        <CardHeader><CardTitle>Accident Types</CardTitle><CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription></CardHeader>
+                        <CardContent><AccidentTypeTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Severity Levels</CardTitle><CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription></CardHeader>
+                        <CardContent><SeverityLevelTable /></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader><CardTitle>Fault Status</CardTitle><CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription></CardHeader>
+                        <CardContent><FaultStatusTable /></CardContent>
+                    </Card>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
       </TabsContent>
     </Tabs>
   );
