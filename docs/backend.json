@@ -309,6 +309,19 @@
         }
       },
       "required": ["billId", "vendorId", "billTypeId", "billDate", "totalPayableAmount"]
+    },
+    "BillItemMaster": {
+      "title": "Bill Item Master",
+      "type": "object",
+      "description": "Master data for billable items and services.",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Raw Material", "Spare", "Service", "Logistics"] },
+        "description": { "type": "string" },
+        "unitOfMeasure": { "type": "string" },
+        "unitPrice": { "type": "number" }
+      },
+      "required": ["name", "category", "unitPrice"]
     }
   },
   "auth": {
@@ -340,6 +353,7 @@
     "/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" }, "description": "Stores vendor profiles for the BillFlow module." },
     "/billTypes/{billTypeId}": { "schema": { "$ref": "#/entities/BillType" }, "description": "Stores master list of bill types." },
     "/billCategories/{billCategoryId}": { "schema": { "$ref": "#/entities/BillCategory" }, "description": "Stores master list of bill categories." },
-    "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." }
+    "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." },
+    "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." }
   }
 }

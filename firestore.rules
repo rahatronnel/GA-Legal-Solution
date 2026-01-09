@@ -88,6 +88,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAuthenticated();
     }
+    match /billItemMasters/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data

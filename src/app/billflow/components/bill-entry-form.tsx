@@ -29,6 +29,7 @@ import type { BillCategory } from './bill-category-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { BillItemMaster } from './bill-item-master-table';
 
 
 type UploadedFile = {
@@ -50,6 +51,7 @@ const documentLabels: Record<DocType, string> = {
 
 export type BillItem = {
     id: string;
+    billItemMasterId?: string; // Link to master item
     name: string;
     category: 'Raw Material' | 'Spare' | 'Service' | 'Logistics' | '';
     description: string;
@@ -120,8 +122,6 @@ const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...a
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 
-const billTypeOptions = ['Purchase', 'Service', 'Transport', 'Utility', 'Others'];
-
 interface BillEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -132,7 +132,7 @@ interface BillEntryFormProps {
 export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryFormProps) {
     const { toast } = useToast();
     const { data } = useBillFlow();
-    const { vendors, billTypes, billCategories, employees, sections } = data;
+    const { vendors, billTypes, billCategories, employees, sections, billItemMasters } = data;
     
     const [step, setStep] = useState(1);
     const [billData, setBillData] = useState(initialBillData);
@@ -213,12 +213,24 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     }
     
     // Item handlers
-    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), name: '', category: '', description: '', unitOfMeasure: '', quantity: 1, unitPrice: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 }]);
+    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', name: '', category: '', description: '', unitOfMeasure: '', quantity: 1, unitPrice: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 }]);
     const removeItem = (id: string) => setItems(prev => prev.filter(item => item.id !== id));
-    const updateItem = (id: string, field: keyof Omit<BillItem, 'id'>, value: string | number) => {
+    const updateItem = (id: string, field: keyof BillItem, value: string | number) => {
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const newItem = { ...item, [field]: value };
+
+                if (field === 'billItemMasterId') {
+                    const masterItem = billItemMasters.find(m => m.id === value);
+                    if (masterItem) {
+                        newItem.name = masterItem.name;
+                        newItem.category = masterItem.category;
+                        newItem.description = masterItem.description;
+                        newItem.unitOfMeasure = masterItem.unitOfMeasure;
+                        newItem.unitPrice = masterItem.unitPrice;
+                    }
+                }
+
                 if (['quantity', 'unitPrice', 'discountAmount'].includes(field as string)) {
                     newItem.grossAmount = newItem.quantity * newItem.unitPrice;
                     newItem.netAmount = newItem.grossAmount - newItem.discountAmount;
@@ -344,7 +356,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                   </Popover>
                                 </div>
                                 <div className="space-y-2"><Label>Bill Reference Number</Label><Input id="billReferenceNumber" value={billData.billReferenceNumber} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Bill Type<MandatoryIndicator/></Label><Select value={billData.billTypeId} onValueChange={handleSelectChange('billTypeId')}><SelectTrigger><SelectValue placeholder="Select type"/></SelectTrigger><SelectContent>{billTypeOptions.map(t=><SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select></div>
+                                <div className="space-y-2"><Label>Bill Type<MandatoryIndicator/></Label><Select value={billData.billTypeId} onValueChange={handleSelectChange('billTypeId')}><SelectTrigger><SelectValue placeholder="Select type"/></SelectTrigger><SelectContent>{billTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label>Bill Category</Label><Select value={billData.billCategoryId} onValueChange={handleSelectChange('billCategoryId')}><SelectTrigger><SelectValue placeholder="Select category"/></SelectTrigger><SelectContent>{billCategories.map(c=><SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label>Bill Sub-Category</Label><Input id="billSubCategory" value={billData.billSubCategory} onChange={handleInputChange} /></div>
                                 <div className="space-y-2"><Label>Bill Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{billDate ? format(billDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={billDate} onSelect={handleDateChange(setBillDate, 'billDate')} /></PopoverContent></Popover></div>
@@ -361,9 +373,15 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                     <div key={item.id} className="p-3 border rounded-lg space-y-2">
                                          <div className="flex justify-between items-center"><Label className="text-base">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div className="space-y-2"><Label>Item/Service Name</Label><Input value={item.name} onChange={(e) => updateItem(item.id, 'name', e.target.value)} /></div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Item/Service Name</Label>
+                                                <Select value={item.billItemMasterId} onValueChange={(v) => updateItem(item.id, 'billItemMasterId', v)}>
+                                                    <SelectTrigger><SelectValue placeholder="Select from master list..."/></SelectTrigger>
+                                                    <SelectContent>{billItemMasters.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
                                             <div className="space-y-2"><Label>Item Category</Label><Select value={item.category} onValueChange={(v) => updateItem(item.id, 'category', v)}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="Raw Material">Raw Material</SelectItem><SelectItem value="Spare">Spare</SelectItem><SelectItem value="Service">Service</SelectItem><SelectItem value="Logistics">Logistics</SelectItem></SelectContent></Select></div>
-                                            <div className="space-y-2"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} /></div>
+                                            <div className="space-y-2 md:col-span-3"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} /></div>
                                          </div>
                                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                             <div className="space-y-1"><Label>Unit</Label><Input value={item.unitOfMeasure} onChange={(e) => updateItem(item.id, 'unitOfMeasure', e.target.value)} /></div>
