@@ -12,7 +12,7 @@ import { BillTypeTable } from "./components/bill-type-table";
 import { BillCategoryTable } from "./components/bill-category-table";
 import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BillFlowProvider } from "./components/bill-flow-provider";
+import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser } from "@/firebase";
@@ -34,28 +34,33 @@ function BillFlowContent() {
               <TabsTrigger value="master">Master Data</TabsTrigger>
           </TabsList>
           <TabsContent value="bills">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Bills</CardTitle>
-                    <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <BillTable />
-                </CardContent>
-            </Card>
+            <BillDataProvider>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Bills</CardTitle>
+                        <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <BillTable />
+                    </CardContent>
+                </Card>
+            </BillDataProvider>
           </TabsContent>
           <TabsContent value="vendors">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Vendors</CardTitle>
-                    <CardDescription>Manage your organization's vendors and their information.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <VendorTable />
-                </CardContent>
-            </Card>
+            <VendorDataProvider>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Vendors</CardTitle>
+                        <CardDescription>Manage your organization's vendors and their information.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <VendorTable />
+                    </CardContent>
+                </Card>
+            </VendorDataProvider>
           </TabsContent>
           <TabsContent value="master" className="space-y-6">
+            <MasterDataProvider>
               <Card>
                   <CardHeader>
                       <CardTitle>Bill Items</CardTitle>
@@ -113,6 +118,7 @@ function BillFlowContent() {
                       <BillCategoryTable />
                   </CardContent>
               </Card>
+            </MasterDataProvider>
           </TabsContent>
         </Tabs>
       </div>

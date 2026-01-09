@@ -4,7 +4,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
-import { BillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
+import { LegacyBillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer } from 'lucide-react';
@@ -201,8 +201,8 @@ function BillProfileContent() {
 
 export default function BillPage() {
     return (
-        <BillFlowProvider>
+        <LegacyBillFlowProvider>
             <BillProfileContent />
-        </BillFlowProvider>
+        </LegacyBillFlowProvider>
     );
 }

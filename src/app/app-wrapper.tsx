@@ -28,8 +28,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Sidebar } from '@/components/sidebar';
-import { Header } from '@/components/header';
 import dynamic from 'next/dynamic';
 
 const VehicleManagementPage = dynamic(() => import('./vehicle-management/page'));
@@ -76,10 +74,10 @@ const ModuleDashboard = () => {
                     />
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button variant="ghost" size="icon" className="text-white" asChild>
                         <Link href="/user-management"><Users /></Link>
                     </Button>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button variant="ghost" size="icon" className="text-white" asChild>
                         <Link href="/settings"><Settings /></Link>
                     </Button>
                     <DropdownMenu>
@@ -164,7 +162,6 @@ export function AppWrapper() {
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <div className="flex flex-col sm:gap-4 sm:py-4">
-          <Header />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <Component />
           </main>
