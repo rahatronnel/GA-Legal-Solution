@@ -75,13 +75,13 @@ const ModuleDashboard = () => {
                         className="w-full rounded-lg bg-background pl-8 text-white"
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="icon"
-                          className="overflow-hidden rounded-full h-9 w-9"
+                          className="overflow-hidden rounded-full h-9 w-9 bg-white text-black hover:bg-gray-200"
                         >
                           <UserIcon className="h-5 w-5" />
                         </Button>
@@ -162,7 +162,7 @@ export function AppWrapper() {
           <Header />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <div className="flex items-center gap-4">
-                <Button variant="outline" asChild>
+                <Button variant="secondary" asChild className="bg-black text-white hover:bg-gray-800">
                     <Link href="/">
                         <Home className="h-4 w-4 mr-2" /> Home
                     </Link>
