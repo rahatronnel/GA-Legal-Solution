@@ -78,16 +78,13 @@ const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
     )
 };
 
-
-const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <li className="flex items-start gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
-    </li>
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean}> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
+    </div>
 );
+
 
 export default function EmployeeProfilePage() {
   const router = useRouter();
@@ -125,7 +122,7 @@ export default function EmployeeProfilePage() {
   }
   
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
   }
 
   const department = sections?.find(s => s.id === employee.departmentId);
@@ -141,88 +138,72 @@ export default function EmployeeProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <Button variant="outline" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Employee List
-        </Button>
-        <Button onClick={() => handlePrint(employee, 'employee')}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print Profile
-        </Button>
-       </div>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center gap-6">
-            <Avatar className="h-24 w-24">
-                <AvatarImage src={employee.profilePicture} alt={employee.fullName} />
-                <AvatarFallback className="text-3xl">{getInitials(employee.fullName)}</AvatarFallback>
-            </Avatar>
-            <div>
-                <CardTitle className="text-3xl">{employee.fullName}</CardTitle>
-                <CardDescription>User ID: {employee.userIdCode}</CardDescription>
-                <CardDescription className="mt-1">{designation?.name || 'N/A'}</CardDescription>
-                <Badge variant={getStatusVariant(employee.status)} className="mt-2">{employee.status}</Badge>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="mt-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Contact & Login</h3>
-                    <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Phone} label="Mobile Number" value={employee.mobileNumber} />
-                        <InfoItem icon={Mail} label="Email Address" value={employee.email} />
-                        <InfoItem icon={UserCog} label="Username / Login ID" value={employee.username} />
-                         <InfoItem icon={Home} label="Address" value={employee.address} />
-                    </ul>
-                </div>
+    <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+        {/* Left Column */}
+        <div className="lg:col-span-1 space-y-6">
+            <Card>
+                <CardHeader className="text-center">
+                    <Avatar className="mx-auto h-32 w-32 border-2 border-primary">
+                        <AvatarImage src={employee.profilePicture} alt={employee.fullName} />
+                        <AvatarFallback className="text-4xl">{getInitials(employee.fullName)}</AvatarFallback>
+                    </Avatar>
+                    <CardTitle className="text-2xl pt-4">{employee.fullName}</CardTitle>
+                    <CardDescription>{designation?.name || 'N/A'}</CardDescription>
+                    <Badge variant={getStatusVariant(employee.status)} className="mx-auto mt-2 text-base">{employee.status}</Badge>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Button onClick={() => handlePrint(employee, 'employee')} className="w-full"><Printer className="mr-2 h-4 w-4" />Print Profile</Button>
+                    <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader><CardTitle>Key Information</CardTitle></CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <InfoItem icon={UserCog} label="User ID / Code" value={employee.userIdCode} />
+                    <InfoItem icon={Mail} label="Email" value={employee.email} />
+                    <InfoItem icon={Phone} label="Mobile" value={employee.mobileNumber} />
+                </CardContent>
+            </Card>
+        </div>
 
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Employment Details</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Building} label="Department / Section" value={department?.name} />
-                        <InfoItem icon={Briefcase} label="Designation" value={designation?.name} />
-                        <InfoItem icon={Calendar} label="Joining Date" value={formatDate(employee.joiningDate)} />
-                        <InfoItem icon={MessageSquare} label="Remarks" value={employee.remarks} />
-                    </ul>
-                </div>
-                
-                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Access & Status</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={UserCheck} label="User Role" value={employee.role} />
-                        <InfoItem icon={ShieldAlert} label="Status" value={employee.status} />
-                        <InfoItem icon={FileText} label="National ID (NID)" value="Available in Documents Tab" />
-                    </ul>
-                </div>
-                
-                 {employee.signature && (
-                    <div className="space-y-4 md:col-span-3">
-                        <h3 className="font-semibold text-lg text-primary border-b pb-2">Signature</h3>
-                        <div className="p-4 border rounded-md bg-muted/50 w-fit">
-                            <Image src={employee.signature} alt="Employee Signature" width={200} height={100} className="object-contain" />
-                        </div>
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-6">
+            <Tabs defaultValue="overview" className="w-full">
+                <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                    <Card>
+                        <CardHeader><CardTitle>Employment Details</CardTitle></CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <InfoItem icon={Building} label="Department / Section" value={department?.name} />
+                            <InfoItem icon={Briefcase} label="Designation" value={designation?.name} />
+                            <InfoItem icon={Calendar} label="Joining Date" value={formatDate(employee.joiningDate)} />
+                            <InfoItem icon={UserCheck} label="User Role" value={employee.role} />
+                            <InfoItem icon={Home} label="Address" value={employee.address} fullWidth />
+                            <InfoItem icon={MessageSquare} label="Remarks" value={employee.remarks} fullWidth />
+                        </CardContent>
+                    </Card>
+                     {employee.signature && (
+                        <Card>
+                            <CardHeader><CardTitle>Signature</CardTitle></CardHeader>
+                            <CardContent>
+                                <div className="p-4 border rounded-md bg-muted/50 w-fit">
+                                    <Image src={employee.signature} alt="Employee Signature" width={200} height={100} className="object-contain" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+                <TabsContent value="documents" className="pt-4">
+                    <div className="space-y-6">
+                        <DocumentViewer doc={employee.documents.nid} label="National ID (NID)" />
+                        <DocumentViewer doc={employee.documents.other} label="Other Document" />
                     </div>
-                 )}
-              </div>
-            </TabsContent>
-             <TabsContent value="documents">
-                <div className="space-y-6 pt-4">
-                    <DocumentViewer doc={employee.documents.nid} label="National ID (NID)" />
-                    <DocumentViewer doc={employee.documents.other} label="Other Document" />
-                </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                </TabsContent>
+            </Tabs>
+        </div>
     </div>
   );
 }

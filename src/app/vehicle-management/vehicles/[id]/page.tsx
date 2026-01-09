@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, Car, FileText, Download, Printer, Users, Wrench,
-    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, User as UserIcon, Phone
+    Calendar, Fuel, Info, Hash, Palette, Building, CheckCircle, Eye, AlertTriangle, User as UserIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -24,7 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { AccidentType } from '../../components/accident-type-table';
 import type { VehicleBrand } from '../../components/vehicle-brand-table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
@@ -84,14 +84,11 @@ const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
 };
 
 
-const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <li className="flex items-start gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
-    </li>
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean}> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
+    </div>
 );
 
 function VehicleProfileContent() {
@@ -116,10 +113,9 @@ function VehicleProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string' || !vehicles) {
-        return; // Wait for data
+        return;
     }
-    
-    if (vehicles.length > 0) {
+    if(vehicles.length > 0) {
         const foundVehicle = vehicles.find((v: Vehicle) => v.id === id);
         setVehicle(foundVehicle || null);
     }
@@ -149,13 +145,8 @@ function VehicleProfileContent() {
     return [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
   }, [vehicle]);
 
-
   if (vehicle === undefined) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <p>Loading vehicle profile...</p>
-      </div>
-    );
+    return <div className="flex justify-center items-center h-full"><p>Loading vehicle profile...</p></div>;
   }
 
   if (vehicle === null) {
@@ -184,212 +175,142 @@ function VehicleProfileContent() {
   const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
 
   const documentLabels: Record<keyof Vehicle['documents'], string> = {
-    registration: "Registration Certificate (RC / Blue Book)",
+    registration: "Registration Certificate",
     insurance: "Insurance Certificate",
     fitness: "Fitness Certificate",
-    taxToken: "Tax Token / Road Tax Receipt",
+    taxToken: "Tax Token",
     routePermit: "Route Permit",
     other: "Other Document"
   };
 
   return (
-    <div className="space-y-6">
-       <div className="flex flex-wrap justify-between items-center gap-4">
-         <Button variant="outline" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Vehicle List
-        </Button>
-        <Button variant="outline" onClick={() => handlePrint(vehicle, 'vehicle')}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print Profile
-        </Button>
-       </div>
+    <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+      {/* Left Column */}
+      <div className="lg:col-span-1 space-y-6">
+        <Card>
+          <CardHeader className="text-center">
+            <Car className="mx-auto h-16 w-16 text-muted-foreground" />
+            <CardTitle className="text-2xl pt-4">{vehicleBrand?.name} {vehicle.model}</CardTitle>
+            <CardDescription>{vehicle.registrationNumber}</CardDescription>
+            <Badge variant={getStatusVariant(vehicle.status)} className="mx-auto mt-2 text-base">{vehicle.status}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <Button onClick={() => handlePrint(vehicle, 'vehicle')} className="w-full"><Printer className="mr-2 h-4 w-4"/>Print Profile</Button>
+              <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+          </CardContent>
+        </Card>
+        {currentDriver && (
+             <Card>
+                <CardHeader><CardTitle>Current Driver</CardTitle></CardHeader>
+                <CardContent className="flex flex-col items-center text-center space-y-4">
+                    <Avatar className="h-20 w-20">
+                        <AvatarImage src={currentDriver.profilePicture} alt={currentDriver.name} />
+                        <AvatarFallback className="text-2xl">{currentDriver.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <p className="font-semibold">{currentDriver.name}</p>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/vehicle-management/drivers/${currentDriver.id}`}><Eye className="mr-2 h-4 w-4" />View Driver Profile</Link>
+                    </Button>
+                </CardContent>
+             </Card>
+        )}
+      </div>
       
-      <Card>
-        <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="text-3xl">{vehicleBrand?.name} {vehicle.model}</CardTitle>
-                    <CardDescription>Reg No: {vehicle.registrationNumber}</CardDescription>
-                    <CardDescription className="mt-1">Vehicle ID: {vehicle.vehicleIdCode}</CardDescription>
-                </div>
-                 <Badge variant={getStatusVariant(vehicle.status)} className="text-base">{vehicle.status}</Badge>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
+      {/* Right Column */}
+      <div className="lg:col-span-2 space-y-6">
+        <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="driver">Current Driver</TabsTrigger>
               <TabsTrigger value="history">Driver History</TabsTrigger>
               <TabsTrigger value="maintenance">Maintenance History</TabsTrigger>
               <TabsTrigger value="accidents">Accident History</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="mt-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Vehicle Details</h3>
-                    <ul className="space-y-4 text-sm">
+                <Card>
+                    <CardHeader><CardTitle>Vehicle Details</CardTitle></CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
                         <InfoItem icon={Car} label="Category" value={vehicleType?.name} />
                         <InfoItem icon={Palette} label="Brand & Model" value={`${vehicleBrand?.name} ${vehicle.model}`} />
                         <InfoItem icon={Calendar} label="Manufacture Year" value={vehicle.manufactureYear} />
                         <InfoItem icon={Fuel} label="Fuel Type" value={vehicle.fuelType} />
                         <InfoItem icon={Users} label="Capacity" value={vehicle.capacity} />
-                    </ul>
-                </div>
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Identification</h3>
-                     <ul className="space-y-4 text-sm">
+                        <InfoItem icon={Building} label="Ownership" value={vehicle.ownership} />
                         <InfoItem icon={Hash} label="Engine Number" value={vehicle.engineNumber} />
                         <InfoItem icon={Hash} label="Chassis Number" value={vehicle.chassisNumber} />
-                        <InfoItem icon={Building} label="Ownership" value={vehicle.ownership} />
-                        <InfoItem icon={CheckCircle} label="Status" value={vehicle.status} />
-                    </ul>
-                </div>
-              </div>
+                    </CardContent>
+                </Card>
             </TabsContent>
             
-            <TabsContent value="driver" className="mt-6">
-                 {currentDriver ? (
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Current Driver Information</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col sm:flex-row items-start gap-6">
-                                <Avatar className="h-24 w-24">
-                                    <AvatarImage src={currentDriver.profilePicture} alt={currentDriver.name} />
-                                    <AvatarFallback className="text-3xl">{currentDriver.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div className="grid grid-cols-2 gap-x-8 gap-y-4 flex-grow">
-                                    <InfoItem icon={UserIcon} label="Name" value={currentDriver.name} />
-                                    <InfoItem icon={FileText} label="License Number" value={currentDriver.drivingLicenseNumber} />
-                                    <InfoItem icon={Calendar} label="Joining Date" value={currentDriver.joiningDate ? new Date(currentDriver.joiningDate).toLocaleDateString() : 'N/A'} />
-                                    <InfoItem icon={Phone} label="Mobile Number" value={currentDriver.mobileNumber} />
-                                </div>
-                            </div>
-                            <div className="flex gap-4 mt-6">
-                                <Button asChild>
-                                    <Link href={`/vehicle-management/drivers/${currentDriver.id}`}><Eye className="mr-2 h-4 w-4" /> View Profile</Link>
-                                </Button>
-                                <Button variant="outline" onClick={() => handlePrint(currentDriver, 'driver')}>
-                                    <Printer className="mr-2 h-4 w-4" /> Print Driver Profile
-                                </Button>
-                            </div>
-                        </CardContent>
-                     </Card>
-                 ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">No driver is currently assigned to this vehicle.</p>
-                 )}
+             <TabsContent value="history" className="mt-6">
+                <Card>
+                    <CardHeader><CardTitle>Driver Assignment History</CardTitle></CardHeader>
+                    <CardContent>
+                        {sortedDriverHistory.length > 0 ? (
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Driver Name</TableHead><TableHead>Effective Date</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {sortedDriverHistory.map(assignment => (
+                                        <TableRow key={assignment.id}>
+                                            <TableCell>{getDriverName(assignment.driverId)}</TableCell>
+                                            <TableCell>{new Date(assignment.effectiveDate).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" asChild>
+                                                    <Link href={`/vehicle-management/drivers/${assignment.driverId}`}><Eye className="h-4 w-4" /></Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">No driver assignment history.</p>}
+                    </CardContent>
+                </Card>
             </TabsContent>
 
-             <TabsContent value="history" className="mt-6">
-                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Driver Assignment History</h3>
-                 {sortedDriverHistory.length > 0 ? (
-                     <Table>
-                         <TableHeader>
-                             <TableRow>
-                                 <TableHead>Driver Name</TableHead>
-                                 <TableHead>Effective Date</TableHead>
-                                 <TableHead className="text-right">Actions</TableHead>
-                             </TableRow>
-                         </TableHeader>
-                         <TableBody>
-                             {sortedDriverHistory.map(assignment => (
-                                 <TableRow key={assignment.id}>
-                                     <TableCell>{getDriverName(assignment.driverId)}</TableCell>
-                                     <TableCell>{new Date(assignment.effectiveDate).toLocaleDateString()}</TableCell>
-                                     <TableCell className="text-right">
-                                         <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/vehicle-management/drivers/${assignment.driverId}`}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                     </TableCell>
-                                 </TableRow>
-                             ))}
-                         </TableBody>
-                     </Table>
-                 ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">No driver assignment history for this vehicle.</p>
-                 )}
-             </TabsContent>
-
              <TabsContent value="maintenance" className="mt-6">
-                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Maintenance History</h3>
-                {vehicleMaintenanceHistory.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Service Date</TableHead>
-                                <TableHead>Maintenance Type</TableHead>
-                                <TableHead>Total Cost</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {vehicleMaintenanceHistory.map((record: MaintenanceRecord) => (
-                                <TableRow key={record.id}>
-                                    <TableCell>{record.serviceDate}</TableCell>
-                                    <TableCell>{getMaintenanceTypeName(record.maintenanceTypeId)}</TableCell>
-                                    <TableCell>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(calculateMaintenanceTotalCost(record))}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/vehicle-management/maintenance/${record.id}`}><Eye className="h-4 w-4" /></Link>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">No maintenance history found for this vehicle.</p>
-                )}
+                 <Card>
+                    <CardHeader><CardTitle>Maintenance History</CardTitle></CardHeader>
+                    <CardContent>
+                        {vehicleMaintenanceHistory.length > 0 ? (
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Cost</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {vehicleMaintenanceHistory.map(record => (
+                                        <TableRow key={record.id}><TableCell>{record.serviceDate}</TableCell><TableCell>{getMaintenanceTypeName(record.maintenanceTypeId)}</TableCell><TableCell>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(calculateMaintenanceTotalCost(record))}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" asChild><Link href={`/vehicle-management/maintenance/${record.id}`}><Eye className="h-4 w-4" /></Link></Button></TableCell></TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">No maintenance records.</p>}
+                    </CardContent>
+                </Card>
             </TabsContent>
 
              <TabsContent value="accidents" className="mt-6">
-                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Accident History</h3>
-                {vehicleAccidentHistory.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Accident Date</TableHead>
-                                <TableHead>Accident Type</TableHead>
-                                <TableHead>Driver</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {vehicleAccidentHistory.map((accident: Accident) => (
-                                <TableRow key={accident.id}>
-                                    <TableCell>{accident.accidentDate}</TableCell>
-                                    <TableCell>{getAccidentTypeName(accident.accidentTypeId)}</TableCell>
-                                    <TableCell>{drivers.find((d: Driver) => d.id === accident.driverId)?.name || 'N/A'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" asChild>
-                                            <Link href={`/vehicle-management/accidents/${accident.id}`}><AlertTriangle className="h-4 w-4 text-destructive" /></Link>
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                ) : (
-                     <p className="text-sm text-muted-foreground text-center py-8">No accident history found for this vehicle.</p>
-                )}
+                <Card>
+                    <CardHeader><CardTitle>Accident History</CardTitle></CardHeader>
+                    <CardContent>
+                        {vehicleAccidentHistory.length > 0 ? (
+                            <Table>
+                                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Driver</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                <TableBody>
+                                    {vehicleAccidentHistory.map(accident => (
+                                        <TableRow key={accident.id}><TableCell>{accident.accidentDate}</TableCell><TableCell>{getAccidentTypeName(accident.accidentTypeId)}</TableCell><TableCell>{drivers.find((d: Driver) => d.id === accident.driverId)?.name || 'N/A'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" asChild><Link href={`/vehicle-management/accidents/${accident.id}`}><AlertTriangle className="h-4 w-4 text-destructive" /></Link></Button></TableCell></TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">No accident records.</p>}
+                    </CardContent>
+                </Card>
             </TabsContent>
             
-            <TabsContent value="documents">
-                <div className="space-y-6 pt-4">
-                    {(Object.keys(documentLabels) as (keyof Vehicle['documents'])[]).map(key => (
-                        <DocumentViewer key={key} doc={vehicle.documents[key]} label={documentLabels[key]} />
-                    ))}
-                </div>
+            <TabsContent value="documents" className="pt-4 space-y-6">
+                {(Object.keys(documentLabels) as (keyof Vehicle['documents'])[]).map(key => (
+                    <DocumentViewer key={key} doc={vehicle.documents[key]} label={documentLabels[key]} />
+                ))}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { BillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,14 +10,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, Phone, Mail, Building, Briefcase, DollarSign, Calendar, FileText, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Separator } from '@/components/ui/separator';
 
-const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode }> = ({ icon: Icon, label, value }) => (
-    <div className="flex items-start gap-3 print-no-break">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
+const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
     </div>
 );
 
@@ -60,61 +59,72 @@ function VendorProfileContent() {
     const formatDate = (dateString?: string) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back to Vendor List</Button>
-                <Button onClick={() => handlePrint(vendor, 'vendor')}><Printer className="mr-2 h-4 w-4"/>Print Profile</Button>
+         <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+            {/* Left Column */}
+             <div className="lg:col-span-1 space-y-6">
+                <Card>
+                    <CardHeader className="text-center">
+                        <Building className="mx-auto h-16 w-16 text-muted-foreground" />
+                        <CardTitle className="text-2xl pt-4">{vendor.vendorName}</CardTitle>
+                        <CardDescription>Vendor ID: {vendor.vendorId}</CardDescription>
+                         <Badge variant={getStatusVariant(vendor.vendorStatus)} className="mx-auto mt-2 text-base">{vendor.vendorStatus}</Badge>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                         <Button onClick={() => handlePrint(vendor, 'vendor')} className="w-full"><Printer className="mr-2 h-4 w-4"/>Print Profile</Button>
+                         <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>Contact</CardTitle></CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                        <InfoItem icon={User} label="Contact Person" value={`${vendor.contactPersonName} (${vendor.contactPersonDesignation || 'N/A'})`} />
+                        <InfoItem icon={Phone} label="Mobile Number" value={vendor.mobileNumber} />
+                        <InfoItem icon={Mail} label="Email Address" value={vendor.email} />
+                    </CardContent>
+                 </Card>
             </div>
-             <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle className="text-3xl">{vendor.vendorName}</CardTitle>
-                            <CardDescription>Vendor ID: {vendor.vendorId}</CardDescription>
+
+            {/* Right Column */}
+            <div className="lg:col-span-2 space-y-6">
+                 <Card>
+                    <CardHeader><CardTitle>Vendor Overview</CardTitle></CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                            <InfoItem icon={Briefcase} label="Vendor Type" value={vendor.vendorType} />
+                            <InfoItem icon={Briefcase} label="Vendor Category" value={`${category?.name || 'N/A'} ${vendor.vendorSubCategory ? `(${vendor.vendorSubCategory})` : ''}`} />
+                            <InfoItem icon={Building} label="Nature of Business" value={natureOfBusiness?.name} />
+                            <InfoItem icon={Calendar} label="Years of Experience" value={vendor.yearsOfExperience} />
                         </div>
-                        <Badge variant={getStatusVariant(vendor.vendorStatus)} className="text-base">{vendor.vendorStatus}</Badge>
-                    </div>
-                </CardHeader>
-                 <CardContent className="space-y-8">
-                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg text-primary border-b pb-2">Basic Information</h3>
-                            <ul className="space-y-4 text-sm">
-                                <InfoItem icon={User} label="Vendor Type" value={vendor.vendorType} />
-                                <InfoItem icon={Briefcase} label="Vendor Category" value={`${category?.name || 'N/A'} ${vendor.vendorSubCategory ? `(${vendor.vendorSubCategory})` : ''}`} />
-                                <InfoItem icon={Building} label="Nature of Business" value={natureOfBusiness?.name} />
-                                <InfoItem icon={Calendar} label="Years of Experience" value={vendor.yearsOfExperience} />
-                            </ul>
+                        <Separator />
+                         <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                            <InfoItem icon={Phone} label="Office Phone" value={vendor.officePhone} />
+                            <InfoItem icon={Phone} label="WhatsApp" value={vendor.whatsAppNumber} />
+                            <InfoItem icon={Building} label="Office Address" value={vendor.officeAddress} fullWidth />
+                             <InfoItem icon={Building} label="Factory Address" value={vendor.factoryAddress} fullWidth/>
                         </div>
-                         <div className="space-y-4">
-                            <h3 className="font-semibold text-lg text-primary border-b pb-2">Contact Details</h3>
-                            <ul className="space-y-4 text-sm">
-                                <InfoItem icon={User} label="Contact Person" value={`${vendor.contactPersonName} (${vendor.contactPersonDesignation || 'N/A'})`} />
-                                <InfoItem icon={Phone} label="Mobile Number" value={vendor.mobileNumber} />
-                                <InfoItem icon={Mail} label="Email Address" value={vendor.email} />
-                                <InfoItem icon={Building} label="Office Address" value={vendor.officeAddress} />
-                            </ul>
-                        </div>
-                         <div className="space-y-4">
-                            <h3 className="font-semibold text-lg text-primary border-b pb-2">Legal & Financial</h3>
-                            <ul className="space-y-4 text-sm">
-                                <InfoItem icon={FileText} label="Trade License No." value={vendor.tradeLicenseNumber} />
-                                <InfoItem icon={FileText} label="TIN" value={vendor.tinNumber} />
-                                <InfoItem icon={DollarSign} label="Payment Method" value={vendor.paymentMethod} />
-                                <InfoItem icon={DollarSign} label="Payment Terms" value={vendor.paymentTerms} />
-                            </ul>
-                        </div>
-                     </div>
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-lg text-primary border-b pb-2">Internal Control</h3>
-                        <ul className="grid md:grid-cols-3 gap-6 text-sm">
-                           <InfoItem icon={User} label="Created By" value={createdBy?.fullName} />
-                           <InfoItem icon={User} label="Approved By" value={approvedBy?.fullName} />
-                           <InfoItem icon={Calendar} label="Approval Date" value={formatDate(vendor.approvalDate)} />
-                        </ul>
-                      </div>
-                 </CardContent>
-            </Card>
+                    </CardContent>
+                 </Card>
+                  <Card>
+                    <CardHeader><CardTitle>Legal & Financial</CardTitle></CardHeader>
+                     <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                        <InfoItem icon={FileText} label="Trade License No." value={vendor.tradeLicenseNumber} />
+                        <InfoItem icon={FileText} label="TIN" value={vendor.tinNumber} />
+                        <InfoItem icon={FileText} label="VAT/BIN" value={vendor.vatBinNumber} />
+                        <InfoItem icon={DollarSign} label="Payment Method" value={vendor.paymentMethod} />
+                        <InfoItem icon={DollarSign} label="Payment Terms" value={vendor.paymentTerms} />
+                        <InfoItem icon={DollarSign} label="Credit Limit" value={vendor.creditLimit > 0 ? vendor.creditLimit.toLocaleString() : 'N/A'} />
+                     </CardContent>
+                 </Card>
+                 <Card>
+                    <CardHeader><CardTitle>Internal Control</CardTitle></CardHeader>
+                     <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                        <InfoItem icon={User} label="Created By" value={createdBy?.fullName} />
+                        <InfoItem icon={Calendar} label="Created Date" value={formatDate(vendor.createdDate)} />
+                        <InfoItem icon={User} label="Approved By" value={approvedBy?.fullName} />
+                        <InfoItem icon={Calendar} label="Approval Date" value={formatDate(vendor.approvalDate)} />
+                     </CardContent>
+                 </Card>
+            </div>
         </div>
     );
 }

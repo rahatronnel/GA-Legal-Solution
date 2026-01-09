@@ -38,6 +38,12 @@ import SettingsPage from './settings/page';
 import BillFlowPage from './billflow/page';
 import BillPage from './billflow/bills/[id]/page';
 import VendorPage from './billflow/vendors/[id]/page';
+import DriverProfilePage from './vehicle-management/drivers/[id]/page';
+import VehicleProfilePage from './vehicle-management/vehicles/[id]/page';
+import TripProfilePage from './vehicle-management/trips/[id]/page';
+import MaintenanceProfilePage from './vehicle-management/maintenance/[id]/page';
+import AccidentProfilePage from './vehicle-management/accidents/[id]/page';
+import EmployeeProfilePage from './user-management/employees/[id]/page';
 
 
 const moduleComponents: { [key:string]: React.ComponentType } = {
@@ -47,6 +53,12 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/billflow': BillFlowPage,
     '/billflow/bills/[id]': BillPage,
     '/billflow/vendors/[id]': VendorPage,
+    '/vehicle-management/drivers/[id]': DriverProfilePage,
+    '/vehicle-management/vehicles/[id]': VehicleProfilePage,
+    '/vehicle-management/trips/[id]': TripProfilePage,
+    '/vehicle-management/maintenance/[id]': MaintenanceProfilePage,
+    '/vehicle-management/accidents/[id]': AccidentProfilePage,
+    '/user-management/employees/[id]': EmployeeProfilePage,
 };
 
 const ModuleDashboard = () => {    
@@ -64,12 +76,6 @@ const ModuleDashboard = () => {
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button asChild variant="ghost">
-                        <Link href="/">
-                            <Home className="mr-2 h-4 w-4" />
-                            Home
-                        </Link>
-                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -155,6 +161,13 @@ export function AppWrapper() {
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
           <Header />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+            <div className="flex items-center gap-4">
+                <Button variant="outline" asChild>
+                    <Link href="/">
+                        <Home className="h-4 w-4 mr-2" /> Home
+                    </Link>
+                </Button>
+            </div>
             <Component />
           </main>
         </div>

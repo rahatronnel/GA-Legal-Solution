@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
@@ -11,6 +11,7 @@ import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, P
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 import type { MaintenanceRecord } from '../components/maintenance-entry-form';
 import type { Vehicle } from '../components/vehicle-table';
@@ -65,14 +66,11 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
 };
 
 
-const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <li className="flex items-start gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
-    </li>
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean}> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
+    </div>
 );
 
 
@@ -107,7 +105,7 @@ function MaintenanceProfileContent() {
     }
   }, [id, maintenanceRecords]);
 
-  const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost } = useMemo(() => {
+  const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost, totalPartsCost, totalExpensesCost } = useMemo(() => {
     if (!record) return {};
     const vehicle = vehicles.find((v: Vehicle) => v.id === record.vehicleId);
     const maintenanceType = maintenanceTypes.find((t: MaintenanceType) => t.id === record.maintenanceTypeId);
@@ -116,11 +114,15 @@ function MaintenanceProfileContent() {
     const driver = drivers.find((d: Driver) => d.id === record.driverId);
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-    return { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost: partsCost + expensesCost };
+    return { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost: partsCost + expensesCost, totalPartsCost: partsCost, totalExpensesCost: expensesCost };
   }, [record, vehicles, maintenanceTypes, serviceCenters, employees, drivers]);
   
   const getExpenseTypeName = (id: string) => maintenanceExpenseTypes.find((et: MaintenanceExpenseType) => et.id === id)?.name || 'N/A';
   const getPartName = (partId: string) => parts.find((p: PartType) => p.id === partId)?.name || 'N/A';
+  const formatCurrency = (amount: number | undefined) => {
+    if (typeof amount !== 'number') return 'N/A';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  }
 
   if (record === undefined) {
       return <div className="flex justify-center items-center h-full"><p>Loading maintenance record...</p></div>;
@@ -131,110 +133,107 @@ function MaintenanceProfileContent() {
   }
 
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back to Maintenance List</Button>
-       </div>
-      
-      <Card>
-        <CardHeader>
-            <CardTitle className="text-3xl">Maintenance: {maintenanceType?.name || 'Record'}</CardTitle>
-            <CardDescription>For Vehicle: {vehicle?.registrationNumber || 'N/A'} on {record.serviceDate}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="parts">Parts</TabsTrigger>
-              <TabsTrigger value="expenses">Expenses</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-            </TabsList>
+    <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+        {/* Left Column */}
+        <div className="lg:col-span-1 space-y-6">
+            <Card>
+                <CardHeader className="text-center">
+                    <Wrench className="mx-auto h-16 w-16 text-muted-foreground" />
+                    <CardTitle className="text-2xl pt-4">{maintenanceType?.name || 'Maintenance Record'}</CardTitle>
+                    <CardDescription>
+                        {vehicle?.registrationNumber || 'N/A'} on {record.serviceDate}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Parts:</span><span>{formatCurrency(totalPartsCost)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Expenses:</span><span>{formatCurrency(totalExpensesCost)}</span></div>
+                    <Separator className="my-2" />
+                    <div className="flex justify-between font-bold text-base"><span className="text-foreground">Total:</span><span>{formatCurrency(totalCost)}</span></div>
+                </CardContent>
+            </Card>
+        </div>
 
-            <TabsContent value="overview" className="mt-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Service Details</h3>
-                    <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
-                        <InfoItem icon={Wrench} label="Maintenance Type" value={maintenanceType?.name} />
-                        <InfoItem icon={Building} label="Service Center" value={serviceCenter?.name} />
-                        <InfoItem icon={User} label="Monitoring Employee" value={employee?.fullName} />
-                         <InfoItem icon={User} label="Driver During Service" value={driver?.name} />
-                    </ul>
-                </div>
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Dates & Description</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Calendar} label="Service Date" value={record.serviceDate} />
-                        <InfoItem icon={Calendar} label="Upcoming Service Date" value={record.upcomingServiceDate} />
-                        <InfoItem icon={Text} label="Description / Remarks" value={record.description} />
-                    </ul>
-                </div>
-                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Cost Summary</h3>
-                     <ul className="space-y-4 text-sm">
-                         <InfoItem icon={DollarSign} label="Total Cost" value={totalCost?.toLocaleString('en-US', { style: 'currency', currency: 'USD'})} />
-                    </ul>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="parts" className="mt-6">
-                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Parts Used</h3>
-                 {record.parts && record.parts.length > 0 ? (
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Part Name</TableHead><TableHead>Brand</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead><TableHead>Warranty</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {record.parts.map(part => (
-                                <TableRow key={part.id}>
-                                    <TableCell>{getPartName(part.partId)}</TableCell>
-                                    <TableCell>{part.brand}</TableCell>
-                                    <TableCell>{part.quantity}</TableCell>
-                                    <TableCell>{part.price.toLocaleString('en-US', { style: 'currency', currency: 'USD'})}</TableCell>
-                                    <TableCell>{part.warranty}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                 ) : (
-                    <p className="text-sm text-muted-foreground">No parts were recorded for this service.</p>
-                 )}
-            </TabsContent>
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-6">
+             <Tabs defaultValue="overview" className="w-full">
+                <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="parts">Parts</TabsTrigger>
+                <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="expenses" className="mt-6">
-                <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Expenses</h3>
-                {record.expenses && record.expenses.length > 0 ? (
-                <Table>
-                    <TableHeader><TableRow><TableHead>Expense Type</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                        {record.expenses.map(exp => (
-                            <TableRow key={exp.id}>
-                                <TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell>
-                                <TableCell className="text-right">{exp.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD'})}</TableCell>
-                            </TableRow>
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                    <Card>
+                        <CardHeader><CardTitle>Service Details</CardTitle></CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model}` : ''} />
+                            <InfoItem icon={User} label="Driver During Service" value={driver?.name} />
+                            <InfoItem icon={Building} label="Service Center" value={serviceCenter?.name} />
+                            <InfoItem icon={User} label="Monitoring Employee" value={employee?.fullName} />
+                            <InfoItem icon={Calendar} label="Service Date" value={record.serviceDate} />
+                            <InfoItem icon={Calendar} label="Upcoming Service Date" value={record.upcomingServiceDate} />
+                            <InfoItem icon={Text} label="Description" value={record.description} fullWidth />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                
+                <TabsContent value="parts" className="mt-6">
+                    <Card>
+                        <CardHeader><CardTitle>Parts Used</CardTitle></CardHeader>
+                        <CardContent>
+                            {record.parts && record.parts.length > 0 ? (
+                                <Table>
+                                    <TableHeader><TableRow><TableHead>Part Name</TableHead><TableHead>Brand</TableHead><TableHead>Quantity</TableHead><TableHead>Price</TableHead><TableHead>Warranty</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {record.parts.map(part => (
+                                            <TableRow key={part.id}><TableCell>{getPartName(part.partId)}</TableCell><TableCell>{part.brand}</TableCell><TableCell>{part.quantity}</TableCell><TableCell>{formatCurrency(part.price)}</TableCell><TableCell>{part.warranty}</TableCell></TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : <p className="text-sm text-muted-foreground">No parts were recorded.</p>}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="expenses" className="mt-6">
+                    <Card>
+                        <CardHeader><CardTitle>Additional Expenses</CardTitle></CardHeader>
+                        <CardContent>
+                            {record.expenses && record.expenses.length > 0 ? (
+                                <Table>
+                                    <TableHeader><TableRow><TableHead>Expense Type</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {record.expenses.map(exp => (
+                                            <TableRow key={exp.id}><TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell><TableCell className="text-right">{formatCurrency(exp.amount)}</TableCell></TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : <p className="text-sm text-muted-foreground">No additional expenses were recorded.</p>}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="documents" className="pt-4">
+                    <div className="space-y-6">
+                        {(Object.keys(documentCategories) as (keyof MaintenanceRecord['documents'])[]).map(key => (
+                            record.documents[key] && record.documents[key].length > 0 && (
+                                <DocumentViewer key={key} files={record.documents[key]} categoryLabel={documentCategories[key]} />
+                            )
                         ))}
-                    </TableBody>
-                </Table>
-                ) : (
-                    <p className="text-sm text-muted-foreground">No additional expenses were recorded.</p>
-                )}
-            </TabsContent>
-
-            <TabsContent value="documents" className="pt-4">
-                 <div className="space-y-6">
-                    {(Object.keys(documentCategories) as (keyof MaintenanceRecord['documents'])[]).map(key => (
-                        record.documents[key] && record.documents[key].length > 0 && (
-                             <DocumentViewer key={key} files={record.documents[key]} categoryLabel={documentCategories[key]} />
-                        )
-                    ))}
-                    {Object.values(record.documents).every(arr => !arr || arr.length === 0) && (
-                         <p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this record.</p>
-                    )}
-                </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                        {Object.values(record.documents).every(arr => !arr || arr.length === 0) && (
+                            <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
+                        )}
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
     </div>
   );
 }
@@ -246,4 +245,3 @@ export default function MaintenanceProfilePage() {
         </VehicleManagementProvider>
     )
 }
-    

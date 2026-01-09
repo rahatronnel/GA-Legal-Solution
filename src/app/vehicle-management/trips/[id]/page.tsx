@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { ExpenseType } from '../../components/expense-type-table';
-
+import { Separator } from '@/components/ui/separator';
 
 const documentLabels: Record<keyof Omit<Trip['documents'], 'id'>, string> = {
     approvalDoc: 'Approval Document', fuelReceipt: 'Fuel Receipt/Memo', parkingBill: 'Parking Bill',
@@ -62,14 +62,11 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
 };
 
 
-const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <li className="flex items-start gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
-    </li>
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean}> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
+    </div>
 );
 
 const getStatusVariant = (status: Trip['tripStatus']) => {
@@ -102,8 +99,10 @@ function TripProfileContent() {
 
   useEffect(() => {
     if (typeof id !== 'string') return;
-    const foundTrip = trips.find((t: Trip) => t.id === id);
-    setTrip(foundTrip || null);
+    if (trips.length > 0) {
+      const foundTrip = trips.find((t: Trip) => t.id === id);
+      setTrip(foundTrip || null);
+    }
   }, [id, trips]);
 
   const { vehicle, driver, purpose, totalDistance, totalExpenses, itinerary } = useMemo(() => {
@@ -129,98 +128,96 @@ function TripProfileContent() {
   }
 
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back to Trip List</Button>
-         <Button onClick={() => handlePrint(trip, 'trip')}><Printer className="mr-2 h-4 w-4" />Print Trip</Button>
-       </div>
-      
-      <Card>
-        <CardHeader>
-            <div className="flex justify-between items-start">
-                <div>
-                    <CardTitle className="text-3xl">Trip ID: {trip.tripId}</CardTitle>
-                    <CardDescription>Vehicle: {vehicle?.registrationNumber || 'N/A'}</CardDescription>
-                </div>
-                 <Badge variant={getStatusVariant(trip.tripStatus)} className="text-base">{trip.tripStatus}</Badge>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
+    <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+        {/* Left Column */}
+        <div className="lg:col-span-1 space-y-6">
+            <Card>
+                <CardHeader className="text-center">
+                    <Route className="mx-auto h-16 w-16 text-muted-foreground" />
+                    <CardTitle className="text-2xl pt-4">{trip.tripId}</CardTitle>
+                    <CardDescription>{purpose?.name || 'Trip'}</CardDescription>
+                    <Badge variant={getStatusVariant(trip.tripStatus)} className="mx-auto mt-2 text-base">{trip.tripStatus}</Badge>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <Button onClick={() => handlePrint(trip, 'trip')} className="w-full"><Printer className="mr-2 h-4 w-4"/>Print Trip</Button>
+                     <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader><CardTitle>Key Details</CardTitle></CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <InfoItem icon={Car} label="Vehicle" value={vehicle?.registrationNumber} />
+                    <InfoItem icon={User} label="Driver" value={driver?.name} />
+                    <InfoItem icon={Calendar} label="Start Date" value={`${trip.startDate} ${trip.startTime}`} />
+                    <InfoItem icon={Hash} label="Total Distance" value={`${totalDistance} km`} />
+                    <InfoItem icon={DollarSign} label="Total Expenses" value={totalExpenses?.toFixed(2)} />
+                </CardContent>
+            </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-6">
+            <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview" className="mt-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Primary Details</h3>
-                    <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
-                        <InfoItem icon={User} label="Driver" value={driver?.name} />
+            <TabsContent value="overview" className="space-y-6 mt-6">
+                <Card>
+                    <CardHeader><CardTitle>Itinerary</CardTitle></CardHeader>
+                    <CardContent>
+                        {itinerary && itinerary.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                                {itinerary.map((locationName, index) => (
+                                    <React.Fragment key={index}>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="secondary" className="text-base">{locationName}</Badge>
+                                        </div>
+                                        {index < itinerary.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        ): ( <p className="text-sm text-muted-foreground">No itinerary defined.</p> )}
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader><CardTitle>Details</CardTitle></CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                        <InfoItem icon={Clock} label="End Date & Time" value={`${trip.endDate} ${trip.endTime}`} />
                         <InfoItem icon={Flag} label="Purpose" value={purpose?.name} />
-                        <InfoItem icon={Info} label="Remarks" value={trip.remarks} />
-                    </ul>
-                </div>
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Timeline</h3>
-                     <ul className="space-y-4 text-sm">
-                        <InfoItem icon={Calendar} label="Start Date" value={`${trip.startDate} ${trip.startTime}`} />
-                        <InfoItem icon={Clock} label="End Date" value={`${trip.endDate} ${trip.endTime}`} />
-                    </ul>
-                </div>
-                 <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Distance</h3>
-                     <ul className="space-y-4 text-sm">
                         <InfoItem icon={Milestone} label="Starting Meter" value={`${trip.startingMeter} km`} />
                         <InfoItem icon={Milestone} label="Ending Meter" value={`${trip.endingMeter} km`} />
-                        <InfoItem icon={Hash} label="Total Distance" value={`${totalDistance} km`} />
-                    </ul>
-                </div>
-                <div className="lg:col-span-3 space-y-4">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2">Itinerary</h3>
-                    {itinerary && itinerary.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                            {itinerary.map((locationName, index) => (
-                                <React.Fragment key={index}>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="secondary">{locationName}</Badge>
-                                    </div>
-                                    {index < itinerary.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    ): (
-                        <p className="text-sm text-muted-foreground">No itinerary defined.</p>
-                    )}
-                </div>
-              </div>
-               {trip.expenses && trip.expenses.length > 0 && (
-                <div className="mt-6">
-                    <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Expenses</h3>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {trip.expenses.map(exp => (
-                                <TableRow key={exp.id}>
-                                    <TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell>
-                                    <TableCell>{exp.date}</TableCell>
-                                    <TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
+                        <InfoItem icon={Info} label="Remarks" value={trip.remarks} fullWidth/>
+                    </CardContent>
+                 </Card>
+                 {trip.expenses && trip.expenses.length > 0 && (
+                <Card>
+                    <CardHeader><CardTitle>Expenses</CardTitle></CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
-                            ))}
-                            <TableRow className="font-bold bg-muted/50">
-                                <TableCell colSpan={2}>Total Expenses</TableCell>
-                                <TableCell className="text-right">{totalExpenses?.toFixed(2)}</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
+                            </TableHeader>
+                            <TableBody>
+                                {trip.expenses.map(exp => (
+                                    <TableRow key={exp.id}>
+                                        <TableCell>{getExpenseTypeName(exp.expenseTypeId)}</TableCell>
+                                        <TableCell>{exp.date}</TableCell>
+                                        <TableCell className="text-right">{exp.amount.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))}
+                                <TableRow className="font-bold bg-muted/50">
+                                    <TableCell colSpan={2}>Total Expenses</TableCell>
+                                    <TableCell className="text-right">{totalExpenses?.toFixed(2)}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
                )}
             </TabsContent>
             <TabsContent value="documents" className="pt-4">
@@ -236,8 +233,7 @@ function TripProfileContent() {
                 </div>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, P
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '../../components/print-provider';
+import { Separator } from '@/components/ui/separator';
 
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
@@ -40,21 +41,21 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
             <CardHeader>
                 <CardTitle>{categoryLabel}</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-4 md:grid-cols-2">
                 {files.map((doc, index) => {
                     const isImage = doc.file.startsWith('data:image/');
                     const fileName = doc.name;
                     return (
-                        <div key={index} className="border rounded-lg p-3">
-                            <div className="flex justify-between items-center mb-2">
+                        <div key={index} className="border rounded-lg p-3 space-y-2">
+                            <div className="flex justify-between items-center">
                                 <p className="font-medium text-sm truncate">{fileName}</p>
                                 <Button variant="outline" size="sm" asChild>
                                     <Link href={doc.file} download={fileName} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4"/>Download</Link>
                                 </Button>
                             </div>
                              {isImage && (
-                                <div className="mt-2 rounded-lg overflow-hidden flex justify-center items-center bg-muted/50" style={{maxHeight: '400px'}}>
-                                    <Image src={doc.file} alt={fileName} width={600} height={400} className="object-contain" />
+                                <div className="mt-2 rounded-lg overflow-hidden flex justify-center items-center bg-muted/50 aspect-video">
+                                    <Image src={doc.file} alt={fileName} width={400} height={225} className="object-contain" />
                                 </div>
                             )}
                         </div>
@@ -66,14 +67,11 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
 };
 
 
-const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <li className="flex items-start gap-3">
-        <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-        <div>
-            <p className="font-medium">{label}</p>
-            <p className="text-muted-foreground">{value || 'N/A'}</p>
-        </div>
-    </li>
+const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean}> = ({ icon: Icon, label, value, fullWidth }) => (
+    <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
+        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
+    </div>
 );
 
 
@@ -142,107 +140,92 @@ function AccidentProfileContent() {
   }
 
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back to Accident List</Button>
-         <Button onClick={() => handlePrint(accident, 'accident')}><Printer className="mr-2 h-4 w-4" />Print Report</Button>
-       </div>
-      
-      <Card>
-        <CardHeader>
-            <CardTitle className="text-3xl">Accident Record: {accident.accidentId}</CardTitle>
-            <CardDescription>Vehicle: {vehicle?.registrationNumber || 'N/A'} on {accident.accidentDate}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-            </TabsList>
+    <div className="grid gap-6 lg:grid-cols-[1fr_3fr]">
+        {/* Left Column */}
+        <div className="lg:col-span-1 space-y-6">
+             <Card>
+                <CardHeader className="text-center">
+                    <AlertTriangle className="mx-auto h-16 w-16 text-destructive" />
+                    <CardTitle className="text-2xl pt-4">{accident.accidentId}</CardTitle>
+                    <CardDescription>
+                        {vehicle?.registrationNumber || 'N/A'} on {accident.accidentDate}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Button onClick={() => handlePrint(accident, 'accident')} className="w-full"><Printer className="mr-2 h-4 w-4"/>Print Report</Button>
+                    <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader><CardTitle>Key Details</CardTitle></CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model}` : ''} />
+                    <InfoItem icon={User} label="Driver" value={driver?.name} />
+                    <InfoItem icon={Calendar} label="Date & Time" value={`${accident.accidentDate} ${accident.accidentTime}`} />
+                    <InfoItem icon={Tag} label="Type" value={accidentType?.name} />
+                    <InfoItem icon={Shield} label="Severity" value={severityLevel?.name} />
+                </CardContent>
+            </Card>
+        </div>
 
-            <TabsContent value="overview" className="mt-6 space-y-8">
-              <div className="space-y-4">
-                  <h3 className="font-semibold text-lg text-primary border-b pb-2">Incident Details</h3>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                      <ul className="space-y-4 text-sm">
-                          <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
-                          <InfoItem icon={User} label="Driver" value={driver?.name} />
-                          <InfoItem icon={User} label="Reporting Employee" value={employee?.fullName} />
-                          <InfoItem icon={Text} label="Description" value={accident.description} />
-                      </ul>
-                      <ul className="space-y-4 text-sm">
-                           <InfoItem icon={Calendar} label="Accident Date" value={accident.accidentDate} />
-                           <InfoItem icon={Clock} label="Accident Time" value={accident.accidentTime} />
-                           <InfoItem icon={MapPin} label="Location" value={accident.location} />
-                      </ul>
-                       <ul className="space-y-4 text-sm">
-                           <InfoItem icon={Route} label="Route" value={route?.name} />
-                           <InfoItem icon={Fingerprint} label="Trip ID" value={trip?.tripId} />
-                      </ul>
-                  </div>
-              </div>
-
-               <div className="space-y-4">
-                  <h3 className="font-semibold text-lg text-primary border-b pb-2">Classification & Damage</h3>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                      <ul className="space-y-4 text-sm">
-                          <InfoItem icon={Tag} label="Accident Type" value={accidentType?.name} />
-                          <InfoItem icon={AlertTriangle} label="Severity Level" value={severityLevel?.name} />
-                          <InfoItem icon={Shield} label="Fault Status" value={faultStatus?.name} />
-                      </ul>
-                       <ul className="space-y-4 text-sm">
-                          <InfoItem icon={Wrench} label="Vehicle Damage" value={accident.vehicleDamageDescription} />
-                          <InfoItem icon={Car} label="Vehicle Status After Accident" value={accident.vehicleStatusAfterAccident} />
-                          <InfoItem icon={ShieldQuestion} label="Third-Party Damage" value={accident.thirdPartyDamage} />
-                          <InfoItem icon={HeartPulse} label="Human Injury" value={accident.humanInjury} />
-                       </ul>
-                  </div>
-              </div>
-
-               <div className="space-y-4">
-                  <h3 className="font-semibold text-lg text-primary border-b pb-2">Financial & Legal</h3>
-                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                      <ul className="space-y-4 text-sm">
-                          <InfoItem icon={DollarSign} label="Estimated Repair Cost" value={formatCurrency(accident.estimatedRepairCost)} />
-                          <InfoItem icon={DollarSign} label="Actual Repair Cost" value={formatCurrency(accident.actualRepairCost)} />
-                          <InfoItem icon={DollarSign} label="Third-Party Damage Cost" value={formatCurrency(accident.thirdPartyDamageCost)} />
-                          <InfoItem icon={Building} label="Repaired By (Garage)" value={repairedBy?.name} />
-                          <InfoItem icon={Package} label="Repair Payment Status" value={accident.repairPaymentStatus} />
-                      </ul>
-                      <ul className="space-y-4 text-sm">
-                           <InfoItem icon={accident.policeReportFiled ? CheckSquare : XSquare} label="Police Report Filed?" value={accident.policeReportFiled ? 'Yes' : 'No'} />
-                            {accident.policeReportFiled && <>
-                               <InfoItem icon={FileText} label="Report Number" value={accident.policeReportNumber} />
-                               <InfoItem icon={Landmark} label="Police Station" value={accident.policeStation} />
-                            </>}
-                      </ul>
-                       <ul className="space-y-4 text-sm">
-                           <InfoItem icon={accident.insuranceClaimFiled ? CheckSquare : XSquare} label="Insurance Claim Filed?" value={accident.insuranceClaimFiled ? 'Yes' : 'No'} />
-                            {accident.insuranceClaimFiled && <>
-                               <InfoItem icon={FileText} label="Claim Number" value={accident.insuranceClaimNumber} />
-                               <InfoItem icon={Building} label="Insurance Company" value={accident.insuranceCompany} />
-                            </>}
-                      </ul>
-                   </div>
-              </div>
-
-            </TabsContent>
-
-            <TabsContent value="documents" className="pt-4">
-                 <div className="grid md:grid-cols-1 gap-6">
-                    {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(key => (
-                        accident.documents[key] && accident.documents[key].length > 0 && (
-                             <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
-                        )
-                    ))}
-                    {Object.values(accident.documents).every(arr => !arr || arr.length === 0) && (
-                         <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
-                    )}
-                </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-6">
+            <Tabs defaultValue="overview" className="w-full">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="documents">Documents</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                    <Card>
+                        <CardHeader><CardTitle>Incident Details</CardTitle></CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <InfoItem icon={MapPin} label="Location" value={accident.location} />
+                            <InfoItem icon={User} label="Reporting Employee" value={employee?.fullName} />
+                            <InfoItem icon={Route} label="Route" value={route?.name} />
+                            <InfoItem icon={Fingerprint} label="Trip ID" value={trip?.tripId} />
+                            <InfoItem icon={Text} label="Description" value={accident.description} fullWidth />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader><CardTitle>Classification & Damage</CardTitle></CardHeader>
+                        <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <InfoItem icon={ShieldQuestion} label="Fault Status" value={faultStatus?.name} />
+                             <InfoItem icon={HeartPulse} label="Human Injury" value={accident.humanInjury} />
+                            <InfoItem icon={Wrench} label="Vehicle Damage" value={accident.vehicleDamageDescription} fullWidth />
+                            <InfoItem icon={Car} label="Vehicle Status After Accident" value={accident.vehicleStatusAfterAccident} />
+                             <InfoItem icon={ShieldQuestion} label="Third-Party Damage" value={accident.thirdPartyDamage} />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader><CardTitle>Financial & Legal</CardTitle></CardHeader>
+                         <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <InfoItem icon={DollarSign} label="Estimated Repair Cost" value={formatCurrency(accident.estimatedRepairCost)} />
+                            <InfoItem icon={DollarSign} label="Actual Repair Cost" value={formatCurrency(accident.actualRepairCost)} />
+                            <InfoItem icon={DollarSign} label="Third-Party Damage Cost" value={formatCurrency(accident.thirdPartyDamageCost)} />
+                            <InfoItem icon={Building} label="Repaired By (Garage)" value={repairedBy?.name} />
+                            <InfoItem icon={Package} label="Repair Payment Status" value={accident.repairPaymentStatus} />
+                             <Separator className="col-span-2" />
+                            <InfoItem icon={accident.policeReportFiled ? CheckSquare : XSquare} label="Police Report Filed?" value={accident.policeReportFiled ? `Yes (#${accident.policeReportNumber})` : 'No'} />
+                            <InfoItem icon={Landmark} label="Police Station" value={accident.policeStation} />
+                            <InfoItem icon={accident.insuranceClaimFiled ? CheckSquare : XSquare} label="Insurance Claim Filed?" value={accident.insuranceClaimFiled ? `Yes (#${accident.insuranceClaimNumber})` : 'No'} />
+                            <InfoItem icon={Building} label="Insurance Company" value={accident.insuranceCompany} />
+                         </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="documents" className="pt-4">
+                    <div className="space-y-6">
+                        {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(key => (
+                            accident.documents[key] && accident.documents[key].length > 0 && (
+                                <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
+                            )
+                        ))}
+                        {Object.values(accident.documents).every(arr => !arr || arr.length === 0) && (
+                            <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
+                        )}
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
     </div>
   );
 }
