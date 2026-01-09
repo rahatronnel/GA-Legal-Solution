@@ -23,18 +23,18 @@ export type Module = {
 };
 
 export const coreModules: Module[] = [
-  { name: 'Vehicle Management', href: '/vehicle-management', icon: Car },
+  { name: 'Vehicle Mgt.', href: '/vehicle-management', icon: Car },
   { name: 'BillFlow', href: '/billflow', icon: Receipt },
-  { name: 'Security Management', href: '/security-management', icon: Shield },
-  { name: 'Overseas Visa Management', href: '/overseas-visa-management', icon: Globe },
-  { name: 'BGD Visa Management', href: '/bgd-visa-management', icon: FileText },
-  { name: 'IL,BRL, Hotel Management', href: '/il-brl-hotel-management', icon: Building },
-  { name: 'Air Ticket Management', href: '/air-ticket-management', icon: Plane },
-  { name: 'Expats Apartment Management', href: '/expats-apartment-management', icon: Home },
-  { name: 'Legal Management', href: '/legal-management', icon: Gavel },
-  { name: 'Event Management', href: '/event-management', icon: CalendarDays },
-  { name: 'Audit Management', href: '/audit-management', icon: ClipboardCheck },
-  { name: 'Office Administrative Management', href: '/office-administrative-management', icon: Briefcase },
+  { name: 'Security Mgt.', href: '/security-management', icon: Shield },
+  { name: 'Overseas Visa', href: '/overseas-visa-management', icon: Globe },
+  { name: 'BGD Visa', href: '/bgd-visa-management', icon: FileText },
+  { name: 'IL,BRL, Hotel', href: '/il-brl-hotel-management', icon: Building },
+  { name: 'Air Ticket', href: '/air-ticket-management', icon: Plane },
+  { name: 'Expats Apartment', href: '/expats-apartment-management', icon: Home },
+  { name: 'Legal Mgt.', href: '/legal-management', icon: Gavel },
+  { name: 'Event Mgt.', href: '/event-management', icon: CalendarDays },
+  { name: 'Audit Mgt.', href: '/audit-management', icon: ClipboardCheck },
+  { name: 'Office Admin', href: '/office-administrative-management', icon: Briefcase },
   { name: 'Others', href: '/others', icon: Archive },
 ];
 

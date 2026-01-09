@@ -36,7 +36,7 @@ const ModuleDashboard = () => {
     const auth = useAuth();
     
     return (
-        <div className="w-full min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center p-4 relative">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative">
              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full">
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -113,17 +113,19 @@ export function AppWrapper() {
   
   if (CurrentModuleComponent && moduleComponents[CurrentModuleComponent]) {
     const Component = moduleComponents[CurrentModuleComponent];
-    return <Component />;
+    return <div className="p-4 sm:px-6 sm:py-0"><Component /></div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Page Not Found</CardTitle>
-        <CardDescription>
-            The page you are looking for does not have a component defined in the AppWrapper.
-        </CardDescription>
-      </CardHeader>
-    </Card>
+     <div className="p-4 sm:px-6 sm:py-0">
+        <Card>
+          <CardHeader>
+            <CardTitle>Page Not Found</CardTitle>
+            <CardDescription>
+                The page you are looking for does not have a component defined in the AppWrapper.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+    </div>
   );
 }
