@@ -30,6 +30,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { BillItemMaster } from './bill-item-master-table';
+import { useUser } from '@/firebase';
 
 
 type UploadedFile = {
@@ -131,6 +132,7 @@ interface BillEntryFormProps {
 
 export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryFormProps) {
     const { toast } = useToast();
+    const { user } = useUser();
     const { data } = useBillFlow();
     const { vendors, billTypes, billCategories, employees, sections, billItemMasters, billItemCategories } = data;
     
@@ -174,7 +176,9 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             setDateIfValid(bill.billingPeriodTo, setBillingPeriodTo);
           } else {
             const today = new Date();
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd')});
+            const loggedInEmployee = employees.find(e => e.email === user?.email);
+
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || ''});
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
@@ -184,7 +188,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             setBillingPeriodTo(undefined);
           }
         }
-      }, [isOpen, bill, isEditing]);
+      }, [isOpen, bill, isEditing, user, employees]);
 
       
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -282,7 +286,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             if (!billData.billTypeId) missingFields.push('Bill Type');
             if (!billData.billDate) missingFields.push('Bill Date');
             if (!billData.billReceivedDate) missingFields.push('Bill Received Date');
-            if (!billData.entryBy) missingFields.push('Entry By');
+            if (!billData.entryBy) missingFields.push('Entry By information');
         }
         if (missingFields.length > 0) {
             toast({ variant: 'destructive', title: 'Missing Fields', description: `Please fill: ${missingFields.join(', ')}` });
@@ -362,7 +366,6 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                 <div className="space-y-2"><Label>Bill Sub-Category</Label><Input id="billSubCategory" value={billData.billSubCategory} onChange={handleInputChange} /></div>
                                 <div className="space-y-2"><Label>Bill Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{billDate ? format(billDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={billDate} onSelect={handleDateChange(setBillDate, 'billDate')} /></PopoverContent></Popover></div>
                                 <div className="space-y-2"><Label>Bill Received Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{billReceivedDate ? format(billReceivedDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={billReceivedDate} onSelect={handleDateChange(setBillReceivedDate, 'billReceivedDate')} /></PopoverContent></Popover></div>
-                                <div className="space-y-2"><Label>Entry By<MandatoryIndicator/></Label><Select value={billData.entryBy} onValueChange={handleSelectChange('entryBy')}><SelectTrigger><SelectValue placeholder="Select employee"/></SelectTrigger><SelectContent>{employees.map(e=><SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent></Select></div>
                             </div>
                         </div>
                     )}

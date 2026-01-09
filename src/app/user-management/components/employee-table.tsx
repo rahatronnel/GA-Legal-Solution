@@ -104,7 +104,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       fullName: '',
       email: '',
       mobileNumber: '',
-      userRole: 'Admin/Operator/Driver/Viewer',
+      role: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
       sectionCode: '',
       designationCode: '',
@@ -119,7 +119,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && employeesRef) {
+    if (file && employeesRef && auth) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
@@ -158,13 +158,14 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                 address: item.address?.toString().trim() || '',
                 remarks: item.remarks?.toString().trim() || '',
                 profilePicture: '',
+                signature: '',
                 documents: { nid: '', other: '' },
                 defaultPassword: defaultPassword
             };
             
             try {
                 // Create auth user first
-                await initiateEmailSignUp(auth, newEmployee.email, defaultPassword);
+                initiateEmailSignUp(auth, newEmployee.email, defaultPassword);
                 // Then save employee doc
                 addDocumentNonBlocking(employeesRef, newEmployee);
             } catch (authError: any) {
