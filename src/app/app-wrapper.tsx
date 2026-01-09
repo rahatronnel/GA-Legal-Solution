@@ -13,10 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, LayoutGrid, Home } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
@@ -131,15 +127,17 @@ const AppHeader = () => {
 }
 
 const ModuleDashboard = () => {    
+    const auth = useAuth();
+
     return (
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-[#0a0a0a] text-white">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative">
              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full">
                 <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
                         placeholder="Search modules..."
-                        className="w-full rounded-lg bg-gray-800/80 border-gray-700 text-white pl-8 backdrop-blur-sm"
+                        className="w-full rounded-lg bg-background/80 border-border/80 pl-8 backdrop-blur-sm"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -147,7 +145,7 @@ const ModuleDashboard = () => {
                         <Link
                             href={mod.href}
                             key={mod.href}
-                            className="p-2 rounded-full text-gray-400 hover:bg-gray-800/80 hover:text-white transition-colors"
+                            className="p-2 rounded-full text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
                             title={mod.name}
                         >
                             <mod.icon className="h-6 w-6" />
@@ -159,31 +157,31 @@ const ModuleDashboard = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="overflow-hidden rounded-full h-9 w-9 bg-gray-800/80 border-gray-700 hover:bg-gray-700"
+                          className="overflow-hidden rounded-full h-9 w-9"
                         >
-                          <UserIcon className="h-5 w-5 text-gray-300" />
+                          <UserIcon className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-gray-900 border-gray-700 text-white">
-                        <DropdownMenuItem className="hover:bg-gray-800">My Account</DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-700"/>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>My Account</DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <AlertDialog>
                            <AlertDialogTrigger asChild>
-                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-400 hover:bg-red-900/50">
+                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>Logout</span>
                                </DropdownMenuItem>
                            </AlertDialogTrigger>
-                           <AlertDialogContent className="bg-gray-950 border-gray-800 text-white">
+                           <AlertDialogContent>
                                <AlertDialogHeader>
                                <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                               <AlertDialogDescription className="text-gray-400">
+                               <AlertDialogDescription>
                                    You will be returned to the login page.
                                </AlertDialogDescription>
                                </AlertDialogHeader>
                                <AlertDialogFooter>
-                               <AlertDialogCancel className="bg-gray-800 border-gray-700 hover:bg-gray-700">Cancel</AlertDialogCancel>
-                               <AlertDialogAction onClick={() => useAuth().signOut()} className="bg-red-600 hover:bg-red-700">Logout</AlertDialogAction>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
                                </AlertDialogFooter>
                            </AlertDialogContent>
                         </AlertDialog>
@@ -192,18 +190,16 @@ const ModuleDashboard = () => {
                 </div>
             </header>
 
-            <div className="absolute inset-0 -z-10 h-full w-full bg-[#0a0a0a]" />
-
             <div className="text-center mb-12">
-                 <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">Enterprise Resource Planning</h1>
-                 <p className="text-gray-400">Select a module to begin your journey.</p>
+                 <h1 className="text-4xl font-bold tracking-tight">Enterprise Resource Planning</h1>
+                 <p className="text-muted-foreground">Select a module to begin your journey.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
                 {coreModules.map((mod) => (
                     <Link href={mod.href} key={mod.href}>
-                        <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110 hover:shadow-cyan-500/20 bg-gray-900/60 border-gray-800 backdrop-blur-sm">
-                            <mod.icon className="h-12 w-12 text-cyan-400 mb-3" />
-                            <p className="font-semibold text-sm text-gray-200">{mod.name}</p>
+                        <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110 bg-background/60 border-border/80 backdrop-blur-sm">
+                            <mod.icon className="h-12 w-12 text-primary mb-3" />
+                            <p className="font-semibold text-sm">{mod.name}</p>
                         </Card>
                     </Link>
                 ))}

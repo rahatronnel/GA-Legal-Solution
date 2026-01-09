@@ -71,11 +71,6 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-  .main-bg {
-    background-color: hsl(var(--background));
-    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
-    background-size: 2rem 2rem;
-  }
 }
 
 @layer utilities {
