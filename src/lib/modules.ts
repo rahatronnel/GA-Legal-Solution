@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   Briefcase,
   Archive,
+  Receipt,
 } from 'lucide-react';
 
 export type Module = {
@@ -23,6 +24,7 @@ export type Module = {
 
 export const coreModules: Module[] = [
   { name: 'Vehicle Management', href: '/vehicle-management', icon: Car },
+  { name: 'BillFlow', href: '/billflow', icon: Receipt },
   { name: 'Security Management', href: '/security-management', icon: Shield },
   { name: 'Overseas Visa Management', href: '/overseas-visa-management', icon: Globe },
   { name: 'BGD Visa Management', href: '/bgd-visa-management', icon: FileText },
