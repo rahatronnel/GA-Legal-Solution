@@ -144,6 +144,8 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     const [invoiceDate, setInvoiceDate] = useState<Date|undefined>();
     const [billingPeriodFrom, setBillingPeriodFrom] = useState<Date|undefined>();
     const [billingPeriodTo, setBillingPeriodTo] = useState<Date|undefined>();
+    
+    const [vendorPopoverOpen, setVendorPopoverOpen] = useState(false);
 
     const isEditing = bill && bill.id;
     const totalSteps = 6;
@@ -315,7 +317,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2 md:col-span-2">
                                   <Label>Vendor<MandatoryIndicator/></Label>
-                                  <Popover>
+                                  <Popover open={vendorPopoverOpen} onOpenChange={setVendorPopoverOpen}>
                                     <PopoverTrigger asChild>
                                       <Button variant="outline" role="combobox" className="w-full justify-between">
                                         {billData.vendorId ? vendors.find(v => v.id === billData.vendorId)?.vendorName : "Select vendor..."}
@@ -328,7 +330,10 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                         <CommandEmpty>No vendor found.</CommandEmpty>
                                         <CommandList><CommandGroup>
                                           {vendors.map(v => 
-                                            <CommandItem key={v.id} value={v.vendorName} onSelect={() => handleSelectChange('vendorId')(v.id)}>
+                                            <CommandItem key={v.id} value={v.vendorName} onSelect={() => {
+                                                handleSelectChange('vendorId')(v.id);
+                                                setVendorPopoverOpen(false);
+                                            }}>
                                               <Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />
                                               {v.vendorName}
                                             </CommandItem>
