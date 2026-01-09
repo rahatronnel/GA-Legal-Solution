@@ -13,8 +13,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, LayoutGrid, Home } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -43,9 +47,90 @@ const moduleComponents: { [key: string]: React.ComponentType } = {
     '/billflow': BillFlowPage,
 };
 
-const ModuleDashboard = () => {
+const AppHeader = () => {
     const auth = useAuth();
-    
+
+    return (
+         <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <div className="flex items-center gap-4">
+                 <Link href="/">
+                    <Button variant="outline" size="icon">
+                        <Home className="h-5 w-5" />
+                        <span className="sr-only">Home</span>
+                    </Button>
+                </Link>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            <LayoutGrid className="mr-2 h-5 w-5" />
+                            Modules
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        {coreModules.map((mod) => (
+                            <Link href={mod.href} key={mod.href}>
+                                <DropdownMenuItem>
+                                    <mod.icon className="mr-2 h-4 w-4" />
+                                    <span>{mod.name}</span>
+                                </DropdownMenuItem>
+                            </Link>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="flex-1" />
+
+            <div className="flex items-center gap-4">
+                 {utilityModules.map((mod) => (
+                    <Link href={mod.href} key={mod.href}>
+                        <Button variant="ghost" size="icon" title={mod.name}>
+                            <mod.icon className="h-5 w-5" />
+                            <span className="sr-only">{mod.name}</span>
+                        </Button>
+                    </Link>
+                ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="overflow-hidden rounded-full"
+                    >
+                      <UserIcon className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>My Account</DropdownMenuItem>
+                    <DropdownMenuSeparator/>
+                    <AlertDialog>
+                       <AlertDialogTrigger asChild>
+                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                           </DropdownMenuItem>
+                       </AlertDialogTrigger>
+                       <AlertDialogContent>
+                           <AlertDialogHeader>
+                           <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                           <AlertDialogDescription>
+                               You will be returned to the login page.
+                           </AlertDialogDescription>
+                           </AlertDialogHeader>
+                           <AlertDialogFooter>
+                           <AlertDialogCancel>Cancel</AlertDialogCancel>
+                           <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
+                           </AlertDialogFooter>
+                       </AlertDialogContent>
+                    </AlertDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </header>
+    )
+}
+
+const ModuleDashboard = () => {    
     return (
         <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-[#0a0a0a] text-white">
              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full">
@@ -98,7 +183,7 @@ const ModuleDashboard = () => {
                                </AlertDialogHeader>
                                <AlertDialogFooter>
                                <AlertDialogCancel className="bg-gray-800 border-gray-700 hover:bg-gray-700">Cancel</AlertDialogCancel>
-                               <AlertDialogAction onClick={() => auth.signOut()} className="bg-red-600 hover:bg-red-700">Logout</AlertDialogAction>
+                               <AlertDialogAction onClick={() => useAuth().signOut()} className="bg-red-600 hover:bg-red-700">Logout</AlertDialogAction>
                                </AlertDialogFooter>
                            </AlertDialogContent>
                         </AlertDialog>
@@ -136,7 +221,14 @@ export function AppWrapper() {
   
   if (CurrentModuleComponentKey && moduleComponents[CurrentModuleComponentKey]) {
     const Component = moduleComponents[CurrentModuleComponentKey];
-    return <div className="p-4 sm:px-6 sm:py-0"><Component /></div>;
+    return (
+        <div className="flex min-h-screen w-full flex-col">
+          <AppHeader />
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+            <Component />
+          </main>
+        </div>
+    );
   }
 
   // Fallback to the dashboard if no specific module matches

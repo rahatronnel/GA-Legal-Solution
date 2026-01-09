@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -21,11 +22,5 @@ export default function Home() {
   }
 
   // The AppWrapper is now only rendered if a user is successfully authenticated.
-  return (
-    <div className="flex min-h-screen w-full flex-col">
-        <main className="flex-1">
-          <AppWrapper />
-        </main>
-    </div>
-  );
+  return <AppWrapper />;
 }
