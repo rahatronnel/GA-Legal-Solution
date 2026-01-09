@@ -7,6 +7,7 @@ import { SectionTable } from "./components/section-table";
 import { DesignationTable } from "./components/designation-table";
 import { EmployeeTable } from "./components/employee-table";
 import { UserManagementProvider, useUserManagement } from "./components/user-management-provider";
+import { useUser } from "@/firebase";
 
 function UserManagementContent() {
   const { data } = useUserManagement();
@@ -64,6 +65,12 @@ function UserManagementContent() {
 }
 
 export default function UserManagementPage() {
+    const { isUserLoading } = useUser();
+
+    if (isUserLoading) {
+        return <div className="flex items-center justify-center h-full"><p>Loading Module...</p></div>
+    }
+
     return (
         <UserManagementProvider>
             <UserManagementContent />

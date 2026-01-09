@@ -23,6 +23,7 @@ import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { VehicleManagementProvider } from './components/vehicle-management-provider';
+import { useUser } from "@/firebase";
 
 function VehicleManagementContent() {
 
@@ -224,6 +225,12 @@ function VehicleManagementContent() {
 }
 
 export default function VehicleManagementPage() {
+    const { isUserLoading } = useUser();
+
+    if (isUserLoading) {
+        return <div className="flex items-center justify-center h-full"><p>Loading Module...</p></div>
+    }
+
     return (
         <VehicleManagementProvider>
             <VehicleManagementContent />

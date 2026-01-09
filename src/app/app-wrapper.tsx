@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,17 @@ import {
 import { Search, LogOut, User as UserIcon } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Simplified pages for routing
 import VehicleManagementPage from './vehicle-management/page';
@@ -52,6 +63,7 @@ const ModuleDashboard = () => {
                             href={mod.href}
                             key={mod.href}
                             className="p-2 rounded-full text-muted-foreground hover:bg-card/80 hover:text-accent-foreground transition-colors"
+                            title={mod.name}
                         >
                             <mod.icon className="h-6 w-6" />
                             <span className="sr-only">{mod.name}</span>
@@ -70,10 +82,26 @@ const ModuleDashboard = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>My Account</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => auth.signOut()}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Logout</span>
-                        </DropdownMenuItem>
+                        <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Logout</span>
+                               </DropdownMenuItem>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                               <AlertDialogHeader>
+                               <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                   You will be returned to the login page.
+                               </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction onClick={() => auth.signOut()}>Logout</AlertDialogAction>
+                               </AlertDialogFooter>
+                           </AlertDialogContent>
+                        </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -105,27 +133,14 @@ const ModuleDashboard = () => {
 export function AppWrapper() {
   const pathname = usePathname() || '/';
 
-  if (pathname === '/') {
-       return <ModuleDashboard />;
-  }
-
-  const CurrentModuleComponent = Object.keys(moduleComponents).find(key => pathname.startsWith(key));
+  // Find the component that matches the start of the path
+  const CurrentModuleComponentKey = Object.keys(moduleComponents).find(key => pathname.startsWith(key));
   
-  if (CurrentModuleComponent && moduleComponents[CurrentModuleComponent]) {
-    const Component = moduleComponents[CurrentModuleComponent];
+  if (CurrentModuleComponentKey && moduleComponents[CurrentModuleComponentKey]) {
+    const Component = moduleComponents[CurrentModuleComponentKey];
     return <div className="p-4 sm:px-6 sm:py-0"><Component /></div>;
   }
 
-  return (
-     <div className="p-4 sm:px-6 sm:py-0">
-        <Card>
-          <CardHeader>
-            <CardTitle>Page Not Found</CardTitle>
-            <CardDescription>
-                The page you are looking for does not have a component defined in the AppWrapper.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-    </div>
-  );
+  // Fallback to the dashboard if no specific module matches
+  return <ModuleDashboard />;
 }

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X } from 'lucide-react';
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { imageToDataUrl } from '@/lib/utils';
@@ -43,12 +43,15 @@ const initialSettings: OrganizationSettings = {
 export default function SettingsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
   
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-  const { data: remoteSettings, isLoading } = useDoc<OrganizationSettings>(settingsDocRef);
+  const { data: remoteSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
   const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
+  const isLoading = isUserLoading || isLoadingSettings;
 
   useEffect(() => {
     if (remoteSettings) {

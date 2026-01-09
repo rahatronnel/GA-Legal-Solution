@@ -21,8 +21,8 @@ export default function Home() {
     return <LoginPage />;
   }
 
-  // This is the main layout for an authenticated user.
-  // The AppWrapper will now render the page content for the current route.
+  // The AppWrapper now intelligently decides whether to show the dashboard
+  // or a specific module page based on the URL path.
   return (
     <div className="flex min-h-screen w-full flex-col main-bg">
         <main className="flex-1">

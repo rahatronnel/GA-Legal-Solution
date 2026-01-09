@@ -12,12 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BillFlowProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
+import { useUser } from "@/firebase";
 
-
-export default function BillFlowPage() {
-
-  return (
-    <BillFlowProvider>
+function BillFlowContent() {
+    return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -117,6 +115,19 @@ export default function BillFlowPage() {
           </TabsContent>
         </Tabs>
       </div>
+    );
+}
+
+export default function BillFlowPage() {
+    const { isUserLoading } = useUser();
+
+    if (isUserLoading) {
+        return <div className="flex items-center justify-center h-full"><p>Loading Module...</p></div>
+    }
+
+  return (
+    <BillFlowProvider>
+      <BillFlowContent />
     </BillFlowProvider>
   );
 }
