@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-export function AppWrapper({ children }: { children: React.ReactNode }) {
+export function AppWrapper() {
   const { user, isUserLoading } = useUser();
 
   if (isUserLoading) {

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 import type { Employee } from './employee-entry-form';
@@ -24,16 +24,12 @@ const UserManagementContext = createContext<UserManagementDataContextType | unde
 
 export function UserManagementProvider({ children }: { children: React.ReactNode }) {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
 
-    // Only attempt to fetch data if the user is logged in.
-    const shouldFetch = !!user;
-
-    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'employees') : null, [firestore, shouldFetch]));
-    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'sections') : null, [firestore, shouldFetch]));
-    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => shouldFetch && firestore ? collection(firestore, 'designations') : null, [firestore, shouldFetch]));
+    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
+    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
+    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
     
-    const isLoading = isUserLoading || (shouldFetch && (l1 || l2 || l3));
+    const isLoading = l1 || l2 || l3;
 
     const data = useMemo(() => ({
         employees: employees || [],
