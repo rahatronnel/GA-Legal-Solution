@@ -343,12 +343,18 @@
           "maxAmount": { "type": "number", "description": "Maximum bill amount for this rule to apply." },
           "approverLevels": {
             "type": "array",
-            "description": "An ordered list of approvers for this rule.",
+            "description": "An ordered list of approvers and escalation policies for this rule.",
             "items": {
               "type": "object",
               "properties": {
                 "level": { "type": "number", "description": "The approval level (e.g., 1, 2, 3)." },
-                "approverId": { "type": "string", "description": "The ID of the employee who needs to approve." }
+                "approverId": { "type": "string", "description": "The ID of the primary employee who needs to approve." },
+                "escalationTimeoutDays": { "type": "number", "description": "Number of days before escalating to an alternative approver." },
+                "alternativeApprovers": {
+                  "type": "array",
+                  "description": "An ordered list of alternative approver employee IDs.",
+                  "items": { "type": "string" }
+                }
               },
               "required": ["level", "approverId"]
             }
