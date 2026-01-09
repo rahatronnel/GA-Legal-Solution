@@ -44,8 +44,8 @@ export function AppWrapper() {
   if (moduleComponents[pathname]) {
       CurrentModuleComponent = moduleComponents[pathname];
   } else {
-      // This is a simplified check for dynamic /[module] pages.
-      // A more robust solution might use regex or a more structured routing definition.
+      // This is a simplified check for dynamic /[module]/[subpath] pages.
+      // We render the base component for the entire module.
       const moduleKey = `/${pathname.split('/')[1]}`;
        if (moduleComponents[moduleKey]) {
           CurrentModuleComponent = moduleComponents[moduleKey];

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 import type { Employee } from './employee-entry-form';
@@ -13,34 +13,38 @@ export type UserManagementData = {
     employees: Employee[];
     sections: Section[];
     designations: Designation[];
+    isLoading: boolean;
 };
 
 type UserManagementDataContextType = {
     data: UserManagementData;
-    isLoading: boolean;
 };
 
 const UserManagementContext = createContext<UserManagementDataContextType | undefined>(undefined);
 
 export function UserManagementProvider({ children }: { children: React.ReactNode }) {
     const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
 
-    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
-    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
-    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
+    // Only fetch data if the user is authenticated
+    const shouldFetch = !isUserLoading && !!user;
+
+    const { data: employees, isLoading: l1 } = useCollection<Employee>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'employees') : null, [shouldFetch, firestore]));
+    const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'sections') : null, [shouldFetch, firestore]));
+    const { data: designations, isLoading: l3 } = useCollection<Designation>(useMemoFirebase(() => shouldFetch ? collection(firestore, 'designations') : null, [shouldFetch, firestore]));
     
-    const isLoading = l1 || l2 || l3;
+    const isLoading = isUserLoading || l1 || l2 || l3;
 
     const data = useMemo(() => ({
         employees: employees || [],
         sections: sections || [],
         designations: designations || [],
-    }), [employees, sections, designations]);
+        isLoading,
+    }), [employees, sections, designations, isLoading]);
 
     const value = useMemo(() => ({
         data,
-        isLoading,
-    }), [data, isLoading]);
+    }), [data]);
 
     if (isLoading) {
         return (
@@ -62,5 +66,5 @@ export function useUserManagement() {
     if (!context) {
         throw new Error('useUserManagement must be used within a UserManagementProvider');
     }
-    return { data: context.data, isLoading: context.isLoading };
+    return { data: context.data };
 }

@@ -9,7 +9,8 @@ import { EmployeeTable } from "./components/employee-table";
 import { UserManagementProvider, useUserManagement } from "./components/user-management-provider";
 
 function UserManagementContent() {
-  const { employees, sections, designations, isLoading } = useUserManagement();
+  const { data } = useUserManagement();
+  const { employees, sections, designations, isLoading } = data;
 
   return (
     <Tabs defaultValue="employees" className="w-full">
