@@ -62,5 +62,5 @@ export function useUserManagement() {
     if (!context) {
         throw new Error('useUserManagement must be used within a UserManagementProvider');
     }
-    return { ...context.data, isLoading: context.isLoading };
+    return { data: context.data, isLoading: context.isLoading };
 }

@@ -2,34 +2,33 @@
 'use client';
 
 import React from 'react';
-import { useUser } from '@/firebase';
-import LoginPage from './login/page';
-import { Sidebar } from '@/components/sidebar';
-import { Header } from '@/components/header';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { usePathname } from 'next/navigation';
+import { coreModules, utilityModules } from '@/lib/modules';
+import VehicleManagementPage from './vehicle-management/page';
+import UserManagementPage from './user-management/page';
+import SettingsPage from './settings/page';
+import BillFlowPage from './billflow/page';
+
+// This map is simplified. In a real app, you might use dynamic imports
+// or a more sophisticated routing system if the number of modules grows.
+const moduleComponents: { [key: string]: React.ComponentType } = {
+    '/vehicle-management': VehicleManagementPage,
+    '/user-management': UserManagementPage,
+    '/settings': SettingsPage,
+    '/billflow': BillFlowPage,
+    // Add other top-level module pages here
+};
 
 export function AppWrapper() {
-  const { user, isUserLoading } = useUser();
+  const pathname = usePathname() || '/';
 
-  if (isUserLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  // Find the component that matches the current path.
+  // We need to handle the base path and dynamic module paths.
+  let CurrentModuleComponent = null;
 
-  if (!user) {
-    return <LoginPage />;
-  }
-
-  // This is the main layout for an authenticated user.
-  return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <Sidebar />
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-        <Header />
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+  if (pathname === '/') {
+       return (
            <Card>
             <CardHeader>
               <CardTitle>Welcome to GA & Legal Solution</CardTitle>
@@ -38,8 +37,42 @@ export function AppWrapper() {
               </CardDescription>
             </CardHeader>
           </Card>
-        </main>
-      </div>
-    </div>
+       );
+  }
+
+  // Check for top-level modules first.
+  if (moduleComponents[pathname]) {
+      CurrentModuleComponent = moduleComponents[pathname];
+  } else {
+      // This is a simplified check for dynamic /[module] pages.
+      // A more robust solution might use regex or a more structured routing definition.
+      const moduleKey = `/${pathname.split('/')[1]}`;
+       if (moduleComponents[moduleKey]) {
+          CurrentModuleComponent = moduleComponents[moduleKey];
+       }
+  }
+
+
+  if (CurrentModuleComponent) {
+    return <CurrentModuleComponent />;
+  }
+
+  // Fallback for pages that don't have a specific component mapped,
+  // but might still be valid routes.
+  const allModules = [...coreModules, ...utilityModules];
+  const currentModuleInfo = allModules.find(mod => pathname.startsWith(mod.href));
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{currentModuleInfo?.name || 'Page Not Found'}</CardTitle>
+        <CardDescription>
+          {currentModuleInfo 
+            ? `This is the page for the ${currentModuleInfo.name} module. You can start building its specific functionality here.`
+            : 'The page you are looking for does not have a component defined in the AppWrapper.'
+          }
+        </CardDescription>
+      </CardHeader>
+    </Card>
   );
 }

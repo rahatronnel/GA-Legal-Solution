@@ -104,13 +104,13 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
         drivers, vehicles, trips, maintenanceTypes, maintenanceExpenseTypes, parts, serviceCenters,
         maintenanceRecords, accidentTypes, severityLevels, faultStatuses, accidents
     ]);
-
+    
     const value = useMemo(() => ({
         data,
         isLoading,
     }), [data, isLoading]);
 
-    if (isLoading) {
+     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
                 <p>Loading Vehicle Management Data...</p>
