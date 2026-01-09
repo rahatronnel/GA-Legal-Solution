@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
@@ -30,8 +32,10 @@ import { useVehicleManagement } from './vehicle-management-provider';
 
 export function AccidentTable() {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const accidentsRef = useMemoFirebase(() => firestore ? collection(firestore, 'accidents') : null, [firestore]);
   
-  const { data, setData } = useVehicleManagement();
+  const { data } = useVehicleManagement();
   const {
       accidents,
       vehicles = [],
@@ -41,10 +45,6 @@ export function AccidentTable() {
       routes = [],
       faultStatuses = [],
   } = data;
-
-  const setAccidents = (updater: React.SetStateAction<Accident[]>) => {
-    setData(prev => ({ ...prev, accidents: typeof updater === 'function' ? updater(prev.accidents || []) : updater }));
-  };
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -104,50 +104,20 @@ export function AccidentTable() {
   };
 
   const handleSave = (data: Partial<Accident>) => {
+    if (!accidentsRef) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+        return;
+    }
+    
     if (data.id) {
-        setAccidents(prev => prev.map(acc => (acc.id === data.id ? { ...acc, ...data } as Accident : acc)));
+        setDocumentNonBlocking(doc(accidentsRef, data.id), data, { merge: true });
         toast({ title: 'Success', description: 'Accident record updated successfully.' });
     } else {
-        const newRecord: Accident = { 
-            id: Date.now().toString(),
+        const newRecord = { 
             accidentId: `ACC-${Date.now()}`,
-            vehicleId: data.vehicleId || '',
-            driverId: data.driverId || '',
-            employeeId: data.employeeId || '',
-            accidentDate: data.accidentDate || '',
-            accidentTime: data.accidentTime || '',
-            location: data.location || '',
-            accidentTypeId: data.accidentTypeId || '',
-            severityLevelId: data.severityLevelId || '',
-            faultStatusId: data.faultStatusId || '',
-            routeId: data.routeId || '',
-            tripId: data.tripId || '',
-            description: data.description || '',
-            vehicleDamageDescription: data.vehicleDamageDescription || '',
-            thirdPartyDamage: data.thirdPartyDamage || '',
-            humanInjury: data.humanInjury || '',
-            vehicleStatusAfterAccident: data.vehicleStatusAfterAccident || '',
-            estimatedRepairCost: data.estimatedRepairCost || 0,
-            actualRepairCost: data.actualRepairCost || 0,
-            thirdPartyDamageCost: data.thirdPartyDamageCost || 0,
-            repairedById: data.repairedById || '',
-            repairPaymentStatus: data.repairPaymentStatus || '',
-            policeReportFiled: data.policeReportFiled || false,
-            policeReportNumber: data.policeReportNumber || '',
-            policeStation: data.policeStation || '',
-            insuranceClaimFiled: data.insuranceClaimFiled || false,
-            insuranceClaimNumber: data.insuranceClaimNumber || '',
-            insuranceCompany: data.insuranceCompany || '',
-            documents: data.documents || {
-                accidentPhotos: [],
-                policeReport: [],
-                insuranceClaimForm: [],
-                workshopQuotation: [],
-                repairInvoice: [],
-                medicalReport: [],
-            },
+            ...data,
         };
-        setAccidents(prev => [...prev, newRecord]);
+        addDocumentNonBlocking(accidentsRef, newRecord);
         toast({ title: 'Success', description: 'Accident record added successfully.' });
     }
   };
@@ -158,8 +128,8 @@ export function AccidentTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setAccidents(prev => prev.filter(t => t.id !== currentItem.id));
+    if (currentItem?.id && accidentsRef) {
+        deleteDocumentNonBlocking(doc(accidentsRef, currentItem.id));
         toast({ title: 'Success', description: 'Accident record deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
