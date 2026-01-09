@@ -2,7 +2,8 @@
 'use client';
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Link from 'next/link';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { usePathname } from 'next/navigation';
 import { coreModules, utilityModules } from '@/lib/modules';
 import VehicleManagementPage from './vehicle-management/page';
@@ -20,6 +21,37 @@ const moduleComponents: { [key: string]: React.ComponentType } = {
     // Add other top-level module pages here
 };
 
+const ModuleDashboard = () => (
+    <div className="w-full">
+        <header className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-semibold">GA & Legal Solution Modules</h1>
+            <div className="flex items-center gap-2">
+                {utilityModules.map((mod) => (
+                    <Link
+                        href={mod.href}
+                        key={mod.href}
+                        className="p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                        <mod.icon className="h-6 w-6" />
+                        <span className="sr-only">{mod.name}</span>
+                    </Link>
+                ))}
+            </div>
+        </header>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {coreModules.map((mod) => (
+                <Link href={mod.href} key={mod.href}>
+                    <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-105">
+                        <mod.icon className="h-12 w-12 text-primary mb-3" />
+                        <p className="font-semibold text-sm">{mod.name}</p>
+                    </Card>
+                </Link>
+            ))}
+        </div>
+    </div>
+);
+
+
 export function AppWrapper() {
   const pathname = usePathname() || '/';
 
@@ -28,16 +60,7 @@ export function AppWrapper() {
   let CurrentModuleComponent = null;
 
   if (pathname === '/') {
-       return (
-           <Card>
-            <CardHeader>
-              <CardTitle>Welcome to GA & Legal Solution</CardTitle>
-              <CardDescription>
-                This is your internal documentation software. Select a module from the sidebar to get started.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-       );
+       return <ModuleDashboard />;
   }
 
   // Check for top-level modules first.
