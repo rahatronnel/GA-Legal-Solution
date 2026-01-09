@@ -53,7 +53,7 @@ export type BillItem = {
     id: string;
     billItemMasterId?: string; // Link to master item
     name: string;
-    category: 'Raw Material' | 'Spare' | 'Service' | 'Logistics' | '';
+    billItemCategoryId: string;
     description: string;
     unitOfMeasure: string;
     quantity: number;
@@ -132,7 +132,7 @@ interface BillEntryFormProps {
 export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryFormProps) {
     const { toast } = useToast();
     const { data } = useBillFlow();
-    const { vendors, billTypes, billCategories, employees, sections, billItemMasters } = data;
+    const { vendors, billTypes, billCategories, employees, sections, billItemMasters, billItemCategories } = data;
     
     const [step, setStep] = useState(1);
     const [billData, setBillData] = useState(initialBillData);
@@ -214,7 +214,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     }
     
     // Item handlers
-    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', name: '', category: '', description: '', unitOfMeasure: '', quantity: 1, unitPrice: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 }]);
+    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', name: '', billItemCategoryId: '', description: '', unitOfMeasure: '', quantity: 1, unitPrice: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 }]);
     const removeItem = (id: string) => setItems(prev => prev.filter(item => item.id !== id));
     const updateItem = (id: string, field: keyof BillItem, value: string | number) => {
         setItems(prev => prev.map(item => {
@@ -225,7 +225,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                     const masterItem = billItemMasters.find(m => m.id === value);
                     if (masterItem) {
                         newItem.name = masterItem.name;
-                        newItem.category = masterItem.category;
+                        newItem.billItemCategoryId = masterItem.billItemCategoryId;
                         newItem.description = masterItem.description;
                         newItem.unitOfMeasure = masterItem.unitOfMeasure;
                         newItem.unitPrice = masterItem.unitPrice;
@@ -381,7 +381,13 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                                     <SelectContent>{billItemMasters.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
                                                 </Select>
                                             </div>
-                                            <div className="space-y-2"><Label>Item Category</Label><Select value={item.category} onValueChange={(v) => updateItem(item.id, 'category', v)}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="Raw Material">Raw Material</SelectItem><SelectItem value="Spare">Spare</SelectItem><SelectItem value="Service">Service</SelectItem><SelectItem value="Logistics">Logistics</SelectItem></SelectContent></Select></div>
+                                            <div className="space-y-2">
+                                                <Label>Item Category</Label>
+                                                <Select value={item.billItemCategoryId} onValueChange={(v) => updateItem(item.id, 'billItemCategoryId', v)}>
+                                                    <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
+                                                    <SelectContent>{billItemCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
                                             <div className="space-y-2 md:col-span-3"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} /></div>
                                          </div>
                                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

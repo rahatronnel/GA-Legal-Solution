@@ -14,6 +14,7 @@ import type { BillCategory } from './bill-category-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemMaster } from './bill-item-master-table';
+import type { BillItemCategory } from './bill-item-category-table';
 
 export type BillFlowData = {
     vendors: Vendor[];
@@ -25,6 +26,7 @@ export type BillFlowData = {
     employees: Employee[];
     sections: Section[];
     billItemMasters: BillItemMaster[];
+    billItemCategories: BillItemCategory[];
 };
 
 type BillFlowDataContextType = {
@@ -46,8 +48,9 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
     const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
     const { data: sections, isLoading: l8 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
     const { data: billItemMasters, isLoading: l9 } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
+    const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
     
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9;
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10;
 
     const data = useMemo(() => ({
         vendors: vendors || [],
@@ -59,7 +62,8 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
         employees: employees || [],
         sections: sections || [],
         billItemMasters: billItemMasters || [],
-    }), [vendors, vendorCategories, vendorNatureOfBusiness, bills, billTypes, billCategories, employees, sections, billItemMasters]);
+        billItemCategories: billItemCategories || [],
+    }), [vendors, vendorCategories, vendorNatureOfBusiness, bills, billTypes, billCategories, employees, sections, billItemMasters, billItemCategories]);
 
     const value = useMemo(() => ({
         data,

@@ -11,6 +11,7 @@ import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BillFlowProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
+import { BillItemCategoryTable } from "./components/bill-item-category-table";
 
 
 export default function BillFlowPage() {
@@ -63,6 +64,15 @@ export default function BillFlowPage() {
                   </CardHeader>
                   <CardContent>
                       <BillItemMasterTable />
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Bill Item Categories</CardTitle>
+                      <CardDescription>Manage categories for your billable items.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <BillItemCategoryTable />
                   </CardContent>
               </Card>
               <Card>

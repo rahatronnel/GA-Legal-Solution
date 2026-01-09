@@ -244,7 +244,7 @@
       "description": "Represents a single line item in a bill.",
       "properties": {
         "name": { "type": "string" },
-        "category": { "type": "string", "enum": ["Raw Material", "Spare", "Service", "Logistics"] },
+        "billItemCategoryId": { "type": "string" },
         "description": { "type": "string" },
         "unitOfMeasure": { "type": "string" },
         "quantity": { "type": "number" },
@@ -310,18 +310,28 @@
       },
       "required": ["billId", "vendorId", "billTypeId", "billDate", "totalPayableAmount"]
     },
+    "BillItemCategory": {
+      "title": "Bill Item Category",
+      "type": "object",
+      "description": "Defines a category for a billable item.",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" }
+      },
+      "required": ["name", "code"]
+    },
     "BillItemMaster": {
       "title": "Bill Item Master",
       "type": "object",
       "description": "Master data for billable items and services.",
       "properties": {
         "name": { "type": "string" },
-        "category": { "type": "string", "enum": ["Raw Material", "Spare", "Service", "Logistics"] },
+        "billItemCategoryId": { "type": "string" },
         "description": { "type": "string" },
         "unitOfMeasure": { "type": "string" },
         "unitPrice": { "type": "number" }
       },
-      "required": ["name", "category", "unitPrice"]
+      "required": ["name", "billItemCategoryId", "unitPrice"]
     }
   },
   "auth": {
@@ -354,6 +364,7 @@
     "/billTypes/{billTypeId}": { "schema": { "$ref": "#/entities/BillType" }, "description": "Stores master list of bill types." },
     "/billCategories/{billCategoryId}": { "schema": { "$ref": "#/entities/BillCategory" }, "description": "Stores master list of bill categories." },
     "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." },
+    "/billItemCategories/{billItemCategoryId}": { "schema": { "$ref": "#/entities/BillItemCategory" }, "description": "Stores categories for billable items." },
     "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." }
   }
 }

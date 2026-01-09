@@ -28,65 +28,44 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useBillFlow } from './bill-flow-provider';
-import type { BillItemCategory } from './bill-item-category-table';
 
-export type BillItemMaster = {
+export type BillItemCategory = {
   id: string;
   name: string;
-  billItemCategoryId: string;
-  description: string;
-  unitOfMeasure: string;
-  unitPrice: number;
+  code: string;
 };
 
-export function BillItemMasterTable() {
+export function BillItemCategoryTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data: billFlowData, isLoading: isBillFlowLoading } = useBillFlow();
-  const { billItemCategories = [] } = billFlowData;
-  
-  const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]);
-  const { data: items, isLoading: areItemsLoading } = useCollection<BillItemMaster>(dataRef);
-
-  const isLoading = isBillFlowLoading || areItemsLoading;
+  const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]);
+  const { data: items, isLoading } = useCollection<BillItemCategory>(dataRef);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState<Partial<BillItemMaster> | null>(null);
-  const [formData, setFormData] = useState<Omit<BillItemMaster, 'id'>>({ name: '', billItemCategoryId: '', description: '', unitOfMeasure: '', unitPrice: 0 });
+  const [currentItem, setCurrentItem] = useState<Partial<BillItemCategory> | null>(null);
+  const [formData, setFormData] = useState({ name: '', code: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
   const safeItems = useMemo(() => Array.isArray(items) ? items : [], [items]);
-
-  const getCategoryName = (categoryId: string) => {
-      return billItemCategories.find(c => c.id === categoryId)?.name || 'N/A';
-  }
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeItems;
     const lowercasedTerm = searchTerm.toLowerCase();
     return safeItems.filter(p => 
         p.name.toLowerCase().includes(lowercasedTerm) ||
-        getCategoryName(p.billItemCategoryId).toLowerCase().includes(lowercasedTerm) ||
-        p.description.toLowerCase().includes(lowercasedTerm)
+        p.code.toLowerCase().includes(lowercasedTerm)
     );
-  }, [safeItems, searchTerm, billItemCategories]);
+  }, [safeItems, searchTerm]);
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value, type } = e.target;
-    setFormData(prev => ({ ...prev, [id]: type === 'number' ? parseFloat(value) || 0 : value }));
-  };
-
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, billItemCategoryId: value }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
   };
 
   const resetForm = () => {
     setCurrentItem(null);
-    setFormData({ name: '', billItemCategoryId: '', description: '', unitOfMeasure: '', unitPrice: 0 });
+    setFormData({ name: '', code: '' });
   }
 
   const handleAdd = () => {
@@ -94,13 +73,13 @@ export function BillItemMasterTable() {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (item: BillItemMaster) => {
+  const handleEdit = (item: BillItemCategory) => {
     setCurrentItem(item);
-    setFormData({ ...item });
+    setFormData({ name: item.name, code: item.code });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (item: BillItemMaster) => {
+  const handleDelete = (item: BillItemCategory) => {
     setCurrentItem(item);
     setIsDeleteConfirmOpen(true);
   };
@@ -108,15 +87,15 @@ export function BillItemMasterTable() {
   const confirmDelete = () => {
     if (currentItem?.id && dataRef) {
         deleteDocumentNonBlocking(doc(dataRef, currentItem.id));
-        toast({ title: 'Success', description: 'Bill Item deleted successfully.' });
+        toast({ title: 'Success', description: 'Bill Item Category deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
     resetForm();
   };
 
   const handleSave = () => {
-    if (!formData.name.trim() || !formData.billItemCategoryId || formData.unitPrice <= 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Name, Category, and a valid Unit Price are required.' });
+    if (!formData.name.trim() || !formData.code.trim()) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
       return;
     }
 
@@ -127,10 +106,10 @@ export function BillItemMasterTable() {
 
     if (currentItem?.id) {
       setDocumentNonBlocking(doc(dataRef, currentItem.id), formData, { merge: true });
-      toast({ title: 'Success', description: 'Bill Item updated successfully.' });
+      toast({ title: 'Success', description: 'Bill Item Category updated successfully.' });
     } else {
       addDocumentNonBlocking(dataRef, formData);
-      toast({ title: 'Success', description: 'Bill Item added successfully.' });
+      toast({ title: 'Success', description: 'Bill Item Category added successfully.' });
     }
 
     setIsDialogOpen(false);
@@ -138,10 +117,10 @@ export function BillItemMasterTable() {
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '', categoryCode: '', description: '', unitOfMeasure: '', unitPrice: 0 }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '', code: '' }]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'BillItems');
-    XLSX.writeFile(wb, 'BillItemTemplate.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'BillItemCategories');
+    XLSX.writeFile(wb, 'BillItemCategoryTemplate.xlsx');
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,30 +133,24 @@ export function BillItemMasterTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false}) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
-          if (!json[0] || !('name' in json[0]) || !('categoryCode' in json[0]) || !('unitPrice' in json[0])) {
-             throw new Error('Invalid Excel file format. Expecting columns "name", "categoryCode", and "unitPrice".');
+          if (!json[0] || !('name' in json[0]) || !('code' in json[0])) {
+             throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "code".');
           }
 
           const newItems = json
-            .map(item => {
-                const category = billItemCategories.find(c => c.code === String(item.categoryCode || '').trim());
-                return {
-                    name: String(item.name || '').trim(),
-                    billItemCategoryId: category?.id || '',
-                    description: String(item.description || '').trim(),
-                    unitOfMeasure: String(item.unitOfMeasure || '').trim(),
-                    unitPrice: parseFloat(String(item.unitPrice || '0'))
-                }
-            })
-            .filter(item => item.name && item.billItemCategoryId && item.unitPrice > 0);
+            .map((item: any) => ({ 
+                name: String(item.name || '').trim(),
+                code: String(item.code || '').trim(),
+            }))
+            .filter(item => item.name && item.code)
           
           if(newItems.length > 0) {
             newItems.forEach(item => addDocumentNonBlocking(dataRef, item));
-            toast({ title: 'Success', description: 'Bill Items uploaded successfully.' });
+            toast({ title: 'Success', description: 'Bill Item Categories uploaded successfully.' });
           } else {
-            toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid data found or category codes did not match. Check names, category codes, and prices.' });
+            toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid data found in the file.' });
           }
 
         } catch (error: any) {
@@ -198,29 +171,27 @@ export function BillItemMasterTable() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search by name, category..."
+                    placeholder="Search by name or code..."
                     className="w-full rounded-lg bg-background pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <div className="flex justify-end gap-2">
-                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
+                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button>
                 <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-                <label htmlFor="upload-excel-bill-items" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                <label htmlFor="upload-excel-billitemcategories" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
                     <Upload className="mr-2 h-4 w-4" /> Upload Excel
                 </label>
-                <Input id="upload-excel-bill-items" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+                <Input id="upload-excel-billitemcategories" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
             </div>
         </div>
         <div className="border rounded-lg">
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Item Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Category Name</TableHead>
+                    <TableHead>Code</TableHead>
                     <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -230,8 +201,6 @@ export function BillItemMasterTable() {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
                       </TableRow>
                     ))
@@ -239,9 +208,7 @@ export function BillItemMasterTable() {
                     filteredItems.map((item) => (
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
-                        <TableCell>{getCategoryName(item.billItemCategoryId)}</TableCell>
-                        <TableCell className="max-w-xs truncate">{item.description}</TableCell>
-                        <TableCell>{item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell>{item.code}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Tooltip>
@@ -266,7 +233,7 @@ export function BillItemMasterTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No bill items found.</TableCell>
+                    <TableCell colSpan={3} className="h-24 text-center">No bill item categories found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -276,40 +243,19 @@ export function BillItemMasterTable() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{currentItem?.id ? 'Edit' : 'Add'} Bill Item</DialogTitle>
+            <DialogTitle>{currentItem?.id ? 'Edit' : 'Add'} Bill Item Category</DialogTitle>
             <DialogDescription>
-              {currentItem?.id ? 'Update the details.' : 'Create a new master bill item.'}
+              {currentItem?.id ? 'Update the details.' : 'Create a new bill item category.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name<span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">Name</Label>
               <Input id="name" value={formData.name} onChange={handleInputChange} />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="billItemCategoryId">Category<span className="text-red-500">*</span></Label>
-              <Select value={formData.billItemCategoryId} onValueChange={handleSelectChange}>
-                  <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
-                  <SelectContent>
-                      {billItemCategories.map((cat: BillItemCategory) => (
-                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={formData.description} onChange={handleInputChange} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                <Label htmlFor="unitOfMeasure">Unit of Measure</Label>
-                <Input id="unitOfMeasure" value={formData.unitOfMeasure} onChange={handleInputChange} />
-                </div>
-                <div className="space-y-2">
-                <Label htmlFor="unitPrice">Unit Price<span className="text-red-500">*</span></Label>
-                <Input id="unitPrice" type="number" value={formData.unitPrice} onChange={handleInputChange} />
-                </div>
+              <Label htmlFor="code">Code</Label>
+              <Input id="code" value={formData.code} onChange={handleInputChange} />
             </div>
           </div>
           <DialogFooter>
