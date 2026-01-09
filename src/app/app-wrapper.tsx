@@ -130,7 +130,7 @@ const ModuleDashboard = () => {
     const auth = useAuth();
 
     return (
-        <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 relative">
+        <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full">
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -228,9 +228,5 @@ export function AppWrapper() {
   }
 
   // Fallback to the dashboard if no specific module matches
-  return (
-    <div className="dark bg-background text-foreground">
-        <ModuleDashboard />
-    </div>
-  );
+  return <ModuleDashboard />;
 }
