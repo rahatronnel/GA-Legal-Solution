@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -21,8 +20,7 @@ export default function Home() {
     return <LoginPage />;
   }
 
-  // The AppWrapper now intelligently decides whether to show the dashboard
-  // or a specific module page based on the URL path.
+  // The AppWrapper is now only rendered if a user is successfully authenticated.
   return (
     <div className="flex min-h-screen w-full flex-col">
         <main className="flex-1">
