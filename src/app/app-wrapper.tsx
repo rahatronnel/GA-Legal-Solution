@@ -30,20 +30,20 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
+import dynamic from 'next/dynamic';
 
-// Simplified pages for routing
-import VehicleManagementPage from './vehicle-management/page';
-import UserManagementPage from './user-management/page';
-import SettingsPage from './settings/page';
-import BillFlowPage from './billflow/page';
-import BillPage from './billflow/bills/[id]/page';
-import VendorPage from './billflow/vendors/[id]/page';
-import DriverProfilePage from './vehicle-management/drivers/[id]/page';
-import VehicleProfilePage from './vehicle-management/vehicles/[id]/page';
-import TripProfilePage from './vehicle-management/trips/[id]/page';
-import MaintenanceProfilePage from './vehicle-management/maintenance/[id]/page';
-import AccidentProfilePage from './vehicle-management/accidents/[id]/page';
-import EmployeeProfilePage from './user-management/employees/[id]/page';
+const VehicleManagementPage = dynamic(() => import('./vehicle-management/page'));
+const UserManagementPage = dynamic(() => import('./user-management/page'));
+const SettingsPage = dynamic(() => import('./settings/page'));
+const BillFlowPage = dynamic(() => import('./billflow/page'));
+const BillPage = dynamic(() => import('./billflow/bills/[id]/page'));
+const VendorPage = dynamic(() => import('./billflow/vendors/[id]/page'));
+const DriverProfilePage = dynamic(() => import('./vehicle-management/drivers/[id]/page'));
+const VehicleProfilePage = dynamic(() => import('./vehicle-management/vehicles/[id]/page'));
+const TripProfilePage = dynamic(() => import('./vehicle-management/trips/[id]/page'));
+const MaintenanceProfilePage = dynamic(() => import('./vehicle-management/maintenance/[id]/page'));
+const AccidentProfilePage = dynamic(() => import('./vehicle-management/accidents/[id]/page'));
+const EmployeeProfilePage = dynamic(() => import('./user-management/employees/[id]/page'));
 
 
 const moduleComponents: { [key:string]: React.ComponentType } = {
