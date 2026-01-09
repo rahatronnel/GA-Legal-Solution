@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { Label } from '@/components/ui/label';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -373,5 +374,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     </TooltipProvider>
   );
 }
+
+    
 
     
