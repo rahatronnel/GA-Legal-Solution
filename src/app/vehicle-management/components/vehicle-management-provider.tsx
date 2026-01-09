@@ -113,10 +113,10 @@ export function VehicleManagementProvider({ children }: { children: React.ReactN
         isLoading,
     }), [data, isLoading]);
 
-     if (isLoading) {
+     if (isUserLoading) {
         return (
             <div className="flex justify-center items-center h-full">
-                <p>Loading Vehicle Management Data...</p>
+                <p>Verifying authentication...</p>
             </div>
         );
     }

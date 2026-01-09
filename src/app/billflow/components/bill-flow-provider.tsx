@@ -73,6 +73,14 @@ export function BillFlowProvider({ children }: { children: React.ReactNode }) {
         isLoading,
     }), [data, isLoading]);
 
+    if (isUserLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <p>Verifying authentication...</p>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">

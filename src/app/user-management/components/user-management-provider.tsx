@@ -46,13 +46,14 @@ export function UserManagementProvider({ children }: { children: React.ReactNode
         data,
     }), [data]);
 
-    if (isLoading) {
+     if (isUserLoading) {
         return (
             <div className="flex justify-center items-center h-full">
-                <p>Loading User Management Data...</p>
+                <p>Verifying authentication...</p>
             </div>
         );
     }
+
 
     return (
         <UserManagementContext.Provider value={value}>
@@ -68,3 +69,4 @@ export function useUserManagement() {
     }
     return { data: context.data };
 }
+
