@@ -7,9 +7,10 @@ import type { Vehicle } from './vehicle-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Trip } from './trip-entry-form';
 import type { Accident } from './accident-entry-form';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 
-type PrintableItem = Driver | Vehicle | Employee | Trip | Accident;
-type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip' | 'accident';
+type PrintableItem = Driver | Vehicle | Employee | Trip | Accident | Vendor;
+type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip' | 'accident' | 'vendor';
 
 interface PrintContextType {
   itemToPrint: PrintableItem | null;

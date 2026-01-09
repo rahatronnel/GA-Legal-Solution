@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Download, Upload } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Download, Upload, Printer } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -23,10 +23,12 @@ import { VendorEntryForm, type Vendor } from './vendor-entry-form';
 import * as XLSX from 'xlsx';
 import type { VendorCategory } from './vendor-category-table';
 import type { VendorNatureOfBusiness } from './vendor-nature-of-business-table';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 export function VendorTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { handlePrint } = usePrint();
   
   const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
   const { data: vendors, isLoading: isLoadingVendors } = useCollection<Vendor>(vendorsRef);
@@ -78,7 +80,11 @@ export function VendorTable() {
         setDocumentNonBlocking(doc(vendorsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Vendor updated successfully.' });
     } else {
-        addDocumentNonBlocking(vendorsRef, vendorData);
+        const newVendorData = {
+          ...vendorData,
+          vendorId: `V-${Date.now()}`
+        };
+        addDocumentNonBlocking(vendorsRef, newVendorData);
         toast({ title: 'Success', description: 'Vendor added successfully.' });
     }
   };
@@ -146,7 +152,7 @@ export function VendorTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && vendorsRef) {
+    if (file && vendorsRef && categories && naturesOfBusiness) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
@@ -167,8 +173,8 @@ export function VendorTable() {
           for (const item of json) {
             if (!item.vendorName || !item.email) continue;
             
-            const category = categories?.find(c => c.code === item.vendorCategoryCode);
-            const nature = naturesOfBusiness?.find(n => n.code === item.natureOfBusinessCode);
+            const category = categories.find(c => c.code === item.vendorCategoryCode);
+            const nature = naturesOfBusiness.find(n => n.code === item.natureOfBusinessCode);
 
             const newVendor: Partial<Vendor> = {
                 vendorId: `V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -209,16 +215,10 @@ export function VendorTable() {
                 taxDeductionApplicable: ['yes', 'true', '1'].includes(String(item.taxDeductionApplicable).toLowerCase()),
                 vatApplicable: ['yes', 'true', '1'].includes(String(item.vatApplicable).toLowerCase()),
                 suppliedItems: [],
-                documents: {
-                    tradeLicense: '',
-                    bankChequeCopy: '',
-                    contractAgreement: '',
-                    vatCertificate: '',
-                    complianceCertificates: '',
-                    other: ''
-                },
-                loginId: item.email, // Use email as login ID by default
+                documents: Object.keys(document).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, any[]>),
+                loginId: item.email,
                 createdDate: new Date().toISOString(),
+                vendorStatus: 'Pending',
             };
             addDocumentNonBlocking(vendorsRef, newVendor);
           }
@@ -266,7 +266,7 @@ export function VendorTable() {
                     <TableHead>Vendor ID</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Mobile</TableHead>
-                    <TableHead className="w-[100px] text-right">Actions</TableHead>
+                    <TableHead className="w-[140px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -296,6 +296,14 @@ export function VendorTable() {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>Edit Vendor</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'vendor')}>
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Print Vendor Profile</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
