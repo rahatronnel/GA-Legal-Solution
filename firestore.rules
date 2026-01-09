@@ -16,125 +16,105 @@ service cloud.firestore {
     // It's safe for anyone to read this data, but only authenticated
     // users can make changes.
     // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read: if true;
+    }
+
     match /settings/{docId} {
-        allow read: if true;
         allow write: if isAuthenticated();
     }
     match /vehicleTypes/{docId} {
-        allow read: if true;
         allow write: if isAuthenticated();
     }
     match /vehicleBrands/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /locations/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /routes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /tripPurposes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /expenseTypes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /maintenanceTypes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /maintenanceExpenseTypes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /parts/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /serviceCenters/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /accidentTypes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /severityLevels/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /faultStatuses/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /vendorCategories/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /vendorNatureOfBusiness/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /billTypes/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /billCategories/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /billItemCategories/{docId} {
-        allow read: if true;
         allow write: if isAuthenticated();
     }
     match /billItemMasters/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data
-    // Write access is protected, but some read access is public to prevent
+    // Write access is protected, but read access is public to prevent
     // initial load errors.
     // -------------------------------------------------------------------------
     match /sections/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /designations/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /employees/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
     match /vehicles/{docId} {
-      allow read: if true;
       allow write: if isAuthenticated();
     }
      match /drivers/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
      match /trips/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
     match /maintenanceRecords/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
      match /accidents/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
     match /vendors/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
     match /bills/{docId} {
-      allow read, write: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
   }
 }
