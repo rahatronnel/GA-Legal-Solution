@@ -15,10 +15,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -27,6 +26,18 @@ import type { Section } from './section-table';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -97,6 +108,22 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setCurrentEmployee(null);
   };
 
+  const handlePasswordReset = async (email: string) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: 'Password Reset Email Sent',
+            description: `An email has been sent to ${email} with instructions to reset the password.`,
+        });
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Send Email',
+            description: error.message || 'An unknown error occurred.',
+        });
+    }
+  };
+
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{ 
       userIdCode: '',
@@ -138,21 +165,22 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
 
           for (const item of json) {
-            if (!item.email || !item.fullName || !item.password) continue;
+            const email = item.email?.toString().trim();
+            if (!item.fullName || !email || !item.password) continue;
 
             const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
             const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
             const password = String(item.password);
              if (password.length < 6) {
-                toast({ variant: 'destructive', title: `Skipping user ${item.email}`, description: 'Password must be at least 6 characters.' });
+                toast({ variant: 'destructive', title: `Skipping user ${email}`, description: 'Password must be at least 6 characters.' });
                 continue;
             }
 
             const newEmployee: Omit<Employee, 'id' | 'defaultPassword'> = {
                 userIdCode: item.userIdCode?.toString().trim() || '',
                 fullName: item.fullName?.toString().trim() || '',
-                email: item.email?.toString().trim() || '',
-                username: item.email?.toString().trim() || '',
+                email: email,
+                username: email,
                 mobileNumber: item.mobileNumber?.toString().trim() || '',
                 role: item.role?.toString().trim() || 'Viewer',
                 status: item.status?.toString().trim() || 'Active',
@@ -219,7 +247,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
               <TableHead>Mobile Number</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[160px] text-right">Actions</TableHead>
+              <TableHead className="w-[200px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -264,6 +292,30 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                         </TooltipTrigger>
                         <TooltipContent>Edit Employee</TooltipContent>
                       </Tooltip>
+                       <AlertDialog>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <KeyRound className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Reset Password</TooltipContent>
+                          </Tooltip>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Reset Password?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will send a password reset link to <span className="font-semibold">{employee.email}</span>. The employee will be able to set their own new password. Are you sure?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handlePasswordReset(employee.email)}>Send Reset Email</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                       </AlertDialog>
                        <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(employee, 'employee')}>
@@ -321,3 +373,5 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     </TooltipProvider>
   );
 }
+
+    
