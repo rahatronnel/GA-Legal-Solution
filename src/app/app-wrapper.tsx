@@ -72,6 +72,12 @@ const AppHeader = () => {
             <div className="flex-1" />
 
             <div className="flex items-center gap-4">
+                 <Link href="/">
+                    <Button variant="ghost" size="icon" title="Home">
+                        <Home className="h-5 w-5" />
+                        <span className="sr-only">Home</span>
+                    </Button>
+                </Link>
                  {utilityModules.map((mod) => (
                     <Link href={mod.href} key={mod.href}>
                         <Button variant="ghost" size="icon" title={mod.name}>
