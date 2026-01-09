@@ -235,7 +235,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         return;
     }
 
-    const { defaultPassword, ...dataToSave } = {
+    const fullDataWithPassword = {
         ...employeeData,
         profilePicture: profilePicPreview || employeeData.profilePicture,
         signature: signaturePreview || employeeData.signature,
@@ -244,6 +244,8 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             other: docPreviews.other || employeeData.documents.other
         },
     };
+
+    const { defaultPassword, ...dataToSave } = fullDataWithPassword;
 
     if (isEditing) {
         onSave(dataToSave, employee.id);
