@@ -169,7 +169,7 @@ export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, 
             </PrintPage>
 
             {Object.entries(bill.documents || {}).flatMap(([category, files]) => 
-                files.map(doc => (
+                (files || []).map((doc: { id: string; name: string; file: string; }) => (
                     <DocumentPage key={doc.id} doc={doc} label={documentLabels[category] || 'Document'} pageNumber={pageCounter++} orgSettings={orgSettings} />
                 ))
             )}
