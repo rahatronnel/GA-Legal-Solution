@@ -120,6 +120,8 @@ const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...a
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 
+const billTypeOptions = ['Purchase', 'Service', 'Transport', 'Utility', 'Others'];
+
 interface BillEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -137,7 +139,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     const [items, setItems] = useState<BillItem[]>([]);
     const [documents, setDocuments] = useState(initialDocuments);
     
-    const [billDate, setBillDate] = useState<Date|undefined>();
+    const [billDate, setBillDate] = useState<Date|undefined>(new Date());
     const [billReceivedDate, setBillReceivedDate] = useState<Date|undefined>();
     const [invoiceDate, setInvoiceDate] = useState<Date|undefined>();
     const [billingPeriodFrom, setBillingPeriodFrom] = useState<Date|undefined>();
@@ -169,11 +171,15 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             setDateIfValid(bill.billingPeriodFrom, setBillingPeriodFrom);
             setDateIfValid(bill.billingPeriodTo, setBillingPeriodTo);
           } else {
-            setBillData({...initialBillData, entryDate: format(new Date(), 'yyyy-MM-dd')});
+            const today = new Date();
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd')});
             setItems([]);
             setDocuments(initialDocuments);
-            setBillDate(undefined); setBillReceivedDate(undefined); setInvoiceDate(undefined);
-            setBillingPeriodFrom(undefined); setBillingPeriodTo(undefined);
+            setBillDate(today); 
+            setBillReceivedDate(undefined); 
+            setInvoiceDate(undefined);
+            setBillingPeriodFrom(undefined); 
+            setBillingPeriodTo(undefined);
           }
         }
       }, [isOpen, bill, isEditing]);
@@ -185,7 +191,14 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     }
     
     const handleSelectChange = (id: keyof Omit<Bill, 'id' | 'items' | 'documents'>) => (value: string) => {
-        setBillData(prev => ({...prev, [id]: value }));
+        const newBillData = { ...billData, [id]: value };
+        if (id === 'vendorId') {
+            const selectedVendor = vendors.find(v => v.id === value);
+            if (selectedVendor && selectedVendor.vendorCategoryId) {
+                newBillData.billCategoryId = selectedVendor.vendorCategoryId;
+            }
+        }
+        setBillData(newBillData);
     }
     
     const handleCheckboxChange = (id: 'vatApplicable' | 'tdsApplicable') => (checked: boolean) => {
@@ -204,7 +217,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
         setItems(prev => prev.map(item => {
             if (item.id === id) {
                 const newItem = { ...item, [field]: value };
-                if (['quantity', 'unitPrice', 'discountAmount'].includes(field)) {
+                if (['quantity', 'unitPrice', 'discountAmount'].includes(field as string)) {
                     newItem.grossAmount = newItem.quantity * newItem.unitPrice;
                     newItem.netAmount = newItem.grossAmount - newItem.discountAmount;
                 }
@@ -300,10 +313,33 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg">Step 1: Bill Basic Information</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label>Vendor<MandatoryIndicator/></Label><Command><CommandInput placeholder="Search vendor..."/><CommandList><CommandEmpty>No vendor found.</CommandEmpty><CommandGroup>{vendors.map(v => <CommandItem key={v.id} onSelect={() => handleSelectChange('vendorId')(v.id)}>{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></div>
-                                <div className="space-y-2"><Label>Vendor Name</Label><Input value={vendors.find(v=>v.id===billData.vendorId)?.vendorName || ''} disabled /></div>
+                                <div className="space-y-2 md:col-span-2">
+                                  <Label>Vendor<MandatoryIndicator/></Label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="outline" role="combobox" className="w-full justify-between">
+                                        {billData.vendorId ? vendors.find(v => v.id === billData.vendorId)?.vendorName : "Select vendor..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                      <Command>
+                                        <CommandInput placeholder="Search vendor..." />
+                                        <CommandEmpty>No vendor found.</CommandEmpty>
+                                        <CommandList><CommandGroup>
+                                          {vendors.map(v => 
+                                            <CommandItem key={v.id} value={v.vendorName} onSelect={() => handleSelectChange('vendorId')(v.id)}>
+                                              <Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />
+                                              {v.vendorName}
+                                            </CommandItem>
+                                          )}
+                                        </CommandGroup></CommandList>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
                                 <div className="space-y-2"><Label>Bill Reference Number</Label><Input id="billReferenceNumber" value={billData.billReferenceNumber} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Bill Type<MandatoryIndicator/></Label><Select value={billData.billTypeId} onValueChange={handleSelectChange('billTypeId')}><SelectTrigger><SelectValue placeholder="Select type"/></SelectTrigger><SelectContent>{billTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
+                                <div className="space-y-2"><Label>Bill Type<MandatoryIndicator/></Label><Select value={billData.billTypeId} onValueChange={handleSelectChange('billTypeId')}><SelectTrigger><SelectValue placeholder="Select type"/></SelectTrigger><SelectContent>{billTypeOptions.map(t=><SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label>Bill Category</Label><Select value={billData.billCategoryId} onValueChange={handleSelectChange('billCategoryId')}><SelectTrigger><SelectValue placeholder="Select category"/></SelectTrigger><SelectContent>{billCategories.map(c=><SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label>Bill Sub-Category</Label><Input id="billSubCategory" value={billData.billSubCategory} onChange={handleInputChange} /></div>
                                 <div className="space-y-2"><Label>Bill Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{billDate ? format(billDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={billDate} onSelect={handleDateChange(setBillDate, 'billDate')} /></PopoverContent></Popover></div>
@@ -401,14 +437,13 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                             <Input id={`file-upload-${docType}`} type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
                                         </div>
                                         <div className="space-y-1">
-                                            {documents[docType]?.length > 0 ? (
-                                                documents[docType].map(file => (
-                                                    <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
-                                                        <div className="flex items-center gap-2 truncate"><FileIcon className="h-4 w-4 flex-shrink-0" /><span className="truncate">{file.name}</span></div>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}><X className="h-4 w-4" /></Button>
-                                                    </div>
-                                                ))
-                                            ) : ( <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p> )}
+                                            {(documents[docType] || []).map(file => (
+                                                <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
+                                                    <div className="flex items-center gap-2 truncate"><FileIcon className="h-4 w-4 flex-shrink-0" /><span className="truncate">{file.name}</span></div>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}><X className="h-4 w-4" /></Button>
+                                                </div>
+                                            ))}
+                                            {(documents[docType] || []).length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>}
                                         </div>
                                     </div>
                                 ))}
