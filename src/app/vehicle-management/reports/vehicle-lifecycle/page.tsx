@@ -33,7 +33,7 @@ import type { ExpenseType } from '@/app/vehicle-management/components/expense-ty
 // --- Helper Components ---
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
-    <div className="flex items-start gap-2 text-sm">
+    <div className="flex items-start gap-2 text-sm print-no-break">
         <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
         <div>
             <p className="font-semibold">{label}</p>
@@ -70,7 +70,7 @@ const documentLabels: Record<string, string> = {
 // --- Detail View Dialogs ---
 
 const TripDetailDialog: React.FC<{ trip: Trip; onOpenChange: (open: boolean) => void; parentData: any }> = ({ trip, onOpenChange, parentData }) => {
-    const { purpose, driver, route, totalDistance, totalExpenses } = parentData;
+    const { purpose, driver, itinerary, totalDistance, totalExpenses } = parentData;
     const getExpenseTypeName = (id: string) => parentData.expenseTypes.find((et:any) => et.id === id)?.name || 'N/A';
 
     return (
@@ -82,7 +82,7 @@ const TripDetailDialog: React.FC<{ trip: Trip; onOpenChange: (open: boolean) => 
                 </DialogHeader>
                 <div className="py-4 max-h-[70vh] overflow-y-auto pr-4 grid gap-6">
                     <InfoItem icon={Car} label="Driver" value={driver} />
-                    <InfoItem icon={Route} label="Route" value={route} />
+                    <InfoItem icon={Route} label="Itinerary" value={itinerary} />
                     <InfoItem icon={Calendar} label="Start" value={`${trip.startDate} ${trip.startTime}`} />
                     <InfoItem icon={Calendar} label="End" value={`${trip.endDate} ${trip.endTime}`} />
                     <InfoItem icon={Flag} label="Purpose" value={purpose} />
@@ -247,12 +247,10 @@ export default function VehicleLifecycleReportPage() {
     const getTripDetails = (trip: Trip) => {
         const purpose = purposes.find(p => p.id === trip.purposeId)?.name;
         const driver = drivers.find(d => d.id === trip.driverId)?.name;
-        const startLocation = locations.find(l => l.id === trip.startLocationId)?.name;
-        const endLocation = locations.find(l => l.id === trip.destinationLocationId)?.name;
-        const route = startLocation && endLocation ? `${startLocation} to ${endLocation}` : 'N/A';
+        const itinerary = trip.stops?.map(stop => locations.find(l => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
         const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
         const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-        return { purpose, driver, route, totalDistance, totalExpenses, expenseTypes };
+        return { purpose, driver, itinerary, totalDistance, totalExpenses, expenseTypes };
     }
     
     const getMaintenanceDetails = (maint: MaintenanceRecord) => {
@@ -269,6 +267,18 @@ export default function VehicleLifecycleReportPage() {
         const severity = severityLevels.find(s => s.id === acc.severityLevelId)?.name;
         const driver = drivers.find(d => d.id === acc.driverId)?.name;
         return { type, severity, driver };
+    }
+
+    const handlePrint = () => {
+      const printContents = document.getElementById('report-content')?.innerHTML;
+      const originalContents = document.body.innerHTML;
+      if (printContents) {
+          document.body.innerHTML = printContents;
+          window.print();
+          document.body.innerHTML = originalContents;
+          // We need to re-attach the event listeners after printing
+          window.location.reload();
+      }
     }
 
 
@@ -306,12 +316,20 @@ export default function VehicleLifecycleReportPage() {
                         </PopoverContent>
                     </Popover>
                     <Button onClick={handleGenerateReport} disabled={!selectedVehicleId}>Generate Report</Button>
-                     {reportData && <Button variant="outline" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print Report</Button>}
+                     {reportData && <Button variant="outline" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" />Print Report</Button>}
                 </CardContent>
             </Card>
 
             {reportData && (
                 <div id="report-content" className="space-y-6">
+                    <div className="print:block hidden">
+                        <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4">
+                            <div className="text-sm">
+                                <h1 className="text-xl font-bold text-gray-800">GA & Legal Solution</h1>
+                                <p className="text-xs">Head Office: 123 Business Rd, Dhaka, Bangladesh</p>
+                            </div>
+                        </div>
+                    </div>
                     <Card className="print:border-none print:shadow-none">
                         <CardHeader>
                             <div className="flex flex-col items-center text-center">
@@ -345,7 +363,7 @@ export default function VehicleLifecycleReportPage() {
                                         <TableRow key={trip.id}>
                                             <TableCell>{trip.startDate}</TableCell>
                                             <TableCell>{details.driver}</TableCell>
-                                            <TableCell>{details.route}</TableCell>
+                                            <TableCell>{details.itinerary}</TableCell>
                                             <TableCell>{details.totalDistance} km</TableCell>
                                             <TableCell>{formatCurrency(details.totalExpenses)}</TableCell>
                                             <TableCell><Badge variant="outline">{trip.tripStatus}</Badge></TableCell>
@@ -466,4 +484,3 @@ export default function VehicleLifecycleReportPage() {
         </div>
     );
 }
-

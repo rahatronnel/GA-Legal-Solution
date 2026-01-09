@@ -143,6 +143,11 @@ function VehicleProfileContent() {
     const latestAssignment = sortedHistory[0];
     return drivers.find((d: Driver) => d.id === latestAssignment.driverId) || null;
   }, [vehicle, drivers]);
+  
+  const sortedDriverHistory = useMemo(() => {
+    if (!vehicle || !vehicle.driverAssignmentHistory) return [];
+    return [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+  }, [vehicle]);
 
 
   if (vehicle === undefined) {
@@ -176,6 +181,7 @@ function VehicleProfileContent() {
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     return partsCost + expensesCost;
   }
+  const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
 
   const documentLabels: Record<keyof Vehicle['documents'], string> = {
     registration: "Registration Certificate (RC / Blue Book)",
@@ -214,7 +220,8 @@ function VehicleProfileContent() {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="driver">Driver</TabsTrigger>
+              <TabsTrigger value="driver">Current Driver</TabsTrigger>
+              <TabsTrigger value="history">Driver History</TabsTrigger>
               <TabsTrigger value="maintenance">Maintenance History</TabsTrigger>
               <TabsTrigger value="accidents">Accident History</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -278,6 +285,36 @@ function VehicleProfileContent() {
                     <p className="text-sm text-muted-foreground text-center py-8">No driver is currently assigned to this vehicle.</p>
                  )}
             </TabsContent>
+
+             <TabsContent value="history" className="mt-6">
+                 <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Driver Assignment History</h3>
+                 {sortedDriverHistory.length > 0 ? (
+                     <Table>
+                         <TableHeader>
+                             <TableRow>
+                                 <TableHead>Driver Name</TableHead>
+                                 <TableHead>Effective Date</TableHead>
+                                 <TableHead className="text-right">Actions</TableHead>
+                             </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                             {sortedDriverHistory.map(assignment => (
+                                 <TableRow key={assignment.id}>
+                                     <TableCell>{getDriverName(assignment.driverId)}</TableCell>
+                                     <TableCell>{new Date(assignment.effectiveDate).toLocaleDateString()}</TableCell>
+                                     <TableCell className="text-right">
+                                         <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/vehicle-management/drivers/${assignment.driverId}`}><Eye className="h-4 w-4" /></Link>
+                                        </Button>
+                                     </TableCell>
+                                 </TableRow>
+                             ))}
+                         </TableBody>
+                     </Table>
+                 ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">No driver assignment history for this vehicle.</p>
+                 )}
+             </TabsContent>
 
              <TabsContent value="maintenance" className="mt-6">
                  <h3 className="font-semibold text-lg text-primary border-b pb-2 mb-4">Maintenance History</h3>
