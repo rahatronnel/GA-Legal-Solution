@@ -15,6 +15,8 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemMaster } from './bill-item-master-table';
 import type { BillItemCategory } from './bill-item-category-table';
+import type { Designation } from '@/app/user-management/components/designation-table';
+
 
 // --- Data Contexts for specific tabs ---
 
@@ -165,8 +167,9 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
     const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
     const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => collection(firestore, 'vendorCategories'), [firestore]));
     const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => collection(firestore, 'vendorNatureOfBusiness'), [firestore]));
+    const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10;
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11;
 
     const data = useMemo(() => ({
         vendors: vendors || [],
@@ -178,7 +181,8 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
         billItemCategories: billItemCategories || [],
         vendorCategories: vendorCategories || [],
         vendorNatureOfBusiness: vendorNatureOfBusiness || [],
-    }), [vendors, bills, billTypes, billCategories, employees, sections, billItemCategories, vendorCategories, vendorNatureOfBusiness]);
+        designations: designations || [],
+    }), [vendors, bills, billTypes, billCategories, employees, sections, billItemCategories, vendorCategories, vendorNatureOfBusiness, designations]);
     
     const value = useMemo(() => ({ data, isLoading }), [data, isLoading]);
 

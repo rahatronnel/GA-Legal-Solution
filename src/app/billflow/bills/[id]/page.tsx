@@ -7,7 +7,7 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { LegacyBillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, MessageSquare, Building } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -26,7 +26,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -88,7 +90,7 @@ function BillProfileContent() {
     const { id } = params;
 
     const { data, isLoading } = useBillFlow();
-    const { bills, vendors, billTypes, billCategories, employees, sections, billItemCategories } = data;
+    const { bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations } = data;
 
     const bill = React.useMemo(() => {
         if (isLoading || !bills) return undefined;
@@ -189,6 +191,42 @@ function BillProfileContent() {
                                     <InfoItem icon={Clock} label="Entry Date & Time" value={formatDateTime(bill.entryDate)} />
                                 </CardContent>
                             </Card>
+                            
+                            {bill.approvalHistory && bill.approvalHistory.length > 0 && (
+                                <Card>
+                                    <CardHeader><CardTitle>Approval History</CardTitle></CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {bill.approvalHistory.map((entry, index) => {
+                                            const approver = employees.find((e: any) => e.id === entry.approverId);
+                                            const designation = designations.find((d: any) => d.id === approver?.designationId);
+                                            const statusColor = entry.status === 'Approved' ? 'text-green-500' : 'text-red-500';
+
+                                            return (
+                                                <div key={index} className="flex gap-4 p-3 border rounded-lg">
+                                                     <Avatar>
+                                                        <AvatarImage src={approver?.profilePicture} alt={approver?.fullName}/>
+                                                        <AvatarFallback>{approver?.fullName.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <p className="font-semibold">{approver?.fullName || 'Unknown User'}</p>
+                                                                <p className="text-xs text-muted-foreground">{designation?.name || 'N/A'}</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className={`font-semibold text-sm ${statusColor}`}>{entry.status}</p>
+                                                                <p className="text-xs text-muted-foreground">{formatDateTime(entry.timestamp)}</p>
+                                                            </div>
+                                                        </div>
+                                                        {entry.remarks && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{entry.remarks}</p>}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             <Card>
                                 <CardHeader><CardTitle>Items / Services</CardTitle></CardHeader>
                                 <CardContent>
@@ -203,8 +241,8 @@ function BillProfileContent() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {bill.items.map(item => (
-                                                <TableRow key={item.id}>
+                                            {bill.items.map((item, index) => (
+                                                <TableRow key={index}>
                                                     <TableCell>{item.name}</TableCell>
                                                     <TableCell>{getItemCategoryName(item.billItemCategoryId)}</TableCell>
                                                     <TableCell className="text-right">{item.quantity}</TableCell>

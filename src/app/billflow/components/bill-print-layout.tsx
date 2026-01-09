@@ -11,6 +11,7 @@ import type { BillType } from './bill-type-table';
 import type { BillCategory } from './bill-category-table';
 import type { BillItemCategory } from './bill-item-category-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Designation } from '@/app/user-management/components/designation-table';
 
 interface PrintHeaderProps {
   orgSettings: OrganizationSettings;
@@ -31,19 +32,57 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     </div>
 );
 
-const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
-    <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500">
-        Page {pageNumber}
-    </div>
-);
+interface PrintFooterProps {
+    pageNumber: number;
+    bill?: Bill;
+    employees?: Employee[];
+    designations?: Designation[];
+}
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
+const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, designations }) => {
+    const approvers = bill?.approvalHistory
+        ?.filter(h => h.status === 'Approved')
+        .map(h => {
+            const employee = employees?.find(e => e.id === h.approverId);
+            const designation = designations?.find(d => d.id === employee?.designationId);
+            return {
+                ...h,
+                employee,
+                designation,
+            };
+        })
+        .slice(0, 5); // Max 5 approvers
+
+    return (
+        <div className="absolute bottom-4 left-0 right-0 px-4">
+            {approvers && approvers.length > 0 && pageNumber === 1 && (
+                <div className="flex justify-between items-end border-t-2 border-gray-300 pt-4 mt-6">
+                    {approvers.map((approver, index) => (
+                        <div key={index} className="text-center text-xs w-1/5 px-1">
+                            {approver.employee?.signature ? (
+                                <Image src={approver.employee.signature} alt="Signature" width={100} height={30} className="object-contain mx-auto h-8" />
+                            ) : (
+                                <div className="h-8"></div>
+                            )}
+                            <p className="border-t border-gray-500 mt-1 pt-1 font-semibold truncate">{approver.employee?.fullName}</p>
+                            <p className="truncate">{approver.designation?.name}</p>
+                            <p className="text-gray-500">{new Date(approver.timestamp).toLocaleDateString()}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div className="text-center text-xs text-gray-500 pt-2">Page {pageNumber}</div>
+        </div>
+    );
+};
+
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, bill?: Bill, employees?: Employee[], designations?: Designation[], className?: string}> = ({children, pageNumber, orgSettings, bill, employees, designations, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6">
+        <div className="flex-grow pt-6 pb-24">
             {children}
         </div>
-        <PrintFooter pageNumber={pageNumber} />
+        <PrintFooter pageNumber={pageNumber} bill={bill} employees={employees} designations={designations} />
     </div>
 );
 
@@ -96,10 +135,12 @@ interface BillPrintLayoutProps {
   billCategory?: BillCategory;
   billItemCategories: BillItemCategory[];
   employee?: Employee;
+  employees: Employee[];
+  designations: Designation[];
   orgSettings: OrganizationSettings;
 }
 
-export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, billType, billCategory, billItemCategories, employee, orgSettings }) => {
+export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, billType, billCategory, billItemCategories, employee, employees, designations, orgSettings }) => {
     let pageCounter = 1;
     
     const getItemCategoryName = (id: string) => billItemCategories.find(c => c.id === id)?.name || 'N/A';
@@ -107,7 +148,7 @@ export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, 
 
     return (
         <div className="bg-white">
-            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings}>
+            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings} bill={bill} employees={employees} designations={designations}>
                 <h2 className="text-xl font-bold text-center mb-6">Bill / Invoice - {bill.billReferenceNumber || bill.billId}</h2>
                 <div className="space-y-4">
                     <div>
@@ -134,8 +175,8 @@ export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, 
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {bill.items.map(item => (
-                                    <TableRow key={item.id}>
+                                {bill.items.map((item, index) => (
+                                    <TableRow key={index}>
                                         <TableCell>{item.name}</TableCell>
                                         <TableCell>{getItemCategoryName(item.billItemCategoryId)}</TableCell>
                                         <TableCell>{item.quantity}</TableCell>

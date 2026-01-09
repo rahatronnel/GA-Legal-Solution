@@ -101,7 +101,7 @@ export const PrintDriver = () => {
               const billType = billTypes?.find(bt => bt.id === bill.billTypeId);
               const billCategory = billCategories?.find(bc => bc.id === bill.billCategoryId);
               const employee = employees?.find(e => e.id === bill.entryBy);
-              return <BillPrintLayout bill={bill} vendor={vendor} billType={billType} billCategory={billCategory} billItemCategories={billItemCategories || []} employee={employee} orgSettings={orgSettings} />;
+              return <BillPrintLayout bill={bill} vendor={vendor} billType={billType} billCategory={billCategory} billItemCategories={billItemCategories || []} employee={employee} employees={employees || []} designations={designations || []} orgSettings={orgSettings} />;
           default:
               return null;
       }
