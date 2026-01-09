@@ -80,6 +80,9 @@ service cloud.firestore {
     match /billItemMasters/{docId} {
       allow write: if isAuthenticated();
     }
+    match /approvalRules/{docId} {
+      allow write: if isAuthenticated();
+    }
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data
