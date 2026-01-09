@@ -4,7 +4,6 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,6 +28,7 @@ import type { ServiceCenter } from '@/app/vehicle-management/components/service-
 import type { Location } from '@/app/vehicle-management/components/location-table';
 import type { SeverityLevel } from '@/app/vehicle-management/components/severity-level-table';
 import type { ExpenseType } from '@/app/vehicle-management/components/expense-type-table';
+import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 // --- Helper Components ---
 
@@ -169,20 +169,23 @@ const AccidentDetailDialog: React.FC<{ accident: Accident; onOpenChange: (open: 
 // --- Main Page Component ---
 
 export default function VehicleLifecycleReportPage() {
-    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-    const [trips] = useLocalStorage<Trip[]>('trips', []);
-    const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-    const [accidents] = useLocalStorage<Accident[]>('accidents', []);
-    const [drivers] = useLocalStorage<Driver[]>('drivers', []);
-    const [brands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
-    const [purposes] = useLocalStorage<TripPurpose[]>('tripPurposes', []);
-    const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-    const [accidentTypes] = useLocalStorage<AccidentType[]>('accidentTypes', []);
-    const [parts] = useLocalStorage<PartType[]>('parts', []);
-    const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
-    const [locations] = useLocalStorage<Location[]>('locations', []);
-    const [severityLevels] = useLocalStorage<SeverityLevel[]>('severityLevels', []);
-    const [expenseTypes] = useLocalStorage<ExpenseType[]>('expenseTypes', []);
+    const { data } = useVehicleManagement();
+    const { 
+        vehicles = [], 
+        trips = [], 
+        maintenanceRecords = [], 
+        accidents = [], 
+        drivers = [], 
+        vehicleBrands: brands = [], 
+        tripPurposes: purposes = [], 
+        maintenanceTypes = [], 
+        accidentTypes = [], 
+        parts = [], 
+        serviceCenters = [], 
+        locations = [], 
+        severityLevels = [], 
+        expenseTypes = [] 
+    } = data;
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [reportData, setReportData] = useState<any | null>(null);
@@ -302,7 +305,7 @@ export default function VehicleLifecycleReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {vehicles.map((vehicle) => (
+                                    {(vehicles || []).map((vehicle) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id);
                                         setOpen(false);
