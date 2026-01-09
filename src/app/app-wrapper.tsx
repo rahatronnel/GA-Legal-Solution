@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Home } from 'lucide-react';
+import { Search, LogOut, User as UserIcon } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -36,13 +36,17 @@ import VehicleManagementPage from './vehicle-management/page';
 import UserManagementPage from './user-management/page';
 import SettingsPage from './settings/page';
 import BillFlowPage from './billflow/page';
+import BillPage from './billflow/bills/[id]/page';
+import VendorPage from './billflow/vendors/[id]/page';
 
 
-const moduleComponents: { [key: string]: React.ComponentType } = {
+const moduleComponents: { [key:string]: React.ComponentType } = {
     '/vehicle-management': VehicleManagementPage,
     '/user-management': UserManagementPage,
     '/settings': SettingsPage,
     '/billflow': BillFlowPage,
+    '/billflow/bills/[id]': BillPage,
+    '/billflow/vendors/[id]': VendorPage,
 };
 
 const ModuleDashboard = () => {    
@@ -60,14 +64,7 @@ const ModuleDashboard = () => {
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link
-                        href="/"
-                        className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        title="Home"
-                    >
-                        <Home className="h-6 w-6" />
-                        <span className="sr-only">Home</span>
-                    </Link>
+                    
                     {utilityModules.map((mod) => (
                         <Link
                             href={mod.href}
@@ -142,11 +139,22 @@ const ModuleDashboard = () => {
 export function AppWrapper() {
   const pathname = usePathname() || '/';
 
-  // Find the component that matches the start of the path
-  const CurrentModuleComponentKey = Object.keys(moduleComponents).find(key => pathname.startsWith(key));
+  const findMatchingKey = (path: string) => {
+    // Exact match first
+    if (moduleComponents[path]) return path;
+    // Dynamic match for paths like /billflow/bills/some-id
+    const dynamicKey = Object.keys(moduleComponents).find(key => {
+        if (!key.includes('[')) return false;
+        const regex = new RegExp(`^${key.replace(/\[\.\.\..*\]/,'.*').replace(/\[(.*?)\]/g, '([^/]+)')}$`);
+        return regex.test(path);
+    });
+    return dynamicKey;
+  }
   
-  if (CurrentModuleComponentKey && moduleComponents[CurrentModuleComponentKey]) {
-    const Component = moduleComponents[CurrentModuleComponentKey];
+  const currentKey = findMatchingKey(pathname);
+
+  if (currentKey && moduleComponents[currentKey]) {
+    const Component = moduleComponents[currentKey];
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <Sidebar />

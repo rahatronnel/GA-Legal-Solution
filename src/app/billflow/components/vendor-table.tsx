@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Download, Upload, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Download, Upload, Printer, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -292,6 +293,14 @@ export function VendorTable() {
                         <TableCell>{item.mobileNumber}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                             <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                  <Link href={`/billflow/vendors/${item.id}`}><Eye className="h-4 w-4" /></Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View Vendor</TooltipContent>
+                            </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}>
@@ -354,4 +363,3 @@ export function VendorTable() {
     </TooltipProvider>
   );
 }
-
