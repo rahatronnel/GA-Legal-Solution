@@ -20,6 +20,13 @@ import { useUser } from "@/firebase";
 function BillFlowContent() {
     return (
       <div className="space-y-6">
+        <div className="flex items-center gap-4">
+            <Button variant="secondary" asChild className="bg-black text-white hover:bg-gray-800">
+                <Link href="/">
+                    <HomeIcon className="h-4 w-4 mr-2" /> Home
+                </Link>
+            </Button>
+        </div>
         <Tabs defaultValue="bills" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="bills">Bills</TabsTrigger>

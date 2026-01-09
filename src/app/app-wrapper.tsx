@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Home } from 'lucide-react';
+import { Search, LogOut, User as UserIcon } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -161,13 +161,6 @@ export function AppWrapper() {
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
           <Header />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-            <div className="flex items-center gap-4">
-                <Button variant="secondary" asChild className="bg-black text-white hover:bg-gray-800">
-                    <Link href="/">
-                        <Home className="h-4 w-4 mr-2" /> Home
-                    </Link>
-                </Button>
-            </div>
             <Component />
           </main>
         </div>
