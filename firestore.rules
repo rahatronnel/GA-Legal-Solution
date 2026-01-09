@@ -80,6 +80,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAuthenticated();
     }
+    match /billTypes/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    match /billCategories/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
 
     // -------------------------------------------------------------------------
     // Protected User & Operational Data
@@ -111,6 +119,9 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     match /vendors/{docId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /bills/{docId} {
       allow read, write: if isAuthenticated();
     }
   }

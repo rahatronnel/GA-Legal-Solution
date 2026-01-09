@@ -223,6 +223,92 @@
         "deliveryFrequency": { "type": "string" }
       },
       "required": ["id", "name", "rate"]
+    },
+    "BillType": {
+      "title": "Bill Type",
+      "type": "object",
+      "description": "Defines a type for a bill.",
+      "properties": { "name": { "type": "string" }, "code": { "type": "string" } },
+      "required": ["name", "code"]
+    },
+    "BillCategory": {
+      "title": "Bill Category",
+      "type": "object",
+      "description": "Defines a category for a bill.",
+      "properties": { "name": { "type": "string" }, "code": { "type": "string" } },
+      "required": ["name", "code"]
+    },
+    "BillItem": {
+      "title": "Bill Item",
+      "type": "object",
+      "description": "Represents a single line item in a bill.",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Raw Material", "Spare", "Service", "Logistics"] },
+        "description": { "type": "string" },
+        "unitOfMeasure": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "grossAmount": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "netAmount": { "type": "number" }
+      },
+      "required": ["name", "quantity", "unitPrice", "grossAmount"]
+    },
+    "Bill": {
+      "title": "Bill",
+      "type": "object",
+      "description": "Represents a single bill or invoice for payment processing.",
+      "properties": {
+        "billId": { "type": "string" },
+        "billReferenceNumber": { "type": "string" },
+        "vendorId": { "type": "string" },
+        "billTypeId": { "type": "string" },
+        "billCategoryId": { "type": "string" },
+        "billSubCategory": { "type": "string" },
+        "billDate": { "type": "string", "format": "date" },
+        "billReceivedDate": { "type": "string", "format": "date" },
+        "entryDate": { "type": "string", "format": "date-time" },
+        "entryBy": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/BillItem" } },
+        "vatApplicable": { "type": "boolean" },
+        "vatPercentage": { "type": "number" },
+        "vatAmount": { "type": "number" },
+        "tdsApplicable": { "type": "boolean" },
+        "tdsPercentage": { "type": "number" },
+        "tdsAmount": { "type": "number" },
+        "otherCharges": { "type": "number" },
+        "deductionAmount": { "type": "number" },
+        "totalPayableAmount": { "type": "number" },
+        "billingPeriodFrom": { "type": "string", "format": "date" },
+        "billingPeriodTo": { "type": "string", "format": "date" },
+        "poNumber": { "type": "string" },
+        "woNumber": { "type": "string" },
+        "grnNumber": { "type": "string" },
+        "gatePassNumber": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "invoiceDate": { "type": "string", "format": "date" },
+        "departmentCode": { "type": "string" },
+        "departmentName": { "type": "string" },
+        "costCenter": { "type": "string" },
+        "project": { "type": "string" },
+        "machineNumber": { "type": "string" },
+        "budgetHead": { "type": "string" },
+        "budgetRef": { "type": "string" },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "vendorInvoice": { "type": "string" },
+            "deliveryChallan": { "type": "string" },
+            "workCompletionCert": { "type": "string" },
+            "poCopy": { "type": "string" },
+            "contractCopy": { "type": "string" },
+            "supportingDocs": { "type": "string" },
+            "remarksDoc": { "type": "string" }
+          }
+        }
+      },
+      "required": ["billId", "vendorId", "billTypeId", "billDate", "totalPayableAmount"]
     }
   },
   "auth": {
@@ -251,8 +337,9 @@
     "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." },
     "/vendorCategories/{vendorCategoryId}": { "schema": { "$ref": "#/entities/VendorCategory" }, "description": "Stores vendor categories for the BillFlow module." },
     "/vendorNatureOfBusiness/{vendorNatureOfBusinessId}": { "schema": { "$ref": "#/entities/VendorNatureOfBusiness" }, "description": "Stores the nature of business for vendors." },
-    "/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" }, "description": "Stores vendor profiles for the BillFlow module." }
+    "/vendors/{vendorId}": { "schema": { "$ref": "#/entities/Vendor" }, "description": "Stores vendor profiles for the BillFlow module." },
+    "/billTypes/{billTypeId}": { "schema": { "$ref": "#/entities/BillType" }, "description": "Stores master list of bill types." },
+    "/billCategories/{billCategoryId}": { "schema": { "$ref": "#/entities/BillCategory" }, "description": "Stores master list of bill categories." },
+    "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." }
   }
 }
-
-    
