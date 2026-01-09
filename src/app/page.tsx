@@ -11,7 +11,7 @@ export default function Home() {
 
   if (isUserLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <p>Loading...</p>
       </div>
     );
@@ -24,7 +24,7 @@ export default function Home() {
   // The AppWrapper now intelligently decides whether to show the dashboard
   // or a specific module page based on the URL path.
   return (
-    <div className="flex min-h-screen w-full flex-col main-bg">
+    <div className="flex min-h-screen w-full flex-col">
         <main className="flex-1">
           <AppWrapper />
         </main>
