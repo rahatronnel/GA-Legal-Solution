@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, ChevronsUpDown, AlertCircle, Info } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, ChevronsUpDown, AlertCircle, Info, X, Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -33,7 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandInput, CommandGroup, CommandList, CommandItem } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+
 
 export type AlternativeApprover = {
   id: string; // Employee ID
@@ -355,3 +355,5 @@ export function ApprovalConfigTable() {
     </TooltipProvider>
   );
 }
+
+    
