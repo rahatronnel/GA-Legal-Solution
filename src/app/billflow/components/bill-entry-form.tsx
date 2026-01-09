@@ -196,8 +196,9 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
         const newBillData = { ...billData, [id]: value };
         if (id === 'vendorId') {
             const selectedVendor = vendors.find(v => v.id === value);
-            if (selectedVendor && selectedVendor.vendorCategoryId) {
-                newBillData.billCategoryId = selectedVendor.vendorCategoryId;
+            if (selectedVendor) {
+                newBillData.billCategoryId = selectedVendor.vendorCategoryId || '';
+                newBillData.billSubCategory = selectedVendor.vendorSubCategory || '';
             }
         }
         setBillData(newBillData);
