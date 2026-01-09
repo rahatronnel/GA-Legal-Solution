@@ -20,9 +20,9 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 
 import { doc } from 'firebase/firestore';
 import type { Employee } from '../user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { User, Mail, Phone, Building, Briefcase } from 'lucide-react';
-import { Separator } from '../ui/separator';
+import { Separator } from '@/components/ui/separator';
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <div className="flex items-start gap-3">
