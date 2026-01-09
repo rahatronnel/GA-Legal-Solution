@@ -128,6 +128,16 @@
         "code": { "type": "string", "description": "The unique code for the category." }
       },
       "required": ["name", "code"]
+    },
+    "VendorNatureOfBusiness": {
+      "title": "Vendor Nature of Business",
+      "type": "object",
+      "description": "Defines the nature of a vendor's business.",
+      "properties": {
+        "name": { "type": "string", "description": "The nature of business." },
+        "code": { "type": "string", "description": "The unique code for the nature of business." }
+      },
+      "required": ["name", "code"]
     }
   },
   "auth": {
@@ -154,6 +164,7 @@
     "/accidentTypes/{accidentTypeId}": { "schema": { "$ref": "#/entities/AccidentType" }, "description": "Stores types of accidents." },
     "/severityLevels/{severityLevelId}": { "schema": { "$ref": "#/entities/SeverityLevel" }, "description": "Stores severity levels for accidents." },
     "/faultStatuses/{faultStatusId}": { "schema": { "$ref": "#/entities/FaultStatus" }, "description": "Stores fault statuses of accidents." },
-    "/vendorCategories/{vendorCategoryId}": { "schema": { "$ref": "#/entities/VendorCategory" }, "description": "Stores vendor categories for the BillFlow module." }
+    "/vendorCategories/{vendorCategoryId}": { "schema": { "$ref": "#/entities/VendorCategory" }, "description": "Stores vendor categories for the BillFlow module." },
+    "/vendorNatureOfBusiness/{vendorNatureOfBusinessId}": { "schema": { "$ref": "#/entities/VendorNatureOfBusiness" }, "description": "Stores the nature of business for vendors." }
   }
 }

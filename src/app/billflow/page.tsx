@@ -3,6 +3,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
+import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
 
 export default function BillFlowPage() {
 
@@ -24,6 +25,16 @@ export default function BillFlowPage() {
           </CardHeader>
           <CardContent>
               <VendorCategoryTable />
+          </CardContent>
+      </Card>
+
+       <Card>
+          <CardHeader>
+              <CardTitle>Vendor Nature of Business</CardTitle>
+              <CardDescription>Manage the nature of business for your vendors.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <VendorNatureOfBusinessTable />
           </CardContent>
       </Card>
     </div>
