@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
 import { useAuth } from '@/firebase';
 import {
@@ -76,6 +76,12 @@ const ModuleDashboard = () => {
                     />
                 </div>
                 <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/user-management"><Users /></Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/settings"><Settings /></Link>
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -157,8 +163,7 @@ export function AppWrapper() {
     const Component = moduleComponents[currentKey];
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <Sidebar />
-        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+        <div className="flex flex-col sm:gap-4 sm:py-4">
           <Header />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <Component />
