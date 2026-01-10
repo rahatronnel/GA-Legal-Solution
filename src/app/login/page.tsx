@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { sendPasswordResetEmail, useAuth } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { useState } from 'react';
 import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
