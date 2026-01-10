@@ -28,7 +28,7 @@ service cloud.firestore {
     // Singleton & Public Master Data
     // These collections contain general configuration or master list data.
     // -------------------------------------------------------------------------
-    match /settings/{docId}      { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /settings/{docId}      { allow read: if true; allow write: if isAdmin(); }
     
     match /vehicleTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /vehicleBrands/{docId}  { allow read: if true; allow write: if isAdmin(); }
