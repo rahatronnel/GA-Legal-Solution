@@ -111,19 +111,8 @@ function LoginPageContent() {
 
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center relative bg-background">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop"
-          alt="Background"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-20"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-      </div>
-
-      <Card className="w-full max-w-sm z-10 bg-background/80 backdrop-blur-sm">
+    <div className="w-full min-h-screen flex items-center justify-center bg-background">
+      <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
             {isLoadingSettings ? <Skeleton className="h-12 w-12 rounded-full mx-auto" /> : (
                 orgSettings?.logo ? (
