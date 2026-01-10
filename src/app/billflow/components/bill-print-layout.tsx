@@ -50,27 +50,52 @@ const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, 
                 employee,
                 designation,
             };
-        })
-        .slice(0, 5); // Max 5 approvers
+        });
+
+    if (!approvers || approvers.length === 0 || pageNumber !== 1) {
+        return (
+            <div className="absolute bottom-4 left-0 right-0 px-4">
+                <div className="text-center text-xs text-gray-500 pt-2">Page {pageNumber}</div>
+            </div>
+        );
+    }
+    
+    const approverRows = [];
+    for (let i = 0; i < approvers.length; i += 5) {
+        approverRows.push(approvers.slice(i, i + 5));
+    }
+
+    const formatDateTime = (timestamp: string) => {
+        try {
+            return new Date(timestamp).toLocaleString();
+        } catch {
+            return 'N/A';
+        }
+    }
+
 
     return (
         <div className="absolute bottom-4 left-0 right-0 px-4">
-            {approvers && approvers.length > 0 && pageNumber === 1 && (
-                <div className="flex justify-between items-end border-t-2 border-gray-300 pt-4 mt-6">
-                    {approvers.map((approver, index) => (
-                        <div key={index} className="text-center text-xs w-1/5 px-1">
-                            {approver.employee?.signature ? (
-                                <Image src={approver.employee.signature} alt="Signature" width={100} height={30} className="object-contain mx-auto h-8" />
-                            ) : (
-                                <div className="h-8"></div>
-                            )}
-                            <p className="border-t border-gray-500 mt-1 pt-1 font-semibold truncate">{approver.employee?.fullName}</p>
-                            <p className="truncate">{approver.designation?.name}</p>
-                            <p className="text-gray-500">{new Date(approver.timestamp).toLocaleDateString()}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <div className="space-y-8 border-t-2 border-gray-300 pt-4 mt-6">
+                {approverRows.map((row, rowIndex) => (
+                    <div key={rowIndex} className="flex justify-around items-end">
+                        {row.map((approver, index) => (
+                            <div key={index} className="text-center text-xs w-1/5 px-1">
+                                {approver.employee?.signature ? (
+                                    <Image src={approver.employee.signature} alt="Signature" width={100} height={30} className="object-contain mx-auto h-8" />
+                                ) : (
+                                    <div className="h-8"></div>
+                                )}
+                                <p className="border-t border-gray-500 mt-1 pt-1 font-semibold truncate">{approver.employee?.fullName}</p>
+                                <p className="truncate">{approver.designation?.name}</p>
+                                <p className="text-gray-500 text-[10px]">{formatDateTime(approver.timestamp)}</p>
+                            </div>
+                        ))}
+                        {/* Fill empty slots to maintain layout */}
+                        {Array(5 - row.length).fill(0).map((_, i) => <div key={`fill-${i}`} className="w-1/5 px-1"></div>)}
+                    </div>
+                ))}
+            </div>
             <div className="text-center text-xs text-gray-500 pt-2">Page {pageNumber}</div>
         </div>
     );
@@ -79,7 +104,7 @@ const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, 
 const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, bill?: Bill, employees?: Employee[], designations?: Designation[], className?: string}> = ({children, pageNumber, orgSettings, bill, employees, designations, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6 pb-24">
+        <div className="flex-grow pt-6 pb-48">
             {children}
         </div>
         <PrintFooter pageNumber={pageNumber} bill={bill} employees={employees} designations={designations} />
