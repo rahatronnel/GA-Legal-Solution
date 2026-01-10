@@ -28,6 +28,7 @@ import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Building } from 'lucide-react';
 
 function LoginPageContent() {
   const auth = useAuth();
@@ -111,27 +112,34 @@ function LoginPageContent() {
 
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4 relative bg-background">
-        <Image
-          src="https://picsum.photos/seed/loginpage/1920/1080"
-          alt="Modern office background"
-          data-ai-hint="modern office"
-          fill
-          className="object-cover -z-10 brightness-50"
-        />
-        <Card className="w-full max-w-sm backdrop-blur-sm bg-background/70">
+    <div className="w-full min-h-screen flex items-stretch">
+      <div className="hidden lg:flex lg:w-1/2 bg-gray-900 text-white p-12 flex-col justify-between">
+        <div className="flex items-center gap-3">
+          {isLoadingSettings ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+          ) : (
+            orgSettings?.logo ? (
+              <Image src={orgSettings.logo} alt="Organization Logo" width={40} height={40} className="rounded-full"/>
+            ) : (
+              <Building className="h-8 w-8" />
+            )
+          )}
+           <span className="text-xl font-bold">{isLoadingSettings ? <Skeleton className="h-6 w-40" /> : (orgSettings?.name || 'Welcome')}</span>
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Access Your Digital Workspace</h1>
+          <p className="text-gray-400 mt-4">
+            The comprehensive solution for managing your organization's general affairs, legal matters, and vehicle fleet with efficiency and precision.
+          </p>
+        </div>
+        <p className="text-xs text-gray-500">© {new Date().getFullYear()} {orgSettings?.name || 'Your Company'}. All Rights Reserved.</p>
+      </div>
+
+      <div className="w-full lg:w-1/2 bg-background flex items-center justify-center p-6">
+        <Card className="w-full max-w-sm border-0 shadow-none lg:border lg:shadow-sm">
           <CardHeader className="text-center">
-             {isLoadingSettings ? (
-                <Skeleton className="h-16 w-16 rounded-full mx-auto mb-4" />
-             ) : (
-                orgSettings?.logo && <Image src={orgSettings.logo} alt="Organization Logo" width={64} height={64} className="mx-auto mb-4 rounded-full"/>
-             )}
-            <CardTitle className="text-3xl font-bold">
-                {isLoadingSettings ? <Skeleton className="h-8 w-48 mx-auto" /> : (orgSettings?.name || 'Welcome')}
-            </CardTitle>
-            <CardDescription>
-                Enter your credentials to access the system
-            </CardDescription>
+            <CardTitle className="text-3xl font-bold">Login</CardTitle>
+            <CardDescription>Enter your credentials to access your account.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
@@ -158,7 +166,7 @@ function LoginPageContent() {
                     onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
                 />
             </div>
-            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+             <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                 <DialogTrigger asChild>
                      <Button variant="link" className="px-0 justify-start text-sm">Forgot your password?</Button>
                 </DialogTrigger>
@@ -195,6 +203,7 @@ function LoginPageContent() {
             </Button>
           </CardContent>
         </Card>
+      </div>
     </div>
   )
 }
