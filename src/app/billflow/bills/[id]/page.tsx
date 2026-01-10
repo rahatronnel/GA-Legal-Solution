@@ -159,9 +159,6 @@ function BillProfileContent() {
         try { return new Date(dateStr).toLocaleString(); } catch { return 'N/A'; }
     }
     
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-    const isCurrentUserApprover = user?.uid === bill.currentApproverId;
-
     return (
         <div className="space-y-6">
             <Card>
@@ -172,7 +169,7 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{bill.approvalStatus || 'Pending'}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
+                             {bill.approvalStatus === 'Pending' && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
@@ -319,5 +316,7 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
+    
 
     
