@@ -1,76 +1,16 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // -------------------------------------------------------------------------
-    // Helper Functions
-    // -------------------------------------------------------------------------
+    // Helper function to check if a user is signed in.
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      // Check if the user is authenticated and if their employee document has the 'Admin' role.
-      return isAuthenticated() && get(/databases/$(database)/documents/employees/$(request.auth.uid)).data.role == 'Admin';
-    }
-
-    // -------------------------------------------------------------------------
-    // Default Security Rule: Deny all access by default for security.
-    // -------------------------------------------------------------------------
+    // Grant full read and write access to any authenticated user for all collections.
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAuthenticated();
     }
-
-    // -------------------------------------------------------------------------
-    // Public Master Data: Readable by anyone to prevent loading errors. Writable only by Admins.
-    // -------------------------------------------------------------------------
-    match /settings/{docId}                 { allow read: if true; allow write: if isAdmin(); }
-    match /vehicleTypes/{docId}             { allow read: if true; allow write: if isAdmin(); }
-    match /vehicleBrands/{docId}            { allow read: if true; allow write: if isAdmin(); }
-    match /locations/{docId}                { allow read: if true; allow write: if isAdmin(); }
-    match /tripPurposes/{docId}             { allow read: if true; allow write: if isAdmin(); }
-    match /expenseTypes/{docId}             { allow read: if true; allow write: if isAdmin(); }
-    match /maintenanceTypes/{docId}         { allow read: if true; allow write: if isAdmin(); }
-    match /maintenanceExpenseTypes/{docId}  { allow read: if true; allow write: if isAdmin(); }
-    match /parts/{docId}                    { allow read: if true; allow write: if isAdmin(); }
-    match /serviceCenters/{docId}           { allow read: if true; allow write: if isAdmin(); }
-    match /accidentTypes/{docId}            { allow read: if true; allow write: if isAdmin(); }
-    match /severityLevels/{docId}           { allow read: if true; allow write: if isAdmin(); }
-    match /faultStatuses/{docId}            { allow read: if true; allow write: if isAdmin(); }
-    match /vendorCategories/{docId}         { allow read: if true; allow write: if isAdmin(); }
-    match /vendorNatureOfBusiness/{docId}   { allow read: if true; allow write: if isAdmin(); }
-    match /billTypes/{docId}                { allow read: if true; allow write: if isAdmin(); }
-    match /billCategories/{docId}           { allow read: if true; allow write: if isAdmin(); }
-    match /billItemCategories/{docId}       { allow read: if true; allow write: if isAdmin(); }
-    match /billItemMasters/{docId}          { allow read: if true; allow write: if isAdmin(); }
-
-    // -------------------------------------------------------------------------
-    // Authenticated Master Data: Readable by any signed-in user, writable by Admins.
-    // -------------------------------------------------------------------------
-    match /sections/{docId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
-    match /designations/{docId}   { allow read: if isAuthenticated(); allow write: if isAdmin(); }
-    match /routes/{routeId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
-    
-    // Approval rules are sensitive and should only be managed by Admins.
-    match /approvalRules/{docId}  { allow read, write: if isAdmin(); }
-    
-    // -------------------------------------------------------------------------
-    // Operational Data: Requires user to be logged in for any action.
-    // -------------------------------------------------------------------------
-    match /employees/{employeeId} {
-      // Any authenticated user can read employee info (for dropdowns, etc.)
-      allow read: if isAuthenticated();
-      // Only admins can create or modify employee records.
-      allow write: if isAdmin();
-    }
-
-    match /vehicles/{docId} { allow read, write: if isAuthenticated(); }
-    match /drivers/{docId} { allow read, write: if isAuthenticated(); }
-    match /trips/{docId} { allow read, write: if isAuthenticated(); }
-    match /maintenanceRecords/{docId} { allow read, write: if isAuthenticated(); }
-    match /accidents/{docId} { allow read, write: if isAuthenticated(); }
-    match /vendors/{docId} { allow read, write: if isAuthenticated(); }
-    match /bills/{docId} { allow read, write: if isAuthenticated(); }
   }
 }
