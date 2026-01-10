@@ -57,7 +57,10 @@ service cloud.firestore {
     }
     match /billTypes/{docId}      { allow write: if isAdmin(); }
     match /billCategories/{docId} { allow write: if isAdmin(); }
-    match /billItemCategories/{docId} { allow write: if isAdmin(); }
+    match /billItemCategories/{docId} { 
+      allow read: if true;
+      allow write: if isAdmin(); 
+    }
     match /billItemMasters/{docId} { allow write: if isAdmin(); }
     match /approvalRules/{docId}  { allow write: if isAdmin(); }
     match /sections/{docId}       { allow write: if isAdmin(); }
