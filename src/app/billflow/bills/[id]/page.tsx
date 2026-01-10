@@ -277,14 +277,20 @@ function BillProfileContent() {
                                                         {status === 'upcoming' && <MoreHorizontal className="h-6 w-6 text-muted-foreground" />}
                                                         {status === 'rejected' && <X className="h-6 w-6 text-destructive" />}
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <p className="font-semibold">{step.stepName}</p>
-                                                        <p className="text-sm">{approver?.fullName || 'N/A'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
-                                                        {historyEntry && (
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {historyEntry.status} on {formatDateTime(historyEntry.timestamp)}
-                                                            </p>
-                                                        )}
+                                                    <div className="flex-1 flex gap-4 items-center">
+                                                        <Avatar className="h-10 w-10 border">
+                                                            <AvatarImage src={approver?.profilePicture} alt={approver?.fullName} />
+                                                            <AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-semibold">{step.stepName}</p>
+                                                            <p className="text-sm">{approver?.fullName || 'N/A'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
+                                                            {historyEntry && (
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {historyEntry.status} on {formatDateTime(historyEntry.timestamp)}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </li>
                                             );
