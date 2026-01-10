@@ -15,6 +15,11 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { imageToDataUrl } from '@/lib/utils';
 
+type ApprovalStep = {
+    stepName: string;
+    approverId: string;
+    statusName: string;
+};
 
 export type OrganizationSettings = {
   name: string;
@@ -28,10 +33,9 @@ export type OrganizationSettings = {
   logo: string; // Stored as data URL
   approvalFlow?: {
       effectiveDate: string;
-      steps: {
-          stepName: string;
-          approverId: string;
-      }[];
+      defaultPendingStatusName: string;
+      rejectedStatusName: string;
+      steps: ApprovalStep[];
   }
 };
 

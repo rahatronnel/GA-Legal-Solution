@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from '@/components/ui/checkbox';
 import type { OrganizationSettings } from '@/app/settings/page';
+import { getBillStatusText } from '../lib/status-helper';
 
 
 export function BillTable() {
@@ -172,12 +173,6 @@ export function BillTable() {
     setSelectedRows([]);
 };
 
-  const getStatusText = (status: number) => {
-    if (status === 1) return 'Approved';
-    if (status === 0) return 'Rejected';
-    return 'Pending';
-  }
-
   const getStatusVariant = (status: number) => {
     if (status === 1) return 'default';
     if (status === 0) return 'destructive';
@@ -272,7 +267,7 @@ export function BillTable() {
                                 <TableCell>{bill.billDate}</TableCell>
                                 <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                 <TableCell>
-                                    <Badge variant={getStatusVariant(bill.approvalStatus)}>{getStatusText(bill.approvalStatus)}</Badge>
+                                    <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, orgSettings?.approvalFlow)}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
@@ -319,3 +314,4 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+

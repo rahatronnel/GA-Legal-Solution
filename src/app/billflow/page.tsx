@@ -27,18 +27,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { defaultStepAndStatusNames } from './lib/status-helper';
+import { Input } from '@/components/ui/input';
 
-const approvalStepNames: { [key: number]: string[] } = {
-    1: ['Approver'],
-    2: ['Initiator', 'Final Approver'],
-    3: ['Initiator', 'Reviewer', 'Final Approver'],
-    4: ['Initiator', 'Validator', 'Reviewer', 'Final Approver'],
-    5: ['Initiator', 'Validator', 'Reviewer', 'Compliance Officer', 'Final Approver'],
-    6: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Final Approver'],
-    7: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Final Approver'],
-    8: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Final Approver'],
-    9: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Senior Reviewer', 'Final Approver'],
-    10: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Senior Reviewer', 'Executive Approver', 'Final Approver'],
+type ApprovalStep = {
+    stepName: string;
+    approverId: string;
+    statusName: string;
 };
 
 function ApprovalSettingsTab() {
@@ -52,8 +47,11 @@ function ApprovalSettingsTab() {
     const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
 
     const [numberOfSteps, setNumberOfSteps] = useState(1);
-    const [steps, setSteps] = useState<{stepName: string; approverId: string}[]>([]);
+    const [steps, setSteps] = useState<ApprovalStep[]>([]);
     const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(new Date());
+    const [rejectedStatusName, setRejectedStatusName] = useState('Rejected');
+    const [defaultPendingStatusName, setDefaultPendingStatusName] = useState('Pending');
+
 
     useEffect(() => {
         if (orgSettings?.approvalFlow) {
@@ -61,28 +59,49 @@ function ApprovalSettingsTab() {
             setNumberOfSteps(flow.steps.length);
             setSteps(flow.steps);
             setEffectiveDate(flow.effectiveDate ? new Date(flow.effectiveDate) : new Date());
+            setRejectedStatusName(flow.rejectedStatusName || 'Rejected');
+            setDefaultPendingStatusName(flow.defaultPendingStatusName || 'Pending');
         } else {
-            // Initialize with a default of 1 step
-            setNumberOfSteps(1);
-            setSteps([{ stepName: 'Approver', approverId: '' }]);
+            const defaultFlow = defaultStepAndStatusNames[3] || { steps: [], defaultPending: '', rejected: ''};
+            setNumberOfSteps(3);
+            setSteps(defaultFlow.steps.map(s => ({...s, approverId: ''})));
+            setDefaultPendingStatusName(defaultFlow.defaultPending);
+            setRejectedStatusName(defaultFlow.rejected);
             setEffectiveDate(new Date());
         }
     }, [orgSettings]);
 
     const handleNumberOfStepsChange = (value: string) => {
         const num = parseInt(value, 10);
-        setNumberOfSteps(num);
-        const newStepNames = approvalStepNames[num] || [];
-        const newSteps = newStepNames.map(name => ({
-            stepName: name,
-            approverId: '',
-        }));
-        setSteps(newSteps);
+        if (num > 0 && num <= 10) {
+            setNumberOfSteps(num);
+            const newFlowConfig = defaultStepAndStatusNames[num];
+            const newSteps = newFlowConfig.steps.map(s => ({
+                stepName: s.stepName,
+                statusName: s.statusName,
+                approverId: '', // Reset approver on change
+            }));
+            setSteps(newSteps);
+            setDefaultPendingStatusName(newFlowConfig.defaultPending);
+            setRejectedStatusName(newFlowConfig.rejected);
+        }
     };
 
     const handleApproverChange = (index: number, employeeId: string) => {
         const newSteps = [...steps];
         newSteps[index].approverId = employeeId;
+        setSteps(newSteps);
+    };
+    
+    const handleStepNameChange = (index: number, newName: string) => {
+        const newSteps = [...steps];
+        newSteps[index].stepName = newName;
+        setSteps(newSteps);
+    };
+
+    const handleStatusNameChange = (index: number, newName: string) => {
+        const newSteps = [...steps];
+        newSteps[index].statusName = newName;
         setSteps(newSteps);
     };
 
@@ -102,6 +121,8 @@ function ApprovalSettingsTab() {
 
         const approvalFlow = {
             effectiveDate: format(effectiveDate, 'yyyy-MM-dd'),
+            defaultPendingStatusName,
+            rejectedStatusName,
             steps: steps,
         };
 
@@ -118,7 +139,7 @@ function ApprovalSettingsTab() {
             <CardHeader>
                 <CardTitle>Bill Approval Flow</CardTitle>
                 <CardDescription>
-                    Define the sequence of employees who must approve bills. Bills will be routed in this order.
+                    Define the sequence of employees and status names for the bill approval process.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -126,9 +147,7 @@ function ApprovalSettingsTab() {
                     <div className="space-y-2">
                         <Label>Number of Approval Steps</Label>
                         <Select value={String(numberOfSteps)} onValueChange={handleNumberOfStepsChange}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                                     <SelectItem key={num} value={String(num)}>{num} Step{num > 1 ? 's' : ''}</SelectItem>
@@ -147,20 +166,31 @@ function ApprovalSettingsTab() {
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={effectiveDate} onSelect={setEffectiveDate} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
+                     <div className="space-y-2">
+                        <Label>Default Pending Status</Label>
+                        <Input value={defaultPendingStatusName} onChange={(e) => setDefaultPendingStatusName(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Rejected Status</Label>
+                        <Input value={rejectedStatusName} onChange={(e) => setRejectedStatusName(e.target.value)} />
+                    </div>
                 </div>
 
                 <div className="space-y-4">
                     {steps.map((step, index) => (
                         <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 border rounded-lg">
-                            <div className="flex items-center font-semibold w-full md:w-48">
-                                <span className="text-lg mr-2">{index + 1}.</span>
-                                <span>{step.stepName}</span>
+                            <div className="flex-grow w-full space-y-2">
+                                <Label>Step {index + 1}: Step Name</Label>
+                                <Input value={step.stepName} onChange={(e) => handleStepNameChange(index, e.target.value)} />
                             </div>
-                            <div className="flex-grow w-full">
+                             <div className="flex-grow w-full space-y-2">
+                                <Label>Step {index + 1}: Status Name</Label>
+                                <Input value={step.statusName} onChange={(e) => handleStatusNameChange(index, e.target.value)} />
+                            </div>
+                            <div className="flex-grow w-full space-y-2">
+                                <Label>Step {index + 1}: Approver</Label>
                                 <Select value={step.approverId} onValueChange={(value) => handleApproverChange(index, value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an employee..." />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Select an employee..." /></SelectTrigger>
                                     <SelectContent>
                                         {(employees || []).map(emp => (
                                             <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>

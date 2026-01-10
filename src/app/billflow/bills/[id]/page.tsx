@@ -36,6 +36,7 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemCategory } from '../../components/bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import type { OrganizationSettings } from '@/app/settings/page';
+import { getBillStatusText } from '../../lib/status-helper';
 
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
@@ -185,10 +186,10 @@ function BillProfileContent() {
     const billCategory = billCategories?.find((bc:any) => bc.id === bill.billCategoryId);
     const entryBy = employees?.find((e:any) => e.id === bill.entryBy);
     
-    const getStatusText = (status: number) => {
-        if (status === 1) return 'Approved';
-        if (status === 0) return 'Rejected';
-        return 'Pending';
+    const getStatusVariant = (status: number) => {
+        if (status === 1) return 'default';
+        if (status === 0) return 'destructive';
+        return 'secondary';
     }
 
     const getItemCategoryName = (id: string) => billItemCategories?.find((c:any) => c.id === id)?.name || 'N/A';
@@ -210,7 +211,7 @@ function BillProfileContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">{bill.billReferenceNumber || bill.billId}</CardTitle>
-                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{getStatusText(bill.approvalStatus)}</Badge></CardDescription>
+                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, orgSettings?.approvalFlow)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                              {canApprove && (
@@ -360,3 +361,4 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
