@@ -324,6 +324,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
-
-    

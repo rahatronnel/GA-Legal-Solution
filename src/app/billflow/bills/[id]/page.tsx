@@ -358,8 +358,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-
-
-
-    
