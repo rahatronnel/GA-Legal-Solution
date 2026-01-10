@@ -162,7 +162,6 @@ export function BillTable() {
                     <TableHead>Bill Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Appr. Status</TableHead>
-                    <TableHead>Approval Actions</TableHead>
                     <TableHead className="w-[140px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -175,8 +174,7 @@ export function BillTable() {
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                          <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
-                         <TableCell><Skeleton className="h-8 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
+                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
@@ -191,30 +189,6 @@ export function BillTable() {
                         <TableCell>
                             <Badge>{bill.approvalStatus || 'Pending'}</Badge>
                         </TableCell>
-                        <TableCell>
-                          {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
-                              <div className="flex gap-2">
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as approved.</AlertDialogDescription></AlertDialogHeader>
-                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                                <AlertDialog>
-                                     <AlertDialogTrigger asChild>
-                                        <Button size="sm" variant="destructive">Reject</Button>
-                                    </AlertDialogTrigger>
-                                     <AlertDialogContent>
-                                      <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as rejected.</AlertDialogDescription></AlertDialogHeader>
-                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            )}
-                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
@@ -227,7 +201,7 @@ export function BillTable() {
                   )})
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                             No bills found. Click "Add Bill" to start.
                         </TableCell>
                     </TableRow>
