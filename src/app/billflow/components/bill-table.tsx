@@ -194,24 +194,24 @@ export function BillTable() {
                         <TableCell>
                           {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
                               <div className="flex gap-2">
-                                <Tooltip><TooltipTrigger asChild>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600"><Check className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
+                                    </AlertDialogTrigger>
                                     <AlertDialogContent>
                                       <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as approved.</AlertDialogDescription></AlertDialogHeader>
                                       <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
-                                  </AlertDialog>
-                                </TooltipTrigger><TooltipContent>Approve Bill</TooltipContent></Tooltip>
-                                 <Tooltip><TooltipTrigger asChild>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><X className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                </AlertDialog>
+                                <AlertDialog>
+                                     <AlertDialogTrigger asChild>
+                                        <Button size="sm" variant="destructive">Reject</Button>
+                                    </AlertDialogTrigger>
                                      <AlertDialogContent>
                                       <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as rejected.</AlertDialogDescription></AlertDialogHeader>
                                       <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
-                                  </AlertDialog>
-                                </TooltipTrigger><TooltipContent>Reject Bill</TooltipContent></Tooltip>
+                                </AlertDialog>
                               </div>
                             )}
                         </TableCell>
