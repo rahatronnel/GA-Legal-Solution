@@ -23,7 +23,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser, recreateUserWithPassword } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -38,7 +38,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
-import { sendPasswordResetEmail } from 'firebase/auth';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -57,8 +56,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState<Partial<Employee> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const isSuperAdmin = superadminUser?.email === 'superadmin@galsolution.com';
 
@@ -100,26 +102,34 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setCurrentEmployee(employee);
     setIsDeleteConfirmOpen(true);
   };
+  
+  const handleSetPassword = (employee: Employee) => {
+      setCurrentEmployee(employee);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setIsSetPasswordOpen(true);
+  }
 
-  const handlePasswordReset = async (email: string) => {
-      if(!auth) {
-        toast({variant: "destructive", title: "Error", description: "Auth service not available."});
-        return;
+  const confirmSetPassword = async () => {
+      if (!auth || !currentEmployee?.email) return;
+      if (newPassword.length < 6) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Password must be at least 6 characters.'});
+          return;
       }
+      if (newPassword !== confirmNewPassword) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.'});
+          return;
+      }
+
       try {
-        await sendPasswordResetEmail(auth, email);
-        toast({
-            title: "Password Reset Email Sent",
-            description: `An email has been sent to ${email} with instructions to reset the password.`,
-        });
+        await recreateUserWithPassword(auth, currentEmployee.email, newPassword);
+        toast({ title: 'Success', description: `Password for ${currentEmployee.fullName} has been set.`});
+        setIsSetPasswordOpen(false);
       } catch (error: any) {
-          toast({
-              variant: "destructive",
-              title: "Failed to Send Email",
-              description: error.message || "An unknown error occurred.",
-          });
+          toast({ variant: 'destructive', title: 'Operation Failed', description: error.message || 'Could not set the new password.'});
       }
   }
+
 
   const confirmDelete = () => {
     if (currentEmployee?.id && employeesRef) {
@@ -300,28 +310,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                         </TooltipTrigger>
                         <TooltipContent>Edit Employee</TooltipContent>
                       </Tooltip>
-                       {isSuperAdmin && (
+                       {isSuperAdmin && employee.email !== 'superadmin@galsolution.com' && (
                          <Tooltip>
-                          <TooltipTrigger asChild>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                 <Button variant="ghost" size="icon" className="h-8 w-8"><KeyRound className="h-4 w-4 text-orange-500" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirm Password Reset</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will send a password reset link to <span className="font-semibold">{employee.email}</span>. The user will be required to set a new password. Are you sure you want to proceed?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handlePasswordReset(employee.email)}>Send Reset Email</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TooltipTrigger>
-                          <TooltipContent>Reset Password</TooltipContent>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetPassword(employee)}><KeyRound className="h-4 w-4 text-orange-500" /></Button></TooltipTrigger>
+                            <TooltipContent>Set Password</TooltipContent>
                         </Tooltip>
                        )}
                        <Tooltip>
@@ -363,6 +355,23 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
         sections={sections || []}
         designations={designations || []}
       />
+      
+      <Dialog open={isSetPasswordOpen} onOpenChange={setIsSetPasswordOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set New Password</DialogTitle>
+                    <DialogDescription>Set a new password for {currentEmployee?.fullName}. This will immediately change their password.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2"><Label htmlFor="new-password">New Password</Label><Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="confirm-new-password">Confirm New Password</Label><Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} /></div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsSetPasswordOpen(false)}>Cancel</Button>
+                    <Button onClick={confirmSetPassword}>Set Password</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>
