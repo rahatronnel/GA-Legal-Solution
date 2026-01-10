@@ -32,7 +32,13 @@ service cloud.firestore {
     match /vehicleBrands/{docId}  { allow write: if isAdmin(); }
     match /locations/{docId}      { allow write: if isAdmin(); }
     match /routes/{docId}         { allow write: if isAdmin(); }
-    match /tripPurposes/{docId}   { allow write: if isAdmin(); }
+    
+    // Allow public read for trip purposes, but only admin writes.
+    match /tripPurposes/{docId}   { 
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /expenseTypes/{docId}   { allow write: if isAdmin(); }
     match /maintenanceTypes/{docId}{ allow write: if isAdmin(); }
     match /maintenanceExpenseTypes/{docId} { allow write: if isAdmin(); }
