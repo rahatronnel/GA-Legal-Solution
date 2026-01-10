@@ -32,33 +32,20 @@ import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
 import LoginPage from './login/page';
 
-const VehicleManagementPage = dynamic(() => import('./vehicle-management/page'));
-const UserManagementPage = dynamic(() => import('./user-management/page'));
-const SettingsPage = dynamic(() => import('./settings/page'));
-const BillFlowPage = dynamic(() => import('./billflow/page'));
-const BillPage = dynamic(() => import('./billflow/bills/[id]/page'));
-const VendorPage = dynamic(() => import('./billflow/vendors/[id]/page'));
-const DriverProfilePage = dynamic(() => import('./vehicle-management/drivers/[id]/page'));
-const VehicleProfilePage = dynamic(() => import('./vehicle-management/vehicles/[id]/page'));
-const TripProfilePage = dynamic(() => import('./vehicle-management/trips/[id]/page'));
-const MaintenanceProfilePage = dynamic(() => import('./vehicle-management/maintenance/[id]/page'));
-const AccidentProfilePage = dynamic(() => import('./vehicle-management/accidents/[id]/page'));
-const EmployeeProfilePage = dynamic(() => import('./user-management/employees/[id]/page'));
-
-
+// Lazy load all page components to prevent their data providers from running before auth is checked.
 const moduleComponents: { [key:string]: React.ComponentType } = {
-    '/vehicle-management': VehicleManagementPage,
-    '/user-management': UserManagementPage,
-    '/settings': SettingsPage,
-    '/billflow': BillFlowPage,
-    '/billflow/bills/[id]': BillPage,
-    '/billflow/vendors/[id]': VendorPage,
-    '/vehicle-management/drivers/[id]': DriverProfilePage,
-    '/vehicle-management/vehicles/[id]': VehicleProfilePage,
-    '/vehicle-management/trips/[id]': TripProfilePage,
-    '/vehicle-management/maintenance/[id]': MaintenanceProfilePage,
-    '/vehicle-management/accidents/[id]': AccidentProfilePage,
-    '/user-management/employees/[id]': EmployeeProfilePage,
+    '/vehicle-management': dynamic(() => import('./vehicle-management/page')),
+    '/user-management': dynamic(() => import('./user-management/page')),
+    '/settings': dynamic(() => import('./settings/page')),
+    '/billflow': dynamic(() => import('./billflow/page')),
+    '/billflow/bills/[id]': dynamic(() => import('./billflow/bills/[id]/page')),
+    '/billflow/vendors/[id]': dynamic(() => import('./billflow/vendors/[id]/page')),
+    '/vehicle-management/drivers/[id]': dynamic(() => import('./vehicle-management/drivers/[id]/page')),
+    '/vehicle-management/vehicles/[id]': dynamic(() => import('./vehicle-management/vehicles/[id]/page')),
+    '/vehicle-management/trips/[id]': dynamic(() => import('./vehicle-management/trips/[id]/page')),
+    '/vehicle-management/maintenance/[id]': dynamic(() => import('./vehicle-management/maintenance/[id]/page')),
+    '/vehicle-management/accidents/[id]': dynamic(() => import('./vehicle-management/accidents/[id]/page')),
+    '/user-management/employees/[id]': dynamic(() => import('./user-management/employees/[id]/page')),
 };
 
 const ModuleDashboard = () => {    
