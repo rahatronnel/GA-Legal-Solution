@@ -143,7 +143,7 @@ function BillProfileContent() {
         };
     
         let approvalStatus = bill.approvalStatus;
-        let nextApproverId = bill.currentApproverId;
+        let nextApproverId = '';
     
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
@@ -201,6 +201,8 @@ function BillProfileContent() {
     const currentUserEmployee = employees?.find(e => e.email === user?.email);
     const isCurrentUserApprover = bill.currentApproverId === currentUserEmployee?.id;
 
+    const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+
     return (
         <div className="space-y-6">
             <Card>
@@ -211,7 +213,7 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{getStatusText(bill.approvalStatus)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover) && (
+                             {canApprove && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
