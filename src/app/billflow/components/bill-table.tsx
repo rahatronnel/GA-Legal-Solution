@@ -12,7 +12,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBillData } from './bill-flow-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from '@/firebase';
@@ -39,6 +39,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import type { OrganizationSettings } from '@/app/settings/page';
 import { getBillStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
+import { isWithinInterval, parseISO } from 'date-fns';
 
 
 export function BillTable() {
@@ -46,7 +50,7 @@ export function BillTable() {
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
   const { user } = useUser();
-  const { bills, vendors, employees, isLoading } = useBillData();
+  const { bills, vendors, employees, billTypes, billCategories, sections, isLoading } = useBillData();
   
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
@@ -56,9 +60,21 @@ export function BillTable() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Bill> | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('all');
+  const [billDateRange, setBillDateRange] = useState<DateRange | undefined>();
+  const [amountFilter, setAmountFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [billTypeFilter, setBillTypeFilter] = useState('all');
+  const [billCategoryFilter, setBillCategoryFilter] = useState('all');
+  const [billingPeriodRange, setBillingPeriodRange] = useState<DateRange | undefined>();
+  const [poFilter, setPoFilter] = useState('');
+  const [woFilter, setWoFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
+
   const currentUserEmployee = useMemo(() => {
     if (!user || !employees) return null;
     return employees.find(e => e.email === user.email);
@@ -69,15 +85,44 @@ export function BillTable() {
   const safeBills = useMemo(() => Array.isArray(bills) ? bills : [], [bills]);
 
   const filteredItems = useMemo(() => {
-    if (!searchTerm) return safeBills;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return safeBills.filter(bill => 
-      (bill.billId?.toLowerCase().includes(lowercasedTerm)) ||
-      (bill.billReferenceNumber?.toLowerCase().includes(lowercasedTerm)) ||
-      (getVendorName(bill.vendorId).toLowerCase().includes(lowercasedTerm))
-    );
-  }, [safeBills, searchTerm, vendors]);
+    return safeBills.filter(bill => {
+        const searchTermMatch = !searchTerm ||
+            (bill.billId?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (bill.billReferenceNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (getVendorName(bill.vendorId).toLowerCase().includes(searchTerm.toLowerCase()));
 
+        const vendorMatch = vendorFilter === 'all' || bill.vendorId === vendorFilter;
+        const statusMatch = statusFilter === 'all' || bill.approvalStatus === parseInt(statusFilter);
+        const typeMatch = billTypeFilter === 'all' || bill.billTypeId === billTypeFilter;
+        const categoryMatch = billCategoryFilter === 'all' || bill.billCategoryId === billCategoryFilter;
+        const departmentMatch = departmentFilter === 'all' || bill.departmentName === departmentFilter;
+        
+        const poMatch = !poFilter || bill.poNumber?.toLowerCase().includes(poFilter.toLowerCase());
+        const woMatch = !woFilter || bill.woNumber?.toLowerCase().includes(woFilter.toLowerCase());
+        
+        const amountMatch = !amountFilter || bill.totalPayableAmount.toString().includes(amountFilter);
+
+        const billDateMatch = !billDateRange?.from || (bill.billDate && isWithinInterval(parseISO(bill.billDate), { start: billDateRange.from, end: billDateRange.to || billDateRange.from }));
+        const billingPeriodMatch = !billingPeriodRange?.from || (bill.billingPeriodFrom && isWithinInterval(parseISO(bill.billingPeriodFrom), { start: billingPeriodRange.from, end: billingPeriodRange.to || billingPeriodRange.from }));
+
+        return searchTermMatch && vendorMatch && statusMatch && typeMatch && categoryMatch && departmentMatch && poMatch && woMatch && amountMatch && billDateMatch && billingPeriodMatch;
+    });
+  }, [safeBills, searchTerm, vendorFilter, statusFilter, billTypeFilter, billCategoryFilter, departmentFilter, poFilter, woFilter, amountFilter, billDateRange, billingPeriodRange, vendors]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setVendorFilter('all');
+    setBillDateRange(undefined);
+    setAmountFilter('');
+    setStatusFilter('all');
+    setBillTypeFilter('all');
+    setBillCategoryFilter('all');
+    setBillingPeriodRange(undefined);
+    setPoFilter('');
+    setWoFilter('');
+    setDepartmentFilter('all');
+  };
+  
   const handleAdd = () => {
     setCurrentItem(null);
     setIsFormOpen(true);
@@ -213,6 +258,24 @@ export function BillTable() {
                 <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Bill</Button>
             </div>
         </div>
+        
+        <div className="p-4 border rounded-lg space-y-4">
+            <div className="flex items-center gap-2 font-semibold"><Filter className="h-4 w-4" /> Filters</div>
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <Select value={vendorFilter} onValueChange={setVendorFilter}><SelectTrigger><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vendors</SelectItem>{(vendors || []).map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent></Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue placeholder="Filter by Status..." /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="2">Pending</SelectItem><SelectItem value="1">Completed</SelectItem><SelectItem value="0">Rejected</SelectItem></SelectContent></Select>
+                <Select value={billTypeFilter} onValueChange={setBillTypeFilter}><SelectTrigger><SelectValue placeholder="Filter by Bill Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Bill Types</SelectItem>{(billTypes || []).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={billCategoryFilter} onValueChange={setBillCategoryFilter}><SelectTrigger><SelectValue placeholder="Filter by Category..." /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{(billCategories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={departmentFilter} onValueChange={setDepartmentFilter}><SelectTrigger><SelectValue placeholder="Filter by Department..." /></SelectTrigger><SelectContent><SelectItem value="all">All Departments</SelectItem>{(sections || []).map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <Input placeholder="PO Number..." value={poFilter} onChange={(e) => setPoFilter(e.target.value)} />
+                <Input placeholder="WO Number..." value={woFilter} onChange={(e) => setWoFilter(e.target.value)} />
+                <Input placeholder="Amount..." value={amountFilter} onChange={(e) => setAmountFilter(e.target.value)} type="number" />
+                <DateRangePicker date={billDateRange} onDateChange={setBillDateRange} />
+                <DateRangePicker date={billingPeriodRange} onDateChange={setBillingPeriodRange} />
+             </div>
+             <Button variant="ghost" onClick={clearFilters} size="sm"><XCircle className="mr-2 h-4 w-4" /> Clear All Filters</Button>
+        </div>
+
          <div className="border rounded-lg">
             <Table>
                 <TableHeader>
@@ -319,3 +382,5 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    
