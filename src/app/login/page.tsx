@@ -111,81 +111,106 @@ function LoginPageContent() {
 
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-            {isLoadingSettings ? <Skeleton className="h-12 w-12 rounded-full mx-auto" /> : (
-                orgSettings?.logo ? (
-                    <Image src={orgSettings.logo} alt="Logo" width={48} height={48} className="mx-auto rounded-full"/>
-                ) : (
-                    <div className="h-12 w-12 rounded-full bg-muted mx-auto"/>
-                )
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
+      <div className="flex items-center justify-center py-12 bg-secondary">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+             {isLoadingSettings ? (
+              <>
+                <Skeleton className="h-8 w-48 mx-auto mb-2" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
+                <p className="text-balance text-muted-foreground">
+                  Enter your credentials to access the system
+                </p>
+              </>
             )}
-            <CardTitle className="text-3xl font-bold pt-2">{isLoadingSettings ? <Skeleton className="h-8 w-48 mx-auto"/> : (orgSettings?.name || "Welcome")}</CardTitle>
-            <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
+          </div>
+          <div className="grid gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                />
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
             <div className="grid gap-2">
+              <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
-                />
-            </div>
-             <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-                <DialogTrigger asChild>
-                     <Button variant="link" className="px-0 justify-start text-sm">Forgot your password?</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Forgot Password</DialogTitle>
-                        <DialogDescription>
-                            Enter your email address below. If an account exists, we'll send you a link to reset your password.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="reset-email">Email Address</Label>
-                            <Input
-                                id="reset-email"
-                                type="email"
-                                placeholder="m@example.com"
-                                value={resetEmail}
-                                onChange={(e) => setResetEmail(e.target.value)}
-                                disabled={isResetting}
-                            />
+                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                    <DialogTrigger asChild>
+                         <Button variant="link" className="ml-auto inline-block text-sm underline">Forgot your password?</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Forgot Password</DialogTitle>
+                            <DialogDescription>
+                                Enter your email address below. If an account exists, we'll send you a link to reset your password.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="reset-email">Email Address</Label>
+                                <Input
+                                    id="reset-email"
+                                    type="email"
+                                    placeholder="m@example.com"
+                                    value={resetEmail}
+                                    onChange={(e) => setResetEmail(e.target.value)}
+                                    disabled={isResetting}
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
-                        <Button onClick={handlePasswordReset} disabled={isResetting}>
-                            {isResetting ? 'Sending...' : 'Send Reset Link'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
+                            <Button onClick={handlePasswordReset} disabled={isResetting}>
+                                {isResetting ? 'Sending...' : 'Send Reset Link'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+              </div>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
+              />
+            </div>
             <Button onClick={handleSignIn} disabled={isLoading} className="w-full">
-            {isLoading ? 'Signing in...' : 'Login'}
+              {isLoading ? 'Signing in...' : 'Login'}
             </Button>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:flex items-center justify-center relative overflow-hidden">
+        <Image
+          src="https://picsum.photos/seed/login/1920/1080"
+          alt="Office Background"
+          data-ai-hint="office building"
+          fill
+          className="object-cover opacity-20"
+        />
+         <div className="z-10 text-center space-y-4 px-8">
+          <h2 className="text-4xl font-bold text-foreground">
+             {orgSettings?.name || 'GA & Legal Solution'}
+          </h2>
+          <p className="text-lg text-muted-foreground">
+             {orgSettings?.slogan || 'Your Trusted Partner in Excellence'}
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

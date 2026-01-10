@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { ModuleHeader } from '@/app/components/module-header';
+import { BillFlowDashboard } from './components/dashboard';
 
 type ApprovalStep = {
     stepName: string;
@@ -200,13 +201,27 @@ function BillFlowContent() {
     return (
       <div className="space-y-6">
         <ModuleHeader />
-        <Tabs defaultValue="bills" className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>
               {isSuperAdmin && <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>}
           </TabsList>
+          <TabsContent value="dashboard">
+             <BillDataProvider>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>BillFlow Dashboard</CardTitle>
+                        <CardDescription>A quick overview of your billing activities.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <BillFlowDashboard />
+                    </CardContent>
+                </Card>
+            </BillDataProvider>
+          </TabsContent>
           <TabsContent value="bills">
             <BillDataProvider>
                 <Card>
