@@ -13,6 +13,7 @@ import {
 import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useUser } from '@/firebase';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -59,15 +60,16 @@ export function useCollection<T = any>(
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
 
+  const { isUserLoading } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
+    // SECURITY: Do not attempt to fetch data if there's no authenticated user OR if auth state is still loading.
     // This prevents "Missing or insufficient permissions" errors on initial load.
     const auth = getAuth();
-    if (!auth.currentUser) {
+    if (isUserLoading || !auth.currentUser) {
         setIsLoading(true); // Remain in loading state until auth is resolved
         setData(null);
         return;
@@ -119,7 +121,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]);
+  }, [memoizedTargetRefOrQuery, isUserLoading]);
 
   return { data, isLoading, error };
 }
