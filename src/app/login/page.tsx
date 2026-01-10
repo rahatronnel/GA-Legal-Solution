@@ -28,7 +28,6 @@ import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Building } from 'lucide-react';
 
 function LoginPageContent() {
   const auth = useAuth();
@@ -112,47 +111,42 @@ function LoginPageContent() {
 
 
   return (
-    <div className="w-full min-h-screen flex items-stretch">
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-900 text-white p-12 flex-col justify-between">
-        <div className="flex items-center gap-3">
-          {isLoadingSettings ? (
-            <Skeleton className="h-10 w-10 rounded-full" />
-          ) : (
-            orgSettings?.logo ? (
-              <Image src={orgSettings.logo} alt="Organization Logo" width={40} height={40} className="rounded-full"/>
-            ) : (
-              <Building className="h-8 w-8" />
-            )
-          )}
-           <span className="text-xl font-bold">{isLoadingSettings ? <Skeleton className="h-6 w-40" /> : (orgSettings?.name || 'Welcome')}</span>
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight">Access Your Digital Workspace</h1>
-          <p className="text-gray-400 mt-4">
-            The comprehensive solution for managing your organization's general affairs, legal matters, and vehicle fleet with efficiency and precision.
-          </p>
-        </div>
-        <p className="text-xs text-gray-500">© {new Date().getFullYear()} {orgSettings?.name || 'Your Company'}. All Rights Reserved.</p>
+    <div className="w-full min-h-screen flex items-center justify-center relative bg-background">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop"
+          alt="Background"
+          layout="fill"
+          objectFit="cover"
+          className="opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
       </div>
 
-      <div className="w-full lg:w-1/2 bg-background flex items-center justify-center p-6">
-        <Card className="w-full max-w-sm border-0 shadow-none lg:border lg:shadow-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">Login</CardTitle>
-            <CardDescription>Enter your credentials to access your account.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
+      <Card className="w-full max-w-sm z-10 bg-background/80 backdrop-blur-sm">
+        <CardHeader className="text-center">
+            {isLoadingSettings ? <Skeleton className="h-12 w-12 rounded-full mx-auto" /> : (
+                orgSettings?.logo ? (
+                    <Image src={orgSettings.logo} alt="Logo" width={48} height={48} className="mx-auto rounded-full"/>
+                ) : (
+                    <div className="h-12 w-12 rounded-full bg-muted mx-auto"/>
+                )
+            )}
+            <CardTitle className="text-3xl font-bold pt-2">{isLoadingSettings ? <Skeleton className="h-8 w-48 mx-auto"/> : (orgSettings?.name || "Welcome")}</CardTitle>
+            <CardDescription>Enter your credentials to access your account</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
+                <Label htmlFor="email">Email</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                />
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
@@ -199,11 +193,10 @@ function LoginPageContent() {
                 </DialogContent>
             </Dialog>
             <Button onClick={handleSignIn} disabled={isLoading} className="w-full">
-              {isLoading ? 'Signing in...' : 'Login'}
+            {isLoading ? 'Signing in...' : 'Login'}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
