@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 export function BillTable() {
@@ -51,6 +52,7 @@ export function BillTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Bill> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   
   const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
 
@@ -65,6 +67,24 @@ export function BillTable() {
       (getVendorName(bill.vendorId).toLowerCase().includes(lowercasedTerm))
     );
   }, [safeBills, searchTerm, vendors]);
+  
+  const pendingBills = useMemo(() => filteredItems.filter(b => b.approvalStatus === 'Pending'), [filteredItems]);
+  
+  const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+          setSelectedRowIds(pendingBills.map(b => b.id));
+      } else {
+          setSelectedRowIds([]);
+      }
+  };
+
+  const handleRowSelect = (billId: string, checked: boolean) => {
+      if (checked) {
+          setSelectedRowIds(prev => [...prev, billId]);
+      } else {
+          setSelectedRowIds(prev => prev.filter(id => id !== billId));
+      }
+  };
 
   const handleAdd = () => {
     setCurrentItem(null);
@@ -110,30 +130,32 @@ export function BillTable() {
     }
   };
 
-  const handleApproval = (bill: Bill, status: 'Approved' | 'Rejected') => {
-      if (!firestore || !user) return;
-      
-      const billRef = doc(firestore, 'bills', bill.id);
-      
-      const newHistoryEntry = {
-        approverId: user.uid,
-        status,
-        timestamp: new Date().toISOString(),
-        remarks: `Manually ${status.toLowerCase()} from bill list`,
-        level: bill.approvalHistory?.length || 0,
-      };
-      
-      const updatedData = {
-          approvalStatus: status,
-          approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
-          currentApproverId: '' // Clear approver once action is taken
-      };
+  const handleBulkApproval = (status: 'Approved' | 'Rejected') => {
+      if (!firestore || !user || selectedRowIds.length === 0) return;
 
-      setDocumentNonBlocking(billRef, updatedData, { merge: true });
-      toast({ title: 'Success', description: `Bill has been ${status.toLowerCase()}.` });
+      selectedRowIds.forEach(billId => {
+          const billToUpdate = bills.find(b => b.id === billId);
+          if (!billToUpdate) return;
+          
+          const billRef = doc(firestore, 'bills', billId);
+          const newHistoryEntry = {
+              approverId: user.uid,
+              status,
+              timestamp: new Date().toISOString(),
+              remarks: `Bulk ${status.toLowerCase()}`,
+              level: billToUpdate.approvalHistory?.length || 0,
+          };
+          const updatedData = {
+              approvalStatus: status,
+              approvalHistory: [...(billToUpdate.approvalHistory || []), newHistoryEntry],
+              currentApproverId: ''
+          };
+          setDocumentNonBlocking(billRef, updatedData, { merge: true });
+      });
+      
+      toast({ title: 'Success', description: `${selectedRowIds.length} bill(s) have been ${status.toLowerCase()}.` });
+      setSelectedRowIds([]);
   };
-  
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
   return (
     <TooltipProvider>
@@ -150,6 +172,24 @@ export function BillTable() {
                 />
             </div>
             <div className="flex justify-end gap-2 flex-wrap">
+                {selectedRowIds.length > 0 && (
+                  <>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="outline"><Check className="mr-2 h-4 w-4 text-green-500" />Approve Selected ({selectedRowIds.length})</Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>Approve Bills?</AlertDialogTitle><AlertDialogDescription>This will approve {selectedRowIds.length} selected bills. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleBulkApproval('Approved')}>Confirm Approve</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="destructive"><X className="mr-2 h-4 w-4" />Reject Selected ({selectedRowIds.length})</Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>Reject Bills?</AlertDialogTitle><AlertDialogDescription>This will reject {selectedRowIds.length} selected bills. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleBulkApproval('Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                  </>
+                )}
                 <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Bill</Button>
             </div>
         </div>
@@ -157,6 +197,14 @@ export function BillTable() {
             <Table>
                 <TableHeader>
                 <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={selectedRowIds.length > 0 && selectedRowIds.length === pendingBills.length}
+                        onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                        aria-label="Select all"
+                        disabled={pendingBills.length === 0}
+                      />
+                    </TableHead>
                     <TableHead>Bill ID</TableHead>
                     <TableHead>Vendor</TableHead>
                     <TableHead>Bill Date</TableHead>
@@ -169,6 +217,7 @@ export function BillTable() {
                 {isLoading ? (
                      Array.from({length: 5}).map((_, i) => (
                       <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-5" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
@@ -178,16 +227,23 @@ export function BillTable() {
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
-                  filteredItems.map(bill => {
-                    const isCurrentUserApprover = user?.uid === bill.currentApproverId;
-                    return (
-                    <TableRow key={bill.id}>
+                  filteredItems.map(bill => (
+                    <TableRow key={bill.id} data-state={selectedRowIds.includes(bill.id) && "selected"}>
+                        <TableCell>
+                          {bill.approvalStatus === 'Pending' && (
+                            <Checkbox
+                              checked={selectedRowIds.includes(bill.id)}
+                              onCheckedChange={(checked) => handleRowSelect(bill.id, checked as boolean)}
+                              aria-label={`Select bill ${bill.billId}`}
+                            />
+                          )}
+                        </TableCell>
                         <TableCell>{bill.billId}</TableCell>
                         <TableCell>{getVendorName(bill.vendorId)}</TableCell>
                         <TableCell>{bill.billDate}</TableCell>
                         <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                         <TableCell>
-                            <Badge>{bill.approvalStatus || 'Pending'}</Badge>
+                            <Badge variant={bill.approvalStatus === 'Approved' ? 'default' : bill.approvalStatus === 'Rejected' ? 'destructive' : 'secondary'}>{bill.approvalStatus || 'Pending'}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -198,10 +254,10 @@ export function BillTable() {
                           </div>
                         </TableCell>
                     </TableRow>
-                  )})
+                  ))
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                             No bills found. Click "Add Bill" to start.
                         </TableCell>
                     </TableRow>
