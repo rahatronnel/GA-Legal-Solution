@@ -111,25 +111,29 @@ function LoginPageContent() {
 
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
-      <div className="flex items-center justify-center py-12 bg-secondary">
-        <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
+    <div className="w-full min-h-screen flex items-center justify-center p-4 relative bg-background">
+        <Image
+          src="https://picsum.photos/seed/loginpage/1920/1080"
+          alt="Modern office background"
+          data-ai-hint="modern office"
+          fill
+          className="object-cover -z-10 brightness-50"
+        />
+        <Card className="w-full max-w-sm backdrop-blur-sm bg-background/70">
+          <CardHeader className="text-center">
              {isLoadingSettings ? (
-              <>
-                <Skeleton className="h-8 w-48 mx-auto mb-2" />
-                <Skeleton className="h-4 w-64 mx-auto" />
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
-                <p className="text-balance text-muted-foreground">
-                  Enter your credentials to access the system
-                </p>
-              </>
-            )}
-          </div>
-          <div className="grid gap-4">
+                <Skeleton className="h-16 w-16 rounded-full mx-auto mb-4" />
+             ) : (
+                orgSettings?.logo && <Image src={orgSettings.logo} alt="Organization Logo" width={64} height={64} className="mx-auto mb-4 rounded-full"/>
+             )}
+            <CardTitle className="text-3xl font-bold">
+                {isLoadingSettings ? <Skeleton className="h-8 w-48 mx-auto" /> : (orgSettings?.name || 'Welcome')}
+            </CardTitle>
+            <CardDescription>
+                Enter your credentials to access the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -143,74 +147,54 @@ function LoginPageContent() {
               />
             </div>
             <div className="grid gap-2">
-              <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-                    <DialogTrigger asChild>
-                         <Button variant="link" className="ml-auto inline-block text-sm underline">Forgot your password?</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Forgot Password</DialogTitle>
-                            <DialogDescription>
-                                Enter your email address below. If an account exists, we'll send you a link to reset your password.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="reset-email">Email Address</Label>
-                                <Input
-                                    id="reset-email"
-                                    type="email"
-                                    placeholder="m@example.com"
-                                    value={resetEmail}
-                                    onChange={(e) => setResetEmail(e.target.value)}
-                                    disabled={isResetting}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
-                            <Button onClick={handlePasswordReset} disabled={isResetting}>
-                                {isResetting ? 'Sending...' : 'Send Reset Link'}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-              </div>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
-              />
+                <Input 
+                    id="password" 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
+                />
             </div>
+            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                <DialogTrigger asChild>
+                     <Button variant="link" className="px-0 justify-start text-sm">Forgot your password?</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Forgot Password</DialogTitle>
+                        <DialogDescription>
+                            Enter your email address below. If an account exists, we'll send you a link to reset your password.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email Address</Label>
+                            <Input
+                                id="reset-email"
+                                type="email"
+                                placeholder="m@example.com"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                                disabled={isResetting}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
+                        <Button onClick={handlePasswordReset} disabled={isResetting}>
+                            {isResetting ? 'Sending...' : 'Send Reset Link'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <Button onClick={handleSignIn} disabled={isLoading} className="w-full">
               {isLoading ? 'Signing in...' : 'Login'}
             </Button>
-          </div>
-        </div>
-      </div>
-      <div className="hidden bg-muted lg:flex items-center justify-center relative overflow-hidden">
-        <Image
-          src="https://picsum.photos/seed/login/1920/1080"
-          alt="Office Background"
-          data-ai-hint="office building"
-          fill
-          className="object-cover opacity-20"
-        />
-         <div className="z-10 text-center space-y-4 px-8">
-          <h2 className="text-4xl font-bold text-foreground">
-             {orgSettings?.name || 'GA & Legal Solution'}
-          </h2>
-          <p className="text-lg text-muted-foreground">
-             {orgSettings?.slogan || 'Your Trusted Partner in Excellence'}
-          </p>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
     </div>
   )
 }
