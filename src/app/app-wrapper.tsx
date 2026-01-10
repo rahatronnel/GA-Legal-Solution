@@ -168,26 +168,14 @@ export function AppWrapper() {
 
   useEffect(() => {
     if (orgSettings?.favicon) {
-      // Find and remove any existing favicon links
-      document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']").forEach(link => {
-        if (link.parentNode) {
-            link.parentNode.removeChild(link);
-        }
-      });
-
-      // Create a new link element
-      const newLink = document.createElement('link');
-      newLink.rel = 'icon';
-      newLink.href = orgSettings.favicon;
-      
-      // Infer type from data URL if possible
+      const link: HTMLLinkElement = document.querySelector("link[rel~='icon']") || document.createElement('link');
+      link.rel = 'icon';
+      link.href = orgSettings.favicon;
       const mimeType = orgSettings.favicon.match(/data:(image\/[^;]+);/);
       if (mimeType && mimeType[1]) {
-        newLink.type = mimeType[1];
+        link.type = mimeType[1];
       }
-
-      // Append the new link to the head
-      document.head.appendChild(newLink);
+      document.head.appendChild(link);
     }
   }, [orgSettings]);
 
