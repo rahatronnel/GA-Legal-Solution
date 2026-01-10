@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound, Copy } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -179,10 +179,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       reader.onload = async (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false}) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
           if (!json[0] || !('userIdCode' in json[0]) || !('email' in json[0])) {
              throw new Error('Invalid Excel file format. Required columns are: userIdCode, email.');
@@ -324,7 +324,29 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                     {employee.fullName}
                   </TableCell>
                   <TableCell>{employee.userIdCode}</TableCell>
-                  <TableCell>{employee.email}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <span>{employee.email}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              navigator.clipboard.writeText(employee.email);
+                              toast({ title: 'Copied!', description: 'Email copied to clipboard.' });
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Copy Email</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
                   <TableCell>{employee.mobileNumber}</TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{employee.status}</TableCell>
@@ -427,7 +449,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       </Dialog>
 
       <Dialog open={isUploadConfirmOpen} onOpenChange={setIsUploadConfirmOpen}>
-        <DialogContent className="sm:max-w-2xl flex flex-col h-auto max-h-[90vh]">
+        <DialogContent className="sm:max-w-2xl flex flex-col h-[60vh]">
             <DialogHeader>
                 <DialogTitle>Confirm Excel Upload</DialogTitle>
                 <DialogDescription>
