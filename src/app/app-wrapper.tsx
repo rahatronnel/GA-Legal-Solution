@@ -170,7 +170,11 @@ export function AppWrapper() {
     if (orgSettings?.favicon) {
       // Find and remove any existing favicon links
       const existingLinks = document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']");
-      existingLinks.forEach(link => link.remove());
+      existingLinks.forEach(link => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      });
 
       // Create a new link element
       const newLink = document.createElement('link');
