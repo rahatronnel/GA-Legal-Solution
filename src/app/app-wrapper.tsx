@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
-import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,9 +32,10 @@ import {
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
 import LoginPage from './login/page';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { OrganizationSettings } from './settings/page';
 
 
 // Lazy load all page components to prevent their data providers from running before auth is checked.
@@ -160,6 +161,23 @@ const ModuleDashboard = () => {
 export function AppWrapper() {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname() || '/';
+
+  const firestore = useFirestore();
+  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+  const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+
+  useEffect(() => {
+    if (orgSettings?.favicon) {
+      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = orgSettings.favicon;
+    }
+  }, [orgSettings]);
+
 
   if (isUserLoading) {
     return (

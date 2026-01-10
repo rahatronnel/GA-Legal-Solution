@@ -12,33 +12,12 @@ import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from './settings/page';
 
 
-function FaviconUpdater() {
-  const firestore = useFirestore();
-  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-  const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
-
-  useEffect(() => {
-    if (orgSettings?.favicon) {
-      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
-      }
-      link.href = orgSettings.favicon;
-    }
-  }, [orgSettings]);
-
-  return null; // This component does not render anything
-}
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -51,7 +30,6 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
-          <FaviconUpdater />
           <PrintProvider>
             <div className="app-container">
               {children}
