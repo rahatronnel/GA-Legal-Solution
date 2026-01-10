@@ -174,7 +174,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
             </div>
         ) : (
              <div className="py-4 text-center text-muted-foreground">
-                <p>Could not load employee profile.</p>
+                <p>Could not load employee profile. Superadmin profile is not displayed here.</p>
              </div>
         )}
         
@@ -205,3 +205,5 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
     </Dialog>
   );
 }
+
+    

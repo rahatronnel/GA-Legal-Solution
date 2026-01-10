@@ -189,7 +189,13 @@ export function BillTable() {
   };
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  const canPerformBulkAction = selectedRows.length > 0;
+  
+  const canPerformBulkAction = selectedRows.length > 0 && (
+      isSuperAdmin || selectedRows.every(id => {
+          const bill = bills.find(b => b.id === id);
+          return bill && bill.currentApproverId === currentUserEmployee?.id;
+      })
+  );
 
   return (
     <TooltipProvider>
@@ -220,9 +226,15 @@ export function BillTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead className="w-[50px]"><Checkbox
-                        checked={selectedRows.length > 0 && selectedRows.length === filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === currentUserEmployee?.id)).length}
+                        checked={selectedRows.length > 0 && selectedRows.length === filteredItems.filter(b => {
+                            const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
+                            return b.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+                        }).length}
                         onCheckedChange={(checked) => {
-                           const approvableIds = filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === currentUserEmployee?.id)).map(b => b.id);
+                           const approvableIds = filteredItems.filter(b => {
+                               const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
+                               return b.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+                           }).map(b => b.id);
                            setSelectedRows(checked ? approvableIds : []);
                         }}
                     /></TableHead>
@@ -249,7 +261,8 @@ export function BillTable() {
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                   filteredItems.map(bill => {
-                        const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || bill.currentApproverId === currentUserEmployee?.id);
+                        const isCurrentUserApprover = currentUserEmployee ? bill.currentApproverId === currentUserEmployee.id : false;
+                        const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
                         return (
                             <TableRow key={bill.id} data-state={selectedRows.includes(bill.id) ? "selected" : ""}>
                                 <TableCell>
@@ -311,3 +324,6 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+
+    
