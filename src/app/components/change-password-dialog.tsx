@@ -14,10 +14,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { useAuth, useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import { doc, collection } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import type { Employee } from '../user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,16 +48,17 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   const [departmentName, setDepartmentName] = useState('N/A');
 
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const employeeDocRef = useMemoFirebase(
-    () => (firestore && user) ? doc(firestore, 'employees', user.uid) : null,
-    [firestore, user]
-  );
+  const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
   
-  const { data: employee, isLoading: isLoadingEmployee } = useDoc<Employee>(employeeDocRef);
+  const employee = useMemo(() => {
+    if (!user || !employees) return null;
+    return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
+  }, [user, employees]);
   
   // These will only be fetched when the dialog is open and the employee data is available
   const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(
@@ -131,6 +132,8 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
       setIsLoading(false);
     }
   };
+  
+  const isComponentLoading = isUserLoading || isLoadingEmployees || (isOpen && (isLoadingDesignations || isLoadingSections));
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -141,7 +144,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
           <DialogDescription>View your profile information and update your password.</DialogDescription>
         </DialogHeader>
 
-        {isLoadingEmployee || (isOpen && (isLoadingDesignations || isLoadingSections)) ? (
+        {isComponentLoading ? (
             <div className="space-y-4 py-4">
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-20 w-20 rounded-full" />
@@ -153,7 +156,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
             </div>
-        ) : employee && (
+        ) : employee ? (
             <div className="space-y-4 py-4">
                  <div className="flex items-center gap-4">
                     <Avatar className="h-20 w-20 border">
@@ -171,6 +174,10 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
                   <InfoItem icon={Building} label="Department" value={departmentName} />
                 </div>
             </div>
+        ) : (
+             <div className="py-4 text-center text-muted-foreground">
+                <p>Could not load employee profile.</p>
+             </div>
         )}
         
         <Separator />
