@@ -44,6 +44,7 @@ service cloud.firestore {
     match /billTypes/{docId}                { allow read: if true; allow write: if isAdmin(); }
     match /billCategories/{docId}           { allow read: if true; allow write: if isAdmin(); }
     match /billItemCategories/{docId}       { allow read: if true; allow write: if isAdmin(); }
+    match /billItemMasters/{docId}          { allow read: if true; allow write: if isAdmin(); }
 
     // -------------------------------------------------------------------------
     // Authenticated Master Data
@@ -52,7 +53,6 @@ service cloud.firestore {
     match /sections/{docId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /designations/{docId}   { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /routes/{routeId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
-    match /billItemMasters/{docId} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /approvalRules/{docId}  { allow read: if isAdmin(); allow write: if isAdmin(); }
     
     // -------------------------------------------------------------------------
