@@ -13,10 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
 import { coreModules, utilityModules } from '@/lib/modules';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,10 @@ import {
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
 import LoginPage from './login/page';
+import { collection } from 'firebase/firestore';
+import type { Employee } from './user-management/components/employee-entry-form';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 // Lazy load all page components to prevent their data providers from running before auth is checked.
 const moduleComponents: { [key:string]: React.ComponentType } = {
@@ -50,6 +55,17 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
 
 const ModuleDashboard = () => {    
     const auth = useAuth();
+    const { user } = useUser();
+    const firestore = useFirestore();
+    
+    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+    const { data: employees } = useCollection<Employee>(employeesRef);
+    
+    const currentUserEmployee = React.useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
+    }, [user, employees]);
+
 
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
@@ -72,14 +88,22 @@ const ModuleDashboard = () => {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          variant="secondary"
+                          variant="ghost"
                           size="icon"
-                          className="overflow-hidden rounded-full h-9 w-9 bg-white text-black hover:bg-gray-200"
+                          className="overflow-hidden rounded-full h-9 w-9"
                         >
-                          <UserIcon className="h-5 w-5" />
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={currentUserEmployee?.profilePicture} alt={currentUserEmployee?.fullName}/>
+                                <AvatarFallback>{currentUserEmployee?.fullName?.charAt(0) || <UserIcon />}</AvatarFallback>
+                            </Avatar>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>
+                            <p className="font-semibold">{currentUserEmployee?.fullName || user?.email}</p>
+                            <p className="text-xs text-muted-foreground font-normal">{currentUserEmployee?.email || ''}</p>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
                         <ChangePasswordDialog>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 My Account
