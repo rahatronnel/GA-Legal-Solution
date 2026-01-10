@@ -23,7 +23,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -51,6 +51,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const { toast } = useToast();
   const { handlePrint } = usePrint();
   const auth = useAuth();
+  const { user: superadminUser } = useUser();
   const firestore = useFirestore();
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   
@@ -58,6 +59,8 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState<Partial<Employee> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const isSuperAdmin = superadminUser?.email === 'superadmin@galsolution.com';
 
   const filteredEmployees = useMemo(() => {
     if (!searchTerm) return employees;
@@ -99,7 +102,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   };
 
   const handlePasswordReset = async (email: string) => {
-      if(!auth) return;
+      if(!auth) {
+        toast({variant: "destructive", title: "Error", description: "Auth service not available."});
+        return;
+      }
       try {
         await sendPasswordResetEmail(auth, email);
         toast({
@@ -294,6 +300,30 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                         </TooltipTrigger>
                         <TooltipContent>Edit Employee</TooltipContent>
                       </Tooltip>
+                       {isSuperAdmin && (
+                         <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="h-8 w-8"><KeyRound className="h-4 w-4 text-orange-500" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirm Password Reset</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will send a password reset link to <span className="font-semibold">{employee.email}</span>. The user will be required to set a new password. Are you sure you want to proceed?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handlePasswordReset(employee.email)}>Send Reset Email</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TooltipTrigger>
+                          <TooltipContent>Reset Password</TooltipContent>
+                        </Tooltip>
+                       )}
                        <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(employee, 'employee')}>
