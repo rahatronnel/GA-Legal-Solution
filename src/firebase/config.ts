@@ -1,8 +1,8 @@
+// This file is no longer hardcoding the config, but pulling from environment variables.
 export const firebaseConfig = {
-  "projectId": "studio-6048667940-fd500",
-  "appId": "1:879725653100:web:ff73ba64fe375f7ac67c49",
-  "apiKey": "AIzaSyBzkw9w9lUPpiUKlZpBzJc-TJfS2lAP9YY",
-  "authDomain": "studio-6048667940-fd500.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "879725653100"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
