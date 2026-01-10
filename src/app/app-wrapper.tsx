@@ -137,7 +137,7 @@ const ModuleDashboard = () => {
             </header>
 
             <div className="text-center mb-12">
-                 <h1 className="text-5xl font-extrabold tracking-tight text-white">GA &amp; Legal Solution</h1>
+                 <h1 className="text-5xl font-extrabold tracking-tight text-white">GA & Legal Solution</h1>
                  <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
@@ -168,13 +168,23 @@ export function AppWrapper() {
 
   useEffect(() => {
     if (orgSettings?.favicon) {
-      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
+      // Find and remove any existing favicon links
+      const existingLinks = document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']");
+      existingLinks.forEach(link => link.remove());
+
+      // Create a new link element
+      const newLink = document.createElement('link');
+      newLink.rel = 'icon';
+      newLink.href = orgSettings.favicon;
+      
+      // Infer type from data URL if possible
+      const mimeType = orgSettings.favicon.match(/data:(image\/[^;]+);/);
+      if (mimeType && mimeType[1]) {
+        newLink.type = mimeType[1];
       }
-      link.href = orgSettings.favicon;
+
+      // Append the new link to the head
+      document.head.appendChild(newLink);
     }
   }, [orgSettings]);
 
