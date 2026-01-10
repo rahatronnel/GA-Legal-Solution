@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useBillData } from './bill-flow-provider';
 import { useUser } from '@/firebase';
-import { Eye, FileText, Hourglass, CheckCircle, XCircle, Users } from 'lucide-react';
+import { Eye, FileText, Hourglass, CheckCircle, Users } from 'lucide-react';
 import { getBillStatusText } from '../lib/status-helper';
 import { format, isThisMonth } from 'date-fns';
 
@@ -42,10 +42,11 @@ export function BillFlowDashboard() {
     const dashboardStats = React.useMemo(() => {
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
-        const pendingBills = (bills || []).filter(b => b.approvalStatus !== 1 && b.approvalStatus !== 0);
+        const allPendingBills = (bills || []).filter(b => b.approvalStatus !== 1 && b.approvalStatus !== 0);
+        
         const myPendingBills = isSuperAdmin 
-            ? pendingBills 
-            : (pendingBills || []).filter(b => b.currentApproverId === currentUserEmployee?.id);
+            ? allPendingBills 
+            : (allPendingBills || []).filter(b => b.currentApproverId === currentUserEmployee?.id);
         
         const completedThisMonth = (bills || []).filter(b => 
             b.approvalStatus === 1 && 
@@ -55,8 +56,6 @@ export function BillFlowDashboard() {
         );
 
         return {
-            pendingCount: pendingBills.length,
-            pendingAmount: pendingBills.reduce((acc, b) => acc + b.totalPayableAmount, 0),
             myPendingCount: myPendingBills.length,
             myPendingAmount: myPendingBills.reduce((acc, b) => acc + b.totalPayableAmount, 0),
             completedMonthCount: completedThisMonth.length,
@@ -77,18 +76,12 @@ export function BillFlowDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard 
-                    title="Total Pending Bills" 
-                    value={dashboardStats.pendingCount} 
-                    description={formatCurrency(dashboardStats.pendingAmount)}
-                    icon={Hourglass} 
-                />
-                <StatCard 
-                    title="Awaiting Your Approval" 
+                    title="Bills Awaiting Your Approval" 
                     value={dashboardStats.myPendingCount} 
                     description={formatCurrency(dashboardStats.myPendingAmount)}
-                    icon={FileText} 
+                    icon={Hourglass} 
                 />
                 <StatCard 
                     title="Completed This Month" 
