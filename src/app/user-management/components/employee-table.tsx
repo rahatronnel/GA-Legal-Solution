@@ -87,8 +87,8 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const handleAdd = () => {
     setCurrentEmployee(null);
     setIsFormOpen(true);
-  };
-
+  }
+  
   const handleEdit = (employee: Employee) => {
     setCurrentEmployee(employee);
     setIsFormOpen(true);
@@ -427,35 +427,35 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       </Dialog>
 
       <Dialog open={isUploadConfirmOpen} onOpenChange={setIsUploadConfirmOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Confirm Excel Upload</DialogTitle>
-            <DialogDescription>
-                Review the changes below. Click "Confirm" to apply them.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 h-[400px]">
-            <div className="space-y-2">
-                <h4 className="font-semibold">New Employees to Create ({processedUpload.filter(p => p.isNew).length})</h4>
-                <ScrollArea className="h-full border rounded-md p-2">
-                    <ul className="list-disc pl-5">
-                       {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i}>{p.data.fullName} ({p.data.email})</li>)}
-                    </ul>
-                </ScrollArea>
+        <DialogContent className="sm:max-w-2xl flex flex-col h-auto max-h-[90vh]">
+            <DialogHeader>
+                <DialogTitle>Confirm Excel Upload</DialogTitle>
+                <DialogDescription>
+                    Review the changes below. Click "Confirm" to apply them.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="flex-grow overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 flex flex-col">
+                    <h4 className="font-semibold">New Employees to Create ({processedUpload.filter(p => p.isNew).length})</h4>
+                    <ScrollArea className="flex-grow border rounded-md p-2">
+                        <ul className="list-disc pl-5">
+                        {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i}>{p.data.fullName} ({p.data.email})</li>)}
+                        </ul>
+                    </ScrollArea>
+                </div>
+                <div className="space-y-2 flex flex-col">
+                    <h4 className="font-semibold">Employees to Update ({processedUpload.filter(p => !p.isNew).length})</h4>
+                    <ScrollArea className="flex-grow border rounded-md p-2">
+                        <ul className="list-disc pl-5">
+                        {processedUpload.filter(p => !p.isNew).map((p, i) => <li key={i}>{p.original?.fullName} ({p.original?.email})</li>)}
+                        </ul>
+                    </ScrollArea>
+                </div>
             </div>
-             <div className="space-y-2">
-                <h4 className="font-semibold">Employees to Update ({processedUpload.filter(p => !p.isNew).length})</h4>
-                <ScrollArea className="h-full border rounded-md p-2">
-                     <ul className="list-disc pl-5">
-                       {processedUpload.filter(p => !p.isNew).map((p, i) => <li key={i}>{p.original?.fullName} ({p.original?.email})</li>)}
-                    </ul>
-                </ScrollArea>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUploadConfirmOpen(false)}>Cancel</Button>
-            <Button onClick={confirmUpload}>Confirm</Button>
-          </DialogFooter>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsUploadConfirmOpen(false)}>Cancel</Button>
+                <Button onClick={confirmUpload}>Confirm</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </TooltipProvider>
