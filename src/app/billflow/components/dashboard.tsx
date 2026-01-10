@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useBillData } from './bill-flow-provider';
 import { useUser } from '@/firebase';
-import { Eye, FileText, Hourglass, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, FileText, Hourglass, CheckCircle, XCircle, Users } from 'lucide-react';
 import { getBillStatusText } from '../lib/status-helper';
 import { format, isThisMonth } from 'date-fns';
 
