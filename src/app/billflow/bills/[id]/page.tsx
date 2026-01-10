@@ -129,43 +129,47 @@ function BillProfileContent() {
         const currentUserEmployee = employees?.find(e => e.email === user.email);
         if (!currentUserEmployee) return;
 
+        const approvalLevels = orgSettings.billApprovalLevels;
+        const currentLevel = bill.approvalHistory?.length || 0;
+
         const statusText = status === 1 ? 'Approved' : 'Rejected';
-        
+
         const newHistoryEntry = {
             approverId: currentUserEmployee.id,
             status: statusText,
             timestamp: new Date().toISOString(),
+            level: currentLevel + 1,
             remarks: `Manually ${statusText.toLowerCase()} from details page`,
-            level: (bill.approvalHistory?.length || 0) + 1,
         };
 
-        const updatedHistory = [...(bill.approvalHistory || []), newHistoryEntry];
+        let approvalStatus = bill.approvalStatus;
         let nextApproverId = '';
-        let finalStatus = bill.approvalStatus;
 
         if (status === 1) { // Approved
-            const currentApproverIndexInFlow = orgSettings.billApprovalLevels.indexOf(bill.currentApproverId);
-            const isLastApprover = currentApproverIndexInFlow === orgSettings.billApprovalLevels.length - 1;
-
-            if (currentApproverIndexInFlow === -1 || isLastApprover) { // If user not in flow (superadmin) or is the last one
-                finalStatus = 1; // Final Approval
-                nextApproverId = ''; // No next approver
+            if (currentLevel + 1 < approvalLevels.length) {
+            // Move to next approver
+            approvalStatus = 2; // Pending
+            nextApproverId = approvalLevels[currentLevel + 1];
             } else {
-                nextApproverId = orgSettings.billApprovalLevels[currentApproverIndexInFlow + 1];
-                finalStatus = 2; // Still Pending, moved to next level
+            // Final approval
+            approvalStatus = 1; // Approved
+            nextApproverId = '';
             }
-        } else { // Rejected
-            finalStatus = 0; // Rejected
+        } else {
+            // Rejected
+            approvalStatus = 0;
             nextApproverId = '';
         }
 
-        const updatedData = {
-            approvalStatus: finalStatus,
-            approvalHistory: updatedHistory,
-            currentApproverId: nextApproverId
-        };
-
-        setDocumentNonBlocking(billRef, updatedData, { merge: true });
+        setDocumentNonBlocking(
+            billRef,
+            {
+            approvalStatus,
+            currentApproverId: nextApproverId,
+            approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
+            },
+            { merge: true }
+        );
     };
 
     if (isLoading || bill === undefined) {
@@ -354,7 +358,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-    
-
-    
