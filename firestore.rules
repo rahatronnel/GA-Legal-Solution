@@ -37,7 +37,8 @@ service cloud.firestore {
     match /tripPurposes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /expenseTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /maintenanceTypes/{docId}{ allow read: if true; allow write: if isAdmin(); }
-    match /maintenanceExpenseTypes/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /maintenanceExpenseTypes/{docId} { allow read: if true; allow write
+: if isAdmin(); }
     match /parts/{docId}          { allow read: if true; allow write: if isAdmin(); }
     match /serviceCenters/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /accidentTypes/{docId}  { allow read: if true; allow write: if isAdmin(); }
@@ -74,7 +75,7 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
      match /trips/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
     match /maintenanceRecords/{docId} {
       allow write: if isAuthenticated();
