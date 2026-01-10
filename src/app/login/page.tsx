@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail, useAuth } from 'firebase/auth';
 import { useState } from 'react';
 import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
@@ -114,35 +114,20 @@ function LoginPageContent() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
       <div className="flex items-center justify-center py-12 bg-secondary">
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-4 text-center">
-            {isLoadingSettings ? (
-                <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          <div className="grid gap-2 text-center">
+             {isLoadingSettings ? (
+              <>
+                <Skeleton className="h-8 w-48 mx-auto mb-2" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+              </>
             ) : (
-                orgSettings?.logo && (
-                <Image
-                    src={orgSettings.logo}
-                    alt="Company Logo"
-                    width={100}
-                    height={100}
-                    className="rounded-full mx-auto border-2 border-white shadow-md"
-                />
-                )
+              <>
+                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
+                <p className="text-balance text-muted-foreground">
+                  Enter your credentials to access the system
+                </p>
+              </>
             )}
-            <div className="grid gap-2 text-center">
-                {isLoadingSettings ? (
-                <>
-                    <Skeleton className="h-8 w-48 mx-auto" />
-                    <Skeleton className="h-4 w-64 mx-auto" />
-                </>
-                ) : (
-                <>
-                    <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
-                    <p className="text-balance text-muted-foreground">
-                    Enter your credentials to access the system
-                    </p>
-                </>
-                )}
-            </div>
           </div>
           <div className="grid gap-4">
             <div className="grid gap-2">
