@@ -26,10 +26,16 @@ export type OrganizationSettings = {
   fax: string;
   registrationNumber: string;
   logo: string; // Stored as data URL
-  billApprovalLevels?: string[];
+  approvalFlow?: {
+      effectiveDate: string;
+      steps: {
+          stepName: string;
+          approverId: string;
+      }[];
+  }
 };
 
-const initialSettings: OrganizationSettings = {
+const initialSettings: Omit<OrganizationSettings, 'approvalFlow'> = {
   name: 'GA & Legal Solution',
   slogan: 'Your Trusted Partner',
   address: 'Head Office: 123 Business Rd, Dhaka, Bangladesh',
@@ -39,7 +45,6 @@ const initialSettings: OrganizationSettings = {
   fax: '+880 2 888 7778',
   registrationNumber: 'C-12345/67',
   logo: '',
-  billApprovalLevels: [],
 };
 
 export default function SettingsPage() {
@@ -50,7 +55,7 @@ export default function SettingsPage() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: remoteSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
+  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings as OrganizationSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   
   const isLoading = isUserLoading || isLoadingSettings;
@@ -61,6 +66,8 @@ export default function SettingsPage() {
       if (remoteSettings.logo) {
         setLogoPreview(remoteSettings.logo);
       }
+    } else {
+      setSettings(initialSettings as OrganizationSettings);
     }
   }, [remoteSettings]);
 
@@ -199,3 +206,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

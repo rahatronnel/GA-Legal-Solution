@@ -16,10 +16,24 @@
         "fax": { "type": "string", "description": "Fax number." },
         "registrationNumber": { "type": "string", "description": "Official registration number." },
         "logo": { "type": "string", "description": "Data URL of the organization's logo." },
-        "billApprovalLevels": {
-            "type": "array",
-            "description": "An ordered list of employee IDs representing the bill approval sequence.",
-            "items": { "type": "string" }
+        "approvalFlow": {
+            "type": "object",
+            "description": "Defines the bill approval workflow.",
+            "properties": {
+                "effectiveDate": { "type": "string", "format": "date" },
+                "steps": {
+                    "type": "array",
+                    "description": "An ordered list of approval steps.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "stepName": { "type": "string" },
+                            "approverId": { "type": "string" }
+                        },
+                        "required": ["stepName", "approverId"]
+                    }
+                }
+            }
         }
       },
       "required": ["name", "email"]
@@ -391,4 +405,6 @@
   }
 }
     
+    
+
     

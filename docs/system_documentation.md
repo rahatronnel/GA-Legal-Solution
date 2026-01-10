@@ -1,8 +1,9 @@
+
 # System Documentation: Multi-Layer Bill Approval Workflow
 
 ## 1. Objective
 
-To implement a sequential, multi-level approval workflow for bills submitted in the BillFlow module. The system allows a superadmin to define an ordered chain of employees who must approve a bill in sequence.
+To implement a sequential, multi-level approval workflow for bills submitted in the BillFlow module. The system allows a superadmin to define a dynamic, ordered chain of employees (from 1 to 10 steps) who must approve a bill in sequence. Each step in the flow is named for clarity.
 
 ## 2. Data Structure
 
@@ -10,10 +11,26 @@ The core of this system is stored in the main organization settings document in 
 
 - **File**: `docs/backend.json`
 - **Entity**: `OrganizationSettings`
-- **Key Field**: `billApprovalLevels`
-  - **Type**: `array`
-  - **Description**: This field holds an ordered array of **employee document IDs**. The order of IDs in this array defines the exact sequence of approval.
-  - **Example**: `["employee_id_1", "employee_id_2", "employee_id_3"]`
+- **Key Field**: `approvalFlow`
+  - **Type**: `object`
+  - **Description**: This object contains the entire definition for the active approval workflow.
+  - **Properties**:
+    - `effectiveDate` (`string`): The date from which this approval flow is active.
+    - `steps` (`array`): An ordered array of objects, where each object defines one step in the approval sequence.
+      - **Step Object Properties**:
+        - `stepName` (`string`): The user-defined name for the step (e.g., "Initiator", "Reviewer").
+        - `approverId` (`string`): The **employee document ID** of the person assigned to this step.
+  - **Example**:
+    ```json
+    "approvalFlow": {
+      "effectiveDate": "2024-01-01",
+      "steps": [
+        { "stepName": "Initiator", "approverId": "employee_id_1" },
+        { "stepName": "Reviewer", "approverId": "employee_id_2" },
+        { "stepName": "Final Approver", "approverId": "employee_id_3" }
+      ]
+    }
+    ```
 
 The `Bill` entity contains the fields that track the approval state:
 - `approvalStatus`: A number representing the bill's state (0: Rejected, 1: Approved, 2: Pending).
@@ -27,11 +44,11 @@ The approval workflow is configured by a superadmin.
 - **Location**: BillFlow Module -> "Approval Settings" Tab.
 - **Visibility**: This tab is only visible to the user logged in as `superadmin@galsolution.com`.
 - **Functionality**:
-  1. The UI displays a dynamic list representing the approval steps.
-  2. The superadmin can add new steps to the chain.
+  1. The superadmin first selects the **Number of Approval Steps** (1 to 10) from a dropdown.
+  2. The UI dynamically renders the selected number of steps, each with its predefined name (e.g., "Initiator").
   3. For each step, the superadmin selects an employee from a dropdown list.
-  4. The superadmin can remove steps from the chain.
-  5. Clicking "Save Approval Flow" stores the ordered array of employee IDs into the `billApprovalLevels` field in the `/settings/organization` document in Firestore.
+  4. The superadmin sets an "Effective Date" for the workflow.
+  5. Clicking "Save Approval Flow" stores the entire `approvalFlow` object into the `/settings/organization` document in Firestore.
 
 ## 4. Workflow Logic
 
@@ -41,22 +58,22 @@ The progression of a bill through the approval chain is deterministic and based 
 
 - **File**: `src/app/billflow/components/bill-entry-form.tsx`
 - **Logic**: When a new bill is created:
-  1. The system reads the `billApprovalLevels` array from the organization settings.
+  1. The system reads the `approvalFlow.steps` array from the organization settings.
   2. The bill's `approvalStatus` is set to `2` (Pending).
-  3. The bill's `currentApproverId` is set to the **first employee ID** in the `billApprovalLevels` array (`billApprovalLevels[0]`). If the array is empty, it is set to an empty string.
+  3. The bill's `currentApproverId` is set to the `approverId` of the **first step** (`approvalFlow.steps[0].approverId`).
   4. The `approvalHistory` array is initialized as empty.
 
 ### Approval Progression
 
-- **File**: `src/app/billflow/bills/[id]/page.tsx`
-- **Function**: `handleApproval(status)`
+- **File**: `src/app/billflow/bills/[id]/page.tsx` & `src/app/billflow/components/bill-table.tsx`
+- **Function**: `handleApproval(status)` & `handleBulkApproval(status)`
 - **Logic**: When a user clicks "Approve" (status: `1`):
   1. A new entry is created for the `approvalHistory` containing the current user's ID, status, and timestamp.
-  2. The system calculates the **current approval level** based on the new length of the `approvalHistory` array (`currentLevel = bill.approvalHistory.length + 1`).
+  2. The system calculates the **current approval level** based on the length of the `approvalHistory` array (`currentLevel = bill.approvalHistory.length`).
   3. **It checks if this new level is less than the total number of required approvers** (`currentLevel < approvalLevels.length`).
      - **If YES (more approvers are needed):**
        - `approvalStatus` remains `2` (Pending).
-       - `currentApproverId` is updated to the ID of the **next approver** in the sequence (`approvalLevels[currentLevel]`).
+       - `currentApproverId` is updated to the ID of the **next approver** in the sequence (`approvalLevels[currentLevel].approverId`).
      - **If NO (this was the final approver):**
        - `approvalStatus` is set to `1` (Approved).
        - `currentApproverId` is cleared (set to `''`).
@@ -75,7 +92,9 @@ The progression of a bill through the approval chain is deterministic and based 
 ## 5. Key Files for this System
 
 - `docs/backend.json`: Defines the data structure.
-- `src/app/billflow/page.tsx`: Contains the UI for configuring the approval settings.
+- `src/app/billflow/page.tsx`: Contains the UI for configuring the new approval settings.
 - `src/app/billflow/components/bill-entry-form.tsx`: Handles the creation of new bills and sets the initial approver.
 - `src/app/billflow/bills/[id]/page.tsx`: Contains the primary logic (`handleApproval`) for progressing a single bill through the workflow.
 - `src/app/billflow/components/bill-table.tsx`: Contains the logic for bulk approval and displaying the status of bills in the list.
+
+    

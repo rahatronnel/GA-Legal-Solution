@@ -123,13 +123,13 @@ function BillProfileContent() {
     }, [id, bills, isLoading]);
 
     const handleApproval = (status: number) => {
-        if (!firestore || !bill || !user || !orgSettings?.billApprovalLevels || !employees) return;
+        if (!firestore || !bill || !user || !orgSettings?.approvalFlow?.steps) return;
     
         const billRef = doc(firestore, 'bills', bill.id);
-        const currentUserEmployee = employees.find(e => e.email === user.email);
+        const currentUserEmployee = employees?.find(e => e.email === user.email);
         if (!currentUserEmployee) return;
     
-        const approvalLevels = orgSettings.billApprovalLevels;
+        const approvalLevels = orgSettings.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
     
         const statusText = status === 1 ? 'Approved' : 'Rejected';
@@ -149,7 +149,7 @@ function BillProfileContent() {
             if (currentLevel + 1 < approvalLevels.length) {
                 // Move to next approver
                 approvalStatus = 2; // Pending
-                nextApproverId = approvalLevels[currentLevel + 1];
+                nextApproverId = approvalLevels[currentLevel + 1].approverId;
             } else {
                 // Final approval
                 approvalStatus = 1; // Approved
@@ -360,3 +360,5 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
+    

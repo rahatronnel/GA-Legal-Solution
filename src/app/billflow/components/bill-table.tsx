@@ -112,7 +112,7 @@ export function BillTable() {
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
-        const firstApproverId = orgSettings?.billApprovalLevels?.[0] || '';
+        const firstApproverId = orgSettings?.approvalFlow?.steps[0]?.approverId || '';
         const newBillData = {
           ...billData,
           billId: `B-${Date.now()}`,
@@ -126,14 +126,14 @@ export function BillTable() {
   };
 
   const handleBulkApproval = (status: number) => {
-    if (!firestore || !currentUserEmployee || !orgSettings?.billApprovalLevels) return;
+    if (!firestore || !currentUserEmployee || !orgSettings?.approvalFlow?.steps) return;
 
     selectedRows.forEach(billId => {
         const bill = bills.find(b => b.id === billId);
         if (!bill) return;
 
         const billRef = doc(firestore, 'bills', billId);
-        const approvalLevels = orgSettings.billApprovalLevels;
+        const approvalLevels = orgSettings.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
         const statusText = status === 1 ? 'Approved' : 'Rejected';
 
@@ -151,7 +151,7 @@ export function BillTable() {
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
                 approvalStatus = 2; // Pending
-                nextApproverId = approvalLevels[currentLevel + 1];
+                nextApproverId = approvalLevels[currentLevel + 1].approverId;
             } else {
                 approvalStatus = 1; // Approved
                 nextApproverId = '';
@@ -319,3 +319,5 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    

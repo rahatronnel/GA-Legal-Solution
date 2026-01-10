@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, Settings, User, PlusCircle, Trash2 } from 'lucide-react';
+import { Home as HomeIcon, Settings, User, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -23,6 +23,23 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, collection } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
 import type { Employee } from '../user-management/components/employee-entry-form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+
+const approvalStepNames: { [key: number]: string[] } = {
+    1: ['Approver'],
+    2: ['Initiator', 'Final Approver'],
+    3: ['Initiator', 'Reviewer', 'Final Approver'],
+    4: ['Initiator', 'Validator', 'Reviewer', 'Final Approver'],
+    5: ['Initiator', 'Validator', 'Reviewer', 'Compliance Officer', 'Final Approver'],
+    6: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Final Approver'],
+    7: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Final Approver'],
+    8: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Final Approver'],
+    9: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Senior Reviewer', 'Final Approver'],
+    10: ['Initiator', 'Validator', 'Reviewer', 'Pre-Approval Officer', 'Compliance Officer', 'Department Head', 'Financial Reviewer', 'Senior Reviewer', 'Executive Approver', 'Final Approver'],
+};
 
 function ApprovalSettingsTab() {
     const { toast } = useToast();
@@ -34,35 +51,61 @@ function ApprovalSettingsTab() {
     const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
     const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
 
-    const [approvalLevels, setApprovalLevels] = useState<string[]>([]);
+    const [numberOfSteps, setNumberOfSteps] = useState(1);
+    const [steps, setSteps] = useState<{stepName: string; approverId: string}[]>([]);
+    const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(new Date());
 
     useEffect(() => {
-        if (orgSettings && orgSettings.billApprovalLevels) {
-            setApprovalLevels(orgSettings.billApprovalLevels);
+        if (orgSettings?.approvalFlow) {
+            const flow = orgSettings.approvalFlow;
+            setNumberOfSteps(flow.steps.length);
+            setSteps(flow.steps);
+            setEffectiveDate(flow.effectiveDate ? new Date(flow.effectiveDate) : new Date());
         } else {
-            setApprovalLevels([]);
+            // Initialize with a default of 1 step
+            setNumberOfSteps(1);
+            setSteps([{ stepName: 'Approver', approverId: '' }]);
+            setEffectiveDate(new Date());
         }
     }, [orgSettings]);
 
-    const handleLevelChange = (index: number, employeeId: string) => {
-        const newLevels = [...approvalLevels];
-        newLevels[index] = employeeId;
-        setApprovalLevels(newLevels);
+    const handleNumberOfStepsChange = (value: string) => {
+        const num = parseInt(value, 10);
+        setNumberOfSteps(num);
+        const newStepNames = approvalStepNames[num] || [];
+        const newSteps = newStepNames.map(name => ({
+            stepName: name,
+            approverId: '',
+        }));
+        setSteps(newSteps);
     };
 
-    const addLevel = () => setApprovalLevels(prev => [...prev, '']);
-    const removeLevel = (index: number) => setApprovalLevels(prev => prev.filter((_, i) => i !== index));
+    const handleApproverChange = (index: number, employeeId: string) => {
+        const newSteps = [...steps];
+        newSteps[index].approverId = employeeId;
+        setSteps(newSteps);
+    };
 
     const handleSave = () => {
         if (!settingsDocRef) {
             toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
             return;
         }
-        if (approvalLevels.some(id => !id)) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Please select an employee for each approval level.' });
+        if (steps.some(step => !step.approverId)) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select an employee for each approval step.' });
             return;
         }
-        setDocumentNonBlocking(settingsDocRef, { billApprovalLevels: approvalLevels }, { merge: true });
+        if (!effectiveDate) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select an effective date.' });
+            return;
+        }
+
+        const approvalFlow = {
+            effectiveDate: format(effectiveDate, 'yyyy-MM-dd'),
+            steps: steps,
+        };
+
+        setDocumentNonBlocking(settingsDocRef, { approvalFlow }, { merge: true });
         toast({ title: 'Success', description: 'Approval flow saved.' });
     };
 
@@ -79,28 +122,56 @@ function ApprovalSettingsTab() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>Number of Approval Steps</Label>
+                        <Select value={String(numberOfSteps)} onValueChange={handleNumberOfStepsChange}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
+                                    <SelectItem key={num} value={String(num)}>{num} Step{num > 1 ? 's' : ''}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Effective Date</Label>
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!effectiveDate && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4"/>{effectiveDate ? format(effectiveDate, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={effectiveDate} onSelect={setEffectiveDate} initialFocus/></PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+
                 <div className="space-y-4">
-                    {approvalLevels.map((employeeId, index) => (
-                        <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
-                            <Label className="font-bold text-lg">Step {index + 1}:</Label>
-                            <Select value={employeeId} onValueChange={(value) => handleLevelChange(index, value)}>
-                                <SelectTrigger className="flex-grow">
-                                    <SelectValue placeholder="Select an employee..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {(employees || []).map(emp => (
-                                        <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button variant="destructive" size="icon" onClick={() => removeLevel(index)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                    {steps.map((step, index) => (
+                        <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 border rounded-lg">
+                            <div className="flex items-center font-semibold w-full md:w-48">
+                                <span className="text-lg mr-2">{index + 1}.</span>
+                                <span>{step.stepName}</span>
+                            </div>
+                            <div className="flex-grow w-full">
+                                <Select value={step.approverId} onValueChange={(value) => handleApproverChange(index, value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an employee..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(employees || []).map(emp => (
+                                            <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     ))}
                 </div>
                 <div className="flex gap-4">
-                    <Button variant="outline" onClick={addLevel}><PlusCircle className="mr-2 h-4 w-4"/>Add Approval Step</Button>
                     <Button onClick={handleSave}>Save Approval Flow</Button>
                 </div>
             </CardContent>
@@ -224,3 +295,5 @@ export default function BillFlowPage() {
     </BillFlowProvider>
   );
 }
+
+    
