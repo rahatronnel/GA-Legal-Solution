@@ -144,14 +144,14 @@ function BillProfileContent() {
         let finalStatus = bill.approvalStatus;
 
         if (status === 1) { // Approved
-            const currentLevelIndex = orgSettings.billApprovalLevels.indexOf(bill.currentApproverId);
-            const isLastApprover = currentLevelIndex === orgSettings.billApprovalLevels.length - 1;
+            const currentApproverIndexInFlow = orgSettings.billApprovalLevels.indexOf(currentUserEmployee.id);
+            const isLastApprover = currentApproverIndexInFlow === orgSettings.billApprovalLevels.length - 1;
 
-            if (isLastApprover) {
+            if (isLastApprover || currentApproverIndexInFlow === -1) { // If last approver or not in the flow (e.g. superadmin)
                 finalStatus = 1; // Final Approval
-                nextApproverId = '';
+                nextApproverId = ''; // No next approver
             } else {
-                nextApproverId = orgSettings.billApprovalLevels[currentLevelIndex + 1];
+                nextApproverId = orgSettings.billApprovalLevels[currentApproverIndexInFlow + 1];
                 finalStatus = 2; // Still Pending, moved to next level
             }
         } else { // Rejected
@@ -212,14 +212,14 @@ function BillProfileContent() {
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as approved. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as approved and send it to the next approver if applicable. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
                                         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
                                    <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as rejected. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as rejected and stop the approval process. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
                                         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(0)} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                    </AlertDialog>
