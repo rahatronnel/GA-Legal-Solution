@@ -199,9 +199,8 @@ function LoginPageContent() {
           src="https://picsum.photos/seed/login/1920/1080"
           alt="Office Background"
           data-ai-hint="office building"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-20"
+          fill
+          className="object-cover opacity-20"
         />
         <div className="z-10 text-center space-y-4">
           {isLoadingSettings ? (
