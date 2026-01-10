@@ -171,7 +171,8 @@ function BillProfileContent() {
     }
     
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-    const isCurrentUserApprover = bill.currentApproverId === user?.uid;
+    const currentUserEmployee = employees?.find(e => e.email === user?.email);
+    const isCurrentUserApprover = bill.currentApproverId === currentUserEmployee?.id;
 
     return (
         <div className="space-y-6">
@@ -330,3 +331,5 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
+    

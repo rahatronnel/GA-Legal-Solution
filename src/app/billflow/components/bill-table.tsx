@@ -45,7 +45,7 @@ export function BillTable() {
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
   const { user } = useUser();
-  const { bills, vendors, isLoading } = useBillData();
+  const { bills, vendors, employees, isLoading } = useBillData();
   
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
@@ -61,6 +61,7 @@ export function BillTable() {
   const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
 
   const safeBills = useMemo(() => Array.isArray(bills) ? bills : [], [bills]);
+  const safeEmployees = useMemo(() => Array.isArray(employees) ? employees : [], [employees]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeBills;
@@ -73,20 +74,26 @@ export function BillTable() {
   }, [safeBills, searchTerm, vendors]);
   
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const currentUserEmployee = useMemo(() => safeEmployees.find(e => e.email === user?.email), [safeEmployees, user]);
+
 
   const canApproveSelection = useMemo(() => {
     if (selectedRowIds.length === 0) return false;
     if (isSuperAdmin) return true;
+    if (!currentUserEmployee) return false;
+
+    // Check if the current user is the approver for ALL selected bills
     return selectedRowIds.every(id => {
       const bill = safeBills.find(b => b.id === id);
-      return bill && bill.currentApproverId === user?.uid;
+      return bill && bill.currentApproverId === currentUserEmployee.id;
     });
-  }, [selectedRowIds, safeBills, isSuperAdmin, user]);
+  }, [selectedRowIds, safeBills, isSuperAdmin, currentUserEmployee]);
 
 
   const pendingBillsForCurrentUser = useMemo(() => {
-    return filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === user?.uid));
-  }, [filteredItems, isSuperAdmin, user]);
+    if (!currentUserEmployee && !isSuperAdmin) return [];
+    return filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === currentUserEmployee?.id));
+  }, [filteredItems, isSuperAdmin, currentUserEmployee]);
 
 
   const handleSelectAll = (checked: boolean) => {
@@ -167,7 +174,7 @@ export function BillTable() {
           const billRef = doc(firestore, 'bills', billId);
           const statusText = status === 1 ? 'Approved' : 'Rejected';
           const newHistoryEntry = {
-              approverId: user.uid,
+              approverId: currentUserEmployee?.id || user.uid, // Prefer employee doc ID
               status: statusText,
               timestamp: new Date().toISOString(),
               remarks: `Bulk ${statusText.toLowerCase()}`,
@@ -268,7 +275,7 @@ export function BillTable() {
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                   filteredItems.map(bill => {
-                    const isCurrentUserApprover = bill.currentApproverId === user?.uid;
+                    const isCurrentUserApprover = bill.currentApproverId === currentUserEmployee?.id;
                     const canTakeAction = isSuperAdmin || isCurrentUserApprover;
                     
                     return (
@@ -334,3 +341,5 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    
