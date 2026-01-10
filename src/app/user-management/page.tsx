@@ -11,6 +11,7 @@ import { useUser } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Home as HomeIcon } from "lucide-react";
+import { ModuleHeader } from '@/app/components/module-header';
 
 function UserManagementContent() {
   const { data } = useUserManagement();
@@ -18,13 +19,7 @@ function UserManagementContent() {
 
   return (
     <div className="space-y-6">
-        <div className="flex justify-end">
-            <Button size="sm" variant="outline" asChild className="bg-black text-white hover:bg-gray-800">
-                <Link href="/">
-                    <HomeIcon className="h-4 w-4 mr-2" /> Home
-                </Link>
-            </Button>
-        </div>
+        <ModuleHeader />
         <Tabs defaultValue="employees" className="w-full">
         <div className="flex items-center">
             <TabsList>

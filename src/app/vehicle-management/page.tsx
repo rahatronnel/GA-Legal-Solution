@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
 import { useVehicleManagement } from './components/vehicle-management-provider';
 import { Dashboard } from "./components/Dashboard";
+import { ModuleHeader } from '@/app/components/module-header';
 
 function VehicleManagementContent() {
   const { isLoading } = useVehicleManagement();
@@ -36,13 +38,7 @@ function VehicleManagementContent() {
 
   return (
     <div className="space-y-4">
-        <div className="flex justify-end">
-            <Button size="sm" asChild className="bg-black text-white hover:bg-gray-800">
-                <Link href="/">
-                    <HomeIcon className="h-4 w-4 mr-2" /> Home
-                </Link>
-            </Button>
-        </div>
+        <ModuleHeader />
         <Tabs defaultValue="dashboard" className="w-full">
         <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
