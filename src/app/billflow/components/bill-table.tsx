@@ -35,14 +35,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { processBill } from '../services/bill-processor';
+
 
 export function BillTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
   const { user } = useUser();
-  const { bills, vendors, isLoading } = useBillData();
+  const { bills, vendors, isLoading, approvalRules } = useBillData();
   
   const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
 
@@ -90,18 +92,21 @@ export function BillTable() {
   };
 
   const handleSave = (billData: Partial<Bill>) => {
-    if (!billsRef) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+    if (!billsRef || !approvalRules) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database or approval rules not available.' });
         return;
     }
 
+    // Process the bill to find the correct approver
+    const processedData = processBill(billData as Bill, approvalRules);
+
     if (billData.id) {
-        const { id, ...dataToSave } = billData;
+        const { id, ...dataToSave } = processedData;
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
         const newBillData = {
-          ...billData,
+          ...processedData,
           billId: `B-${Date.now()}`
         };
         addDocumentNonBlocking(billsRef, newBillData);
@@ -119,16 +124,18 @@ export function BillTable() {
         status,
         timestamp: new Date().toISOString(),
         remarks: `Manually ${status.toLowerCase()} from bill list`,
-        level: -1,
+        level: bill.approvalHistory?.length || 0,
       };
+      
+      const processedData = processBill({
+          ...bill,
+          approvalStatus: status,
+          approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
+      }, approvalRules);
+      
+      const {id, ...dataToSave} = processedData;
 
-      const updatedData = {
-        approvalStatus: status,
-        approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
-        currentApproverId: ''
-      };
-
-      setDocumentNonBlocking(billRef, updatedData, { merge: true });
+      setDocumentNonBlocking(billRef, dataToSave, { merge: true });
       toast({ title: 'Success', description: `Bill has been ${status.toLowerCase()}.` });
   };
   
@@ -174,7 +181,7 @@ export function BillTable() {
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                          <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
-                         <TableCell><Skeleton className="h-8 w-16" /></TableCell>
+                         <TableCell><Skeleton className="h-8 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                       </TableRow>
                     ))
@@ -258,3 +265,5 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    
