@@ -16,7 +16,6 @@ import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvi
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser } from "@/firebase";
-import { ApprovalConfigTable } from "./components/approval-config-table";
 
 function BillFlowContent() {
     return (
@@ -29,10 +28,9 @@ function BillFlowContent() {
             </Button>
         </div>
         <Tabs defaultValue="bills" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
-              <TabsTrigger value="approval-config">Approval Config</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>
           </TabsList>
           <TabsContent value="bills">
@@ -62,19 +60,6 @@ function BillFlowContent() {
                     </CardContent>
                 </Card>
             </VendorDataProvider>
-          </TabsContent>
-           <TabsContent value="approval-config">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Approval Configuration</CardTitle>
-                      <CardDescription>Define rules and workflows for bill approvals.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <BillDataProvider>
-                        <ApprovalConfigTable />
-                      </BillDataProvider>
-                  </CardContent>
-              </Card>
           </TabsContent>
           <TabsContent value="master" className="space-y-6">
             <MasterDataProvider>

@@ -349,36 +349,6 @@
         "unitPrice": { "type": "number" }
       },
       "required": ["name", "billItemCategoryId", "unitPrice"]
-    },
-    "ApprovalRule": {
-        "title": "Approval Rule",
-        "type": "object",
-        "description": "Defines a rule for bill approval workflows.",
-        "properties": {
-          "name": { "type": "string", "description": "The name of the rule (e.g., 'Standard Bills')." },
-          "minAmount": { "type": "number", "description": "Minimum bill amount for this rule to apply." },
-          "maxAmount": { "type": "number", "description": "Maximum bill amount for this rule to apply." },
-          "effectiveDate": { "type": "string", "format": "date", "description": "The date from which this rule is effective." },
-          "approverLevels": {
-            "type": "array",
-            "description": "An ordered list of approvers and escalation policies for this rule.",
-            "items": {
-              "type": "object",
-              "properties": {
-                "level": { "type": "number", "description": "The approval level (e.g., 1, 2, 3)." },
-                "approverId": { "type": "string", "description": "The ID of the primary employee who needs to approve." },
-                "escalationTimeoutDays": { "type": "number", "description": "Number of days before escalating to an alternative approver." },
-                "alternativeApprovers": {
-                  "type": "array",
-                  "description": "An ordered list of alternative approver employee IDs.",
-                  "items": { "type": "string" }
-                }
-              },
-              "required": ["level", "approverId"]
-            }
-          }
-        },
-        "required": ["name", "minAmount", "maxAmount", "approverLevels"]
     }
   },
   "auth": {
@@ -412,8 +382,7 @@
     "/billCategories/{billCategoryId}": { "schema": { "$ref": "#/entities/BillCategory" }, "description": "Stores master list of bill categories." },
     "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." },
     "/billItemCategories/{billItemCategoryId}": { "schema": { "$ref": "#/entities/BillItemCategory" }, "description": "Stores categories for billable items." },
-    "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." },
-    "/approvalRules/{ruleId}": { "schema": { "$ref": "#/entities/ApprovalRule" }, "description": "Stores the rules for bill approval workflows." }
+    "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." }
   }
 }
     

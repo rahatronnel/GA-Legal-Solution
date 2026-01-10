@@ -16,7 +16,6 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemMaster } from './bill-item-master-table';
 import type { BillItemCategory } from './bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
-import type { ApprovalRule } from './approval-config-table';
 
 
 // --- Data Contexts for specific tabs ---
@@ -37,7 +36,6 @@ const BillDataContext = createContext<{
     sections: Section[];
     billItemCategories: BillItemCategory[];
     designations: Designation[];
-    approvalRules: ApprovalRule[];
     isLoading: boolean;
 } | undefined>(undefined);
 
@@ -80,7 +78,6 @@ export const BillDataProvider = ({ children }: { children: React.ReactNode }) =>
     const { data: sections, isLoading: l6 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
     const { data: billItemCategories, isLoading: l7 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
     const { data: designations, isLoading: l8 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
-    const { data: approvalRules, isLoading: l9 } = useCollection<ApprovalRule>(useMemoFirebase(() => firestore ? collection(firestore, 'approvalRules') : null, [firestore]));
 
 
     const value = useMemo(() => ({
@@ -92,9 +89,8 @@ export const BillDataProvider = ({ children }: { children: React.ReactNode }) =>
         sections: sections || [],
         billItemCategories: billItemCategories || [],
         designations: designations || [],
-        approvalRules: approvalRules || [],
-        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9,
-    }), [bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations, approvalRules, l1, l2, l3, l4, l5, l6, l7, l8, l9]);
+        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8,
+    }), [bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations, l1, l2, l3, l4, l5, l6, l7, l8]);
     
     return <BillDataContext.Provider value={value}>{children}</BillDataContext.Provider>;
 }
@@ -177,9 +173,8 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
     const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
     const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
     const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
-    const { data: approvalRules, isLoading: l12 } = useCollection<ApprovalRule>(useMemoFirebase(() => firestore ? collection(firestore, 'approvalRules') : null, [firestore]));
 
-    const isLoading = isUserLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11 || l12;
+    const isLoading = isUserLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11;
 
     const data = useMemo(() => ({
         vendors: vendors || [],
@@ -192,8 +187,7 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
         vendorCategories: vendorCategories || [],
         vendorNatureOfBusiness: vendorNatureOfBusiness || [],
         designations: designations || [],
-        approvalRules: approvalRules || [],
-    }), [vendors, bills, billTypes, billCategories, employees, sections, billItemCategories, vendorCategories, vendorNatureOfBusiness, designations, approvalRules]);
+    }), [vendors, bills, billTypes, billCategories, employees, sections, billItemCategories, vendorCategories, vendorNatureOfBusiness, designations]);
     
     const value = useMemo(() => ({ data, isLoading }), [data, isLoading]);
     
@@ -216,5 +210,3 @@ export const useBillFlow = () => {
     if (!context) throw new Error('useBillFlow must be used within a LegacyBillFlowProvider');
     return context;
 };
-
-    
