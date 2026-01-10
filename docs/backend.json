@@ -21,8 +21,6 @@
             "description": "Defines the bill approval workflow.",
             "properties": {
                 "effectiveDate": { "type": "string", "format": "date" },
-                "defaultPendingStatusName": { "type": "string" },
-                "rejectedStatusName": { "type": "string" },
                 "steps": {
                     "type": "array",
                     "description": "An ordered list of approval steps.",

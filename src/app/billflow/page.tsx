@@ -49,9 +49,6 @@ function ApprovalSettingsTab() {
     const [numberOfSteps, setNumberOfSteps] = useState(1);
     const [steps, setSteps] = useState<ApprovalStep[]>([]);
     const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(new Date());
-    const [rejectedStatusName, setRejectedStatusName] = useState('Rejected');
-    const [defaultPendingStatusName, setDefaultPendingStatusName] = useState('Pending');
-
 
     useEffect(() => {
         if (orgSettings?.approvalFlow) {
@@ -59,14 +56,10 @@ function ApprovalSettingsTab() {
             setNumberOfSteps(flow.steps.length);
             setSteps(flow.steps);
             setEffectiveDate(flow.effectiveDate ? new Date(flow.effectiveDate) : new Date());
-            setRejectedStatusName(flow.rejectedStatusName || 'Rejected');
-            setDefaultPendingStatusName(flow.defaultPendingStatusName || 'Pending');
         } else {
-            const defaultFlow = defaultStepAndStatusNames[3] || { steps: [], defaultPending: '', rejected: ''};
-            setNumberOfSteps(3);
+            const defaultFlow = defaultStepAndStatusNames[1] || { steps: [] };
+            setNumberOfSteps(1);
             setSteps(defaultFlow.steps.map(s => ({...s, approverId: ''})));
-            setDefaultPendingStatusName(defaultFlow.defaultPending);
-            setRejectedStatusName(defaultFlow.rejected);
             setEffectiveDate(new Date());
         }
     }, [orgSettings]);
@@ -82,27 +75,12 @@ function ApprovalSettingsTab() {
                 approverId: '', // Reset approver on change
             }));
             setSteps(newSteps);
-            setDefaultPendingStatusName(newFlowConfig.defaultPending);
-            setRejectedStatusName(newFlowConfig.rejected);
         }
     };
 
     const handleApproverChange = (index: number, employeeId: string) => {
         const newSteps = [...steps];
         newSteps[index].approverId = employeeId;
-        setSteps(newSteps);
-    };
-    
-    const handleStepNameChange = (index: number, newName: string) => {
-        const newSteps = [...steps];
-        newSteps[index].stepName = newName;
-        setSteps(newSteps);
-    };
-
-    const handleStatusNameChange = (index: number, newName: string) => {
-        // This is now disabled, but we keep the function in case it's needed later
-        const newSteps = [...steps];
-        newSteps[index].statusName = newName;
         setSteps(newSteps);
     };
 
@@ -122,8 +100,6 @@ function ApprovalSettingsTab() {
 
         const approvalFlow = {
             effectiveDate: format(effectiveDate, 'yyyy-MM-dd'),
-            defaultPendingStatusName,
-            rejectedStatusName,
             steps: steps,
         };
 
@@ -167,14 +143,6 @@ function ApprovalSettingsTab() {
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={effectiveDate} onSelect={setEffectiveDate} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
-                     <div className="space-y-2">
-                        <Label>Default Pending Status</Label>
-                        <Input value={defaultPendingStatusName} onChange={(e) => setDefaultPendingStatusName(e.target.value)} disabled />
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Rejected Status</Label>
-                        <Input value={rejectedStatusName} onChange={(e) => setRejectedStatusName(e.target.value)} disabled />
-                    </div>
                 </div>
 
                 <div className="space-y-4">
@@ -182,11 +150,11 @@ function ApprovalSettingsTab() {
                         <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 border rounded-lg">
                             <div className="flex-grow w-full space-y-2">
                                 <Label>Step {index + 1}: Step Name</Label>
-                                <Input value={step.stepName} onChange={(e) => handleStepNameChange(index, e.target.value)} />
+                                <Input value={step.stepName} disabled />
                             </div>
                              <div className="flex-grow w-full space-y-2">
-                                <Label>Step {index + 1}: Status Name</Label>
-                                <Input value={step.statusName} onChange={(e) => handleStatusNameChange(index, e.target.value)} disabled />
+                                <Label>Step {index + 1}: Status After Approval</Label>
+                                <Input value={step.statusName} disabled />
                             </div>
                             <div className="flex-grow w-full space-y-2">
                                 <Label>Step {index + 1}: Approver</Label>
