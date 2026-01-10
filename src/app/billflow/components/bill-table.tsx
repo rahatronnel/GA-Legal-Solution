@@ -118,7 +118,7 @@ export function BillTable() {
         approverId: user.uid,
         status,
         timestamp: new Date().toISOString(),
-        remarks: `Superadmin final ${status.toLowerCase()}`,
+        remarks: `Manually ${status.toLowerCase()} from bill list`,
         level: -1,
       };
 
@@ -177,7 +177,9 @@ export function BillTable() {
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
-                  filteredItems.map(bill => (
+                  filteredItems.map(bill => {
+                    const isCurrentUserApprover = user?.uid === bill.currentApproverId;
+                    return (
                     <TableRow key={bill.id}>
                         <TableCell>{bill.billId}</TableCell>
                         <TableCell>{getVendorName(bill.vendorId)}</TableCell>
@@ -186,7 +188,7 @@ export function BillTable() {
                         <TableCell><Badge>{bill.approvalStatus || 'Pending'}</Badge></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                             {isSuperAdmin && (
+                             {(isSuperAdmin || isCurrentUserApprover) && (
                                 <>
                                   <Tooltip><TooltipTrigger asChild>
                                     <AlertDialog>
@@ -215,7 +217,7 @@ export function BillTable() {
                           </div>
                         </TableCell>
                     </TableRow>
-                  ))
+                  )})
                 ) : (
                     <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
