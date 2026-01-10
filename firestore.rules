@@ -3,14 +3,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if a user is signed in.
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Grant full read and write access to any authenticated user for all collections.
+    // WARNING: This is a temporary rule for development.
+    // It allows open access to your entire database.
+    // We MUST implement proper security rules before deploying to production.
     match /{document=**} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
   }
 }
