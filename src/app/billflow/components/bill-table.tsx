@@ -190,12 +190,7 @@ export function BillTable() {
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
   
-  const canPerformBulkAction = selectedRows.length > 0 && (
-      isSuperAdmin || selectedRows.every(id => {
-          const bill = bills.find(b => b.id === id);
-          return bill && bill.currentApproverId === currentUserEmployee?.id;
-      })
-  );
+  const canPerformBulkAction = selectedRows.length > 0;
 
   return (
     <TooltipProvider>
