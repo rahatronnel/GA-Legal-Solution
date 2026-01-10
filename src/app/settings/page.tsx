@@ -31,6 +31,7 @@ export type OrganizationSettings = {
   fax: string;
   registrationNumber: string;
   logo: string; // Stored as data URL
+  favicon: string; // Stored as data URL for favicon
   approvalFlow?: {
       effectiveDate: string;
       defaultPendingStatusName: string;
@@ -49,6 +50,7 @@ const initialSettings: Omit<OrganizationSettings, 'approvalFlow'> = {
   fax: '+880 2 888 7778',
   registrationNumber: 'C-12345/67',
   logo: '',
+  favicon: '',
 };
 
 export default function SettingsPage() {
@@ -61,6 +63,7 @@ export default function SettingsPage() {
 
   const [settings, setSettings] = useState<OrganizationSettings>(initialSettings as OrganizationSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(null);
   
   const isLoading = isUserLoading || isLoadingSettings;
 
@@ -69,6 +72,9 @@ export default function SettingsPage() {
       setSettings(remoteSettings);
       if (remoteSettings.logo) {
         setLogoPreview(remoteSettings.logo);
+      }
+      if (remoteSettings.favicon) {
+        setFaviconPreview(remoteSettings.favicon);
       }
     } else {
       setSettings(initialSettings as OrganizationSettings);
@@ -80,13 +86,18 @@ export default function SettingsPage() {
     setSettings(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       try {
         const dataUrl = await imageToDataUrl(file);
-        setLogoPreview(dataUrl);
-        setSettings(prev => ({ ...prev, logo: dataUrl }));
+        if (type === 'logo') {
+          setLogoPreview(dataUrl);
+          setSettings(prev => ({ ...prev, logo: dataUrl }));
+        } else {
+          setFaviconPreview(dataUrl);
+          setSettings(prev => ({ ...prev, favicon: dataUrl }));
+        }
       } catch (error) {
         console.error("Error processing image:", error);
         toast({
@@ -98,9 +109,14 @@ export default function SettingsPage() {
     }
   };
 
-  const removeLogo = () => {
-    setLogoPreview(null);
-    setSettings(prev => ({ ...prev, logo: '' }));
+  const removeImage = (type: 'logo' | 'favicon') => {
+    if (type === 'logo') {
+      setLogoPreview(null);
+      setSettings(prev => ({ ...prev, logo: '' }));
+    } else {
+      setFaviconPreview(null);
+      setSettings(prev => ({ ...prev, favicon: '' }));
+    }
   };
 
   const handleSave = () => {
@@ -178,27 +194,52 @@ export default function SettingsPage() {
                   <Input id="registrationNumber" value={settings.registrationNumber} onChange={handleInputChange} />
                 </div>
               </div>
-              <div className="md:col-span-1 space-y-4">
-                <Label>Organization Logo</Label>
-                <div className="flex flex-col items-center gap-4">
-                  <Label htmlFor="logo-upload" className="cursor-pointer w-full">
-                    <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
-                      {logoPreview ? (
-                        <Image src={logoPreview} alt="Logo Preview" width={200} height={112} className="object-contain" />
-                      ) : (
-                        <div className="text-center text-muted-foreground p-4">
-                            <Upload className="mx-auto h-8 w-8 mb-2"/>
-                            <p className="text-sm">Click to upload logo</p>
-                        </div>
-                      )}
+              <div className="md:col-span-1 space-y-6">
+                <div className="space-y-2">
+                    <Label>Organization Logo</Label>
+                    <div className="flex flex-col items-center gap-2">
+                        <Label htmlFor="logo-upload" className="cursor-pointer w-full">
+                            <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
+                            {logoPreview ? (
+                                <Image src={logoPreview} alt="Logo Preview" width={200} height={112} className="object-contain" />
+                            ) : (
+                                <div className="text-center text-muted-foreground p-4">
+                                    <Upload className="mx-auto h-8 w-8 mb-2"/>
+                                    <p className="text-sm">Click to upload logo</p>
+                                </div>
+                            )}
+                            </div>
+                        </Label>
+                        <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'logo')} />
+                        {logoPreview && (
+                            <Button variant="link" size="sm" className="text-destructive" onClick={() => removeImage('logo')}>
+                            <X className="mr-2 h-4 w-4" /> Remove logo
+                            </Button>
+                        )}
                     </div>
-                  </Label>
-                  <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-                  {logoPreview && (
-                    <Button variant="link" size="sm" className="text-destructive" onClick={removeLogo}>
-                      <X className="mr-2 h-4 w-4" /> Remove logo
-                    </Button>
-                  )}
+                </div>
+                <div className="space-y-2">
+                    <Label>Favicon</Label>
+                     <div className="flex flex-col items-center gap-2">
+                        <Label htmlFor="favicon-upload" className="cursor-pointer w-full">
+                            <div className="aspect-square w-24 h-24 rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
+                            {faviconPreview ? (
+                                <Image src={faviconPreview} alt="Favicon Preview" width={96} height={96} className="object-contain" />
+                            ) : (
+                                <div className="text-center text-muted-foreground p-2">
+                                    <Upload className="mx-auto h-6 w-6 mb-1"/>
+                                    <p className="text-xs">Upload Favicon</p>
+                                </div>
+                            )}
+                            </div>
+                        </Label>
+                        <Input id="favicon-upload" type="file" accept="image/png,image/x-icon,image/svg+xml" className="hidden" onChange={(e) => handleImageChange(e, 'favicon')} />
+                        {faviconPreview && (
+                            <Button variant="link" size="sm" className="text-destructive" onClick={() => removeImage('favicon')}>
+                            <X className="mr-2 h-4 w-4" /> Remove favicon
+                            </Button>
+                        )}
+                    </div>
                 </div>
               </div>
             </div>
@@ -210,5 +251,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
