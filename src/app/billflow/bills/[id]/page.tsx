@@ -124,16 +124,16 @@ function BillProfileContent() {
 
     const handleApproval = (status: number) => {
         if (!firestore || !bill || !user || !orgSettings?.billApprovalLevels) return;
-
+    
         const billRef = doc(firestore, 'bills', bill.id);
         const currentUserEmployee = employees?.find(e => e.email === user.email);
         if (!currentUserEmployee) return;
-
+    
         const approvalLevels = orgSettings.billApprovalLevels;
         const currentLevel = bill.approvalHistory?.length || 0;
-
+    
         const statusText = status === 1 ? 'Approved' : 'Rejected';
-
+    
         const newHistoryEntry = {
             approverId: currentUserEmployee.id,
             status: statusText,
@@ -141,32 +141,32 @@ function BillProfileContent() {
             level: currentLevel + 1,
             remarks: `Manually ${statusText.toLowerCase()} from details page`,
         };
-
+    
         let approvalStatus = bill.approvalStatus;
         let nextApproverId = '';
-
+    
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
-            // Move to next approver
-            approvalStatus = 2; // Pending
-            nextApproverId = approvalLevels[currentLevel + 1];
+                // Move to next approver
+                approvalStatus = 2; // Pending
+                nextApproverId = approvalLevels[currentLevel + 1];
             } else {
-            // Final approval
-            approvalStatus = 1; // Approved
-            nextApproverId = '';
+                // Final approval
+                approvalStatus = 1; // Approved
+                nextApproverId = '';
             }
         } else {
             // Rejected
-            approvalStatus = 0;
+            approvalStatus = 0; // Rejected
             nextApproverId = '';
         }
-
+    
         setDocumentNonBlocking(
             billRef,
             {
-            approvalStatus,
-            currentApproverId: nextApproverId,
-            approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
+                approvalStatus,
+                currentApproverId: nextApproverId,
+                approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
             },
             { merge: true }
         );
