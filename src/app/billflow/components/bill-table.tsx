@@ -56,7 +56,13 @@ export function BillTable() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Bill> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   
+  const currentUserEmployee = useMemo(() => {
+    if (!user || !employees) return null;
+    return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
+  }, [user, employees]);
+
   const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
 
   const safeBills = useMemo(() => Array.isArray(bills) ? bills : [], [bills]);
@@ -119,6 +125,52 @@ export function BillTable() {
     }
   };
 
+  const handleBulkApproval = (status: number) => {
+    if (!firestore || !currentUserEmployee || !orgSettings?.billApprovalLevels) return;
+
+    selectedRows.forEach(billId => {
+        const bill = bills.find(b => b.id === billId);
+        if (!bill) return;
+
+        const billRef = doc(firestore, 'bills', billId);
+        const approvalLevels = orgSettings.billApprovalLevels;
+        const currentLevel = bill.approvalHistory?.length || 0;
+        const statusText = status === 1 ? 'Approved' : 'Rejected';
+
+        const newHistoryEntry = {
+            approverId: currentUserEmployee.id,
+            status: statusText,
+            timestamp: new Date().toISOString(),
+            level: currentLevel + 1,
+        };
+
+        let approvalStatus = bill.approvalStatus;
+        let nextApproverId = '';
+
+        if (status === 1) { // Approved
+            if (currentLevel + 1 < approvalLevels.length) {
+                approvalStatus = 2; // Pending
+                nextApproverId = approvalLevels[currentLevel + 1];
+            } else {
+                approvalStatus = 1; // Approved
+                nextApproverId = '';
+            }
+        } else { // Rejected
+            approvalStatus = 0;
+            nextApproverId = '';
+        }
+
+        setDocumentNonBlocking(billRef, {
+            approvalStatus,
+            currentApproverId: nextApproverId,
+            approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
+        }, { merge: true });
+    });
+    
+    toast({ title: 'Success', description: `Selected bills have been processed.` });
+    setSelectedRows([]);
+};
+
   const getStatusText = (status: number) => {
     if (status === 1) return 'Approved';
     if (status === 0) return 'Rejected';
@@ -130,6 +182,13 @@ export function BillTable() {
     if (status === 0) return 'destructive';
     return 'secondary';
   }
+
+  const toggleRowSelection = (id: string) => {
+    setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+  };
+
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const canPerformBulkAction = selectedRows.length > 0;
 
   return (
     <TooltipProvider>
@@ -146,6 +205,12 @@ export function BillTable() {
                 />
             </div>
             <div className="flex justify-end gap-2 flex-wrap">
+                {canPerformBulkAction && (
+                    <>
+                        <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
+                    </>
+                )}
                 <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Bill</Button>
             </div>
         </div>
@@ -153,6 +218,13 @@ export function BillTable() {
             <Table>
                 <TableHeader>
                 <TableRow>
+                    <TableHead className="w-[50px]"><Checkbox
+                        checked={selectedRows.length > 0 && selectedRows.length === filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === currentUserEmployee?.id)).length}
+                        onCheckedChange={(checked) => {
+                           const approvableIds = filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === currentUserEmployee?.id)).map(b => b.id);
+                           setSelectedRows(checked ? approvableIds : []);
+                        }}
+                    /></TableHead>
                     <TableHead>Bill ID</TableHead>
                     <TableHead>Vendor</TableHead>
                     <TableHead>Bill Date</TableHead>
@@ -165,6 +237,7 @@ export function BillTable() {
                 {isLoading ? (
                      Array.from({length: 5}).map((_, i) => (
                       <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-5"/></TableCell>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
@@ -174,25 +247,35 @@ export function BillTable() {
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
-                  filteredItems.map(bill => (
-                        <TableRow key={bill.id} data-state={""}>
-                            <TableCell>{bill.billId}</TableCell>
-                            <TableCell>{getVendorName(bill.vendorId)}</TableCell>
-                            <TableCell>{bill.billDate}</TableCell>
-                            <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                            <TableCell>
-                                <Badge variant={getStatusVariant(bill.approvalStatus)}>{getStatusText(bill.approvalStatus)}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
-                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
-                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
-                                <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(bill)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Bill</TooltipContent></Tooltip>
-                            </div>
-                            </TableCell>
-                        </TableRow>
-                    ))
+                  filteredItems.map(bill => {
+                        const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || bill.currentApproverId === currentUserEmployee?.id);
+                        return (
+                            <TableRow key={bill.id} data-state={selectedRows.includes(bill.id) ? "selected" : ""}>
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selectedRows.includes(bill.id)}
+                                        onCheckedChange={() => toggleRowSelection(bill.id)}
+                                        disabled={!canApprove}
+                                    />
+                                </TableCell>
+                                <TableCell>{bill.billId}</TableCell>
+                                <TableCell>{getVendorName(bill.vendorId)}</TableCell>
+                                <TableCell>{bill.billDate}</TableCell>
+                                <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getStatusVariant(bill.approvalStatus)}>{getStatusText(bill.approvalStatus)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
+                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
+                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
+                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(bill)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Bill</TooltipContent></Tooltip>
+                                </div>
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })
                 ) : (
                     <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
