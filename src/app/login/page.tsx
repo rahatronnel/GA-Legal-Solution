@@ -114,20 +114,35 @@ function LoginPageContent() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
       <div className="flex items-center justify-center py-12 bg-secondary">
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
+          <div className="grid gap-4 text-center">
             {isLoadingSettings ? (
-              <>
-                <Skeleton className="h-8 w-48 mx-auto" />
-                <Skeleton className="h-4 w-64 mx-auto" />
-              </>
+                <Skeleton className="h-24 w-24 rounded-full mx-auto" />
             ) : (
-              <>
-                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
-                <p className="text-balance text-muted-foreground">
-                  Enter your credentials to access the system
-                </p>
-              </>
+                orgSettings?.logo && (
+                <Image
+                    src={orgSettings.logo}
+                    alt="Company Logo"
+                    width={100}
+                    height={100}
+                    className="rounded-full mx-auto border-2 border-white shadow-md"
+                />
+                )
             )}
+            <div className="grid gap-2 text-center">
+                {isLoadingSettings ? (
+                <>
+                    <Skeleton className="h-8 w-48 mx-auto" />
+                    <Skeleton className="h-4 w-64 mx-auto" />
+                </>
+                ) : (
+                <>
+                    <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
+                    <p className="text-balance text-muted-foreground">
+                    Enter your credentials to access the system
+                    </p>
+                </>
+                )}
+            </div>
           </div>
           <div className="grid gap-4">
             <div className="grid gap-2">
@@ -202,20 +217,7 @@ function LoginPageContent() {
           fill
           className="object-cover opacity-20"
         />
-        <div className="z-10 text-center space-y-4">
-          {isLoadingSettings ? (
-            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
-          ) : (
-            orgSettings?.logo && (
-              <Image
-                src={orgSettings.logo}
-                alt="Company Logo"
-                width={150}
-                height={150}
-                className="rounded-full mx-auto border-4 border-white shadow-lg"
-              />
-            )
-          )}
+         <div className="z-10 text-center space-y-4 px-8">
           <h2 className="text-4xl font-bold text-foreground">
              {orgSettings?.name || 'GA & Legal Solution'}
           </h2>
