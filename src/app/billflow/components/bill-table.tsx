@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from '@/components/ui/checkbox';
 import type { OrganizationSettings } from '@/app/settings/page';
-import { getBillStatusText } from '../lib/status-helper';
+import { getBillStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
 
 export function BillTable() {
@@ -103,8 +103,8 @@ export function BillTable() {
   };
 
   const handleSave = (billData: Partial<Bill>) => {
-    if (!billsRef) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+    if (!billsRef || !orgSettings?.approvalFlow?.steps) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Database or approval settings not available.' });
         return;
     }
 
@@ -113,12 +113,13 @@ export function BillTable() {
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
-        const firstApproverId = orgSettings?.approvalFlow?.steps?.[0]?.approverId || '';
+        const approvalFlow = orgSettings.approvalFlow;
         const newBillData = {
           ...billData,
           billId: `B-${Date.now()}`,
+          approvalFlow: approvalFlow, // Copy the flow to the bill
           approvalStatus: 2, // Pending
-          currentApproverId: firstApproverId,
+          currentApproverId: approvalFlow.steps[0]?.approverId || '',
           approvalHistory: [],
         };
         addDocumentNonBlocking(billsRef, newBillData);
@@ -127,43 +128,44 @@ export function BillTable() {
   };
 
   const handleBulkApproval = (status: number) => {
-    if (!firestore || !currentUserEmployee || !orgSettings?.approvalFlow?.steps) return;
+    if (!firestore || !currentUserEmployee) return;
 
     selectedRows.forEach(billId => {
         const bill = bills.find(b => b.id === billId);
-        if (!bill) return;
+        if (!bill || !bill.approvalFlow?.steps) return;
 
         const billRef = doc(firestore, 'bills', billId);
-        const approvalLevels = bill.approvalFlow?.steps || orgSettings.approvalFlow.steps;
+        const approvalLevels = bill.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
-        const statusText = status === 1 ? 'Approved' : 'Rejected';
 
         const newHistoryEntry = {
             approverId: currentUserEmployee.id,
-            status: statusText,
+            status: 'Approved',
             timestamp: new Date().toISOString(),
             level: currentLevel,
-            remarks: `Bulk ${statusText.toLowerCase()} from list view`,
+            remarks: `Bulk approved from list view`,
         };
 
-        let approvalStatus = bill.approvalStatus;
-        let nextApproverId = bill.currentApproverId;
+        let newApprovalStatus: number;
+        let nextApproverId: string;
 
         if (status === 1) { // Approved
-            if (currentLevel + 1 < approvalLevels.length) {
-                approvalStatus = 2; // Pending
-                nextApproverId = approvalLevels[currentLevel + 1].approverId;
+            const nextLevel = currentLevel + 1;
+            if (nextLevel < approvalLevels.length) {
+                newApprovalStatus = getNextApprovalStatusCode(currentLevel);
+                nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                approvalStatus = 1; // Final approval
+                newApprovalStatus = 1; // Completed
                 nextApproverId = '';
             }
         } else { // Rejected
-            approvalStatus = 0;
+            newApprovalStatus = 0;
             nextApproverId = '';
+            newHistoryEntry.status = 'Rejected';
         }
 
         setDocumentNonBlocking(billRef, {
-            approvalStatus,
+            approvalStatus: newApprovalStatus,
             currentApproverId: nextApproverId,
             approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
         }, { merge: true });
@@ -218,12 +220,14 @@ export function BillTable() {
                     <TableHead className="w-[50px]"><Checkbox
                         checked={selectedRows.length > 0 && selectedRows.length === filteredItems.filter(b => {
                             const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
-                            return b.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+                            const isPending = b.approvalStatus !== 0 && b.approvalStatus !== 1;
+                            return isPending && (isSuperAdmin || isCurrentUserApprover);
                         }).length}
                         onCheckedChange={(checked) => {
                            const approvableIds = filteredItems.filter(b => {
                                const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
-                               return b.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+                               const isPending = b.approvalStatus !== 0 && b.approvalStatus !== 1;
+                               return isPending && (isSuperAdmin || isCurrentUserApprover);
                            }).map(b => b.id);
                            setSelectedRows(checked ? approvableIds : []);
                         }}
@@ -252,7 +256,8 @@ export function BillTable() {
                 ) : filteredItems && filteredItems.length > 0 ? (
                   filteredItems.map(bill => {
                         const isCurrentUserApprover = currentUserEmployee ? bill.currentApproverId === currentUserEmployee.id : false;
-                        const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+                        const isPending = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
+                        const canApprove = isPending && (isSuperAdmin || isCurrentUserApprover);
                         return (
                             <TableRow key={bill.id} data-state={selectedRows.includes(bill.id) ? "selected" : ""}>
                                 <TableCell>
@@ -267,7 +272,7 @@ export function BillTable() {
                                 <TableCell>{bill.billDate}</TableCell>
                                 <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                 <TableCell>
-                                    <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, orgSettings?.approvalFlow)}</Badge>
+                                    <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill)}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
@@ -314,5 +319,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
-    

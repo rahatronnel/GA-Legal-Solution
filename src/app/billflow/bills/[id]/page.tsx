@@ -36,7 +36,7 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemCategory } from '../../components/bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import type { OrganizationSettings } from '@/app/settings/page';
-import { getBillStatusText } from '../../lib/status-helper';
+import { getBillStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
@@ -134,40 +134,41 @@ function BillProfileContent() {
         }
 
         const effectiveApproverId = currentUserEmployee?.id || 'superadmin';
-    
         const approvalLevels = bill.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
     
-        const statusText = status === 1 ? 'Approved' : 'Rejected';
-    
         const newHistoryEntry = {
             approverId: effectiveApproverId,
-            status: statusText,
+            status: 'Approved', // History always logs "Approved"
             timestamp: new Date().toISOString(),
             level: currentLevel,
-            remarks: `Manually ${statusText.toLowerCase()} from details page`,
+            remarks: `Manually approved from details page`,
         };
     
-        let approvalStatus = bill.approvalStatus;
-        let nextApproverId = bill.currentApproverId;
+        let newApprovalStatus: number;
+        let nextApproverId: string;
     
-        if (status === 1) { // Approved
-            if (currentLevel + 1 < approvalLevels.length) {
-                approvalStatus = 2; // Pending
-                nextApproverId = approvalLevels[currentLevel + 1].approverId;
+        if (status === 1) { // If the action is "Approve"
+            const nextLevel = currentLevel + 1;
+            if (nextLevel < approvalLevels.length) {
+                // Move to the next approver
+                newApprovalStatus = getNextApprovalStatusCode(currentLevel); // e.g., 3, 4, 5...
+                nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                approvalStatus = 1; // Final approval
+                // This is the final approval
+                newApprovalStatus = 1; // Completed
                 nextApproverId = '';
             }
-        } else { // Rejected
-            approvalStatus = 0;
+        } else { // If the action is "Reject"
+            newApprovalStatus = 0; // Rejected
             nextApproverId = '';
+            newHistoryEntry.status = 'Rejected'; // Update history log for rejection
         }
     
         setDocumentNonBlocking(
             billRef,
             {
-                approvalStatus,
+                approvalStatus: newApprovalStatus,
                 currentApproverId: nextApproverId,
                 approvalHistory: [...(bill.approvalHistory || []), newHistoryEntry],
             },
@@ -189,9 +190,9 @@ function BillProfileContent() {
     const entryBy = employees?.find((e:any) => e.id === bill.entryBy);
     
     const getStatusVariant = (status: number) => {
-        if (status === 1) return 'default';
-        if (status === 0) return 'destructive';
-        return 'secondary';
+        if (status === 1) return 'default'; // Completed
+        if (status === 0) return 'destructive'; // Rejected
+        return 'secondary'; // Pending states
     }
 
     const getItemCategoryName = (id: string) => billItemCategories?.find((c:any) => c.id === id)?.name || 'N/A';
@@ -204,7 +205,9 @@ function BillProfileContent() {
     const currentUserEmployee = employees?.find(e => e.email === user?.email);
     const isCurrentUserApprover = bill.currentApproverId === currentUserEmployee?.id;
 
-    const canApprove = bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover);
+    // A bill is pending approval if its status is not 0 (rejected) or 1 (completed)
+    const isPendingApproval = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
+    const canApprove = isPendingApproval && (isSuperAdmin || isCurrentUserApprover);
 
     return (
         <div className="space-y-6">
@@ -213,7 +216,7 @@ function BillProfileContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">{bill.billReferenceNumber || bill.billId}</CardTitle>
-                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, bill.approvalFlow)}</Badge></CardDescription>
+                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                              {canApprove && (
@@ -261,7 +264,7 @@ function BillProfileContent() {
                                                 status = 'approved';
                                             } else if (historyEntry?.status === 'Rejected') {
                                                 status = 'rejected';
-                                            } else if (bill.currentApproverId === step.approverId && bill.approvalStatus === 2) {
+                                            } else if (bill.currentApproverId === step.approverId && isPendingApproval) {
                                                 status = 'pending';
                                             }
 
@@ -371,5 +374,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-    
