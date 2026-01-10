@@ -75,6 +75,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const isSuperAdmin = superadminUser?.email === 'superadmin@galsolution.com';
 
   const filteredEmployees = useMemo(() => {
+    if (!employees) return [];
     if (!searchTerm) return employees;
     const lowercasedTerm = searchTerm.toLowerCase();
     return employees.filter(emp => 
@@ -307,9 +308,17 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           </TableHeader>
           <TableBody>
             {!employees ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center">Loading...</TableCell>
-              </TableRow>
+                Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                    </TableRow>
+                ))
             ) : filteredEmployees && filteredEmployees.length > 0 ? (
               filteredEmployees.map((employee) => (
                 <TableRow key={employee.id}>

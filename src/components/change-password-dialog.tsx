@@ -61,6 +61,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
 
   const employee = useMemo(() => {
     if (!user || !employees) return null;
+    // Match by both UID and email to cover all cases, including superadmin
     return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
   }, [user, employees]);
 
