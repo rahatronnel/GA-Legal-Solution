@@ -60,7 +60,7 @@ export function BillTable() {
   
   const currentUserEmployee = useMemo(() => {
     if (!user || !employees) return null;
-    return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
+    return employees.find(e => e.email === user.email);
   }, [user, employees]);
 
   const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
@@ -311,4 +311,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
