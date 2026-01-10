@@ -118,16 +118,17 @@ function BillProfileContent() {
         return bills.find((b:any) => b.id === id) || null;
     }, [id, bills, isLoading]);
 
-    const handleApproval = (status: 'Approved' | 'Rejected') => {
+    const handleApproval = (status: number) => {
       if (!firestore || !bill || !user) return;
       
       const billRef = doc(firestore, 'bills', bill.id);
+      const statusText = status === 1 ? 'Approved' : 'Rejected';
       
       const newHistoryEntry = {
         approverId: user.uid,
-        status,
+        status: statusText,
         timestamp: new Date().toISOString(),
-        remarks: `Manually ${status.toLowerCase()} from details page`,
+        remarks: `Manually ${statusText.toLowerCase()} from details page`,
         level: (bill.approvalHistory?.length || 0) + 1,
       };
 
@@ -153,6 +154,12 @@ function BillProfileContent() {
     const billCategory = billCategories?.find((bc:any) => bc.id === bill.billCategoryId);
     const entryBy = employees?.find((e:any) => e.id === bill.entryBy);
     
+    const getStatusText = (status: number) => {
+        if (status === 1) return 'Approved';
+        if (status === 0) return 'Rejected';
+        return 'Pending';
+    }
+
     const getItemCategoryName = (id: string) => billItemCategories?.find((c:any) => c.id === id)?.name || 'N/A';
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     const formatDateTime = (dateStr: string) => {
@@ -166,7 +173,8 @@ function BillProfileContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">{bill.billReferenceNumber || bill.billId}</CardTitle>
-                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{bill.approvalStatus || 'Pending'}</Badge></CardDescription>
+                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{getStatusText(bill.approvalStatus)}</Badge></CardDescription>
+                            <p className="text-xs text-red-500">approvalStatus = {String(bill.approvalStatus)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                              
@@ -175,14 +183,14 @@ function BillProfileContent() {
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as approved. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval('Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
                                    <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark the bill as rejected. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval('Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(0)} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                    </AlertDialog>
                                 </>
@@ -320,5 +328,6 @@ export default function BillPage() {
     
 
     
+
 
 

@@ -109,7 +109,7 @@ export type Bill = {
   documents: Record<DocType, UploadedFile[]>;
 
   // Approval fields
-  approvalStatus: 'Pending' | 'Approved' | 'Rejected';
+  approvalStatus: number; // 0: Rejected, 1: Approved, 2: Pending
   approvalHistory: {
       level: number;
       approverId: string;
@@ -189,7 +189,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             const today = new Date();
             const loggedInEmployee = employees.find(e => e.email === user?.email);
 
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 'Pending'} as any);
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2} as any);
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
