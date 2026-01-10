@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBillData } from './bill-flow-provider';
-import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Bill } from './bill-entry-form';
 import { BillEntryForm } from './bill-entry-form';
@@ -37,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from '@/components/ui/checkbox';
+import type { OrganizationSettings } from '@/app/settings/page';
 
 
 export function BillTable() {
@@ -45,6 +46,9 @@ export function BillTable() {
   const { handlePrint } = usePrint();
   const { user } = useUser();
   const { bills, vendors, isLoading } = useBillData();
+  
+  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+  const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
   
   const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
 
@@ -70,9 +74,13 @@ export function BillTable() {
   
   const pendingBills = useMemo(() => filteredItems.filter(b => b.approvalStatus === 2), [filteredItems]);
   
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const designatedApproverId = orgSettings?.billApproverId;
+
   const handleSelectAll = (checked: boolean) => {
       if (checked) {
-          setSelectedRowIds(pendingBills.map(b => b.id));
+          const idsToSelect = pendingBills.filter(b => isSuperAdmin || b.currentApproverId === user?.uid).map(b => b.id);
+          setSelectedRowIds(idsToSelect);
       } else {
           setSelectedRowIds([]);
       }
@@ -116,19 +124,19 @@ export function BillTable() {
         return;
     }
 
-    // Assign a default approval status if it's a new bill
-    const dataWithStatus = {
+    const dataWithApproval = {
         ...billData,
         approvalStatus: billData.id ? billData.approvalStatus : 2, // 2 for Pending
+        currentApproverId: billData.id ? billData.currentApproverId : designatedApproverId || '',
     };
 
-    if (dataWithStatus.id) {
-        const { id, ...dataToSave } = dataWithStatus;
+    if (dataWithApproval.id) {
+        const { id, ...dataToSave } = dataWithApproval;
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
         const newBillData = {
-          ...dataWithStatus,
+          ...dataWithApproval,
           billId: `B-${Date.now()}`
         };
         addDocumentNonBlocking(billsRef, newBillData);
@@ -218,7 +226,7 @@ export function BillTable() {
                 <TableRow>
                     <TableHead className="w-[50px]">
                       <Checkbox
-                        checked={pendingBills.length > 0 && selectedRowIds.length === pendingBills.length}
+                        checked={pendingBills.length > 0 && selectedRowIds.length === pendingBills.filter(b=> isSuperAdmin || b.currentApproverId === user?.uid).length}
                         onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                         aria-label="Select all pending bills"
                         disabled={pendingBills.length === 0}
@@ -246,34 +254,39 @@ export function BillTable() {
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
-                  filteredItems.map(bill => (
-                    <TableRow key={bill.id} data-state={selectedRowIds.includes(bill.id) && "selected"}>
-                        <TableCell>
-                          {bill.approvalStatus === 2 && (
-                            <Checkbox
-                              checked={selectedRowIds.includes(bill.id)}
-                              onCheckedChange={(checked) => handleRowSelect(bill.id, checked as boolean)}
-                              aria-label={`Select bill ${bill.billId}`}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>{bill.billId}</TableCell>
-                        <TableCell>{getVendorName(bill.vendorId)}</TableCell>
-                        <TableCell>{bill.billDate}</TableCell>
-                        <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusVariant(bill.approvalStatus)}>{getStatusText(bill.approvalStatus)}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
-                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
-                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
-                             <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(bill)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Bill</TooltipContent></Tooltip>
-                          </div>
-                        </TableCell>
-                    </TableRow>
-                  ))
+                  filteredItems.map(bill => {
+                    const isCurrentUserApprover = bill.currentApproverId === user?.uid;
+                    const canTakeAction = isSuperAdmin || isCurrentUserApprover;
+                    
+                    return (
+                        <TableRow key={bill.id} data-state={selectedRowIds.includes(bill.id) && "selected"}>
+                            <TableCell>
+                            {bill.approvalStatus === 2 && canTakeAction && (
+                                <Checkbox
+                                checked={selectedRowIds.includes(bill.id)}
+                                onCheckedChange={(checked) => handleRowSelect(bill.id, checked as boolean)}
+                                aria-label={`Select bill ${bill.billId}`}
+                                />
+                            )}
+                            </TableCell>
+                            <TableCell>{bill.billId}</TableCell>
+                            <TableCell>{getVendorName(bill.vendorId)}</TableCell>
+                            <TableCell>{bill.billDate}</TableCell>
+                            <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                            <TableCell>
+                                <Badge variant={getStatusVariant(bill.approvalStatus)}>{getStatusText(bill.approvalStatus)}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
+                                <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(bill)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Bill</TooltipContent></Tooltip>
+                            </div>
+                            </TableCell>
+                        </TableRow>
+                    )
+                  })
                 ) : (
                     <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
@@ -308,5 +321,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
-    

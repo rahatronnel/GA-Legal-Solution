@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon } from 'lucide-react';
+import { Home as HomeIcon, Settings, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -15,9 +15,77 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
+import React, { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { doc, collection } from 'firebase/firestore';
+import type { OrganizationSettings } from '../settings/page';
+import type { Employee } from '../user-management/components/employee-entry-form';
+
+function ApprovalSettingsTab() {
+    const { toast } = useToast();
+    const firestore = useFirestore();
+
+    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+    
+    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+    const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
+
+    const [approverId, setApproverId] = useState('');
+
+    useEffect(() => {
+        if (orgSettings) {
+            setApproverId(orgSettings.billApproverId || '');
+        }
+    }, [orgSettings]);
+
+    const handleSave = () => {
+        if (!settingsDocRef) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+            return;
+        }
+        setDocumentNonBlocking(settingsDocRef, { billApproverId: approverId }, { merge: true });
+        toast({ title: 'Success', description: 'Approval settings saved.' });
+    };
+
+    if (isLoadingSettings || isLoadingEmployees) {
+        return <p>Loading settings...</p>;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Bill Approval Settings</CardTitle>
+                <CardDescription>Designate an employee who is responsible for approving bills.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2 max-w-sm">
+                    <Label htmlFor="approver">Designated Approver</Label>
+                    <Select value={approverId} onValueChange={setApproverId}>
+                        <SelectTrigger id="approver">
+                            <SelectValue placeholder="Select an employee..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {(employees || []).map(emp => (
+                                <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <Button onClick={handleSave}>Save Settings</Button>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 function BillFlowContent() {
+    const { user } = useUser();
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
     return (
       <div className="space-y-6">
         <div className="flex justify-end">
@@ -28,10 +96,11 @@ function BillFlowContent() {
             </Button>
         </div>
         <Tabs defaultValue="bills" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>
+              {isSuperAdmin && <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>}
           </TabsList>
           <TabsContent value="bills">
             <BillDataProvider>
@@ -111,6 +180,11 @@ function BillFlowContent() {
               </Tabs>
             </MasterDataProvider>
           </TabsContent>
+           {isSuperAdmin && (
+              <TabsContent value="approval-settings">
+                <ApprovalSettingsTab />
+              </TabsContent>
+            )}
         </Tabs>
       </div>
     );

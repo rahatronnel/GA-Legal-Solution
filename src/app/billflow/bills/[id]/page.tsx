@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
-import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -35,6 +35,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import type { Section } from '@/app/user-management/components/section-table';
 import type { BillItemCategory } from '../../components/bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
+import type { OrganizationSettings } from '@/app/settings/page';
 
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
@@ -95,6 +96,9 @@ function BillProfileContent() {
     const { user } = useUser();
     const { handlePrint } = usePrint();
     const { id } = params;
+    
+    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
     const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
     const { data: bills, isLoading: l1 } = useCollection<Bill>(billsRef);
@@ -166,6 +170,9 @@ function BillProfileContent() {
         try { return new Date(dateStr).toLocaleString(); } catch { return 'N/A'; }
     }
     
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isCurrentUserApprover = bill.currentApproverId === user?.uid;
+
     return (
         <div className="space-y-6">
             <Card>
@@ -177,7 +184,7 @@ function BillProfileContent() {
                         </div>
                         <div className="flex items-center gap-2">
                              
-                            {bill.approvalStatus === 2 && (
+                             {bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover) && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
@@ -325,11 +332,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-    
-
-    
-
-
-
-

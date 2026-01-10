@@ -26,6 +26,7 @@ export type OrganizationSettings = {
   fax: string;
   registrationNumber: string;
   logo: string; // Stored as data URL
+  billApproverId?: string;
 };
 
 const initialSettings: OrganizationSettings = {

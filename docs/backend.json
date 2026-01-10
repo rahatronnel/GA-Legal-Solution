@@ -15,7 +15,8 @@
         "email": { "type": "string", "format": "email", "description": "Contact email address." },
         "fax": { "type": "string", "description": "Fax number." },
         "registrationNumber": { "type": "string", "description": "Official registration number." },
-        "logo": { "type": "string", "description": "Data URL of the organization's logo." }
+        "logo": { "type": "string", "description": "Data URL of the organization's logo." },
+        "billApproverId": { "type": "string", "description": "The ID of the employee designated to approve bills." }
       },
       "required": ["name", "email"]
     },

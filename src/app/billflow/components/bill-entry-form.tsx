@@ -30,7 +30,9 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { BillItemMaster } from './bill-item-master-table';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { OrganizationSettings } from '@/app/settings/page';
 
 
 type UploadedFile = {
@@ -144,8 +146,12 @@ interface BillEntryFormProps {
 export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
+    const firestore = useFirestore();
     const { vendors, billTypes, billCategories, employees, sections } = useBillData();
     const { billItemMasters, billItemCategories } = useMasterData();
+
+    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
     
     const [step, setStep] = useState(1);
     const [billData, setBillData] = useState<Omit<Bill, 'id'|'items'|'documents'>>(initialBillData as any);
@@ -189,7 +195,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             const today = new Date();
             const loggedInEmployee = employees.find(e => e.email === user?.email);
 
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2} as any);
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2, currentApproverId: orgSettings?.billApproverId || ''} as any);
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
@@ -199,7 +205,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             setBillingPeriodTo(undefined);
           }
         }
-      }, [isOpen, bill, isEditing, user, employees]);
+      }, [isOpen, bill, isEditing, user, employees, orgSettings]);
 
       
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
