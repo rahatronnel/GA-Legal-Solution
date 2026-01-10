@@ -72,14 +72,26 @@ export function BillTable() {
     );
   }, [safeBills, searchTerm, vendors]);
   
-  const pendingBills = useMemo(() => filteredItems.filter(b => b.approvalStatus === 2), [filteredItems]);
-  
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  const designatedApproverId = orgSettings?.billApproverId;
+
+  const canApproveSelection = useMemo(() => {
+    if (selectedRowIds.length === 0) return false;
+    if (isSuperAdmin) return true;
+    return selectedRowIds.every(id => {
+      const bill = safeBills.find(b => b.id === id);
+      return bill && bill.currentApproverId === user?.uid;
+    });
+  }, [selectedRowIds, safeBills, isSuperAdmin, user]);
+
+
+  const pendingBillsForCurrentUser = useMemo(() => {
+    return filteredItems.filter(b => b.approvalStatus === 2 && (isSuperAdmin || b.currentApproverId === user?.uid));
+  }, [filteredItems, isSuperAdmin, user]);
+
 
   const handleSelectAll = (checked: boolean) => {
       if (checked) {
-          const idsToSelect = pendingBills.filter(b => isSuperAdmin || b.currentApproverId === user?.uid).map(b => b.id);
+          const idsToSelect = pendingBillsForCurrentUser.map(b => b.id);
           setSelectedRowIds(idsToSelect);
       } else {
           setSelectedRowIds([]);
@@ -124,6 +136,7 @@ export function BillTable() {
         return;
     }
 
+    const designatedApproverId = orgSettings?.billApproverId;
     const dataWithApproval = {
         ...billData,
         approvalStatus: billData.id ? billData.approvalStatus : 2, // 2 for Pending
@@ -158,7 +171,7 @@ export function BillTable() {
               status: statusText,
               timestamp: new Date().toISOString(),
               remarks: `Bulk ${statusText.toLowerCase()}`,
-              level: billToUpdate.approvalHistory?.length || 0,
+              level: (billToUpdate.approvalHistory || []).length + 1,
           };
           const updatedData = {
               approvalStatus: status,
@@ -199,7 +212,7 @@ export function BillTable() {
                 />
             </div>
             <div className="flex justify-end gap-2 flex-wrap">
-                {selectedRowIds.length > 0 && (
+                {selectedRowIds.length > 0 && canApproveSelection && (
                   <>
                      <AlertDialog>
                         <AlertDialogTrigger asChild><Button variant="outline"><Check className="mr-2 h-4 w-4 text-green-500" />Approve Selected ({selectedRowIds.length})</Button></AlertDialogTrigger>
@@ -226,10 +239,10 @@ export function BillTable() {
                 <TableRow>
                     <TableHead className="w-[50px]">
                       <Checkbox
-                        checked={pendingBills.length > 0 && selectedRowIds.length === pendingBills.filter(b=> isSuperAdmin || b.currentApproverId === user?.uid).length}
+                        checked={pendingBillsForCurrentUser.length > 0 && selectedRowIds.length === pendingBillsForCurrentUser.length}
                         onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                         aria-label="Select all pending bills"
-                        disabled={pendingBills.length === 0}
+                        disabled={pendingBillsForCurrentUser.length === 0}
                       />
                     </TableHead>
                     <TableHead>Bill ID</TableHead>
@@ -259,7 +272,7 @@ export function BillTable() {
                     const canTakeAction = isSuperAdmin || isCurrentUserApprover;
                     
                     return (
-                        <TableRow key={bill.id} data-state={selectedRowIds.includes(bill.id) && "selected"}>
+                        <TableRow key={bill.id} data-state={selectedRowIds.includes(bill.id) ? "selected" : ""}>
                             <TableCell>
                             {bill.approvalStatus === 2 && canTakeAction && (
                                 <Checkbox

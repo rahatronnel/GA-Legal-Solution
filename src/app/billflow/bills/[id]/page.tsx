@@ -183,7 +183,6 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{getStatusText(bill.approvalStatus)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             
                              {bill.approvalStatus === 2 && (isSuperAdmin || isCurrentUserApprover) && (
                                 <>
                                   <AlertDialog>
@@ -202,7 +201,6 @@ function BillProfileContent() {
                                    </AlertDialog>
                                 </>
                              )}
-                             
                              <Button onClick={() => handlePrint(bill, 'bill')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
                              <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
