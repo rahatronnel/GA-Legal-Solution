@@ -143,7 +143,7 @@ function BillProfileContent() {
         };
     
         let approvalStatus = bill.approvalStatus;
-        let nextApproverId = '';
+        let nextApproverId = bill.currentApproverId;
     
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
