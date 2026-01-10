@@ -27,13 +27,25 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { defaultStepAndStatusNames } from './lib/status-helper';
 import { Input } from '@/components/ui/input';
 
 type ApprovalStep = {
     stepName: string;
     approverId: string;
     statusName: string;
+};
+
+const hardcodedSteps: { [key: number]: Omit<ApprovalStep, 'approverId'>[] } = {
+    1: [{ stepName: 'Final Approver', statusName: 'Completed' }],
+    2: [{ stepName: 'Initiator', statusName: 'Reviewed' }, { stepName: 'Final Approver', statusName: 'Completed' }],
+    3: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Reviewer', statusName: 'Reviewed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    4: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    5: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Compliance Officer', statusName: 'Validated' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    6: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    7: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    8: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Financial Reviewer', statusName: 'Endorsed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
+    9: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Financial Reviewer', statusName: 'Endorsed' }, { stepName: 'Senior Reviewer', statusName: 'Approved' }, { stepName: 'Final Approver', statusName: 'Final Approval' }],
+    10: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Financial Reviewer', statusName: 'Endorsed' }, { stepName: 'Senior Reviewer', statusName: 'Approved' }, { stepName: 'Executive Approver', statusName: 'Final Approval' }, { stepName: 'Final Approver', statusName: 'Completed' }]
 };
 
 function ApprovalSettingsTab() {
@@ -51,15 +63,16 @@ function ApprovalSettingsTab() {
     const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(new Date());
 
     useEffect(() => {
-        if (orgSettings?.approvalFlow) {
+        if (orgSettings?.approvalFlow && orgSettings.approvalFlow.steps) {
             const flow = orgSettings.approvalFlow;
             setNumberOfSteps(flow.steps.length);
             setSteps(flow.steps);
             setEffectiveDate(flow.effectiveDate ? new Date(flow.effectiveDate) : new Date());
         } else {
-            const defaultFlow = defaultStepAndStatusNames[1] || { steps: [] };
+            // Default to 1 step if no flow is set
+            const defaultFlow = hardcodedSteps[1] || [];
             setNumberOfSteps(1);
-            setSteps(defaultFlow.steps.map(s => ({...s, approverId: ''})));
+            setSteps(defaultFlow.map(s => ({...s, approverId: ''})));
             setEffectiveDate(new Date());
         }
     }, [orgSettings]);
@@ -68,8 +81,8 @@ function ApprovalSettingsTab() {
         const num = parseInt(value, 10);
         if (num > 0 && num <= 10) {
             setNumberOfSteps(num);
-            const newFlowConfig = defaultStepAndStatusNames[num];
-            const newSteps = newFlowConfig.steps.map(s => ({
+            const newFlowConfig = hardcodedSteps[num] || [];
+            const newSteps = newFlowConfig.map(s => ({
                 stepName: s.stepName,
                 statusName: s.statusName,
                 approverId: '', // Reset approver on change
@@ -116,7 +129,7 @@ function ApprovalSettingsTab() {
             <CardHeader>
                 <CardTitle>Bill Approval Flow</CardTitle>
                 <CardDescription>
-                    Define the sequence of employees and status names for the bill approval process.
+                    Define the sequence of employees for the bill approval process.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -153,11 +166,11 @@ function ApprovalSettingsTab() {
                                 <Input value={step.stepName} disabled />
                             </div>
                              <div className="flex-grow w-full space-y-2">
-                                <Label>Step {index + 1}: Status After Approval</Label>
+                                <Label>Status After Approval</Label>
                                 <Input value={step.statusName} disabled />
                             </div>
                             <div className="flex-grow w-full space-y-2">
-                                <Label>Step {index + 1}: Approver</Label>
+                                <Label>Approver</Label>
                                 <Select value={step.approverId} onValueChange={(value) => handleApproverChange(index, value)}>
                                     <SelectTrigger><SelectValue placeholder="Select an employee..." /></SelectTrigger>
                                     <SelectContent>
@@ -294,5 +307,3 @@ export default function BillFlowPage() {
     </BillFlowProvider>
   );
 }
-
-    

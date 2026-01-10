@@ -329,10 +329,10 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             documents,
         };
 
-        if (!isEditing) {
-            dataToSave.approvalFlow = orgSettings?.approvalFlow;
+        if (!isEditing && orgSettings?.approvalFlow) {
+            dataToSave.approvalFlow = orgSettings.approvalFlow;
             dataToSave.approvalStatus = 2; // Pending
-            dataToSave.currentApproverId = orgSettings?.approvalFlow?.steps?.[0]?.approverId || '';
+            dataToSave.currentApproverId = orgSettings.approvalFlow.steps?.[0]?.approverId || '';
             dataToSave.approvalHistory = [];
         }
         
