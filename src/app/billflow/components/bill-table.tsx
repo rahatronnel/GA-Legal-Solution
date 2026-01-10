@@ -142,6 +142,7 @@ export function BillTable() {
             status: statusText,
             timestamp: new Date().toISOString(),
             level: currentLevel + 1,
+            remarks: `Bulk ${statusText.toLowerCase()} from list view`,
         };
 
         let approvalStatus = bill.approvalStatus;
@@ -310,3 +311,4 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
