@@ -57,7 +57,6 @@ service cloud.firestore {
     
     // -------------------------------------------------------------------------
     // Operational Data: Requires user to be logged in for any action.
-    // Specific write/delete logic can be added later if needed (e.g., isOwner).
     // -------------------------------------------------------------------------
     match /employees/{employeeId} {
       // Any authenticated user can read employee info (for dropdowns, etc.)
@@ -66,26 +65,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /vehicles/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /drivers/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /trips/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /maintenanceRecords/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /accidents/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /vendors/{docId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /bills/{docId} {
-      allow read, write: if isAuthenticated();
-    }
+    match /vehicles/{docId} { allow read, write: if isAuthenticated(); }
+    match /drivers/{docId} { allow read, write: if isAuthenticated(); }
+    match /trips/{docId} { allow read, write: if isAuthenticated(); }
+    match /maintenanceRecords/{docId} { allow read, write: if isAuthenticated(); }
+    match /accidents/{docId} { allow read, write: if isAuthenticated(); }
+    match /vendors/{docId} { allow read, write: if isAuthenticated(); }
+    match /bills/{docId} { allow read, write: if isAuthenticated(); }
   }
 }

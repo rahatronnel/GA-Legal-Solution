@@ -54,9 +54,9 @@ const MasterDataContext = createContext<{
 
 export const VendorDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
-    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => collection(firestore, 'vendors'), [firestore]));
-    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => collection(firestore, 'vendorCategories'), [firestore]));
-    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => collection(firestore, 'vendorNatureOfBusiness'), [firestore]));
+    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
+    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
+    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
 
     const value = useMemo(() => ({
         vendors: vendors || [],
@@ -70,14 +70,14 @@ export const VendorDataProvider = ({ children }: { children: React.ReactNode }) 
 
 export const BillDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
-    const { data: bills, isLoading: l1 } = useCollection<Bill>(useMemoFirebase(() => collection(firestore, 'bills'), [firestore]));
-    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(useMemoFirebase(() => collection(firestore, 'vendors'), [firestore]));
-    const { data: billTypes, isLoading: l3 } = useCollection<BillType>(useMemoFirebase(() => collection(firestore, 'billTypes'), [firestore]));
-    const { data: billCategories, isLoading: l4 } = useCollection<BillCategory>(useMemoFirebase(() => collection(firestore, 'billCategories'), [firestore]));
-    const { data: employees, isLoading: l5 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
-    const { data: sections, isLoading: l6 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
-    const { data: billItemCategories, isLoading: l7 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
-    const { data: designations, isLoading: l8 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
+    const { data: bills, isLoading: l1 } = useCollection<Bill>(useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]));
+    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
+    const { data: billTypes, isLoading: l3 } = useCollection<BillType>(useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]));
+    const { data: billCategories, isLoading: l4 } = useCollection<BillCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]));
+    const { data: employees, isLoading: l5 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
+    const { data: sections, isLoading: l6 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
+    const { data: billItemCategories, isLoading: l7 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
+    const { data: designations, isLoading: l8 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
     const value = useMemo(() => ({
         bills: bills || [],
@@ -96,12 +96,12 @@ export const BillDataProvider = ({ children }: { children: React.ReactNode }) =>
 
 export const MasterDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
-    const { data: billItemMasters, isLoading: l1 } = useCollection<BillItemMaster>(useMemoFirebase(() => collection(firestore, 'billItemMasters'), [firestore]));
-    const { data: billItemCategories, isLoading: l2 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
-    const { data: vendorCategories, isLoading: l3 } = useCollection<VendorCategory>(useMemoFirebase(() => collection(firestore, 'vendorCategories'), [firestore]));
-    const { data: vendorNatureOfBusiness, isLoading: l4 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => collection(firestore, 'vendorNatureOfBusiness'), [firestore]));
-    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => collection(firestore, 'billTypes'), [firestore]));
-    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => collection(firestore, 'billCategories'), [firestore]));
+    const { data: billItemMasters, isLoading: l1 } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
+    const { data: billItemCategories, isLoading: l2 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
+    const { data: vendorCategories, isLoading: l3 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
+    const { data: vendorNatureOfBusiness, isLoading: l4 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
+    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]));
+    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]));
     
     const value = useMemo(() => ({
         billItemMasters: billItemMasters || [],
@@ -162,16 +162,16 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     
-    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => collection(firestore, 'vendors'), [firestore]));
-    const { data: bills, isLoading: l4 } = useCollection<Bill>(useMemoFirebase(() => collection(firestore, 'bills'), [firestore]));
-    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => collection(firestore, 'billTypes'), [firestore]));
-    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => collection(firestore, 'billCategories'), [firestore]));
-    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => collection(firestore, 'employees'), [firestore]));
-    const { data: sections, isLoading: l8 } = useCollection<Section>(useMemoFirebase(() => collection(firestore, 'sections'), [firestore]));
-    const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => collection(firestore, 'billItemCategories'), [firestore]));
-    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => collection(firestore, 'vendorCategories'), [firestore]));
-    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => collection(firestore, 'vendorNatureOfBusiness'), [firestore]));
-    const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => collection(firestore, 'designations'), [firestore]));
+    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
+    const { data: bills, isLoading: l4 } = useCollection<Bill>(useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]));
+    const { data: billTypes, isLoading: l5 } = useCollection<BillType>(useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]));
+    const { data: billCategories, isLoading: l6 } = useCollection<BillCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]));
+    const { data: employees, isLoading: l7 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
+    const { data: sections, isLoading: l8 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
+    const { data: billItemCategories, isLoading: l10 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
+    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
+    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
+    const { data: designations, isLoading: l11 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
     const isLoading = isUserLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11;
 
@@ -198,10 +198,9 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
         return null;
     }
 
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-full"><p>Loading BillFlow Data...</p></div>;
-    }
-
+    // Since useCollection now handles loading state relative to auth, we can remove the additional loading check here.
+    // If we are here, auth is loaded, and useCollection will correctly report its own loading state.
+    
     return <LegacyBillFlowContext.Provider value={value}>{children}</LegacyBillFlowContext.Provider>;
 }
 
