@@ -26,7 +26,7 @@ export type OrganizationSettings = {
   fax: string;
   registrationNumber: string;
   logo: string; // Stored as data URL
-  billApproverId?: string;
+  billApprovalLevels?: string[];
 };
 
 const initialSettings: OrganizationSettings = {
@@ -39,6 +39,7 @@ const initialSettings: OrganizationSettings = {
   fax: '+880 2 888 7778',
   registrationNumber: 'C-12345/67',
   logo: '',
+  billApprovalLevels: [],
 };
 
 export default function SettingsPage() {

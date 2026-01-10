@@ -194,8 +194,9 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
           } else {
             const today = new Date();
             const loggedInEmployee = employees.find(e => e.email === user?.email);
+            const firstApproverId = orgSettings?.billApprovalLevels?.[0] || '';
 
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2, currentApproverId: orgSettings?.billApproverId || ''} as any);
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2, currentApproverId: firstApproverId} as any);
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
@@ -509,5 +510,3 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
         </Dialog>
     );
 }
-
-    

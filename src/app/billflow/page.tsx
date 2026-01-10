@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, Settings, User } from 'lucide-react';
+import { Home as HomeIcon, Settings, User, PlusCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -34,21 +34,36 @@ function ApprovalSettingsTab() {
     const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
     const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
 
-    const [approverId, setApproverId] = useState('');
+    const [approvalLevels, setApprovalLevels] = useState<string[]>([]);
 
     useEffect(() => {
-        if (orgSettings) {
-            setApproverId(orgSettings.billApproverId || '');
+        if (orgSettings && orgSettings.billApprovalLevels) {
+            setApprovalLevels(orgSettings.billApprovalLevels);
+        } else {
+            setApprovalLevels([]);
         }
     }, [orgSettings]);
+
+    const handleLevelChange = (index: number, employeeId: string) => {
+        const newLevels = [...approvalLevels];
+        newLevels[index] = employeeId;
+        setApprovalLevels(newLevels);
+    };
+
+    const addLevel = () => setApprovalLevels(prev => [...prev, '']);
+    const removeLevel = (index: number) => setApprovalLevels(prev => prev.filter((_, i) => i !== index));
 
     const handleSave = () => {
         if (!settingsDocRef) {
             toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
             return;
         }
-        setDocumentNonBlocking(settingsDocRef, { billApproverId: approverId }, { merge: true });
-        toast({ title: 'Success', description: 'Approval settings saved.' });
+        if (approvalLevels.some(id => !id)) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select an employee for each approval level.' });
+            return;
+        }
+        setDocumentNonBlocking(settingsDocRef, { billApprovalLevels: approvalLevels }, { merge: true });
+        toast({ title: 'Success', description: 'Approval flow saved.' });
     };
 
     if (isLoadingSettings || isLoadingEmployees) {
@@ -58,24 +73,36 @@ function ApprovalSettingsTab() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Bill Approval Settings</CardTitle>
-                <CardDescription>Designate an employee who is responsible for approving bills.</CardDescription>
+                <CardTitle>Bill Approval Flow</CardTitle>
+                <CardDescription>
+                    Define the sequence of employees who must approve bills. Bills will be routed in this order.
+                </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2 max-w-sm">
-                    <Label htmlFor="approver">Designated Approver</Label>
-                    <Select value={approverId} onValueChange={setApproverId}>
-                        <SelectTrigger id="approver">
-                            <SelectValue placeholder="Select an employee..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {(employees || []).map(emp => (
-                                <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+            <CardContent className="space-y-6">
+                <div className="space-y-4">
+                    {approvalLevels.map((employeeId, index) => (
+                        <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                            <Label className="font-bold text-lg">Step {index + 1}:</Label>
+                            <Select value={employeeId} onValueChange={(value) => handleLevelChange(index, value)}>
+                                <SelectTrigger className="flex-grow">
+                                    <SelectValue placeholder="Select an employee..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(employees || []).map(emp => (
+                                        <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button variant="destructive" size="icon" onClick={() => removeLevel(index)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
                 </div>
-                <Button onClick={handleSave}>Save Settings</Button>
+                <div className="flex gap-4">
+                    <Button variant="outline" onClick={addLevel}><PlusCircle className="mr-2 h-4 w-4"/>Add Approval Step</Button>
+                    <Button onClick={handleSave}>Save Approval Flow</Button>
+                </div>
             </CardContent>
         </Card>
     );
