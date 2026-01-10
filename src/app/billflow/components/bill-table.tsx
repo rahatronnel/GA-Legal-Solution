@@ -112,7 +112,7 @@ export function BillTable() {
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
-        const firstApproverId = orgSettings?.approvalFlow?.steps[0]?.approverId || '';
+        const firstApproverId = orgSettings?.approvalFlow?.steps?.[0]?.approverId || '';
         const newBillData = {
           ...billData,
           billId: `B-${Date.now()}`,
@@ -319,5 +319,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
-    

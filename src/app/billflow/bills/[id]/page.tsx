@@ -123,10 +123,10 @@ function BillProfileContent() {
     }, [id, bills, isLoading]);
 
     const handleApproval = (status: number) => {
-        if (!firestore || !bill || !user || !orgSettings?.approvalFlow?.steps) return;
+        if (!firestore || !bill || !user || !orgSettings?.approvalFlow?.steps || !employees) return;
     
         const billRef = doc(firestore, 'bills', bill.id);
-        const currentUserEmployee = employees?.find(e => e.email === user.email);
+        const currentUserEmployee = employees.find(e => e.email === user.email);
         if (!currentUserEmployee) return;
     
         const approvalLevels = orgSettings.approvalFlow.steps;
@@ -360,5 +360,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-    
