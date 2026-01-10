@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Trip } from '@/app/vehicle-management/components/trip-entry-form';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-table';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
@@ -78,12 +78,12 @@ const getStatusVariant = (status: Trip['tripStatus']) => {
     }
 };
 
-function TripProfileContent() {
+export default function TripProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const { data } = useVehicleManagement();
+  const { data, isLoading } = useVehicleManagement();
   const {
       trips = [],
       vehicles = [],
@@ -94,16 +94,13 @@ function TripProfileContent() {
   } = data;
 
 
-  const [trip, setTrip] = useState<Trip | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
-  useEffect(() => {
-    if (typeof id !== 'string') return;
-    if (trips.length > 0) {
-      const foundTrip = trips.find((t: Trip) => t.id === id);
-      setTrip(foundTrip || null);
-    }
+  const trip = useMemo(() => {
+    if (!id || !trips) return undefined;
+    return trips.find((t: Trip) => t.id === id) || null;
   }, [id, trips]);
+
 
   const { vehicle, driver, purpose, totalDistance, totalExpenses, itinerary } = useMemo(() => {
     if (!trip) return {};
@@ -119,12 +116,16 @@ function TripProfileContent() {
   
   const getExpenseTypeName = (id: string) => expenseTypes.find((et: ExpenseType) => et.id === id)?.name || 'N/A';
 
-  if (trip === undefined) {
+  if (isLoading) {
       return <div className="flex justify-center items-center h-full"><p>Loading trip profile...</p></div>;
   }
 
   if (trip === null) {
       notFound();
+  }
+  
+  if (!trip) {
+      return null;
   }
 
   return (
@@ -236,12 +237,4 @@ function TripProfileContent() {
         </div>
     </div>
   );
-}
-
-export default function TripProfilePage() {
-    return (
-        <VehicleManagementProvider>
-            <TripProfileContent />
-        </VehicleManagementProvider>
-    );
 }

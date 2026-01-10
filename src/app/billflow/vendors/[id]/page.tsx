@@ -4,13 +4,19 @@
 import React from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
-import { LegacyBillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, Phone, Mail, Building, Briefcase, DollarSign, Calendar, FileText, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import type { Vendor } from '../../components/vendor-entry-form';
+import type { VendorCategory } from '../../components/vendor-category-table';
+import type { VendorNatureOfBusiness } from '../../components/vendor-nature-of-business-table';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { collection } from 'firebase/firestore';
+
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -24,9 +30,14 @@ function VendorProfileContent() {
     const params = useParams();
     const { id } = params;
     const { handlePrint } = usePrint();
+    const firestore = useFirestore();
 
-    const { data, isLoading } = useBillFlow();
-    const { vendors, vendorCategories, vendorNatureOfBusiness, employees } = data;
+    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
+    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
+    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
+    const { data: employees, isLoading: l4 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
+
+    const isLoading = l1 || l2 || l3 || l4;
 
     const vendor = React.useMemo(() => {
         if (isLoading || !vendors) return undefined;
@@ -41,10 +52,10 @@ function VendorProfileContent() {
         notFound();
     }
 
-    const category = vendorCategories.find(c => c.id === vendor.vendorCategoryId);
-    const natureOfBusiness = vendorNatureOfBusiness.find(n => n.id === vendor.natureOfBusinessId);
-    const createdBy = employees.find(e => e.id === vendor.createdBy);
-    const approvedBy = employees.find(e => e.id === vendor.approvedBy);
+    const category = vendorCategories?.find(c => c.id === vendor.vendorCategoryId);
+    const natureOfBusiness = vendorNatureOfBusiness?.find(n => n.id === vendor.natureOfBusinessId);
+    const createdBy = employees?.find(e => e.id === vendor.createdBy);
+    const approvedBy = employees?.find(e => e.id === vendor.approvedBy);
     
     const getStatusVariant = (status: string) => {
         switch (status) {
@@ -130,9 +141,5 @@ function VendorProfileContent() {
 }
 
 export default function VendorPage() {
-    return (
-        <LegacyBillFlowProvider>
-            <VendorProfileContent />
-        </LegacyBillFlowProvider>
-    );
+    return <VendorProfileContent />;
 }

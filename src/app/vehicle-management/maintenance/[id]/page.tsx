@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, DollarSign, Text } from 'lucide-react';
@@ -74,12 +74,12 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
 );
 
 
-function MaintenanceProfileContent() {
+export default function MaintenanceProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const { data } = useVehicleManagement();
+  const { data, isLoading } = useVehicleManagement();
   const {
       maintenanceRecords,
       vehicles,
@@ -91,18 +91,9 @@ function MaintenanceProfileContent() {
       maintenanceExpenseTypes,
   } = data;
 
-
-  const [record, setRecord] = useState<MaintenanceRecord | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (typeof id !== 'string' || !maintenanceRecords) {
-        return; // Wait for data
-    }
-    
-    if (maintenanceRecords.length > 0) {
-        const foundRecord = maintenanceRecords.find((t: MaintenanceRecord) => t.id === id);
-        setRecord(foundRecord || null);
-    }
+  const record = useMemo(() => {
+    if (!id || !maintenanceRecords) return undefined;
+    return maintenanceRecords.find((t: MaintenanceRecord) => t.id === id) || null;
   }, [id, maintenanceRecords]);
 
   const { vehicle, maintenanceType, serviceCenter, employee, driver, totalCost, totalPartsCost, totalExpensesCost } = useMemo(() => {
@@ -124,12 +115,16 @@ function MaintenanceProfileContent() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   }
 
-  if (record === undefined) {
+  if (isLoading) {
       return <div className="flex justify-center items-center h-full"><p>Loading maintenance record...</p></div>;
   }
   
   if (record === null) {
       notFound();
+  }
+  
+  if (!record) {
+      return null;
   }
 
   return (
@@ -236,12 +231,4 @@ function MaintenanceProfileContent() {
         </div>
     </div>
   );
-}
-
-export default function MaintenanceProfilePage() {
-    return (
-        <VehicleManagementProvider>
-            <MaintenanceProfileContent />
-        </VehicleManagementProvider>
-    )
 }

@@ -4,7 +4,6 @@
 import React from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
-import { LegacyBillFlowProvider, useBillFlow } from '../../components/bill-flow-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, MessageSquare, Building } from 'lucide-react';
@@ -14,8 +13,8 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
-import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +27,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { Bill } from '../../components/bill-entry-form';
+import type { Vendor } from '../../components/vendor-entry-form';
+import type { BillType } from '../../components/bill-type-table';
+import type { BillCategory } from '../../components/bill-category-table';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Section } from '@/app/user-management/components/section-table';
+import type { BillItemCategory } from '../../components/bill-item-category-table';
+import type { Designation } from '@/app/user-management/components/designation-table';
 
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
@@ -89,8 +96,22 @@ function BillProfileContent() {
     const { handlePrint } = usePrint();
     const { id } = params;
 
-    const { data, isLoading } = useBillFlow();
-    const { bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations } = data;
+    const billsRef = useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]);
+    const { data: bills, isLoading: l1 } = useCollection<Bill>(billsRef);
+    const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
+    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(vendorsRef);
+    const billTypesRef = useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]);
+    const { data: billTypes, isLoading: l3 } = useCollection<BillType>(billTypesRef);
+    const billCategoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]);
+    const { data: billCategories, isLoading: l4 } = useCollection<BillCategory>(billCategoriesRef);
+    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+    const { data: employees, isLoading: l5 } = useCollection<Employee>(employeesRef);
+    const billItemCategoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]);
+    const { data: billItemCategories, isLoading: l6 } = useCollection<BillItemCategory>(billItemCategoriesRef);
+    const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+    const { data: designations, isLoading: l7 } = useCollection<Designation>(designationsRef);
+
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     const bill = React.useMemo(() => {
         if (isLoading || !bills) return undefined;
@@ -127,12 +148,12 @@ function BillProfileContent() {
         notFound();
     }
     
-    const vendor = vendors.find((v:any) => v.id === bill.vendorId);
-    const billType = billTypes.find((bt:any) => bt.id === bill.billTypeId);
-    const billCategory = billCategories.find((bc:any) => bc.id === bill.billCategoryId);
-    const entryBy = employees.find((e:any) => e.id === bill.entryBy);
+    const vendor = vendors?.find((v:any) => v.id === bill.vendorId);
+    const billType = billTypes?.find((bt:any) => bt.id === bill.billTypeId);
+    const billCategory = billCategories?.find((bc:any) => bc.id === bill.billCategoryId);
+    const entryBy = employees?.find((e:any) => e.id === bill.entryBy);
     
-    const getItemCategoryName = (id: string) => billItemCategories.find((c:any) => c.id === id)?.name || 'N/A';
+    const getItemCategoryName = (id: string) => billItemCategories?.find((c:any) => c.id === id)?.name || 'N/A';
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     const formatDateTime = (dateStr: string) => {
         try { return new Date(dateStr).toLocaleString(); } catch { return 'N/A'; }
@@ -151,7 +172,7 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{bill.approvalStatus || 'Pending'}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {(isSuperAdmin || isCurrentUserApprover) && (
+                             {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
@@ -198,8 +219,8 @@ function BillProfileContent() {
                                     <CardHeader><CardTitle>Approval History</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
                                         {bill.approvalHistory.map((entry: any, index: number) => {
-                                            const approver = employees.find((e: any) => e.id === entry.approverId);
-                                            const designation = designations.find((d: any) => d.id === approver?.designationId);
+                                            const approver = employees?.find((e: any) => e.id === entry.approverId);
+                                            const designation = designations?.find((d: any) => d.id === approver?.designationId);
                                             const statusColor = entry.status === 'Approved' ? 'text-green-500' : 'text-red-500';
 
                                             return (
@@ -296,9 +317,5 @@ function BillProfileContent() {
 
 
 export default function BillPage() {
-    return (
-        <LegacyBillFlowProvider>
-            <BillProfileContent />
-        </LegacyBillFlowProvider>
-    );
+    return <BillProfileContent />;
 }

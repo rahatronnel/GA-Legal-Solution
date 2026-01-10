@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,12 +88,12 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </div>
 );
 
-function DriverProfileContent() {
+export default function DriverProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const { data } = useVehicleManagement();
+  const { data, isLoading } = useVehicleManagement();
   const { 
       drivers,
       vehicles,
@@ -103,22 +103,12 @@ function DriverProfileContent() {
       accidentTypes
   } = data;
   
-  const [driver, setDriver] = useState<Driver | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
-  useEffect(() => {
-    if (typeof id !== 'string' || !drivers) {
-      setDriver(undefined);
-      return;
-    }
-    if (drivers.length > 0) {
-      const foundDriver = drivers.find((d: Driver) => d.id === id);
-      setDriver(foundDriver || null);
-    } else if (data) {
-      const timer = setTimeout(() => setDriver(null), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [id, drivers, data]);
+  const driver = useMemo(() => {
+    if (!id || !drivers) return undefined;
+    return drivers.find((d: Driver) => d.id === id) || null;
+  }, [id, drivers]);
 
 
   const driverAccidentHistory = useMemo(() => {
@@ -137,12 +127,16 @@ function DriverProfileContent() {
       return maintenanceRecords.filter((record: MaintenanceRecord) => assignedVehicleIds.includes(record.vehicleId));
   }, [id, vehicles, maintenanceRecords]);
 
-  if (driver === undefined) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full"><p>Loading driver profile...</p></div>;
   }
 
   if (driver === null) {
       notFound();
+  }
+  
+  if (!driver) {
+      return null;
   }
   
   const getInitials = (name: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
@@ -255,12 +249,4 @@ function DriverProfileContent() {
       </div>
     </div>
   );
-}
-
-export default function DriverProfilePageWrapper() {
-    return (
-        <VehicleManagementProvider>
-            <DriverProfileContent />
-        </VehicleManagementProvider>
-    )
 }

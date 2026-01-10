@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { type Vehicle } from '@/app/vehicle-management/components/vehicle-entry-form';
 import { type Driver } from '@/app/vehicle-management/components/driver-entry-form';
 import { type VehicleType } from '@/app/vehicle-management/components/vehicle-type-table';
@@ -91,12 +91,12 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
     </div>
 );
 
-function VehicleProfileContent() {
+export default function VehicleProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const { data } = useVehicleManagement();
+  const { data, isLoading } = useVehicleManagement();
   const { 
       vehicles, 
       drivers, 
@@ -108,17 +108,11 @@ function VehicleProfileContent() {
       accidentTypes 
   } = data;
 
-  const [vehicle, setVehicle] = useState<Vehicle | null | undefined>(undefined);
   const { handlePrint } = usePrint();
 
-  useEffect(() => {
-    if (typeof id !== 'string' || !vehicles) {
-        return;
-    }
-    if(vehicles.length > 0) {
-        const foundVehicle = vehicles.find((v: Vehicle) => v.id === id);
-        setVehicle(foundVehicle || null);
-    }
+  const vehicle = useMemo(() => {
+    if (!id || !vehicles) return undefined;
+    return vehicles.find((v: Vehicle) => v.id === id) || null;
   }, [id, vehicles]);
 
   const vehicleMaintenanceHistory = useMemo(() => {
@@ -145,12 +139,16 @@ function VehicleProfileContent() {
     return [...vehicle.driverAssignmentHistory].sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
   }, [vehicle]);
 
-  if (vehicle === undefined) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full"><p>Loading vehicle profile...</p></div>;
   }
 
   if (vehicle === null) {
       notFound();
+  }
+  
+  if (!vehicle) {
+      return null;
   }
   
   const vehicleType = vehicleTypes.find((vt: VehicleType) => vt.id === vehicle.vehicleTypeId);
@@ -313,12 +311,4 @@ function VehicleProfileContent() {
       </div>
     </div>
   );
-}
-
-export default function VehicleProfilePage() {
-    return (
-        <VehicleManagementProvider>
-            <VehicleProfileContent />
-        </VehicleManagementProvider>
-    );
 }

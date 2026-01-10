@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { type Employee } from '@/app/user-management/components/employee-entry-form';
@@ -101,15 +101,10 @@ export default function EmployeeProfilePage() {
   
   const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
   const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+  
+  const isLoading = isLoadingEmployee || isLoadingSections || isLoadingDesignations;
 
-  useEffect(() => {
-    if (!isLoadingEmployee && !employee) {
-        const timer = setTimeout(() => notFound(), 500);
-        return () => clearTimeout(timer);
-    }
-  }, [isLoadingEmployee, employee, notFound]);
-
-  if (isLoadingEmployee || isLoadingSections || isLoadingDesignations) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <p>Loading employee profile...</p>

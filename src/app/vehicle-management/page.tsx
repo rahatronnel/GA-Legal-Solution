@@ -24,7 +24,7 @@ import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
 import ReportsPage from "./reports/page";
 import { VehicleBrandTable } from "./components/vehicle-brand-table";
-import { VehicleManagementProvider, useVehicleManagement } from './components/vehicle-management-provider';
+import { useVehicleManagement } from './components/vehicle-management-provider';
 import { Dashboard } from "./components/Dashboard";
 
 function VehicleManagementContent() {
@@ -185,9 +185,6 @@ function VehicleManagementContent() {
 }
 
 export default function VehicleManagementPage() {
-    return (
-        <VehicleManagementProvider>
-            <VehicleManagementContent />
-        </VehicleManagementProvider>
-    )
+    // The VehicleManagementProvider is now in the layout.tsx file
+    return <VehicleManagementContent />;
 }

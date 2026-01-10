@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { VehicleManagementProvider, useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
+import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion, Printer } from 'lucide-react';
@@ -75,13 +75,13 @@ const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.R
 );
 
 
-function AccidentProfileContent() {
+export default function AccidentProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const { data } = useVehicleManagement();
+  const { data, isLoading } = useVehicleManagement();
   const {
       accidents,
       vehicles,
@@ -96,17 +96,9 @@ function AccidentProfileContent() {
   } = data;
 
 
-  const [accident, setAccident] = useState<Accident | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (typeof id !== 'string' || !accidents) {
-        return; // Wait for data
-    }
-
-    if (accidents.length > 0) {
-        const foundRecord = accidents.find((t: Accident) => t.id === id);
-        setAccident(foundRecord || null);
-    }
+  const accident = useMemo(() => {
+    if (!id || !accidents) return undefined;
+    return accidents.find((t: Accident) => t.id === id) || null;
   }, [id, accidents]);
 
 
@@ -126,12 +118,16 @@ function AccidentProfileContent() {
   }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
   
 
-  if (accident === undefined) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full"><p>Loading accident record...</p></div>;
   }
   
   if (accident === null) {
       notFound();
+  }
+  
+  if (!accident) {
+      return null;
   }
 
   const formatCurrency = (amount: number | undefined) => {
@@ -228,12 +224,4 @@ function AccidentProfileContent() {
         </div>
     </div>
   );
-}
-
-export default function AccidentProfilePage() {
-    return (
-        <VehicleManagementProvider>
-            <AccidentProfileContent />
-        </VehicleManagementProvider>
-    );
 }
