@@ -127,8 +127,8 @@ function BillProfileContent() {
         approverId: user.uid,
         status,
         timestamp: new Date().toISOString(),
-        remarks: `Manually ${status.toLowerCase()}`,
-        level: -1, // Indicates override or non-standard approval
+        remarks: `Manually ${status.toLowerCase()} from details page`,
+        level: (bill.approvalHistory?.length || 0) + 1,
       };
 
       const updatedData = {
