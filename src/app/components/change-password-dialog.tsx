@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { doc, collection } from 'firebase/firestore';
@@ -23,7 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Mail, Phone, Building, Briefcase } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useCollection } from '@/firebase';
 import type { Designation } from '../user-management/components/designation-table';
 import type { Section } from '../user-management/components/section-table';
 
@@ -45,6 +44,8 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [designationName, setDesignationName] = useState('N/A');
+  const [departmentName, setDepartmentName] = useState('N/A');
 
   const auth = useAuth();
   const { user } = useUser();
@@ -58,22 +59,36 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   
   const { data: employee, isLoading: isLoadingEmployee } = useDoc<Employee>(employeeDocRef);
   
-  const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
-  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+  // These will only be fetched when the dialog is open and the employee data is available
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(
+    useMemoFirebase(() => (firestore && isOpen && employee) ? collection(firestore, 'designations') : null, [firestore, isOpen, employee])
+  );
 
-  const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
-  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
-
-
-  const designationName = useMemo(() => {
-    if (!employee || !designations) return 'N/A';
-    return designations.find(d => d.id === employee.designationId)?.name || 'N/A';
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(
+    useMemoFirebase(() => (firestore && isOpen && employee) ? collection(firestore, 'sections') : null, [firestore, isOpen, employee])
+  );
+  
+  useEffect(() => {
+    if (employee && designations) {
+        setDesignationName(designations.find(d => d.id === employee.designationId)?.name || 'N/A');
+    }
   }, [employee, designations]);
 
-  const departmentName = useMemo(() => {
-    if (!employee || !sections) return 'N/A';
-    return sections.find(s => s.id === employee.departmentId)?.name || 'N/A';
+  useEffect(() => {
+    if (employee && sections) {
+        setDepartmentName(sections.find(s => s.id === employee.departmentId)?.name || 'N/A');
+    }
   }, [employee, sections]);
+
+  useEffect(() => {
+      // Reset state when dialog closes
+      if (!isOpen) {
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setIsLoading(false);
+      }
+  }, [isOpen]);
 
 
   const handlePasswordChange = async () => {
@@ -103,9 +118,6 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
       
       toast({ title: 'Success', description: 'Your password has been changed successfully.' });
       setIsOpen(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
 
     } catch (error: any) {
       let errorMessage = 'An unknown error occurred.';
@@ -129,7 +141,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
           <DialogDescription>View your profile information and update your password.</DialogDescription>
         </DialogHeader>
 
-        {isLoadingEmployee || isLoadingDesignations || isLoadingSections ? (
+        {isLoadingEmployee || (isOpen && (isLoadingDesignations || isLoadingSections)) ? (
             <div className="space-y-4 py-4">
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-20 w-20 rounded-full" />
