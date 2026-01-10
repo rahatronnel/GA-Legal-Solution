@@ -19,12 +19,12 @@ import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search,
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -78,7 +79,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setIsFormOpen(true);
   };
 
-  const handleSave = (data: Omit<Employee, 'id' | 'defaultPassword' | 'newPassword'>, id?: string) => {
+  const handleSave = async (data: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => {
     if (!employeesRef) {
         toast({ variant: "destructive", title: "Error", description: "Database not connected." });
         return;
@@ -96,6 +97,23 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setCurrentEmployee(employee);
     setIsDeleteConfirmOpen(true);
   };
+
+  const handlePasswordReset = async (email: string) => {
+      if(!auth) return;
+      try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: "Password Reset Email Sent",
+            description: `An email has been sent to ${email} with instructions to reset the password.`,
+        });
+      } catch (error: any) {
+          toast({
+              variant: "destructive",
+              title: "Failed to Send Email",
+              description: error.message || "An unknown error occurred.",
+          });
+      }
+  }
 
   const confirmDelete = () => {
     if (currentEmployee?.id && employeesRef) {
@@ -333,7 +351,3 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     </TooltipProvider>
   );
 }
-
-    
-
-    

@@ -17,12 +17,16 @@ import { Label } from '@/components/ui/label';
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 import type { Employee } from '../user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Mail, Phone, Building, Briefcase } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useCollection } from '@/firebase';
+import type { Designation } from '../user-management/components/designation-table';
+import type { Section } from '../user-management/components/section-table';
+
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
     <div className="flex items-start gap-3">
@@ -53,6 +57,24 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   );
   
   const { data: employee, isLoading: isLoadingEmployee } = useDoc<Employee>(employeeDocRef);
+  
+  const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
+
+  const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+
+
+  const designationName = useMemo(() => {
+    if (!employee || !designations) return 'N/A';
+    return designations.find(d => d.id === employee.designationId)?.name || 'N/A';
+  }, [employee, designations]);
+
+  const departmentName = useMemo(() => {
+    if (!employee || !sections) return 'N/A';
+    return sections.find(s => s.id === employee.departmentId)?.name || 'N/A';
+  }, [employee, sections]);
+
 
   const handlePasswordChange = async () => {
     if (!user || !user.email) {
@@ -107,7 +129,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
           <DialogDescription>View your profile information and update your password.</DialogDescription>
         </DialogHeader>
 
-        {isLoadingEmployee ? (
+        {isLoadingEmployee || isLoadingDesignations || isLoadingSections ? (
             <div className="space-y-4 py-4">
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-20 w-20 rounded-full" />
@@ -128,13 +150,13 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
                     </Avatar>
                     <div>
                         <p className="text-xl font-bold">{employee.fullName}</p>
-                        <p className="text-sm text-muted-foreground">{employee.designationId || 'No Designation'}</p>
+                        <p className="text-sm text-muted-foreground">{designationName}</p>
                     </div>
                 </div>
                 <div className="grid gap-4">
                   <InfoItem icon={Mail} label="Email" value={employee.email} />
                   <InfoItem icon={Phone} label="Mobile Number" value={employee.mobileNumber} />
-                  <InfoItem icon={Building} label="Department" value={employee.departmentId || 'N/A'} />
+                  <InfoItem icon={Building} label="Department" value={departmentName} />
                 </div>
             </div>
         )}

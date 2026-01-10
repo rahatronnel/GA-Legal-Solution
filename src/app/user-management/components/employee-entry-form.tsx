@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, User, CalendarIcon, Copy, FileSignature } from 'lucide-react';
+import { Upload, X, User, CalendarIcon, Copy, FileSignature, KeyRound } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,7 +25,8 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { initiateEmailSignUp, useAuth, updateEmployeePassword } from '@/firebase';
+import { initiateEmailSignUp, useAuth } from '@/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 
 export type Employee = {
@@ -49,7 +50,6 @@ export type Employee = {
     other: string; // Will store as data URL
   }
   defaultPassword?: string;
-  newPassword?: string;
 };
 
 const initialEmployeeData: Omit<Employee, 'id'> = {
@@ -69,7 +69,6 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   signature: '',
   documents: { nid: '', other: '' },
   defaultPassword: '',
-  newPassword: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -77,7 +76,7 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 interface EmployeeEntryFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (employee: Omit<Employee, 'id' | 'defaultPassword' | 'newPassword'>, id?: string) => void;
+  onSave: (employee: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => void;
   employee: Partial<Employee> | null;
   sections: Section[];
   designations: Designation[];
@@ -100,7 +99,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
 
   const isEditing = employee && employee.id;
-  const totalSteps = 3;
+  const totalSteps = isEditing ? 2 : 3;
   const progress = Math.round((step / totalSteps) * 100);
 
   useEffect(() => {
@@ -212,12 +211,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        if (isEditing) {
-            // When editing, a new password is not required, but if provided, it must be valid.
-            if (employeeData.newPassword && employeeData.newPassword.length < 6) return false;
-            return true;
-        }
-        // When creating, the initial password is required and must be valid.
+        if (isEditing) return true; // Password step is skipped for editing
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
@@ -229,10 +223,14 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
     }
-    setStep(s => s + 1);
+    const next = isEditing && step === 1 ? 3 : step + 1;
+    setStep(next);
   };
 
-  const prevStep = () => setStep(s => s - 1);
+  const prevStep = () => {
+      const prev = isEditing && step === 3 ? 1 : step - 1;
+      setStep(prev);
+  };
   
   const handleSave = async () => {
     if (!validateStep(1) || !validateStep(2)) {
@@ -250,17 +248,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         },
     };
 
-    const { defaultPassword, newPassword, ...dataToSave } = finalData;
+    const { defaultPassword, ...dataToSave } = finalData;
 
     try {
         if (isEditing && employee.id) {
-            if (newPassword) {
-                // This is a placeholder for a secure admin-level password update.
-                // In a real app, this should call a secure backend function.
-                console.log(`Password would be updated for user ${employee.id}`);
-                // For now, we will show a success toast as if it worked.
-                toast({ title: 'Password Updated', description: 'Employee password has been updated.' });
-            }
             onSave(dataToSave, employee.id);
         } else if (defaultPassword) {
             await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
@@ -273,6 +264,27 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
             title: 'Operation Failed',
             description: error.message || 'Could not save the employee.'
         });
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!isEditing || !employeeData.email) return;
+    if(!auth) {
+        toast({variant: "destructive", title: "Error", description: "Auth service not available."});
+        return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, employeeData.email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `An email has been sent to ${employeeData.email} with instructions.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Failed to Send Email",
+        description: error.message || "An unknown error occurred.",
+      });
     }
   };
   
@@ -396,33 +408,34 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
               </div>
             )}
             
-            {step === 2 && (
+            {step === 2 && !isEditing && (
                  <div className="space-y-6">
                     <h3 className="font-semibold text-lg">Step 2: Login Credentials</h3>
                     <p className="text-sm text-muted-foreground">
-                        {isEditing 
-                            ? 'To change this employee\'s password, enter a new one below. Leave blank to keep the current password.' 
-                            : 'Set an initial password for the new employee. They can change it later.'
-                        }
+                        Set an initial password for the new employee. They can change it later.
                     </p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
                         <Input value={employeeData.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor={isEditing ? 'newPassword' : 'defaultPassword'}>
-                            {isEditing ? 'New Password (Optional)' : 'Initial Password'}
-                            {!isEditing && <MandatoryIndicator/>}
-                        </Label>
-                        <Input id={isEditing ? 'newPassword' : 'defaultPassword'} type="password" value={isEditing ? employeeData.newPassword : employeeData.defaultPassword} onChange={handleInputChange} />
+                        <Label htmlFor='defaultPassword'>Initial Password<MandatoryIndicator/></Label>
+                        <Input id='defaultPassword' type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
                          <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
             )}
 
-            {step === 3 && (
+            {step === (isEditing ? 2 : 3) && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 3: Upload Photo & Documents</h3>
+                    <h3 className="font-semibold text-lg">Step {isEditing ? 2 : 3}: Upload Photo & Documents</h3>
+                    {isEditing && (
+                        <div className="p-4 border rounded-lg bg-background">
+                            <h4 className="font-semibold mb-2">Password Management</h4>
+                            <p className="text-sm text-muted-foreground mb-4">You cannot directly change a user's password. Instead, you can send them a secure email to reset it themselves.</p>
+                            <Button onClick={handlePasswordReset}><KeyRound className="mr-2 h-4 w-4"/>Send Password Reset Email</Button>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="col-span-1 flex flex-col items-center gap-4">
                             <Label htmlFor="profile-pic-upload" className="cursor-pointer">
