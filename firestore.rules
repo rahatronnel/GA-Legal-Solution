@@ -11,20 +11,19 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Check if the user is authenticated and if their employee document has the 'Admin' role.
       return isAuthenticated() && get(/databases/$(database)/documents/employees/$(request.auth.uid)).data.role == 'Admin';
     }
 
     // -------------------------------------------------------------------------
-    // Default Security Rule
+    // Default Security Rule: Deny all access by default for security.
     // -------------------------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
 
     // -------------------------------------------------------------------------
-    // Singleton & Public Master Data
-    // These collections are readable by anyone to populate UI elements on app load.
-    // Writes are restricted to admins.
+    // Public Master Data: Readable by anyone to prevent loading errors. Writable only by Admins.
     // -------------------------------------------------------------------------
     match /settings/{docId}                 { allow read: if true; allow write: if isAdmin(); }
     match /vehicleTypes/{docId}             { allow read: if true; allow write: if isAdmin(); }
@@ -47,19 +46,23 @@ service cloud.firestore {
     match /billItemMasters/{docId}          { allow read: if true; allow write: if isAdmin(); }
 
     // -------------------------------------------------------------------------
-    // Authenticated Master Data
-    // Readable by any signed-in user, writable by admins.
+    // Authenticated Master Data: Readable by any signed-in user, writable by Admins.
     // -------------------------------------------------------------------------
     match /sections/{docId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /designations/{docId}   { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     match /routes/{routeId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
-    match /approvalRules/{docId}  { allow read: if isAdmin(); allow write: if isAdmin(); }
+    
+    // Approval rules are sensitive and should only be managed by Admins.
+    match /approvalRules/{docId}  { allow read, write: if isAdmin(); }
     
     // -------------------------------------------------------------------------
-    // Operational Data - Requires user to be logged in
+    // Operational Data: Requires user to be logged in for any action.
+    // Specific write/delete logic can be added later if needed (e.g., isOwner).
     // -------------------------------------------------------------------------
     match /employees/{employeeId} {
+      // Any authenticated user can read employee info (for dropdowns, etc.)
       allow read: if isAuthenticated();
+      // Only admins can create or modify employee records.
       allow write: if isAdmin();
     }
 
