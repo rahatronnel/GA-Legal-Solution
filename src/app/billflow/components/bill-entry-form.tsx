@@ -111,6 +111,7 @@ export type Bill = {
   documents: Record<DocType, UploadedFile[]>;
 
   // Approval fields
+  approvalFlow: OrganizationSettings['approvalFlow'];
   approvalStatus: number; // 0: Rejected, 1: Approved, 2: Pending
   approvalHistory: {
       level: number;
@@ -122,7 +123,7 @@ export type Bill = {
   currentApproverId: string;
 };
 
-const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents' | 'approvalStatus' | 'approvalHistory' | 'currentApproverId'> = {
+const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents' | 'approvalStatus' | 'approvalHistory' | 'currentApproverId' | 'approvalFlow'> = {
   billReferenceNumber: '', vendorId: '', billTypeId: '', billCategoryId: '',
   billSubCategory: '', billDate: '', billReceivedDate: '', entryDate: '', entryBy: '',
   vatApplicable: false, vatPercentage: 0, vatAmount: 0, tdsApplicable: false,
@@ -194,9 +195,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
           } else {
             const today = new Date();
             const loggedInEmployee = employees.find(e => e.email === user?.email);
-            const firstApproverId = orgSettings?.approvalFlow?.steps?.[0]?.approverId || '';
-
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 2, currentApproverId: firstApproverId} as any);
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || ''} as any);
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
@@ -206,7 +205,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             setBillingPeriodTo(undefined);
           }
         }
-      }, [isOpen, bill, isEditing, user, employees, orgSettings]);
+      }, [isOpen, bill, isEditing, user, employees]);
 
       
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -323,11 +322,19 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             toast({ variant: 'destructive', title: 'Missing Required Fields', description: 'Please go back and fill in all required fields in Step 1.'});
             return;
         }
+
         const dataToSave: Partial<Bill> = {
             ...billData,
             items,
             documents,
         };
+
+        if (!isEditing) {
+            dataToSave.approvalFlow = orgSettings?.approvalFlow;
+            dataToSave.approvalStatus = 2; // Pending
+            dataToSave.currentApproverId = orgSettings?.approvalFlow?.steps?.[0]?.approverId || '';
+            dataToSave.approvalHistory = [];
+        }
         
         if (isEditing && bill.id) dataToSave.id = bill.id;
         

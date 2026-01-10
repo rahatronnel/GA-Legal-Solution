@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, MessageSquare, Building } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, MessageSquare, Building, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -124,13 +124,13 @@ function BillProfileContent() {
     }, [id, bills, isLoading]);
 
     const handleApproval = (status: number) => {
-        if (!firestore || !bill || !user || !orgSettings?.approvalFlow?.steps || !employees) return;
+        if (!firestore || !bill || !user || !bill.approvalFlow?.steps || !employees) return;
     
         const billRef = doc(firestore, 'bills', bill.id);
         const currentUserEmployee = employees.find(e => e.email === user.email);
         if (!currentUserEmployee) return;
     
-        const approvalLevels = orgSettings.approvalFlow.steps;
+        const approvalLevels = bill.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
     
         const statusText = status === 1 ? 'Approved' : 'Rejected';
@@ -211,7 +211,7 @@ function BillProfileContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">{bill.billReferenceNumber || bill.billId}</CardTitle>
-                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, orgSettings?.approvalFlow)}</Badge></CardDescription>
+                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill, bill.approvalFlow)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                              {canApprove && (
@@ -244,6 +244,47 @@ function BillProfileContent() {
                             <TabsTrigger value="documents">Documents</TabsTrigger>
                         </TabsList>
                         <TabsContent value="overview" className="space-y-6">
+                            <Card>
+                                <CardHeader><CardTitle>Approval Status</CardTitle></CardHeader>
+                                <CardContent>
+                                    <ul className="space-y-4">
+                                        {bill.approvalFlow?.steps.map((step, index) => {
+                                            const historyEntry = bill.approvalHistory?.[index];
+                                            const approver = employees?.find(e => e.id === step.approverId);
+                                            const designation = designations?.find(d => d.id === approver?.designationId);
+                                            let status: 'approved' | 'pending' | 'upcoming' | 'rejected' = 'upcoming';
+
+                                            if (bill.approvalStatus === 0 && bill.currentApproverId === step.approverId) {
+                                                status = 'rejected';
+                                            } else if (historyEntry) {
+                                                status = 'approved';
+                                            } else if (bill.currentApproverId === step.approverId) {
+                                                status = 'pending';
+                                            }
+
+                                            return (
+                                                <li key={index} className="flex items-start gap-4">
+                                                    <div>
+                                                        {status === 'approved' && <CheckCircle className="h-6 w-6 text-green-500" />}
+                                                        {status === 'pending' && <Hourglass className="h-6 w-6 text-orange-500 animate-spin" />}
+                                                        {status === 'upcoming' && <MoreHorizontal className="h-6 w-6 text-muted-foreground" />}
+                                                        {status === 'rejected' && <X className="h-6 w-6 text-destructive" />}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold">{step.stepName}</p>
+                                                        <p className="text-sm">{approver?.fullName || 'N/A'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
+                                                        {historyEntry && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {historyEntry.status} on {formatDateTime(historyEntry.timestamp)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </CardContent>
+                            </Card>
                              <Card>
                                 <CardHeader><CardTitle>Key Information</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -255,41 +296,6 @@ function BillProfileContent() {
                                     <InfoItem icon={Clock} label="Entry Date & Time" value={formatDateTime(bill.entryDate)} />
                                 </CardContent>
                             </Card>
-                            
-                            {bill.approvalHistory && bill.approvalHistory.length > 0 && (
-                                <Card>
-                                    <CardHeader><CardTitle>Approval History</CardTitle></CardHeader>
-                                    <CardContent className="space-y-4">
-                                        {bill.approvalHistory.map((entry: any, index: number) => {
-                                            const approver = employees?.find((e: any) => e.id === entry.approverId);
-                                            const designation = designations?.find((d: any) => d.id === approver?.designationId);
-                                            const statusColor = entry.status === 'Approved' ? 'text-green-500' : 'text-red-500';
-
-                                            return (
-                                                <div key={index} className="flex gap-4 p-3 border rounded-lg">
-                                                     <Avatar>
-                                                        <AvatarImage src={approver?.profilePicture} alt={approver?.fullName}/>
-                                                        <AvatarFallback>{approver?.fullName.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <p className="font-semibold">{approver?.fullName || 'Unknown User'}</p>
-                                                                <p className="text-xs text-muted-foreground">{designation?.name || 'N/A'}</p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className={`font-semibold text-sm ${statusColor}`}>{entry.status}</p>
-                                                                <p className="text-xs text-muted-foreground">{formatDateTime(entry.timestamp)}</p>
-                                                            </div>
-                                                        </div>
-                                                        {entry.remarks && <p className="text-sm mt-2 p-2 bg-muted rounded-md">{entry.remarks}</p>}
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </CardContent>
-                                </Card>
-                            )}
 
                             <Card>
                                 <CardHeader><CardTitle>Items / Services</CardTitle></CardHeader>
@@ -361,5 +367,3 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
-
-    
