@@ -100,6 +100,7 @@ function ApprovalSettingsTab() {
     };
 
     const handleStatusNameChange = (index: number, newName: string) => {
+        // This is now disabled, but we keep the function in case it's needed later
         const newSteps = [...steps];
         newSteps[index].statusName = newName;
         setSteps(newSteps);
@@ -168,11 +169,11 @@ function ApprovalSettingsTab() {
                     </div>
                      <div className="space-y-2">
                         <Label>Default Pending Status</Label>
-                        <Input value={defaultPendingStatusName} onChange={(e) => setDefaultPendingStatusName(e.target.value)} />
+                        <Input value={defaultPendingStatusName} onChange={(e) => setDefaultPendingStatusName(e.target.value)} disabled />
                     </div>
                      <div className="space-y-2">
                         <Label>Rejected Status</Label>
-                        <Input value={rejectedStatusName} onChange={(e) => setRejectedStatusName(e.target.value)} />
+                        <Input value={rejectedStatusName} onChange={(e) => setRejectedStatusName(e.target.value)} disabled />
                     </div>
                 </div>
 
@@ -185,7 +186,7 @@ function ApprovalSettingsTab() {
                             </div>
                              <div className="flex-grow w-full space-y-2">
                                 <Label>Step {index + 1}: Status Name</Label>
-                                <Input value={step.statusName} onChange={(e) => handleStatusNameChange(index, e.target.value)} />
+                                <Input value={step.statusName} onChange={(e) => handleStatusNameChange(index, e.target.value)} disabled />
                             </div>
                             <div className="flex-grow w-full space-y-2">
                                 <Label>Step {index + 1}: Approver</Label>
