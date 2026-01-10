@@ -358,6 +358,7 @@
           "name": { "type": "string", "description": "The name of the rule (e.g., 'Standard Bills')." },
           "minAmount": { "type": "number", "description": "Minimum bill amount for this rule to apply." },
           "maxAmount": { "type": "number", "description": "Maximum bill amount for this rule to apply." },
+          "effectiveDate": { "type": "string", "format": "date", "description": "The date from which this rule is effective." },
           "approverLevels": {
             "type": "array",
             "description": "An ordered list of approvers and escalation policies for this rule.",
@@ -415,5 +416,5 @@
     "/approvalRules/{ruleId}": { "schema": { "$ref": "#/entities/ApprovalRule" }, "description": "Stores the rules for bill approval workflows." }
   }
 }
-
+    
     

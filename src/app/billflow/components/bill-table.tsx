@@ -161,7 +161,8 @@ export function BillTable() {
                     <TableHead>Bill Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Appr. Status</TableHead>
-                    <TableHead className="w-[200px] text-right">Actions</TableHead>
+                    <TableHead>Approval Actions</TableHead>
+                    <TableHead className="w-[140px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -173,6 +174,7 @@ export function BillTable() {
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                          <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                         <TableCell><Skeleton className="h-8 w-16" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                       </TableRow>
                     ))
@@ -188,10 +190,9 @@ export function BillTable() {
                         <TableCell>
                             <Badge>{bill.approvalStatus || 'Pending'}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                             {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
-                              <>
+                        <TableCell>
+                          {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
+                              <div className="flex gap-2">
                                 <Tooltip><TooltipTrigger asChild>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600"><Check className="h-4 w-4"/></Button></AlertDialogTrigger>
@@ -210,8 +211,11 @@ export function BillTable() {
                                     </AlertDialogContent>
                                   </AlertDialog>
                                 </TooltipTrigger><TooltipContent>Reject Bill</TooltipContent></Tooltip>
-                              </>
+                              </div>
                             )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
@@ -222,7 +226,7 @@ export function BillTable() {
                   )})
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                             No bills found. Click "Add Bill" to start.
                         </TableCell>
                     </TableRow>

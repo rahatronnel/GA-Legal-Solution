@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, ChevronsUpDown, AlertCircle, Info, X, Check } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, ChevronsUpDown, AlertCircle, Info, X, Check, CalendarIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -33,6 +33,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandInput, CommandGroup, CommandList, CommandItem } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
 
 
 export type AlternativeApprover = {
@@ -52,6 +54,7 @@ export type ApprovalRule = {
   name: string;
   minAmount: number;
   maxAmount: number;
+  effectiveDate?: string;
   approverLevels: ApproverLevel[];
 };
 
@@ -59,6 +62,7 @@ const initialFormData: Omit<ApprovalRule, 'id' | 'approverLevels'> = {
     name: '',
     minAmount: 0,
     maxAmount: 0,
+    effectiveDate: '',
 };
 
 export function ApprovalConfigTable() {
@@ -73,6 +77,7 @@ export function ApprovalConfigTable() {
   const [currentItem, setCurrentItem] = useState<Partial<ApprovalRule> | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const [approverLevels, setApproverLevels] = useState<ApproverLevel[]>([]);
+  const [effectiveDate, setEffectiveDate] = useState<Date | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
@@ -95,6 +100,11 @@ export function ApprovalConfigTable() {
     const { id, value, type } = e.target;
     setFormData(prev => ({ ...prev, [id]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
+  
+  const handleDateChange = (date: Date | undefined) => {
+      setEffectiveDate(date);
+      setFormData(prev => ({ ...prev, effectiveDate: date ? format(date, 'yyyy-MM-dd') : ''}));
+  }
 
   const addApproverLevel = () => {
     const nextLevel = approverLevels.length > 0 ? Math.max(...approverLevels.map(l => l.level)) + 1 : 1;
@@ -141,6 +151,7 @@ export function ApprovalConfigTable() {
     setCurrentItem(null);
     setFormData(initialFormData);
     setApproverLevels([]);
+    setEffectiveDate(undefined);
   }
 
   const handleAdd = () => {
@@ -150,8 +161,9 @@ export function ApprovalConfigTable() {
 
   const handleEdit = (item: ApprovalRule) => {
     setCurrentItem(item);
-    setFormData({ name: item.name, minAmount: item.minAmount, maxAmount: item.maxAmount });
+    setFormData({ name: item.name, minAmount: item.minAmount, maxAmount: item.maxAmount, effectiveDate: item.effectiveDate || '' });
     setApproverLevels(item.approverLevels.map(l => ({...l, alternativeApprovers: l.alternativeApprovers || []})));
+    setEffectiveDate(item.effectiveDate ? parseISO(item.effectiveDate) : undefined);
     setIsDialogOpen(true);
   };
 
@@ -221,6 +233,7 @@ export function ApprovalConfigTable() {
                 <TableRow>
                     <TableHead>Rule Name</TableHead>
                     <TableHead>Amount Range</TableHead>
+                    <TableHead>Effective Date</TableHead>
                     <TableHead>Approvers</TableHead>
                     <TableHead>Escalation Policy</TableHead>
                     <TableHead className="w-[100px] text-right">Actions</TableHead>
@@ -232,6 +245,7 @@ export function ApprovalConfigTable() {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
@@ -242,6 +256,7 @@ export function ApprovalConfigTable() {
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.minAmount.toFixed(2)} - {item.maxAmount.toFixed(2)}</TableCell>
+                        <TableCell>{item.effectiveDate ? format(parseISO(item.effectiveDate), 'PPP') : 'N/A'}</TableCell>
                         <TableCell className="max-w-xs truncate">
                            {item.approverLevels.map(l => `L${l.level}: ${getApproverName(l.approverId)}`).join(', ')}
                         </TableCell>
@@ -258,7 +273,7 @@ export function ApprovalConfigTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No approval rules found.</TableCell>
+                    <TableCell colSpan={6} className="h-24 text-center">No approval rules found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -274,9 +289,15 @@ export function ApprovalConfigTable() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Rule Name<span className="text-red-500">*</span></Label>
-              <Input id="name" value={formData.name} onChange={handleInputChange} />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="name">Rule Name<span className="text-red-500">*</span></Label>
+                    <Input id="name" value={formData.name} onChange={handleInputChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="effectiveDate">Effective Date</Label>
+                    <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{effectiveDate ? format(effectiveDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={effectiveDate} onSelect={handleDateChange} /></PopoverContent></Popover>
+                </div>
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
