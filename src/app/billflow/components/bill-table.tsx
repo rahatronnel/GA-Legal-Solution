@@ -134,7 +134,7 @@ export function BillTable() {
         if (!bill) return;
 
         const billRef = doc(firestore, 'bills', billId);
-        const approvalLevels = orgSettings.approvalFlow.steps;
+        const approvalLevels = bill.approvalFlow?.steps || orgSettings.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
         const statusText = status === 1 ? 'Approved' : 'Rejected';
 
@@ -142,19 +142,19 @@ export function BillTable() {
             approverId: currentUserEmployee.id,
             status: statusText,
             timestamp: new Date().toISOString(),
-            level: currentLevel + 1,
+            level: currentLevel,
             remarks: `Bulk ${statusText.toLowerCase()} from list view`,
         };
 
         let approvalStatus = bill.approvalStatus;
-        let nextApproverId = '';
+        let nextApproverId = bill.currentApproverId;
 
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
                 approvalStatus = 2; // Pending
                 nextApproverId = approvalLevels[currentLevel + 1].approverId;
             } else {
-                approvalStatus = 1; // Approved
+                approvalStatus = 1; // Final approval
                 nextApproverId = '';
             }
         } else { // Rejected
@@ -315,3 +315,4 @@ export function BillTable() {
   );
 }
 
+    

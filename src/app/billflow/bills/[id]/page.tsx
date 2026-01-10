@@ -128,7 +128,12 @@ function BillProfileContent() {
     
         const billRef = doc(firestore, 'bills', bill.id);
         const currentUserEmployee = employees.find(e => e.email === user.email);
-        if (!currentUserEmployee) return;
+        if (!currentUserEmployee && user.email !== 'superadmin@galsolution.com') {
+            alert('Your employee profile could not be found.');
+            return;
+        }
+
+        const effectiveApproverId = currentUserEmployee?.id || 'superadmin';
     
         const approvalLevels = bill.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
@@ -136,29 +141,26 @@ function BillProfileContent() {
         const statusText = status === 1 ? 'Approved' : 'Rejected';
     
         const newHistoryEntry = {
-            approverId: currentUserEmployee.id,
+            approverId: effectiveApproverId,
             status: statusText,
             timestamp: new Date().toISOString(),
-            level: currentLevel + 1,
+            level: currentLevel,
             remarks: `Manually ${statusText.toLowerCase()} from details page`,
         };
     
         let approvalStatus = bill.approvalStatus;
-        let nextApproverId = '';
+        let nextApproverId = bill.currentApproverId;
     
         if (status === 1) { // Approved
             if (currentLevel + 1 < approvalLevels.length) {
-                // Move to next approver
                 approvalStatus = 2; // Pending
                 nextApproverId = approvalLevels[currentLevel + 1].approverId;
             } else {
-                // Final approval
-                approvalStatus = 1; // Approved
+                approvalStatus = 1; // Final approval
                 nextApproverId = '';
             }
-        } else {
-            // Rejected
-            approvalStatus = 0; // Rejected
+        } else { // Rejected
+            approvalStatus = 0;
             nextApproverId = '';
         }
     
@@ -249,18 +251,20 @@ function BillProfileContent() {
                                 <CardContent>
                                     <ul className="space-y-4">
                                         {bill.approvalFlow?.steps.map((step, index) => {
-                                            const historyEntry = bill.approvalHistory?.[index];
+                                            const historyEntry = bill.approvalHistory?.find(h => h.level === index);
                                             const approver = employees?.find(e => e.id === step.approverId);
                                             const designation = designations?.find(d => d.id === approver?.designationId);
+                                            
                                             let status: 'approved' | 'pending' | 'upcoming' | 'rejected' = 'upcoming';
 
-                                            if (bill.approvalStatus === 0 && bill.currentApproverId === step.approverId) {
-                                                status = 'rejected';
-                                            } else if (historyEntry) {
+                                            if (historyEntry?.status === 'Approved') {
                                                 status = 'approved';
-                                            } else if (bill.currentApproverId === step.approverId) {
+                                            } else if (historyEntry?.status === 'Rejected') {
+                                                status = 'rejected';
+                                            } else if (bill.currentApproverId === step.approverId && bill.approvalStatus === 2) {
                                                 status = 'pending';
                                             }
+
 
                                             return (
                                                 <li key={index} className="flex items-start gap-4">
@@ -367,3 +371,5 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
+    
