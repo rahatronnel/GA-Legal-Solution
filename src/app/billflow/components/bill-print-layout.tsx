@@ -51,8 +51,9 @@ const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, 
                 designation,
             };
         });
-
-    if (!approvers || approvers.length === 0 || pageNumber !== 1) {
+    
+    // Only render the signature block on the first page.
+    if (pageNumber !== 1) {
         return (
             <div className="absolute bottom-4 left-0 right-0 px-4">
                 <div className="text-center text-xs text-gray-500 pt-2">Page {pageNumber}</div>
@@ -61,8 +62,10 @@ const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, 
     }
     
     const approverRows = [];
-    for (let i = 0; i < approvers.length; i += 5) {
-        approverRows.push(approvers.slice(i, i + 5));
+    if (approvers) {
+        for (let i = 0; i < approvers.length; i += 5) {
+            approverRows.push(approvers.slice(i, i + 5));
+        }
     }
 
     const formatDateTime = (timestamp: string) => {
@@ -73,41 +76,42 @@ const PrintFooter: React.FC<PrintFooterProps> = ({ pageNumber, bill, employees, 
         }
     }
 
-
     return (
         <div className="absolute bottom-4 left-0 right-0 px-4">
-            <div className="space-y-8 border-t-2 border-gray-300 pt-4 mt-6">
-                {approverRows.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex justify-around items-end">
-                        {row.map((approver, index) => (
-                            <div key={index} className="text-center text-xs w-1/5 px-1">
-                                {approver.employee?.signature ? (
-                                    <Image src={approver.employee.signature} alt="Signature" width={100} height={30} className="object-contain mx-auto h-8" />
-                                ) : (
-                                    <div className="h-8"></div>
-                                )}
-                                <p className="border-t border-gray-500 mt-1 pt-1 font-semibold truncate">{approver.employee?.fullName}</p>
-                                <p className="truncate">{approver.designation?.name}</p>
-                                <p className="text-gray-500 text-[10px]">{formatDateTime(approver.timestamp)}</p>
-                            </div>
-                        ))}
-                        {/* Fill empty slots to maintain layout */}
-                        {Array(5 - row.length).fill(0).map((_, i) => <div key={`fill-${i}`} className="w-1/5 px-1"></div>)}
-                    </div>
-                ))}
-            </div>
+            {approverRows.length > 0 && (
+                <div className="space-y-8 border-t-2 border-gray-300 pt-4 mt-6">
+                    {approverRows.map((row, rowIndex) => (
+                        <div key={rowIndex} className="flex justify-around items-end">
+                            {row.map((approver, index) => (
+                                <div key={index} className="text-center text-xs w-1/5 px-1">
+                                    {approver.employee?.signature ? (
+                                        <Image src={approver.employee.signature} alt="Signature" width={100} height={30} className="object-contain mx-auto h-8" />
+                                    ) : (
+                                        <div className="h-8"></div>
+                                    )}
+                                    <p className="border-t border-gray-500 mt-1 pt-1 font-semibold truncate">{approver.employee?.fullName}</p>
+                                    <p className="truncate">{approver.designation?.name}</p>
+                                    <p className="text-gray-500 text-[10px]">{formatDateTime(approver.timestamp)}</p>
+                                </div>
+                            ))}
+                            {/* Fill empty slots to maintain layout */}
+                            {Array(5 - row.length).fill(0).map((_, i) => <div key={`fill-${i}`} className="w-1/5 px-1"></div>)}
+                        </div>
+                    ))}
+                </div>
+            )}
             <div className="text-center text-xs text-gray-500 pt-2">Page {pageNumber}</div>
         </div>
     );
 };
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, bill?: Bill, employees?: Employee[], designations?: Designation[], className?: string}> = ({children, pageNumber, orgSettings, bill, employees, designations, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, isFirstPage: boolean, className?: string}> = ({children, pageNumber, orgSettings, isFirstPage, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6 pb-48">
+        <div className={`flex-grow pt-6 ${isFirstPage ? 'pb-48' : 'pb-12'}`}>
             {children}
         </div>
-        <PrintFooter pageNumber={pageNumber} bill={bill} employees={employees} designations={designations} />
+        {/* Footer is handled within the layout for first page */}
     </div>
 );
 
@@ -126,7 +130,7 @@ const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: {name: stri
     const isImage = doc.file.startsWith('data:image/');
     
     return (
-        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} className="page-break">
+        <PrintPage pageNumber={pageNumber} orgSettings={orgSettings} isFirstPage={false} className="page-break">
             <h2 className="text-lg font-bold mb-4">{label} - {doc.name}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
@@ -135,6 +139,7 @@ const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: {name: stri
                      <p>Cannot preview this document type.</p>
                 )}
             </div>
+            <PrintFooter pageNumber={pageNumber} />
         </PrintPage>
     );
 };
@@ -173,66 +178,70 @@ export const BillPrintLayout: React.FC<BillPrintLayoutProps> = ({ bill, vendor, 
 
     return (
         <div className="bg-white">
-            <PrintPage pageNumber={pageCounter++} orgSettings={orgSettings} bill={bill} employees={employees} designations={designations}>
-                <h2 className="text-xl font-bold text-center mb-6">Bill / Invoice - {bill.billReferenceNumber || bill.billId}</h2>
-                <div className="space-y-4">
-                    <div>
-                        <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Basic Information</h4>
-                        <div className="grid grid-cols-2 gap-x-6">
-                           <InfoRow label="Vendor" value={vendor?.vendorName} />
-                           <InfoRow label="Bill Type" value={billType?.name} />
-                           <InfoRow label="Bill Category" value={`${billCategory?.name}${bill.billSubCategory ? ` / ${bill.billSubCategory}` : ''}`} />
-                           <InfoRow label="Bill Date" value={formatDate(bill.billDate)} />
-                           <InfoRow label="Bill Received Date" value={formatDate(bill.billReceivedDate)} />
-                           <InfoRow label="Entry By" value={employee?.fullName} />
+            <div className="p-4 bg-white text-black font-sans print-page relative" style={{ minHeight: '26cm' }}>
+                <PrintHeader orgSettings={orgSettings} />
+                <div className="flex-grow pt-6 pb-56"> {/* Increased padding-bottom */}
+                    <h2 className="text-xl font-bold text-center mb-6">Bill / Invoice - {bill.billReferenceNumber || bill.billId}</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Basic Information</h4>
+                            <div className="grid grid-cols-2 gap-x-6">
+                               <InfoRow label="Vendor" value={vendor?.vendorName} />
+                               <InfoRow label="Bill Type" value={billType?.name} />
+                               <InfoRow label="Bill Category" value={`${billCategory?.name}${bill.billSubCategory ? ` / ${bill.billSubCategory}` : ''}`} />
+                               <InfoRow label="Bill Date" value={formatDate(bill.billDate)} />
+                               <InfoRow label="Bill Received Date" value={formatDate(bill.billReceivedDate)} />
+                               <InfoRow label="Entry By" value={employee?.fullName} />
+                            </div>
                         </div>
-                    </div>
-                     <div>
-                        <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Items / Services</h4>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Unit Price</TableHead>
-                                    <TableHead className="text-right">Net Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {bill.items.map((item, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{item.name}</TableCell>
-                                        <TableCell>{getItemCategoryName(item.billItemCategoryId)}</TableCell>
-                                        <TableCell>{item.quantity}</TableCell>
-                                        <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(item.netAmount)}</TableCell>
+                         <div>
+                            <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Items / Services</h4>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Qty</TableHead>
+                                        <TableHead>Unit Price</TableHead>
+                                        <TableHead className="text-right">Net Amount</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                     <div className="flex justify-end mt-4">
-                        <div className="w-full max-w-sm space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">Subtotal:</span><span>{formatCurrency(subTotal)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">VAT ({bill.vatPercentage}%):</span><span>{formatCurrency(bill.vatAmount)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">TDS ({bill.tdsPercentage}%):</span><span>- {formatCurrency(bill.tdsAmount)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Other Charges:</span><span>{formatCurrency(bill.otherCharges)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Deductions:</span><span>- {formatCurrency(bill.deductionAmount)}</span></div>
-                            <div className="flex justify-between font-bold text-base pt-2 border-t"><span className="text-gray-800">Total Payable:</span><span>{formatCurrency(bill.totalPayableAmount)}</span></div>
+                                </TableHeader>
+                                <TableBody>
+                                    {bill.items.map((item, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{item.name}</TableCell>
+                                            <TableCell>{getItemCategoryName(item.billItemCategoryId)}</TableCell>
+                                            <TableCell>{item.quantity}</TableCell>
+                                            <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(item.netAmount)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
-                     </div>
-                     <div>
-                        <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2 mt-4">Reference Information</h4>
-                        <div className="grid grid-cols-2 gap-x-6">
-                            <InfoRow label="Vendor Invoice No." value={bill.invoiceNumber} />
-                            <InfoRow label="Invoice Date" value={formatDate(bill.invoiceDate)} />
-                            <InfoRow label="PO / WO Number" value={bill.poNumber || bill.woNumber} />
-                            <InfoRow label="GRN / Challan Number" value={bill.grnNumber} />
+                         <div className="flex justify-end mt-4">
+                            <div className="w-full max-w-sm space-y-2 text-sm">
+                                <div className="flex justify-between"><span className="text-gray-500">Subtotal:</span><span>{formatCurrency(subTotal)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">VAT ({bill.vatPercentage}%):</span><span>{formatCurrency(bill.vatAmount)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">TDS ({bill.tdsPercentage}%):</span><span>- {formatCurrency(bill.tdsAmount)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">Other Charges:</span><span>{formatCurrency(bill.otherCharges)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-500">Deductions:</span><span>- {formatCurrency(bill.deductionAmount)}</span></div>
+                                <div className="flex justify-between font-bold text-base pt-2 border-t"><span className="text-gray-800">Total Payable:</span><span>{formatCurrency(bill.totalPayableAmount)}</span></div>
+                            </div>
+                         </div>
+                         <div>
+                            <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2 mt-4">Reference Information</h4>
+                            <div className="grid grid-cols-2 gap-x-6">
+                                <InfoRow label="Vendor Invoice No." value={bill.invoiceNumber} />
+                                <InfoRow label="Invoice Date" value={formatDate(bill.invoiceDate)} />
+                                <InfoRow label="PO / WO Number" value={bill.poNumber || bill.woNumber} />
+                                <InfoRow label="GRN / Challan Number" value={bill.grnNumber} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </PrintPage>
+                <PrintFooter pageNumber={pageCounter++} bill={bill} employees={employees} designations={designations} />
+            </div>
 
             {Object.entries(bill.documents || {}).flatMap(([category, files]) => 
                 (files || []).map((doc: { id: string; name: string; file: string; }) => (
