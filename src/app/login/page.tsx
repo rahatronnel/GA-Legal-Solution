@@ -112,7 +112,7 @@ function LoginPageContent() {
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-12 bg-secondary">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
             {isLoadingSettings ? (
