@@ -169,7 +169,7 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge>{bill.approvalStatus || 'Pending'}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {bill.approvalStatus === 'Pending' && (
+                             
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
@@ -186,7 +186,7 @@ function BillProfileContent() {
                                     </AlertDialogContent>
                                    </AlertDialog>
                                 </>
-                             )}
+                             
                              <Button onClick={() => handlePrint(bill, 'bill')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
                              <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
@@ -320,4 +320,5 @@ export default function BillPage() {
     
 
     
+
 
