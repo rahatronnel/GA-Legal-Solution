@@ -20,13 +20,18 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { useAuth, initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useState } from 'react';
+import { doc } from 'firebase/firestore';
+import type { OrganizationSettings } from '../settings/page';
+import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +40,10 @@ export default function LoginPage() {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+
+  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+  const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+
 
   const handleSignIn = async () => {
     setIsLoading(true);
@@ -102,15 +111,24 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40">
-      <Card className="mx-auto max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            {isLoadingSettings ? (
+              <>
+                <Skeleton className="h-8 w-48 mx-auto" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
+                <p className="text-balance text-muted-foreground">
+                  Enter your credentials to access the system
+                </p>
+              </>
+            )}
+          </div>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -125,57 +143,92 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-                <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-                        <DialogTrigger asChild>
-                             <Button variant="link" className="ml-auto inline-block text-sm underline">Forgot your password?</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Forgot Password</DialogTitle>
-                                <DialogDescription>
-                                    Enter your email address below. If an account exists, we'll send you a link to reset your password.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="reset-email">Email Address</Label>
-                                    <Input
-                                        id="reset-email"
-                                        type="email"
-                                        placeholder="m@example.com"
-                                        value={resetEmail}
-                                        onChange={(e) => setResetEmail(e.target.value)}
-                                        disabled={isResetting}
-                                    />
-                                </div>
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                    <DialogTrigger asChild>
+                         <Button variant="link" className="ml-auto inline-block text-sm underline">Forgot your password?</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Forgot Password</DialogTitle>
+                            <DialogDescription>
+                                Enter your email address below. If an account exists, we'll send you a link to reset your password.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="reset-email">Email Address</Label>
+                                <Input
+                                    id="reset-email"
+                                    type="email"
+                                    placeholder="m@example.com"
+                                    value={resetEmail}
+                                    onChange={(e) => setResetEmail(e.target.value)}
+                                    disabled={isResetting}
+                                />
                             </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
-                                <Button onClick={handlePasswordReset} disabled={isResetting}>
-                                    {isResetting ? 'Sending...' : 'Send Reset Link'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
-                />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
+                            <Button onClick={handlePasswordReset} disabled={isResetting}>
+                                {isResetting ? 'Sending...' : 'Send Reset Link'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+              </div>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
+              />
             </div>
             <Button onClick={handleSignIn} disabled={isLoading} className="w-full">
               {isLoading ? 'Signing in...' : 'Login'}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:flex items-center justify-center relative overflow-hidden">
+        <Image
+          src="https://picsum.photos/seed/login/1920/1080"
+          alt="Office Background"
+          data-ai-hint="office building"
+          layout="fill"
+          objectFit="cover"
+          className="opacity-20"
+        />
+        <div className="z-10 text-center space-y-4">
+          {isLoadingSettings ? (
+            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          ) : (
+            orgSettings?.logo && (
+              <Image
+                src={orgSettings.logo}
+                alt="Company Logo"
+                width={150}
+                height={150}
+                className="rounded-full mx-auto border-4 border-white shadow-lg"
+              />
+            )
+          )}
+          <h2 className="text-4xl font-bold text-foreground">
+             {orgSettings?.name || 'GA & Legal Solution'}
+          </h2>
+          <p className="text-lg text-muted-foreground">
+             {orgSettings?.slogan || 'Your Trusted Partner in Excellence'}
+          </p>
+        </div>
+      </div>
     </div>
-  );
+  )
+}
+
+export default function LoginPage() {
+    return <LoginPageContent />;
 }
