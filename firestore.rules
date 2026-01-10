@@ -28,39 +28,29 @@ service cloud.firestore {
     // These collections contain general configuration or master list data.
     // -------------------------------------------------------------------------
     match /settings/{docId}      { allow write: if isAdmin(); }
-    match /vehicleTypes/{docId}   { allow write: if isAdmin(); }
-    match /vehicleBrands/{docId}  { allow write: if isAdmin(); }
-    match /locations/{docId}      { allow write: if isAdmin(); }
-    match /routes/{docId}         { allow write: if isAdmin(); }
     
-    // Allow public read for trip purposes, but only admin writes.
-    match /tripPurposes/{docId}   { 
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /expenseTypes/{docId}   { allow write: if isAdmin(); }
-    match /maintenanceTypes/{docId}{ allow write: if isAdmin(); }
-    match /maintenanceExpenseTypes/{docId} { allow write: if isAdmin(); }
-    match /parts/{docId}          { allow write: if isAdmin(); }
-    match /serviceCenters/{docId} { allow write: if isAdmin(); }
-    match /accidentTypes/{docId}  { allow write: if isAdmin(); }
-    match /severityLevels/{docId} { allow write: if isAdmin(); }
-    match /faultStatuses/{docId}  { allow write: if isAdmin(); }
-    match /vendorCategories/{docId} { 
-      allow read: if true;
-      allow write: if isAdmin(); 
-    }
-    match /vendorNatureOfBusiness/{docId} { 
-      allow read: if true;
-      allow write: if isAdmin(); 
-    }
-    match /billTypes/{docId}      { allow write: if isAdmin(); }
-    match /billCategories/{docId} { allow write: if isAdmin(); }
-    match /billItemCategories/{docId} { 
-      allow read: if true;
-      allow write: if isAdmin(); 
-    }
+    match /vehicleTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
+    match /vehicleBrands/{docId}  { allow read: if true; allow write: if isAdmin(); }
+    match /locations/{docId}      { allow read: if true; allow write: if isAdmin(); }
+    match /routes/{docId}         { allow write: if isAdmin(); } // Routes are not public by default
+    
+    match /tripPurposes/{docId}   { allow read: if true; allow write: if isAdmin(); }
+    match /expenseTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
+    match /maintenanceTypes/{docId}{ allow read: if true; allow write: if isAdmin(); }
+    match /maintenanceExpenseTypes/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /parts/{docId}          { allow read: if true; allow write: if isAdmin(); }
+    match /serviceCenters/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /accidentTypes/{docId}  { allow read: if true; allow write: if isAdmin(); }
+    match /severityLevels/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /faultStatuses/{docId}  { allow read: if true; allow write: if isAdmin(); }
+    
+    match /vendorCategories/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /vendorNatureOfBusiness/{docId} { allow read: if true; allow write: if isAdmin(); }
+    
+    match /billTypes/{docId}      { allow read: if true; allow write: if isAdmin(); }
+    match /billCategories/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /billItemCategories/{docId} { allow read: if true; allow write: if isAdmin(); }
+    
     match /billItemMasters/{docId} { allow write: if isAdmin(); }
     match /approvalRules/{docId}  { allow write: if isAdmin(); }
     match /sections/{docId}       { allow write: if isAdmin(); }
