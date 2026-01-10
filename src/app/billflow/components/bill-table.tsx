@@ -143,11 +143,11 @@ export function BillTable() {
         return;
     }
 
-    const designatedApproverId = orgSettings?.billApproverId;
+    const designatedApproverId = orgSettings?.billApproverId || '';
     const dataWithApproval = {
         ...billData,
         approvalStatus: billData.id ? billData.approvalStatus : 2, // 2 for Pending
-        currentApproverId: billData.id ? billData.currentApproverId : (designatedApproverId || ''),
+        currentApproverId: billData.id ? (billData.currentApproverId || '') : designatedApproverId,
     };
 
     if (dataWithApproval.id) {
@@ -341,5 +341,7 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    
 
     
