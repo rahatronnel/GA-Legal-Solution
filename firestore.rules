@@ -17,28 +17,28 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // Default Security Rule
+    // Default Security Rule - More restrictive
     // -------------------------------------------------------------------------
     match /{document=**} {
-      allow read, write: if isAuthenticated();
+      // By default, deny all reads and writes
+      allow read, write: if false;
     }
 
     // -------------------------------------------------------------------------
     // Singleton & Public Master Data
     // These collections contain general configuration or master list data.
     // -------------------------------------------------------------------------
-    match /settings/{docId}      { allow write: if isAdmin(); }
+    match /settings/{docId}      { allow read: if isAuthenticated(); allow write: if isAdmin(); }
     
     match /vehicleTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /vehicleBrands/{docId}  { allow read: if true; allow write: if isAdmin(); }
     match /locations/{docId}      { allow read: if true; allow write: if isAdmin(); }
-    match /routes/{docId}         { allow write: if isAdmin(); } // Routes are not public by default
+    match /routes/{docId}         { allow read: if isAuthenticated(); allow write: if isAdmin(); } 
     
     match /tripPurposes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /expenseTypes/{docId}   { allow read: if true; allow write: if isAdmin(); }
     match /maintenanceTypes/{docId}{ allow read: if true; allow write: if isAdmin(); }
-    match /maintenanceExpenseTypes/{docId} { allow read: if true; allow write
-: if isAdmin(); }
+    match /maintenanceExpenseTypes/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /parts/{docId}          { allow read: if true; allow write: if isAdmin(); }
     match /serviceCenters/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /accidentTypes/{docId}  { allow read: if true; allow write: if isAdmin(); }
@@ -52,42 +52,42 @@ service cloud.firestore {
     match /billCategories/{docId} { allow read: if true; allow write: if isAdmin(); }
     match /billItemCategories/{docId} { allow read: if true; allow write: if isAdmin(); }
     
-    match /billItemMasters/{docId} { allow write: if isAdmin(); }
-    match /approvalRules/{docId}  { allow write: if isAdmin(); }
-    match /sections/{docId}       { allow write: if isAdmin(); }
-    match /designations/{docId}   { allow write: if isAdmin(); }
+    match /billItemMasters/{docId} { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /approvalRules/{docId}  { allow read: if isAdmin(); allow write: if isAdmin(); }
+    match /sections/{docId}       { allow read: if isAuthenticated(); allow write: if isAdmin(); }
+    match /designations/{docId}   { allow read: if isAuthenticated(); allow write: if isAdmin(); }
 
     // -------------------------------------------------------------------------
     // Operational Data
     // -------------------------------------------------------------------------
 
-    // Employees: Only Admins can create, update, or delete employee records.
-    // Any authenticated user can read employee data (needed for dropdowns etc.).
+    // Employees: Any authenticated user can read employee data (needed for dropdowns etc.).
+    // Only Admins can create, update, or delete employee records.
     match /employees/{employeeId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
     match /vehicles/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
      match /drivers/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
      match /trips/{docId} {
       allow read, write: if isAuthenticated();
     }
     match /maintenanceRecords/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
      match /accidents/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
     match /vendors/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
     match /bills/{docId} {
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated();
     }
   }
 }
