@@ -116,13 +116,19 @@ export function BillTable() {
         return;
     }
 
-    if (billData.id) {
-        const { id, ...dataToSave } = billData;
+    // Assign a default approval status if it's a new bill
+    const dataWithStatus = {
+        ...billData,
+        approvalStatus: billData.id ? billData.approvalStatus : 'Pending',
+    };
+
+    if (dataWithStatus.id) {
+        const { id, ...dataToSave } = dataWithStatus;
         setDocumentNonBlocking(doc(billsRef, id), dataToSave, { merge: true });
         toast({ title: 'Success', description: 'Bill updated successfully.' });
     } else {
         const newBillData = {
-          ...billData,
+          ...dataWithStatus,
           billId: `B-${Date.now()}`
         };
         addDocumentNonBlocking(billsRef, newBillData);
@@ -199,9 +205,9 @@ export function BillTable() {
                 <TableRow>
                     <TableHead className="w-[50px]">
                       <Checkbox
-                        checked={selectedRowIds.length > 0 && selectedRowIds.length === pendingBills.length}
+                        checked={pendingBills.length > 0 && selectedRowIds.length === pendingBills.length}
                         onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                        aria-label="Select all"
+                        aria-label="Select all pending bills"
                         disabled={pendingBills.length === 0}
                       />
                     </TableHead>

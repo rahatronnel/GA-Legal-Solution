@@ -107,9 +107,20 @@ export type Bill = {
   budgetRef: string;
   
   documents: Record<DocType, UploadedFile[]>;
+
+  // Approval fields
+  approvalStatus: 'Pending' | 'Approved' | 'Rejected';
+  approvalHistory: {
+      level: number;
+      approverId: string;
+      status: 'Approved' | 'Rejected';
+      timestamp: string;
+      remarks: string;
+  }[];
+  currentApproverId: string;
 };
 
-const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents'> = {
+const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents' | 'approvalStatus' | 'approvalHistory' | 'currentApproverId'> = {
   billReferenceNumber: '', vendorId: '', billTypeId: '', billCategoryId: '',
   billSubCategory: '', billDate: '', billReceivedDate: '', entryDate: '', entryBy: '',
   vatApplicable: false, vatPercentage: 0, vatAmount: 0, tdsApplicable: false,
@@ -137,7 +148,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     const { billItemMasters, billItemCategories } = useMasterData();
     
     const [step, setStep] = useState(1);
-    const [billData, setBillData] = useState(initialBillData);
+    const [billData, setBillData] = useState<Omit<Bill, 'id'|'items'|'documents'>>(initialBillData as any);
     const [items, setItems] = useState<BillItem[]>([]);
     const [documents, setDocuments] = useState(initialDocuments);
     
@@ -166,7 +177,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
         if (isOpen) {
           setStep(1);
           if (isEditing && bill) {
-            setBillData({ ...initialBillData, ...bill });
+            setBillData({ ...initialBillData, ...bill } as any);
             setItems(bill.items || []);
             setDocuments(bill.documents || initialDocuments);
             setDateIfValid(bill.billDate, setBillDate);
@@ -178,7 +189,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
             const today = new Date();
             const loggedInEmployee = employees.find(e => e.email === user?.email);
 
-            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || ''});
+            setBillData({...initialBillData, entryDate: format(today, 'yyyy-MM-dd'), billDate: format(today, 'yyyy-MM-dd'), entryBy: loggedInEmployee?.id || '', approvalStatus: 'Pending'} as any);
             setItems([]);
             setDocuments(initialDocuments);
             setBillDate(today); 
