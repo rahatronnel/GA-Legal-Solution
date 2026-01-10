@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -45,6 +46,12 @@ interface EmployeeTableProps {
   sections: Section[];
   designations: Designation[];
 }
+
+type ProcessedEmployee = {
+  isNew: boolean;
+  data: Partial<Employee>;
+  original?: Employee;
+};
 
 export function EmployeeTable({ employees, setEmployees, sections, designations }: EmployeeTableProps) {
   const { toast } = useToast();
@@ -57,6 +64,9 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
+  const [isUploadConfirmOpen, setIsUploadConfirmOpen] = useState(false);
+  const [processedUpload, setProcessedUpload] = useState<ProcessedEmployee[]>([]);
+
   const [currentEmployee, setCurrentEmployee] = useState<Partial<Employee> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -83,7 +93,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setCurrentEmployee(employee);
     setIsFormOpen(true);
   };
-
+  
   const handleSave = async (data: Omit<Employee, 'id' | 'defaultPassword'>, id?: string) => {
     if (!employeesRef) {
         toast({ variant: "destructive", title: "Error", description: "Database not connected." });
@@ -172,57 +182,52 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false}) as any[];
 
-          const requiredHeaders = ['userIdCode', 'fullName', 'mobileNumber', 'email', 'password'];
-          const headers = Object.keys(json[0] || {});
-          if (!requiredHeaders.every(h => headers.includes(h))) {
-             throw new Error('Invalid Excel file format. Required columns are: userIdCode, fullName, mobileNumber, email, password.');
+          if (!json[0] || !('userIdCode' in json[0]) || !('email' in json[0])) {
+             throw new Error('Invalid Excel file format. Required columns are: userIdCode, email.');
           }
 
-          toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
-
+          const processedData: ProcessedEmployee[] = [];
           for (const item of json) {
-            const email = item.email?.toString().trim();
-            if (!item.fullName || !email || !item.password) continue;
+            const userIdCode = String(item.userIdCode || '').trim();
+            const email = String(item.email || '').trim();
 
+            if (!userIdCode && !email) continue;
+            
+            const existingEmployee = employees.find(emp => emp.userIdCode === userIdCode || emp.email === email);
             const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
             const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
-            const password = String(item.password);
-             if (password.length < 6) {
-                toast({ variant: 'destructive', title: `Skipping user ${email}`, description: 'Password must be at least 6 characters.' });
-                continue;
-            }
 
-            const newEmployee: Omit<Employee, 'id' | 'defaultPassword'> = {
-                userIdCode: item.userIdCode?.toString().trim() || '',
-                fullName: item.fullName?.toString().trim() || '',
+            const employeeDataFromSheet: Partial<Employee> = {
+                userIdCode: userIdCode,
+                fullName: String(item.fullName || '').trim(),
                 email: email,
                 username: email,
-                mobileNumber: item.mobileNumber?.toString().trim() || '',
+                mobileNumber: String(item.mobileNumber || '').trim(),
                 role: item.role?.toString().trim() || 'Viewer',
                 status: item.status?.toString().trim() || 'Active',
                 departmentId: section?.id || '',
                 designationId: designation?.id || '',
-                joiningDate: item.joiningDate?.toString().trim() || '',
-                address: item.address?.toString().trim() || '',
-                remarks: item.remarks?.toString().trim() || '',
-                profilePicture: '',
-                signature: '',
-                documents: { nid: '', other: '' },
+                joiningDate: String(item.joiningDate || '').trim(),
+                address: String(item.address || '').trim(),
+                remarks: String(item.remarks || '').trim(),
+                defaultPassword: String(item.password || '').trim()
             };
             
-            try {
-                // Create auth user first
-                await initiateEmailSignUp(auth, newEmployee.email, password);
-                // Then save employee doc
-                addDocumentNonBlocking(employeesRef, newEmployee);
-            } catch (authError: any) {
-                 toast({ variant: 'destructive', title: `Failed to create user ${newEmployee.email}`, description: authError.message });
+            if (existingEmployee) {
+                processedData.push({ isNew: false, data: employeeDataFromSheet, original: existingEmployee });
+            } else {
+                processedData.push({ isNew: true, data: employeeDataFromSheet });
             }
           }
           
-          toast({ title: 'Success', description: `Finished processing uploaded employees.` });
+          if (processedData.length > 0) {
+              setProcessedUpload(processedData);
+              setIsUploadConfirmOpen(true);
+          } else {
+              toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid data found in the file to process.' });
+          }
 
         } catch (error: any) {
           toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
@@ -232,7 +237,38 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     }
     event.target.value = '';
   };
+  
+  const confirmUpload = async () => {
+    if (!employeesRef || !auth) return;
+    
+    let createdCount = 0;
+    let updatedCount = 0;
 
+    for (const item of processedUpload) {
+        if (item.isNew) {
+            if (item.data.email && item.data.defaultPassword && item.data.defaultPassword.length >= 6) {
+                try {
+                    const { defaultPassword, ...dataToSave } = item.data;
+                    await initiateEmailSignUp(auth, dataToSave.email!, defaultPassword);
+                    addDocumentNonBlocking(employeesRef, dataToSave as Omit<Employee, 'id'>);
+                    createdCount++;
+                } catch (authError: any) {
+                    toast({ variant: 'destructive', title: `Failed to create user ${item.data.email}`, description: authError.message });
+                }
+            } else {
+                 toast({ variant: 'destructive', title: `Skipping user ${item.data.email}`, description: 'New users require a valid email and a password of at least 6 characters in the Excel file.' });
+            }
+        } else if (item.original?.id) {
+            const { defaultPassword, ...dataToUpdate } = item.data; // Don't update password on existing users this way
+            setDocumentNonBlocking(doc(employeesRef, item.original.id), dataToUpdate, { merge: true });
+            updatedCount++;
+        }
+    }
+    
+    toast({ title: 'Upload Complete', description: `${createdCount} employee(s) created, ${updatedCount} employee(s) updated.` });
+    setIsUploadConfirmOpen(false);
+    setProcessedUpload([]);
+  };
 
   return (
     <TooltipProvider>
@@ -386,6 +422,39 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isUploadConfirmOpen} onOpenChange={setIsUploadConfirmOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Confirm Excel Upload</DialogTitle>
+            <DialogDescription>
+                Review the changes below. Click "Confirm" to apply them.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 h-[400px]">
+            <div className="space-y-2">
+                <h4 className="font-semibold">New Employees to Create ({processedUpload.filter(p => p.isNew).length})</h4>
+                <ScrollArea className="h-full border rounded-md p-2">
+                    <ul className="list-disc pl-5">
+                       {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i}>{p.data.fullName} ({p.data.email})</li>)}
+                    </ul>
+                </ScrollArea>
+            </div>
+             <div className="space-y-2">
+                <h4 className="font-semibold">Employees to Update ({processedUpload.filter(p => !p.isNew).length})</h4>
+                <ScrollArea className="h-full border rounded-md p-2">
+                     <ul className="list-disc pl-5">
+                       {processedUpload.filter(p => !p.isNew).map((p, i) => <li key={i}>{p.original?.fullName} ({p.original?.email})</li>)}
+                    </ul>
+                </ScrollArea>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUploadConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={confirmUpload}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
