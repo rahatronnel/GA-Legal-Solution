@@ -160,7 +160,7 @@ export function BillTable() {
                     <TableHead>Vendor</TableHead>
                     <TableHead>Bill Date</TableHead>
                     <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Appr. Status</TableHead>
                     <TableHead className="w-[140px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -185,31 +185,35 @@ export function BillTable() {
                         <TableCell>{getVendorName(bill.vendorId)}</TableCell>
                         <TableCell>{bill.billDate}</TableCell>
                         <TableCell>{bill.totalPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                        <TableCell><Badge>{bill.approvalStatus || 'Pending'}</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge>{bill.approvalStatus || 'Pending'}</Badge>
+                            {(isSuperAdmin || isCurrentUserApprover) && bill.approvalStatus === 'Pending' && (
+                              <>
+                                <Tooltip><TooltipTrigger asChild>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600"><Check className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as approved.</AlertDialogDescription></AlertDialogHeader>
+                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </TooltipTrigger><TooltipContent>Approve Bill</TooltipContent></Tooltip>
+                                 <Tooltip><TooltipTrigger asChild>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><X className="h-4 w-4"/></Button></AlertDialogTrigger>
+                                     <AlertDialogContent>
+                                      <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as rejected.</AlertDialogDescription></AlertDialogHeader>
+                                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </TooltipTrigger><TooltipContent>Reject Bill</TooltipContent></Tooltip>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                             {(isSuperAdmin || isCurrentUserApprover) && (
-                                <>
-                                  <Tooltip><TooltipTrigger asChild>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600"><Check className="h-4 w-4"/></Button></AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Approve Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as approved.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Approved')}>Confirm</AlertDialogAction></AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </TooltipTrigger><TooltipContent>Approve Bill</TooltipContent></Tooltip>
-                                   <Tooltip><TooltipTrigger asChild>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><X className="h-4 w-4"/></Button></AlertDialogTrigger>
-                                       <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Reject Bill?</AlertDialogTitle><AlertDialogDescription>This will mark bill "{bill.billId}" as rejected.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(bill, 'Rejected')} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </TooltipTrigger><TooltipContent>Reject Bill</TooltipContent></Tooltip>
-                                </>
-                              )}
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/billflow/bills/${bill.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit Bill</TooltipContent></Tooltip>
                              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(bill, 'bill')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print Bill</TooltipContent></Tooltip>
