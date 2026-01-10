@@ -137,7 +137,7 @@ const ModuleDashboard = () => {
 
             <div className="text-center mb-12">
                  <h2 className="text-2xl text-muted-foreground mb-4">Welcome, dear!</h2>
-                 <h1 className="text-5xl font-extrabold tracking-tight text-white">GA & Legal Solution</h1>
+                 <h1 className="text-5xl font-extrabold tracking-tight text-white">GA &amp; Legal Solution</h1>
                  <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
