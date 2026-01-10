@@ -144,10 +144,10 @@ function BillProfileContent() {
         let finalStatus = bill.approvalStatus;
 
         if (status === 1) { // Approved
-            const currentApproverIndexInFlow = orgSettings.billApprovalLevels.indexOf(currentUserEmployee.id);
+            const currentApproverIndexInFlow = orgSettings.billApprovalLevels.indexOf(bill.currentApproverId);
             const isLastApprover = currentApproverIndexInFlow === orgSettings.billApprovalLevels.length - 1;
 
-            if (isLastApprover || currentApproverIndexInFlow === -1) { // If last approver or not in the flow (e.g. superadmin)
+            if (currentApproverIndexInFlow === -1 || isLastApprover) { // If user not in flow (superadmin) or is the last one
                 finalStatus = 1; // Final Approval
                 nextApproverId = ''; // No next approver
             } else {
@@ -354,3 +354,5 @@ function BillProfileContent() {
 export default function BillPage() {
     return <BillProfileContent />;
 }
+
+    
