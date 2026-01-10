@@ -262,6 +262,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
             <TableRow>
               <TableHead>Employee</TableHead>
               <TableHead>User ID</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
@@ -271,7 +272,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           <TableBody>
             {!employees ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">Loading...</TableCell>
+                <TableCell colSpan={7} className="text-center">Loading...</TableCell>
               </TableRow>
             ) : filteredEmployees && filteredEmployees.length > 0 ? (
               filteredEmployees.map((employee) => (
@@ -287,6 +288,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                     {employee.fullName}
                   </TableCell>
                   <TableCell>{employee.userIdCode}</TableCell>
+                  <TableCell>{employee.email}</TableCell>
                   <TableCell>{employee.mobileNumber}</TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{employee.status}</TableCell>
@@ -338,7 +340,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                     {searchTerm ? `No employees found for "${searchTerm}".` : "No employees found."}
                 </TableCell>
               </TableRow>
