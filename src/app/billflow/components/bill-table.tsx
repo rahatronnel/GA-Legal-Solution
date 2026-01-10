@@ -147,7 +147,7 @@ export function BillTable() {
     const dataWithApproval = {
         ...billData,
         approvalStatus: billData.id ? billData.approvalStatus : 2, // 2 for Pending
-        currentApproverId: billData.id ? billData.currentApproverId : designatedApproverId || '',
+        currentApproverId: billData.id ? billData.currentApproverId : (designatedApproverId || ''),
     };
 
     if (dataWithApproval.id) {
