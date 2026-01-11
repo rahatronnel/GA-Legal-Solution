@@ -36,6 +36,8 @@ import { collection, doc } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { OrganizationSettings } from './settings/page';
+import { VehicleManagementProvider } from './vehicle-management/components/vehicle-management-provider';
+import { LegacyBillFlowProvider } from './billflow/components/bill-flow-provider';
 
 
 // Lazy load all page components to prevent their data providers from running before auth is checked.
@@ -168,15 +170,15 @@ export function AppWrapper() {
   const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
   useEffect(() => {
-    if (orgSettings?.favicon) {
+    if (orgSettings?.logo) {
       let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
       if (!link) {
           link = document.createElement('link');
           link.rel = 'icon';
           document.head.appendChild(link);
       }
-      link.href = orgSettings.favicon;
-      const mimeType = orgSettings.favicon.match(/data:(image\/[^;]+);/);
+      link.href = orgSettings.logo;
+      const mimeType = orgSettings.logo.match(/data:(image\/[^;]+);/);
       if (mimeType && mimeType[1]) {
         link.type = mimeType[1];
       }
@@ -212,11 +214,18 @@ export function AppWrapper() {
   const Component = currentKey ? moduleComponents[currentKey] : null;
 
   if (Component) {
+    let provider = <Component />;
+    if (pathname.startsWith('/vehicle-management')) {
+        provider = <VehicleManagementProvider>{provider}</VehicleManagementProvider>;
+    } else if (pathname.startsWith('/billflow')) {
+        provider = <LegacyBillFlowProvider>{provider}</LegacyBillFlowProvider>
+    }
+    
     return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <div className="flex flex-col sm:gap-4 sm:py-4">
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-            <Component />
+            {provider}
           </main>
         </div>
       </div>
