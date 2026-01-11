@@ -49,6 +49,8 @@ const MasterDataContext = createContext<{
     isLoading: boolean;
 } | undefined>(undefined);
 
+const ReportsDataContext = createContext<any | undefined>(undefined);
+
 
 // --- Provider Components for each tab's data ---
 
@@ -117,6 +119,21 @@ export const MasterDataProvider = ({ children }: { children: React.ReactNode }) 
     return <MasterDataContext.Provider value={value}>{children}</MasterDataContext.Provider>;
 }
 
+export const ReportsDataProvider = ({ children }: { children: React.ReactNode }) => {
+    // For reports, we often need a mix of data. This provider fetches all necessary collections.
+    const firestore = useFirestore();
+    const { data: bills, isLoading: l1 } = useCollection<Bill>(useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]));
+    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
+
+    const value = useMemo(() => ({
+        bills: bills || [],
+        vendors: vendors || [],
+        isLoading: l1 || l2,
+    }), [bills, vendors, l1, l2]);
+    
+    return <ReportsDataContext.Provider value={value}>{children}</ReportsDataContext.Provider>;
+}
+
 
 // --- Hooks to access the data ---
 
@@ -127,8 +144,12 @@ export const useVendorData = () => {
 };
 
 export const useBillData = () => {
-    const context = useContext(BillDataContext);
-    if (!context) throw new Error('useBillData must be used within a BillDataProvider');
+    const context = useContext(ReportsDataContext); // Reports tab will use this context
+    if (!context) {
+        const billContext = useContext(BillDataContext);
+        if (!billContext) throw new Error('useBillData must be used within a BillDataProvider or ReportsDataProvider');
+        return billContext;
+    }
     return context;
 };
 

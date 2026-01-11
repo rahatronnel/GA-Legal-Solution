@@ -12,7 +12,7 @@ import { BillTypeTable } from "./components/bill-type-table";
 import { BillCategoryTable } from "./components/bill-category-table";
 import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvider } from "./components/bill-flow-provider";
+import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvider, ReportsDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
@@ -30,6 +30,7 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { ModuleHeader } from '@/app/components/module-header';
 import { BillFlowDashboard } from './components/dashboard';
+import BillFlowReportsPage from './reports/page';
 
 type ApprovalStep = {
     stepName: string;
@@ -199,10 +200,11 @@ function BillFlowContent() {
       <div className="space-y-6">
         <ModuleHeader />
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>
               <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
           </TabsList>
@@ -246,6 +248,11 @@ function BillFlowContent() {
                     </CardContent>
                 </Card>
             </VendorDataProvider>
+          </TabsContent>
+           <TabsContent value="reports">
+            <ReportsDataProvider>
+                <BillFlowReportsPage />
+            </ReportsDataProvider>
           </TabsContent>
           <TabsContent value="master" className="space-y-6">
             <MasterDataProvider>
