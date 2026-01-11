@@ -1,13 +1,11 @@
 "use client";
 
-// This layout file is no longer needed as the provider has been moved to the page component
-// to allow for more granular data loading. This file can be removed, but for now we'll just
-// pass children through.
+import { VehicleManagementProvider } from "./components/vehicle-management-provider";
 
 export default function VehicleManagementLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      {children}
-    </>
+    <VehicleManagementProvider>
+        {children}
+    </VehicleManagementProvider>
   );
 }
