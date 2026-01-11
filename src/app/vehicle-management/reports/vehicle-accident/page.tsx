@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,7 +29,13 @@ export default function VehicleAccidentReportPage() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[]>([]);
     
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
 
     const handleGenerateReport = () => {
         let filteredVehicles = vehicles;
@@ -56,6 +61,10 @@ export default function VehicleAccidentReportPage() {
 
     const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
 
+    if (!mounted) {
+        return null;
+    }
+
     return (
         <div className="space-y-6">
             <Card>
@@ -75,23 +84,17 @@ export default function VehicleAccidentReportPage() {
                             <Command>
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
-                                <CommandList>
-                                <CommandGroup>
+                                <CommandList><CommandGroup>
                                     {vehicles.map((vehicle) => (
-                                    <CommandItem
-                                        key={vehicle.id}
-                                        value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`}
-                                        onSelect={() => {
-                                            setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
-                                            setOpen(false);
-                                        }}
-                                    >
+                                    <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
+                                        setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
+                                        setOpen(false);
+                                    }}>
                                         <Check className={cn("mr-2 h-4 w-4", selectedVehicleId === vehicle.id ? "opacity-100" : "opacity-0")} />
                                         {vehicle.registrationNumber} ({vehicle.vehicleIdCode})
                                     </CommandItem>
                                     ))}
-                                </CommandGroup>
-                                </CommandList>
+                                </CommandGroup></CommandList>
                             </Command>
                         </PopoverContent>
                     </Popover>

@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +29,12 @@ export default function MaintenanceCostSummaryPage() {
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<ReportData | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
 
     const handleGenerateReport = () => {
         let filteredRecords = records;
@@ -90,6 +95,10 @@ export default function MaintenanceCostSummaryPage() {
     
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+    
+    if (!mounted) {
+        return null;
     }
 
     return (

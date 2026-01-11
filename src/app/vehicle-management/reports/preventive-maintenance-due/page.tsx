@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +33,11 @@ export default function PreventiveMaintenanceDuePage() {
     const [typePopoverOpen, setTypePopoverOpen] = useState(false);
 
     const [reportData, setReportData] = useState<any[] | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const getCurrentDriver = (vehicle: Vehicle) => {
         if (!vehicle || !vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) return null;
@@ -78,6 +82,10 @@ export default function PreventiveMaintenanceDuePage() {
         if (days <= 7) return <Badge className="bg-yellow-500 text-white">Due in {days} day(s)</Badge>;
         return <Badge>Due in {days} day(s)</Badge>;
     };
+
+    if (!mounted) {
+        return null;
+    }
 
     return (
          <div className="space-y-6">

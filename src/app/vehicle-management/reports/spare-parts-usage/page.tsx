@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,12 @@ export default function SparePartsUsagePage() {
     
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[] | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     
     const getPartName = (partId: string) => allParts.find(p => p.id === partId)?.name || 'Unknown Part';
 
@@ -57,6 +62,10 @@ export default function SparePartsUsagePage() {
     React.useEffect(() => {
         handleGenerateReport();
     }, [maintenanceRecords, allParts]);
+
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

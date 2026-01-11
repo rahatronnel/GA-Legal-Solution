@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,11 @@ export default function WorkshopPerformancePage() {
     
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[] | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleGenerateReport = () => {
         let filteredRecords = maintenanceRecords;
@@ -58,6 +62,9 @@ export default function WorkshopPerformancePage() {
         handleGenerateReport();
     }, [maintenanceRecords, serviceCenters]);
 
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

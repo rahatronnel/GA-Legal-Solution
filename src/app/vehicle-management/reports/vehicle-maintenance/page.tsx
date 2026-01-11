@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,6 +29,12 @@ export default function VehicleMaintenanceReportPage() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[]>([]);
     const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
 
     const handleGenerateReport = () => {
         let filteredVehicles = vehicles;
@@ -58,6 +63,10 @@ export default function VehicleMaintenanceReportPage() {
         const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
         const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
         return partsCost + expensesCost;
+    }
+
+    if (!mounted) {
+        return null;
     }
 
     return (

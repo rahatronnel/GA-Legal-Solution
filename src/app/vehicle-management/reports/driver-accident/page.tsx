@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,7 +29,12 @@ export default function DriverAccidentReportPage() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[]>([]);
     
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleGenerateReport = () => {
         let filteredDrivers = drivers;
@@ -55,6 +59,10 @@ export default function DriverAccidentReportPage() {
     };
 
     const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

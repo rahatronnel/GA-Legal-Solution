@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,12 @@ export default function AccidentCostSummaryPage() {
     const [accidents] = useLocalStorage<Accident[]>('accidents', []);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [filteredSummary, setFilteredSummary] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
 
     const handleGenerateReport = () => {
         let filteredAccidents = accidents;
@@ -46,6 +51,10 @@ export default function AccidentCostSummaryPage() {
     
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+
+    if (!mounted) {
+        return null;
     }
 
     return (
