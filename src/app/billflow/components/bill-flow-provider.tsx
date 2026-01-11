@@ -52,7 +52,20 @@ export const MasterDataProvider = ({ children }: { children: React.ReactNode }) 
 
 export const useMasterData = () => {
     const context = useContext(MasterDataContext);
-    if (!context) throw new Error('useMasterData must be used within a MasterDataProvider');
+    if (!context) {
+        if (typeof window === 'undefined') {
+            return {
+                billItemMasters: [],
+                billItemCategories: [],
+                vendorCategories: [],
+                vendorNatureOfBusiness: [],
+                billTypes: [],
+                billCategories: [],
+                isLoading: true,
+            };
+        }
+        throw new Error('useMasterData must be used within a MasterDataProvider');
+    }
     return context;
 };
 

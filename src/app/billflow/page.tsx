@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { ModuleHeader } from '@/app/components/module-header';
 import { BillFlowDashboard } from './components/dashboard';
 import BillFlowReportsPage from './reports/page';
+import { MasterDataProvider } from './components/bill-flow-provider';
 
 type ApprovalStep = {
     stepName: string;
@@ -224,7 +225,9 @@ export default function BillFlowPage() {
                       <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <BillTable />
+                    <MasterDataProvider>
+                      <BillTable />
+                    </MasterDataProvider>
                   </CardContent>
               </Card>
             </TabsContent>
@@ -243,6 +246,7 @@ export default function BillFlowPage() {
                <BillFlowReportsPage />
             </TabsContent>
             <TabsContent value="master" className="space-y-6">
+              <MasterDataProvider>
                 <Tabs defaultValue="bill-items" className="w-full">
                   <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
@@ -289,6 +293,7 @@ export default function BillFlowPage() {
                     </Card>
                   </TabsContent>
                 </Tabs>
+              </MasterDataProvider>
             </TabsContent>
             <TabsContent value="approval-settings">
               <ApprovalSettingsTab />
