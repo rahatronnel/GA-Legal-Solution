@@ -3,14 +3,14 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useDashboardData } from './vehicle-management-provider';
 import { Car, Users, Wrench, AlertTriangle, Route } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 
 export function Dashboard() {
-    const { data, isLoading } = useVehicleManagement();
+    const { data = {}, isLoading } = useDashboardData() || {};
     const { vehicles = [], drivers = [], trips = [], accidents = [], maintenanceRecords = [] } = data;
 
     const summaryStats = React.useMemo(() => ({
