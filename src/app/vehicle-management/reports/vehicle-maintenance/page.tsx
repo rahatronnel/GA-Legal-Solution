@@ -1,7 +1,7 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,13 +19,11 @@ import { cn } from '@/lib/utils';
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function VehicleMaintenanceReportPage() {
-    const vm = useVehicleManagement();
-    if (!vm) return null; // Build-safe guard
-    const { data, isLoading } = vm;
-    const { maintenanceRecords = [], vehicles = [], maintenanceTypes = [] } = data;
+    const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+    const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -41,11 +39,11 @@ export default function VehicleMaintenanceReportPage() {
     const handleGenerateReport = () => {
         let filteredVehicles = vehicles;
         if (selectedVehicleId) {
-            filteredVehicles = vehicles.filter((v: Vehicle) => v.id === selectedVehicleId);
+            filteredVehicles = vehicles.filter(v => v.id === selectedVehicleId);
         }
 
-        const data = filteredVehicles.map((vehicle: Vehicle) => {
-            let vehicleMaintenance = maintenanceRecords.filter((rec: MaintenanceRecord) => rec.vehicleId === vehicle.id);
+        const data = filteredVehicles.map(vehicle => {
+            let vehicleMaintenance = maintenanceRecords.filter(rec => rec.vehicleId === vehicle.id);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleMaintenance = vehicleMaintenance.filter(rec => {
@@ -54,12 +52,12 @@ export default function VehicleMaintenanceReportPage() {
                 });
             }
             return { ...vehicle, maintenance: vehicleMaintenance };
-        }).filter((v: any) => v.maintenance.length > 0);
+        }).filter(v => v.maintenance.length > 0);
 
         setReportData(data);
     };
 
-    const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes.find((t: MaintenanceType) => t.id === typeId) as MaintenanceType)?.name || 'N/A';
+    const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
     
     const calculateTotalCost = (record: MaintenanceRecord) => {
         const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
@@ -67,8 +65,8 @@ export default function VehicleMaintenanceReportPage() {
         return partsCost + expensesCost;
     }
 
-    if (!mounted || isLoading) {
-        return <p>Loading report data...</p>;
+    if (!mounted) {
+        return null;
     }
 
     return (
@@ -82,7 +80,7 @@ export default function VehicleMaintenanceReportPage() {
                      <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find((v: Vehicle) => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
+                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -91,7 +89,7 @@ export default function VehicleMaintenanceReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {vehicles.map((vehicle: Vehicle) => (
+                                    {vehicles.map((vehicle) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
                                         setOpen(false);

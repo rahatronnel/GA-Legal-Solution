@@ -44,7 +44,9 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [designationName, setDesignationName] = useState('N/A');
+  const [departmentName, setDepartmentName] = useState('N/A');
+
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
@@ -53,30 +55,30 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
   
-  const designationsRef = useMemoFirebase(() => (firestore && isOpen) ? collection(firestore, 'designations') : null, [firestore, isOpen]);
-  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
-
-  const sectionsRef = useMemoFirebase(() => (firestore && isOpen) ? collection(firestore, 'sections') : null, [firestore, isOpen]);
-  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
-
   const employee = useMemo(() => {
     if (!user || !employees) return null;
-    // Match by both UID and email to cover all cases, including superadmin
     return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
   }, [user, employees]);
+  
+  // These will only be fetched when the dialog is open and the employee data is available
+  const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(
+    useMemoFirebase(() => (firestore && isOpen && employee) ? collection(firestore, 'designations') : null, [firestore, isOpen, employee])
+  );
 
-  const designationName = useMemo(() => {
+  const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(
+    useMemoFirebase(() => (firestore && isOpen && employee) ? collection(firestore, 'sections') : null, [firestore, isOpen, employee])
+  );
+  
+  useEffect(() => {
     if (employee && designations) {
-      return designations.find(d => d.id === employee.designationId)?.name || 'N/A';
+        setDesignationName(designations.find(d => d.id === employee.designationId)?.name || 'N/A');
     }
-    return 'N/A';
   }, [employee, designations]);
 
-  const departmentName = useMemo(() => {
+  useEffect(() => {
     if (employee && sections) {
-      return sections.find(s => s.id === employee.departmentId)?.name || 'N/A';
+        setDepartmentName(sections.find(s => s.id === employee.departmentId)?.name || 'N/A');
     }
-    return 'N/A';
   }, [employee, sections]);
 
   useEffect(() => {
@@ -174,7 +176,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
             </div>
         ) : (
              <div className="py-4 text-center text-muted-foreground">
-                <p>Could not load employee profile. Superadmin profile is not displayed here.</p>
+                <p>Could not load employee profile.</p>
              </div>
         )}
         

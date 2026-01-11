@@ -1,23 +1,18 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
 import type { Accident } from '../../components/accident-entry-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function AccidentFrequencyPage() {
-    const vm = useVehicleManagement();
-    if (!vm) return null; // Build-safe guard
-    const { data, isLoading } = vm;
-    const { accidents = [] } = data;
-
+    const [accidents] = useLocalStorage<Accident[]>('accidents', []);
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: startOfMonth(new Date(new Date().setFullYear(new Date().getFullYear() - 1))),
         to: endOfMonth(new Date())
@@ -43,7 +38,7 @@ export default function AccidentFrequencyPage() {
             monthlyCounts[monthKey] = 0;
         });
 
-        accidents.forEach((acc: Accident) => {
+        accidents.forEach(acc => {
             if (acc.accidentDate) {
                 const accidentDate = parseISO(acc.accidentDate);
                 if (accidentDate >= dateRange.from! && accidentDate <= dateRange.to!) {
@@ -64,13 +59,11 @@ export default function AccidentFrequencyPage() {
     
     // Generate initial report on load
     React.useEffect(() => {
-        if (!isLoading) {
-            handleGenerateReport();
-        }
-    }, [accidents, isLoading]);
+        handleGenerateReport();
+    }, [accidents]);
 
-    if (!mounted || isLoading) {
-        return <p>Loading report data...</p>;
+    if (!mounted) {
+        return null;
     }
 
     return (

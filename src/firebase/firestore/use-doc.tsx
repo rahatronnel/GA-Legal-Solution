@@ -9,7 +9,7 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { useUser } from '@/firebase';
+import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -45,24 +45,23 @@ export function useDoc<T = any>(
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
-  const { isUserLoading, user } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    if (isUserLoading || !user) {
-      // Don't fetch if user is loading or not logged in.
-      // Set loading to true if user is loading, false otherwise.
-      setIsLoading(isUserLoading);
-      setData(null);
-      return;
+    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
+    const auth = getAuth();
+    if (!auth.currentUser) {
+        setIsLoading(true);
+        setData(null);
+        return;
     }
 
     if (!memoizedDocRef) {
-      // No document to fetch, not an error, but we're not loading anything.
-      setIsLoading(false);
       setData(null);
+      setIsLoading(true); // If no ref, we are in a loading state until we get one
+      setError(null);
       return;
     }
 
@@ -75,13 +74,12 @@ export function useDoc<T = any>(
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
-          setData(null); // Document does not exist
+          setData(null);
         }
         setError(null);
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        console.error(`Firestore error on path: ${memoizedDocRef.path}`, error);
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
@@ -96,7 +94,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef, isUserLoading, user]);
+  }, [memoizedDocRef]);
 
   return { data, isLoading, error };
 }

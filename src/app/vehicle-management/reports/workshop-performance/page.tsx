@@ -1,7 +1,7 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,10 @@ import { isWithinInterval, parseISO } from 'date-fns';
 
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
 import type { ServiceCenter } from '../../components/service-center-table';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function WorkshopPerformancePage() {
-    const vm = useVehicleManagement();
-    if (!vm) return null; // Build-safe guard
-    const { data, isLoading } = vm;
-    const { maintenanceRecords = [], serviceCenters = [] } = data;
+    const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
+    const [serviceCenters] = useLocalStorage<ServiceCenter[]>('serviceCenters', []);
     
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[] | null>(null);
@@ -30,7 +27,7 @@ export default function WorkshopPerformancePage() {
     const handleGenerateReport = () => {
         let filteredRecords = maintenanceRecords;
         if (dateRange?.from && dateRange?.to) {
-            filteredRecords = maintenanceRecords.filter((rec: MaintenanceRecord) => {
+            filteredRecords = maintenanceRecords.filter(rec => {
                  if (!rec.serviceDate) return false;
                  const serviceDate = parseISO(rec.serviceDate);
                  return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
@@ -39,11 +36,11 @@ export default function WorkshopPerformancePage() {
         
         const report: { [key: string]: { name: string; jobs: number; totalCost: number } } = {};
 
-        serviceCenters.forEach((sc: ServiceCenter) => {
+        serviceCenters.forEach(sc => {
             report[sc.id] = { name: sc.name, jobs: 0, totalCost: 0 };
         });
 
-        filteredRecords.forEach((rec: MaintenanceRecord) => {
+        filteredRecords.forEach(rec => {
             if (rec.serviceCenterId && report[rec.serviceCenterId]) {
                 const partsCost = rec.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
                 const expensesCost = rec.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
@@ -65,8 +62,8 @@ export default function WorkshopPerformancePage() {
         handleGenerateReport();
     }, [maintenanceRecords, serviceCenters]);
 
-    if (!mounted || isLoading) {
-        return <p>Loading report data...</p>;
+    if (!mounted) {
+        return null;
     }
 
     return (

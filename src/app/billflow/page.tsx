@@ -12,6 +12,7 @@ import { BillTypeTable } from "./components/bill-type-table";
 import { BillCategoryTable } from "./components/bill-category-table";
 import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MasterDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
@@ -30,7 +31,6 @@ import { Input } from '@/components/ui/input';
 import { ModuleHeader } from '@/app/components/module-header';
 import { BillFlowDashboard } from './components/dashboard';
 import BillFlowReportsPage from './reports/page';
-import { MasterDataProvider } from './components/bill-flow-provider';
 
 type ApprovalStep = {
     stepName: string;
@@ -198,107 +198,105 @@ export default function BillFlowPage() {
     return (
       <div className="space-y-6">
         <ModuleHeader />
-          <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="bills">Bills</TabsTrigger>
-                <TabsTrigger value="vendors">Vendors</TabsTrigger>
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-                <TabsTrigger value="master">Master Data</TabsTrigger>
-                <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
-            </TabsList>
-            <TabsContent value="dashboard">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>BillFlow Dashboard</CardTitle>
-                      <CardDescription>A quick overview of your billing activities.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <BillFlowDashboard />
-                  </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="bills">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Bills</CardTitle>
-                      <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <MasterDataProvider>
-                      <BillTable />
-                    </MasterDataProvider>
-                  </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="vendors">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Vendors</CardTitle>
-                      <CardDescription>Manage your organization's vendors and their information.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <VendorTable />
-                  </CardContent>
-              </Card>
-            </TabsContent>
-             <TabsContent value="reports">
-               <BillFlowReportsPage />
-            </TabsContent>
-            <TabsContent value="master" className="space-y-6">
-              <MasterDataProvider>
-                <Tabs defaultValue="bill-items" className="w-full">
-                  <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
-                    <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
-                    <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
-                    <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
-                    <TabsTrigger value="bill-types">Bill Types</TabsTrigger>
-                    <TabsTrigger value="bill-categories">Bill Categories</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="bill-items" className="mt-4">
-                    <Card>
-                      <CardHeader><CardTitle>Bill Items</CardTitle><CardDescription>Manage the master list of billable items and services.</CardDescription></CardHeader>
-                      <CardContent><BillItemMasterTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="bill-item-categories" className="mt-4">
-                    <Card>
-                      <CardHeader><CardTitle>Bill Item Categories</CardTitle><CardDescription>Manage categories for your billable items.</CardDescription></CardHeader>
-                      <CardContent><BillItemCategoryTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="vendor-categories" className="mt-4">
-                    <Card>
-                      <CardHeader><CardTitle>Vendor Categories</CardTitle><CardDescription>Manage the categories for your vendors.</CardDescription></CardHeader>
-                      <CardContent><VendorCategoryTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="vendor-nature" className="mt-4">
-                    <Card>
-                      <CardHeader><CardTitle>Vendor Nature of Business</CardTitle><CardDescription>Manage the nature of business for your vendors.</CardDescription></CardHeader>
-                      <CardContent><VendorNatureOfBusinessTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="bill-types" className="mt-4">
-                    <Card>
-                      <CardHeader><CardTitle>Bill Types</CardTitle><CardDescription>Manage the different types of bills (e.g., Purchase, Service).</CardDescription></CardHeader>
-                      <CardContent><BillTypeTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                  <TabsContent value="bill-categories" className="mt-4">
-                     <Card>
-                      <CardHeader><CardTitle>Bill Categories</CardTitle><CardDescription>Manage the categories for your bills.</CardDescription></CardHeader>
-                      <CardContent><BillCategoryTable /></CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </MasterDataProvider>
-            </TabsContent>
-            <TabsContent value="approval-settings">
-              <ApprovalSettingsTab />
-            </TabsContent>
-          </Tabs>
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="bills">Bills</TabsTrigger>
+              <TabsTrigger value="vendors">Vendors</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
+              <TabsTrigger value="master">Master Data</TabsTrigger>
+              <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dashboard">
+            <Card>
+                <CardHeader>
+                    <CardTitle>BillFlow Dashboard</CardTitle>
+                    <CardDescription>A quick overview of your billing activities.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BillFlowDashboard />
+                </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="bills">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Bills</CardTitle>
+                    <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BillTable />
+                </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="vendors">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Vendors</CardTitle>
+                    <CardDescription>Manage your organization's vendors and their information.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <VendorTable />
+                </CardContent>
+            </Card>
+          </TabsContent>
+           <TabsContent value="reports">
+             <BillFlowReportsPage />
+          </TabsContent>
+          <TabsContent value="master" className="space-y-6">
+            <MasterDataProvider>
+              <Tabs defaultValue="bill-items" className="w-full">
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
+                  <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
+                  <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
+                  <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
+                  <TabsTrigger value="bill-types">Bill Types</TabsTrigger>
+                  <TabsTrigger value="bill-categories">Bill Categories</TabsTrigger>
+                </TabsList>
+                <TabsContent value="bill-items" className="mt-4">
+                  <Card>
+                    <CardHeader><CardTitle>Bill Items</CardTitle><CardDescription>Manage the master list of billable items and services.</CardDescription></CardHeader>
+                    <CardContent><BillItemMasterTable /></CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="bill-item-categories" className="mt-4">
+                  <Card>
+                    <CardHeader><CardTitle>Bill Item Categories</CardTitle><CardDescription>Manage categories for your billable items.</CardDescription></CardHeader>
+                    <CardContent><BillItemCategoryTable /></CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="vendor-categories" className="mt-4">
+                  <Card>
+                    <CardHeader><CardTitle>Vendor Categories</CardTitle><CardDescription>Manage the categories for your vendors.</CardDescription></CardHeader>
+                    <CardContent><VendorCategoryTable /></CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="vendor-nature" className="mt-4">
+                  <Card>
+                    <CardHeader><CardTitle>Vendor Nature of Business</CardTitle><CardDescription>Manage the nature of business for your vendors.</CardDescription></CardHeader>
+                    <CardContent><VendorNatureOfBusinessTable /></CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="bill-types" className="mt-4">
+                  <Card>
+                    <CardHeader><CardTitle>Bill Types</CardTitle><CardDescription>Manage the different types of bills (e.g., Purchase, Service).</CardDescription></CardHeader>
+                    <CardContent><BillTypeTable /></CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="bill-categories" className="mt-4">
+                   <Card>
+                    <CardHeader><CardTitle>Bill Categories</CardTitle><CardDescription>Manage the categories for your bills.</CardDescription></CardHeader>
+                    <CardContent><BillCategoryTable /></CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </MasterDataProvider>
+          </TabsContent>
+          <TabsContent value="approval-settings">
+            <ApprovalSettingsTab />
+          </TabsContent>
+        </Tabs>
       </div>
     );
 }

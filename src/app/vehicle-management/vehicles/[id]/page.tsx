@@ -96,10 +96,7 @@ export default function VehicleProfilePage() {
   const params = useParams();
   const { id } = params;
 
-  const vm = useVehicleManagement();
-  if(!vm) return null;
-  const { data, isLoading } = vm;
-  
+  const { data, isLoading } = useVehicleManagement();
   const { 
       vehicles, 
       drivers, 

@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
-import { ChangePasswordDialog } from '@/components/change-password-dialog';
+import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
 import LoginPage from './login/page';
 import { collection, doc } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
@@ -40,18 +40,18 @@ import type { OrganizationSettings } from './settings/page';
 
 // Lazy load all page components to prevent their data providers from running before auth is checked.
 const moduleComponents: { [key:string]: React.ComponentType } = {
-    '/vehicle-management': dynamic(() => import('./vehicle-management/page'), { ssr: false }),
-    '/user-management': dynamic(() => import('./user-management/page'), { ssr: false }),
-    '/settings': dynamic(() => import('./settings/page'), { ssr: false }),
-    '/billflow': dynamic(() => import('./billflow/page'), { ssr: false }),
-    '/billflow/bills/[id]': dynamic(() => import('./billflow/bills/[id]/page'), { ssr: false }),
-    '/billflow/vendors/[id]': dynamic(() => import('./billflow/vendors/[id]/page'), { ssr: false }),
-    '/vehicle-management/drivers/[id]': dynamic(() => import('./vehicle-management/drivers/[id]/page'), { ssr: false }),
-    '/vehicle-management/vehicles/[id]': dynamic(() => import('./vehicle-management/vehicles/[id]/page'), { ssr: false }),
-    '/vehicle-management/trips/[id]': dynamic(() => import('./vehicle-management/trips/[id]/page'), { ssr: false }),
-    '/vehicle-management/maintenance/[id]': dynamic(() => import('./vehicle-management/maintenance/[id]/page'), { ssr: false }),
-    '/vehicle-management/accidents/[id]': dynamic(() => import('./vehicle-management/accidents/[id]/page'), { ssr: false }),
-    '/user-management/employees/[id]': dynamic(() => import('./user-management/employees/[id]/page'), { ssr: false }),
+    '/vehicle-management': dynamic(() => import('./vehicle-management/page')),
+    '/user-management': dynamic(() => import('./user-management/page')),
+    '/settings': dynamic(() => import('./settings/page')),
+    '/billflow': dynamic(() => import('./billflow/page')),
+    '/billflow/bills/[id]': dynamic(() => import('./billflow/bills/[id]/page')),
+    '/billflow/vendors/[id]': dynamic(() => import('./billflow/vendors/[id]/page')),
+    '/vehicle-management/drivers/[id]': dynamic(() => import('./vehicle-management/drivers/[id]/page')),
+    '/vehicle-management/vehicles/[id]': dynamic(() => import('./vehicle-management/vehicles/[id]/page')),
+    '/vehicle-management/trips/[id]': dynamic(() => import('./vehicle-management/trips/[id]/page')),
+    '/vehicle-management/maintenance/[id]': dynamic(() => import('./vehicle-management/maintenance/[id]/page')),
+    '/vehicle-management/accidents/[id]': dynamic(() => import('./vehicle-management/accidents/[id]/page')),
+    '/user-management/employees/[id]': dynamic(() => import('./user-management/employees/[id]/page')),
 };
 
 const ModuleDashboard = () => {    

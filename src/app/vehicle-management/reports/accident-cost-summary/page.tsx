@@ -1,7 +1,7 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -9,14 +9,9 @@ import { DateRange } from 'react-day-picker';
 import { DollarSign, AlertTriangle } from 'lucide-react';
 import type { Accident } from '../../components/accident-entry-form';
 import { isWithinInterval, parseISO } from 'date-fns';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function AccidentCostSummaryPage() {
-    const vm = useVehicleManagement();
-    if (!vm) return null; // Build-safe guard
-    const { data, isLoading } = vm;
-    const { accidents = [] } = data;
-
+    const [accidents] = useLocalStorage<Accident[]>('accidents', []);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [filteredSummary, setFilteredSummary] = useState<any>(null);
     const [mounted, setMounted] = useState(false);
@@ -30,7 +25,7 @@ export default function AccidentCostSummaryPage() {
         let filteredAccidents = accidents;
 
         if (dateRange?.from && dateRange?.to) {
-            filteredAccidents = accidents.filter((acc: Accident) => {
+            filteredAccidents = accidents.filter(acc => {
                 const accDate = parseISO(acc.accidentDate);
                 return isWithinInterval(accDate, { start: dateRange.from!, end: dateRange.to! });
             });
@@ -40,7 +35,7 @@ export default function AccidentCostSummaryPage() {
         let totalActual = 0;
         let totalThirdParty = 0;
 
-        filteredAccidents.forEach((acc: Accident) => {
+        filteredAccidents.forEach(acc => {
             totalEstimated += Number(acc.estimatedRepairCost) || 0;
             totalActual += Number(acc.actualRepairCost) || 0;
             totalThirdParty += Number(acc.thirdPartyDamageCost) || 0;
@@ -58,8 +53,8 @@ export default function AccidentCostSummaryPage() {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
-    if (!mounted || isLoading) {
-        return <p>Loading report data...</p>;
+    if (!mounted) {
+        return null;
     }
 
     return (

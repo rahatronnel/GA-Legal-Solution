@@ -1,7 +1,7 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,13 +19,11 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
 import type { Driver } from '../../components/driver-entry-form';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function VehicleAccidentReportPage() {
-    const vm = useVehicleManagement();
-    if (!vm) return null; // Build-safe guard
-    const { data, isLoading } = vm;
-    const { accidents = [], vehicles = [], drivers = [] } = data;
+    const [accidents] = useLocalStorage<Accident[]>('accidents', []);
+    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+    const [drivers] = useLocalStorage<Driver[]>('drivers', []);
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -42,11 +40,11 @@ export default function VehicleAccidentReportPage() {
     const handleGenerateReport = () => {
         let filteredVehicles = vehicles;
         if (selectedVehicleId) {
-            filteredVehicles = vehicles.filter((v: Vehicle) => v.id === selectedVehicleId);
+            filteredVehicles = vehicles.filter(v => v.id === selectedVehicleId);
         }
 
-        const data = filteredVehicles.map((vehicle: Vehicle) => {
-            let vehicleAccidents = accidents.filter((acc: Accident) => acc.vehicleId === vehicle.id);
+        const data = filteredVehicles.map(vehicle => {
+            let vehicleAccidents = accidents.filter(acc => acc.vehicleId === vehicle.id);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleAccidents = vehicleAccidents.filter(acc => {
@@ -56,15 +54,15 @@ export default function VehicleAccidentReportPage() {
             }
             
             return { ...vehicle, accidents: vehicleAccidents };
-        }).filter((v: any) => v.accidents.length > 0);
+        }).filter(v => v.accidents.length > 0);
 
         setReportData(data);
     };
 
-    const getDriverName = (driverId: string) => (drivers.find((d: Driver) => d.id === driverId) as Driver)?.name || 'N/A';
+    const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
 
-    if (!mounted || isLoading) {
-        return <p>Loading report data...</p>;
+    if (!mounted) {
+        return null;
     }
 
     return (
@@ -78,7 +76,7 @@ export default function VehicleAccidentReportPage() {
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find((v: Vehicle) => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
+                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -87,7 +85,7 @@ export default function VehicleAccidentReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {vehicles.map((vehicle: Vehicle) => (
+                                    {vehicles.map((vehicle) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
                                         setOpen(false);
