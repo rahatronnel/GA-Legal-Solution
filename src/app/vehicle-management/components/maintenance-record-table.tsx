@@ -25,6 +25,13 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import { usePrint } from './print-provider';
+
+import type { Vehicle } from './vehicle-table';
+import type { Driver } from './driver-entry-form';
+import type { MaintenanceType } from './maintenance-type-table';
+import type { ServiceCenter } from './service-center-table';
+
 
 export function MaintenanceRecordTable() {
   const { toast } = useToast();
@@ -38,6 +45,7 @@ export function MaintenanceRecordTable() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<MaintenanceRecord> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
