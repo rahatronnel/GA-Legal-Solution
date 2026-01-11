@@ -230,8 +230,6 @@ export function BillTable() {
     setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
   };
 
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  
   const canPerformBulkAction = selectedRows.length > 0;
 
   return (
@@ -281,18 +279,10 @@ export function BillTable() {
                 <TableHeader>
                 <TableRow>
                     <TableHead className="w-[50px]"><Checkbox
-                        checked={selectedRows.length > 0 && selectedRows.length === filteredItems.filter(b => {
-                            const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
-                            const isPending = b.approvalStatus !== 0 && b.approvalStatus !== 1;
-                            return isPending && (isSuperAdmin || isCurrentUserApprover);
-                        }).length}
+                        checked={selectedRows.length > 0 && selectedRows.length === filteredItems.length}
                         onCheckedChange={(checked) => {
-                           const approvableIds = filteredItems.filter(b => {
-                               const isCurrentUserApprover = currentUserEmployee ? b.currentApproverId === currentUserEmployee.id : false;
-                               const isPending = b.approvalStatus !== 0 && b.approvalStatus !== 1;
-                               return isPending && (isSuperAdmin || isCurrentUserApprover);
-                           }).map(b => b.id);
-                           setSelectedRows(checked ? approvableIds : []);
+                           const allIds = filteredItems.map(b => b.id);
+                           setSelectedRows(checked ? allIds : []);
                         }}
                     /></TableHead>
                     <TableHead>Bill ID</TableHead>
@@ -318,16 +308,14 @@ export function BillTable() {
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
                   filteredItems.map(bill => {
-                        const isCurrentUserApprover = currentUserEmployee ? bill.currentApproverId === currentUserEmployee.id : false;
                         const isPending = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
-                        const canApprove = isPending && (isSuperAdmin || isCurrentUserApprover);
                         return (
                             <TableRow key={bill.id} data-state={selectedRows.includes(bill.id) ? "selected" : ""}>
                                 <TableCell>
                                     <Checkbox
                                         checked={selectedRows.includes(bill.id)}
                                         onCheckedChange={() => toggleRowSelection(bill.id)}
-                                        disabled={!canApprove}
+                                        disabled={!isPending}
                                     />
                                 </TableCell>
                                 <TableCell>{bill.billId}</TableCell>

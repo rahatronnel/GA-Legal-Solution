@@ -57,7 +57,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const { toast } = useToast();
   const { handlePrint } = usePrint();
   const auth = useAuth();
-  const { user: superadminUser } = useUser();
+  const { user: loggedInUser } = useUser();
   const firestore = useFirestore();
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   
@@ -71,8 +71,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const [searchTerm, setSearchTerm] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-
-  const isSuperAdmin = superadminUser?.email === 'superadmin@galsolution.com';
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
@@ -379,12 +377,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                         </TooltipTrigger>
                         <TooltipContent>Edit Employee</TooltipContent>
                       </Tooltip>
-                       {isSuperAdmin && employee.email !== 'superadmin@galsolution.com' && (
-                         <Tooltip>
-                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetPassword(employee)}><KeyRound className="h-4 w-4 text-orange-500" /></Button></TooltipTrigger>
-                            <TooltipContent>Set Password</TooltipContent>
-                        </Tooltip>
-                       )}
+                       <Tooltip>
+                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetPassword(employee)}><KeyRound className="h-4 w-4 text-orange-500" /></Button></TooltipTrigger>
+                        <TooltipContent>Set Password</TooltipContent>
+                      </Tooltip>
                        <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(employee, 'employee')}>

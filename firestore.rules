@@ -3,11 +3,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: This is a temporary rule for development.
-    // It allows open access to your entire database.
-    // We MUST implement proper security rules before deploying to production.
+    // Allow read/write access to any authenticated user.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
   }
 }

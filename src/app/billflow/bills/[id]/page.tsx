@@ -128,12 +128,12 @@ function BillProfileContent() {
     
         const billRef = doc(firestore, 'bills', bill.id);
         const currentUserEmployee = employees.find(e => e.email === user.email);
-        if (!currentUserEmployee && user.email !== 'superadmin@galsolution.com') {
+        if (!currentUserEmployee) {
             alert('Your employee profile could not be found.');
             return;
         }
 
-        const effectiveApproverId = currentUserEmployee?.id || 'superadmin';
+        const effectiveApproverId = currentUserEmployee.id;
         const approvalLevels = bill.approvalFlow.steps;
         const currentLevel = bill.approvalHistory?.length || 0;
     
@@ -201,13 +201,8 @@ function BillProfileContent() {
         try { return new Date(dateStr).toLocaleString(); } catch { return 'N/A'; }
     }
     
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-    const currentUserEmployee = employees?.find(e => e.email === user?.email);
-    const isCurrentUserApprover = bill.currentApproverId === currentUserEmployee?.id;
-
     // A bill is pending approval if its status is not 0 (rejected) or 1 (completed)
     const isPendingApproval = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
-    const canApprove = isPendingApproval && (isSuperAdmin || isCurrentUserApprover);
 
     return (
         <div className="space-y-6">
@@ -219,7 +214,7 @@ function BillProfileContent() {
                             <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {canApprove && (
+                             {isPendingApproval && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>

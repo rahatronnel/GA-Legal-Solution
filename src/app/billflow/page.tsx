@@ -195,19 +195,16 @@ function ApprovalSettingsTab() {
 
 
 function BillFlowContent() {
-    const { user } = useUser();
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-
     return (
       <div className="space-y-6">
         <ModuleHeader />
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="vendors">Vendors</TabsTrigger>
               <TabsTrigger value="master">Master Data</TabsTrigger>
-              {isSuperAdmin && <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>}
+              <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
              <BillDataProvider>
@@ -300,11 +297,9 @@ function BillFlowContent() {
               </Tabs>
             </MasterDataProvider>
           </TabsContent>
-           {isSuperAdmin && (
-              <TabsContent value="approval-settings">
-                <ApprovalSettingsTab />
-              </TabsContent>
-            )}
+          <TabsContent value="approval-settings">
+            <ApprovalSettingsTab />
+          </TabsContent>
         </Tabs>
       </div>
     );
