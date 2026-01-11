@@ -12,7 +12,7 @@ import { BillTypeTable } from "./components/bill-type-table";
 import { BillCategoryTable } from "./components/bill-category-table";
 import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BillFlowProvider, BillDataProvider, VendorDataProvider, MasterDataProvider, ReportsDataProvider } from "./components/bill-flow-provider";
+import { MasterDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
@@ -194,8 +194,7 @@ function ApprovalSettingsTab() {
     );
 }
 
-
-function BillFlowContent() {
+export default function BillFlowPage() {
     return (
       <div className="space-y-6">
         <ModuleHeader />
@@ -209,50 +208,40 @@ function BillFlowContent() {
               <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
-             <BillDataProvider>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>BillFlow Dashboard</CardTitle>
-                        <CardDescription>A quick overview of your billing activities.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <BillFlowDashboard />
-                    </CardContent>
-                </Card>
-            </BillDataProvider>
+            <Card>
+                <CardHeader>
+                    <CardTitle>BillFlow Dashboard</CardTitle>
+                    <CardDescription>A quick overview of your billing activities.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BillFlowDashboard />
+                </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="bills">
-            <BillDataProvider>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Bills</CardTitle>
-                        <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <MasterDataProvider>
-                        <BillTable />
-                      </MasterDataProvider>
-                    </CardContent>
-                </Card>
-            </BillDataProvider>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Bills</CardTitle>
+                    <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BillTable />
+                </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="vendors">
-            <VendorDataProvider>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Vendors</CardTitle>
-                        <CardDescription>Manage your organization's vendors and their information.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VendorTable />
-                    </CardContent>
-                </Card>
-            </VendorDataProvider>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Vendors</CardTitle>
+                    <CardDescription>Manage your organization's vendors and their information.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <VendorTable />
+                </CardContent>
+            </Card>
           </TabsContent>
            <TabsContent value="reports">
-            <ReportsDataProvider>
-                <BillFlowReportsPage />
-            </ReportsDataProvider>
+             <BillFlowReportsPage />
           </TabsContent>
           <TabsContent value="master" className="space-y-6">
             <MasterDataProvider>
@@ -310,12 +299,4 @@ function BillFlowContent() {
         </Tabs>
       </div>
     );
-}
-
-export default function BillFlowPage() {
-  return (
-    <BillFlowProvider>
-      <BillFlowContent />
-    </BillFlowProvider>
-  );
 }

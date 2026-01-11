@@ -25,23 +25,19 @@ import * as XLSX from 'xlsx';
 import type { VendorCategory } from './vendor-category-table';
 import type { VendorNatureOfBusiness } from './vendor-nature-of-business-table';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { useBillFlow } from './bill-flow-provider';
 
 export function VendorTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { handlePrint } = usePrint();
+
+  const billFlowData = useBillFlow();
+  if (!billFlowData) return <p>Loading...</p>;
+  const { data: { vendors, vendorCategories, vendorNatureOfBusiness }, isLoading } = billFlowData;
   
   const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
-  const { data: vendors, isLoading: isLoadingVendors } = useCollection<Vendor>(vendorsRef);
   
-  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]);
-  const { data: categories, isLoading: isLoadingCategories } = useCollection<VendorCategory>(categoriesRef);
-
-  const naturesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]);
-  const { data: naturesOfBusiness, isLoading: isLoadingNatures } = useCollection<VendorNatureOfBusiness>(naturesRef);
-
-  const isLoading = isLoadingVendors || isLoadingCategories || isLoadingNatures;
-
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<Vendor> | null>(null);
@@ -153,7 +149,7 @@ export function VendorTable() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && vendorsRef && categories && naturesOfBusiness) {
+    if (file && vendorsRef && vendorCategories && vendorNatureOfBusiness) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
@@ -174,8 +170,8 @@ export function VendorTable() {
           for (const item of json) {
             if (!item.vendorName || !item.email) continue;
             
-            const category = categories.find(c => c.code === item.vendorCategoryCode);
-            const nature = naturesOfBusiness.find(n => n.code === item.natureOfBusinessCode);
+            const category = vendorCategories.find(c => c.code === item.vendorCategoryCode);
+            const nature = vendorNatureOfBusiness.find(n => n.code === item.natureOfBusinessCode);
 
             const newVendor: Partial<Omit<Vendor, 'id'>> = {
                 vendorId: `V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

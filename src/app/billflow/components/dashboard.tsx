@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useBillData } from './bill-flow-provider';
+import { useBillFlow } from './bill-flow-provider';
 import { useUser } from '@/firebase';
 import { Eye, FileText, Hourglass, CheckCircle, Users } from 'lucide-react';
 import { getBillStatusText } from '../lib/status-helper';
@@ -31,7 +31,9 @@ const formatCurrency = (amount: number) => {
 }
 
 export function BillFlowDashboard() {
-    const { bills, vendors, employees } = useBillData();
+    const billFlowData = useBillFlow();
+    if (!billFlowData) return <p>Loading...</p>;
+    const { data: { bills, vendors, employees }, isLoading } = billFlowData;
     const { user } = useUser();
 
     const currentUserEmployee = React.useMemo(() => {
@@ -72,6 +74,10 @@ export function BillFlowDashboard() {
         if (status === 1) return 'default';
         if (status === 0) return 'destructive';
         return 'secondary';
+    }
+
+    if (isLoading) {
+        return <p>Loading dashboard data...</p>;
     }
 
     return (

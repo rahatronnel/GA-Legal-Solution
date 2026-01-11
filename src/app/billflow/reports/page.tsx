@@ -5,12 +5,14 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useBillData } from '../components/bill-flow-provider';
+import { useBillFlow } from '../components/bill-flow-provider';
 import { differenceInDays, parseISO } from 'date-fns';
 import { getBillStatusText } from '../lib/status-helper';
 
 function VendorBillSummary() {
-    const { bills, vendors, isLoading } = useBillData();
+    const billFlowData = useBillFlow();
+    if (!billFlowData) return <p>Loading...</p>;
+    const { data: { bills, vendors }, isLoading } = billFlowData;
 
     const summary = React.useMemo(() => {
         if (isLoading || !bills || !vendors) return [];
@@ -57,7 +59,9 @@ function VendorBillSummary() {
 }
 
 function BillStatusReport() {
-    const { bills, isLoading } = useBillData();
+    const billFlowData = useBillFlow();
+    if (!billFlowData) return <p>Loading...</p>;
+    const { data: { bills }, isLoading } = billFlowData;
 
     const summary = React.useMemo(() => {
         if (isLoading || !bills) return { approved: 0, pending: 0, rejected: 0 };
@@ -84,7 +88,9 @@ function BillStatusReport() {
 }
 
 function BillAgingReport() {
-    const { bills, isLoading } = useBillData();
+    const billFlowData = useBillFlow();
+    if (!billFlowData) return <p>Loading...</p>;
+    const { data: { bills }, isLoading } = billFlowData;
 
     const agingBuckets = React.useMemo(() => {
         if (isLoading || !bills) return { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
@@ -120,7 +126,9 @@ function BillAgingReport() {
 }
 
 function PaymentAdvisoryReport() {
-    const { bills, vendors, isLoading } = useBillData();
+    const billFlowData = useBillFlow();
+    if (!billFlowData) return <p>Loading...</p>;
+    const { data: { bills, vendors }, isLoading } = billFlowData;
 
     const readyForPayment = React.useMemo(() => {
         if (isLoading || !bills || !vendors) return [];

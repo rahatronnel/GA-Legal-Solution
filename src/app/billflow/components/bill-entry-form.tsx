@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { useBillData, useMasterData } from './bill-flow-provider';
+import { useBillFlow, useMasterData } from './bill-flow-provider';
 import type { Vendor } from './vendor-entry-form';
 import type { BillType } from './bill-type-table';
 import type { BillCategory } from './bill-category-table';
@@ -148,7 +148,9 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
     const { toast } = useToast();
     const { user } = useUser();
     const firestore = useFirestore();
-    const { vendors, billTypes, billCategories, employees, sections } = useBillData();
+    const billFlowData = useBillFlow();
+    
+    const { vendors, billTypes, billCategories, employees, sections } = billFlowData?.data || { vendors: [], billTypes: [], billCategories: [], employees: [], sections: [] };
     const { billItemMasters, billItemCategories } = useMasterData();
 
     const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);

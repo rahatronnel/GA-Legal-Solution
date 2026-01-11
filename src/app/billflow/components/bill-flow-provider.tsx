@@ -17,28 +17,6 @@ import type { BillItemMaster } from './bill-item-master-table';
 import type { BillItemCategory } from './bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
 
-
-// --- Data Contexts for specific tabs ---
-
-const VendorDataContext = createContext<{
-    vendors: Vendor[];
-    vendorCategories: VendorCategory[];
-    vendorNatureOfBusiness: VendorNatureOfBusiness[];
-    isLoading: boolean;
-} | undefined>(undefined);
-
-const BillDataContext = createContext<{
-    bills: Bill[];
-    vendors: Vendor[];
-    billTypes: BillType[];
-    billCategories: BillCategory[];
-    employees: Employee[];
-    sections: Section[];
-    billItemCategories: BillItemCategory[];
-    designations: Designation[];
-    isLoading: boolean;
-} | undefined>(undefined);
-
 const MasterDataContext = createContext<{
     billItemMasters: BillItemMaster[];
     billItemCategories: BillItemCategory[];
@@ -49,53 +27,6 @@ const MasterDataContext = createContext<{
     isLoading: boolean;
 } | undefined>(undefined);
 
-const ReportsDataContext = createContext<any | undefined>(undefined);
-
-
-// --- Provider Components for each tab's data ---
-
-export const VendorDataProvider = ({ children }: { children: React.ReactNode }) => {
-    const firestore = useFirestore();
-    const { data: vendors, isLoading: l1 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
-    const { data: vendorCategories, isLoading: l2 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
-    const { data: vendorNatureOfBusiness, isLoading: l3 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
-
-    const value = useMemo(() => ({
-        vendors: vendors || [],
-        vendorCategories: vendorCategories || [],
-        vendorNatureOfBusiness: vendorNatureOfBusiness || [],
-        isLoading: l1 || l2 || l3,
-    }), [vendors, vendorCategories, vendorNatureOfBusiness, l1, l2, l3]);
-
-    return <VendorDataContext.Provider value={value}>{children}</VendorDataContext.Provider>;
-}
-
-export const BillDataProvider = ({ children }: { children: React.ReactNode }) => {
-    const firestore = useFirestore();
-    const { data: bills, isLoading: l1 } = useCollection<Bill>(useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]));
-    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
-    const { data: billTypes, isLoading: l3 } = useCollection<BillType>(useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]));
-    const { data: billCategories, isLoading: l4 } = useCollection<BillCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]));
-    const { data: employees, isLoading: l5 } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
-    const { data: sections, isLoading: l6 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
-    const { data: billItemCategories, isLoading: l7 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
-    const { data: designations, isLoading: l8 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
-
-
-    const value = useMemo(() => ({
-        bills: bills || [],
-        vendors: vendors || [],
-        billTypes: billTypes || [],
-        billCategories: billCategories || [],
-        employees: employees || [],
-        sections: sections || [],
-        billItemCategories: billItemCategories || [],
-        designations: designations || [],
-        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8,
-    }), [bills, vendors, billTypes, billCategories, employees, sections, billItemCategories, designations, l1, l2, l3, l4, l5, l6, l7, l8]);
-    
-    return <BillDataContext.Provider value={value}>{children}</BillDataContext.Provider>;
-}
 
 export const MasterDataProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
@@ -119,66 +50,13 @@ export const MasterDataProvider = ({ children }: { children: React.ReactNode }) 
     return <MasterDataContext.Provider value={value}>{children}</MasterDataContext.Provider>;
 }
 
-export const ReportsDataProvider = ({ children }: { children: React.ReactNode }) => {
-    // For reports, we often need a mix of data. This provider fetches all necessary collections.
-    const firestore = useFirestore();
-    const { data: bills, isLoading: l1 } = useCollection<Bill>(useMemoFirebase(() => firestore ? collection(firestore, 'bills') : null, [firestore]));
-    const { data: vendors, isLoading: l2 } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
-
-    const value = useMemo(() => ({
-        bills: bills || [],
-        vendors: vendors || [],
-        isLoading: l1 || l2,
-    }), [bills, vendors, l1, l2]);
-    
-    return <ReportsDataContext.Provider value={value}>{children}</ReportsDataContext.Provider>;
-}
-
-
-// --- Hooks to access the data ---
-
-export const useVendorData = () => {
-    const context = useContext(VendorDataContext);
-    if (!context) throw new Error('useVendorData must be used within a VendorDataProvider');
-    return context;
-};
-
-export const useBillData = () => {
-    const context = useContext(ReportsDataContext); // Reports tab will use this context
-    if (!context) {
-        const billContext = useContext(BillDataContext);
-        if (!billContext) throw new Error('useBillData must be used within a BillDataProvider or ReportsDataProvider');
-        return billContext;
-    }
-    return context;
-};
-
 export const useMasterData = () => {
     const context = useContext(MasterDataContext);
     if (!context) throw new Error('useMasterData must be used within a MasterDataProvider');
     return context;
 };
 
-
-// --- BillFlowProvider to wrap pages, ensuring authentication ---
-
-export function BillFlowProvider({ children }: { children: React.ReactNode }) {
-    const { user, isUserLoading } = useUser();
-
-    if (isUserLoading) {
-        return <div className="flex justify-center items-center h-full"><p>Verifying authentication...</p></div>;
-    }
-    
-    if (!user) {
-        return null; // Don't render children if not logged in
-    }
-
-    return <>{children}</>;
-}
-
-
-// --- Legacy hook for detail pages that need a bit of everything ---
-const LegacyBillFlowContext = createContext<{ data: any, isLoading: boolean } | undefined>(undefined);
+const LegacyBillFlowContext = createContext<{ data: any, isLoading: boolean } | null>(undefined);
 
 export function LegacyBillFlowProvider({ children }: { children: React.ReactNode }) {
     const { user, isUserLoading } = useUser();
@@ -219,15 +97,17 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
     if (!user) {
         return null;
     }
-
-    // Since useCollection now handles loading state relative to auth, we can remove the additional loading check here.
-    // If we are here, auth is loaded, and useCollection will correctly report its own loading state.
     
     return <LegacyBillFlowContext.Provider value={value}>{children}</LegacyBillFlowContext.Provider>;
 }
 
 export const useBillFlow = () => {
     const context = useContext(LegacyBillFlowContext);
-    if (!context) throw new Error('useBillFlow must be used within a LegacyBillFlowProvider');
+    if (!context) {
+        if (typeof window === 'undefined') {
+            return null; // Prevents build crash on server
+        }
+        throw new Error('useBillFlow must be used within a LegacyBillFlowProvider');
+    }
     return context;
 };
