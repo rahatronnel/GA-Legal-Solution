@@ -1,23 +1,15 @@
 
-"use client";
-
-import React, { useEffect } from 'react';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
-import { FirebaseClientProvider, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import type { OrganizationSettings } from './settings/page';
-
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -27,9 +19,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className={cn('font-body antialiased')}>
-        <FirebaseClientProvider>
           <PrintProvider>
             <div className="app-container">
               {children}
@@ -39,7 +31,6 @@ export default function RootLayout({
             </div>
             <Toaster />
           </PrintProvider>
-        </FirebaseClientProvider>
       </body>
     </html>
   );

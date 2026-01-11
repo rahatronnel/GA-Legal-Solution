@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -8,9 +9,9 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null; // Allow null for initial render
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
 // Internal state for user authentication
@@ -156,6 +157,17 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   }
 
   if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
+    // This is the build-safe guard. Return a structure that won't crash consumers.
+    if (typeof window === 'undefined') {
+       return {
+         firebaseApp: null as any, 
+         firestore: null as any, 
+         auth: null as any,
+         user: null,
+         isUserLoading: true,
+         userError: null,
+       };
+    }
     throw new Error('Firebase core services not available. Check FirebaseProvider props.');
   }
 

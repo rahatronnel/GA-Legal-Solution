@@ -9,7 +9,7 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { useUser } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -45,15 +45,19 @@ export function useDoc<T = any>(
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
+  const { isUserLoading, user } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
-    const auth = getAuth();
-    if (!auth.currentUser) {
-        setIsLoading(true);
+    if (isUserLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (!user) {
+        setIsLoading(false);
         setData(null);
         return;
     }
@@ -94,7 +98,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef]);
+  }, [memoizedDocRef, isUserLoading, user]);
 
   return { data, isLoading, error };
 }

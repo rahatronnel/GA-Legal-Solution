@@ -10,10 +10,9 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useUser } from '@/firebase';
+import { useUser, useFirebase } from '@/firebase';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -60,29 +59,30 @@ export function useCollection<T = any>(
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
 
-  const { isUserLoading } = useUser();
+  const { isUserLoading, user } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // SECURITY: Do not attempt to fetch data if there's no authenticated user OR if auth state is still loading.
-    // This prevents "Missing or insufficient permissions" errors on initial load.
-    const auth = getAuth();
-    if (isUserLoading || !auth.currentUser) {
-        setIsLoading(true); // Remain in loading state until auth is resolved
+    if (isUserLoading) {
+      setIsLoading(true);
+      return;
+    }
+    
+    if (!user) {
+        setIsLoading(false);
         setData(null);
         return;
     }
     
     if (!memoizedTargetRefOrQuery) {
       setData(null);
-      setIsLoading(true); // If no query, we are in a loading state until we get one
+      setIsLoading(true); 
       setError(null);
       return;
     }
     
-    // Check if the memoization flag is set. This is a development-time check.
     if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
       console.warn('useCollection was not passed a memoized query. This can lead to performance issues and infinite loops. Please use useMemoFirebase.', memoizedTargetRefOrQuery);
     }
@@ -121,7 +121,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading]);
+  }, [memoizedTargetRefOrQuery, isUserLoading, user]);
 
   return { data, isLoading, error };
 }
