@@ -140,7 +140,7 @@ export const ReportsDataProvider = ({ children }: { children: React.ReactNode })
     const { data: parts, isLoading: l5 } = useCollection<Part>(useMemoFirebase(() => collection(firestore, 'parts'), [firestore]));
     const { data: serviceCenters, isLoading: l6 } = useCollection<ServiceCenter>(useMemoFirebase(() => collection(firestore, 'serviceCenters'), [firestore]));
     const { data: maintenanceTypes, isLoading: l7 } = useCollection<MaintenanceType>(useMemoFirebase(() => collection(firestore, 'maintenanceTypes'), [firestore]));
-    const value = useMemo(() => ({ accidents: accidents||[], maintenanceRecords: maintenanceRecords||[], vehicles: vehicles||[], drivers: drivers||[], parts: parts||[], serviceCenters: serviceCenters||[], maintenanceTypes: maintenanceTypes||[], isLoading: l1||l2||l3||l4||l5||l6||l7 }), [accidents, maintenanceRecords, vehicles, drivers, parts, serviceCenters, maintenanceTypes, l1,l2,l3,l4,l5,l6,l7]);
+    const value = useMemo(() => ({ data: { accidents: accidents||[], maintenanceRecords: maintenanceRecords||[], vehicles: vehicles||[], drivers: drivers||[], parts: parts||[], serviceCenters: serviceCenters||[], maintenanceTypes: maintenanceTypes||[] }, isLoading: l1||l2||l3||l4||l5||l6||l7 }), [accidents, maintenanceRecords, vehicles, drivers, parts, serviceCenters, maintenanceTypes, l1,l2,l3,l4,l5,l6,l7]);
     return <ReportsDataContext.Provider value={value}>{children}</ReportsDataContext.Provider>;
 }
 
@@ -157,12 +157,10 @@ export const useDashboardData = () => useContext(DashboardDataContext);
 export const useReportsData = () => useContext(ReportsDataContext);
 
 
-// Legacy hook for pages that need a mix of everything (like detail pages)
 const VehicleManagementContext = createContext<any>(undefined);
 
 export const VehicleManagementProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
-    // This fetches everything, kept for pages that haven't been migrated yet.
     const { data: locations, isLoading: l1 } = useCollection<Location>(useMemoFirebase(() => collection(firestore, 'locations'), [firestore]));
     const { data: routes, isLoading: l2 } = useCollection<Route>(useMemoFirebase(() => collection(firestore, 'routes'), [firestore]));
     const { data: tripPurposes, isLoading: l3 } = useCollection<TripPurpose>(useMemoFirebase(() => collection(firestore, 'tripPurposes'), [firestore]));

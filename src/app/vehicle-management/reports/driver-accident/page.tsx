@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,11 +18,11 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
 import type { Driver } from '../../components/driver-entry-form';
+import { useReportsData } from '../../components/vehicle-management-provider';
 
 export default function DriverAccidentReportPage() {
-    const [accidents] = useLocalStorage<Accident[]>('accidents', []);
-    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-    const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+    const { data: reportContextData, isLoading } = useReportsData() || { data: {}, isLoading: true };
+    const { accidents = [], vehicles = [], drivers = [] } = reportContextData;
     
     const [selectedDriverId, setSelectedDriverId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -34,7 +33,11 @@ export default function DriverAccidentReportPage() {
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+        if (!isLoading) {
+            handleGenerateReport();
+        }
+    }, [isLoading]);
+
 
     const handleGenerateReport = () => {
         let filteredDrivers = drivers;
@@ -47,6 +50,7 @@ export default function DriverAccidentReportPage() {
 
             if (dateRange?.from && dateRange?.to) {
                 driverAccidents = driverAccidents.filter(acc => {
+                    if (!acc.accidentDate) return false;
                     const accDate = parseISO(acc.accidentDate);
                     return isWithinInterval(accDate, { start: dateRange.from!, end: dateRange.to! });
                 });
@@ -60,7 +64,7 @@ export default function DriverAccidentReportPage() {
 
     const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
 
-    if (!mounted) {
+    if (!mounted || isLoading) {
         return null;
     }
 
@@ -85,6 +89,7 @@ export default function DriverAccidentReportPage() {
                                 <CommandEmpty>No driver found.</CommandEmpty>
                                 <CommandList>
                                 <CommandGroup>
+                                    <CommandItem onSelect={() => { setSelectedDriverId(undefined); setOpen(false); }}>All Drivers</CommandItem>
                                     {drivers.map((driver) => (
                                     <CommandItem
                                         key={driver.id}

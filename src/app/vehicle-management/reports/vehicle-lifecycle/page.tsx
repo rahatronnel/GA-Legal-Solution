@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ import type { ServiceCenter } from '@/app/vehicle-management/components/service-
 import type { Location } from '@/app/vehicle-management/components/location-table';
 import type { SeverityLevel } from '@/app/vehicle-management/components/severity-level-table';
 import type { ExpenseType } from '@/app/vehicle-management/components/expense-type-table';
-import { useVehicleManagement } from '../../components/vehicle-management-provider';
+import { useReportsData } from '../../components/vehicle-management-provider';
 
 // --- Helper Components ---
 
@@ -169,23 +169,22 @@ const AccidentDetailDialog: React.FC<{ accident: Accident; onOpenChange: (open: 
 // --- Main Page Component ---
 
 export default function VehicleLifecycleReportPage() {
-    const { data } = useVehicleManagement();
+    const { data, isLoading } = useReportsData() || { data: {}, isLoading: true };
     const { 
         vehicles = [], 
-        trips = [], 
-        maintenanceRecords = [], 
         accidents = [], 
+        maintenanceRecords = [], 
         drivers = [], 
-        vehicleBrands: brands = [], 
-        tripPurposes: purposes = [], 
-        maintenanceTypes = [], 
-        accidentTypes = [], 
-        parts = [], 
         serviceCenters = [], 
-        locations = [], 
-        severityLevels = [], 
-        expenseTypes = [] 
+        maintenanceTypes = [],
+        accidentTypes = [],
+        severityLevels = []
     } = data;
+    
+    // For simplicity, this report uses the main data context.
+    // In a larger app, you might create a specific provider for this complex report.
+    const allData = useReportsData()?.data || {};
+
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [reportData, setReportData] = useState<any | null>(null);
@@ -198,16 +197,16 @@ export default function VehicleLifecycleReportPage() {
             return;
         }
 
-        const vehicle = vehicles.find(v => v.id === selectedVehicleId);
+        const vehicle = vehicles.find((v:any) => v.id === selectedVehicleId);
         if (!vehicle) {
             setReportData(null);
             return;
         }
 
-        const vehicleTrips = trips.filter(t => t.vehicleId === selectedVehicleId);
-        const vehicleMaintenance = maintenanceRecords.filter(m => m.vehicleId === selectedVehicleId);
-        const vehicleAccidents = accidents.filter(a => a.vehicleId === selectedVehicleId);
-        const brand = brands.find(b => b.id === vehicle.brandId);
+        const vehicleTrips = (allData.trips || []).filter((t:any) => t.vehicleId === selectedVehicleId);
+        const vehicleMaintenance = maintenanceRecords.filter((m:any) => m.vehicleId === selectedVehicleId);
+        const vehicleAccidents = accidents.filter((a:any) => a.vehicleId === selectedVehicleId);
+        const brand = (allData.vehicleBrands || []).find((b:any) => b.id === vehicle.brandId);
 
         const photoExtractor = (records: any[], prefix: string, idField: string) => {
             const photos: { src: string, label: string }[] = [];
@@ -248,27 +247,27 @@ export default function VehicleLifecycleReportPage() {
     }
     
     const getTripDetails = (trip: Trip) => {
-        const purpose = purposes.find(p => p.id === trip.purposeId)?.name;
-        const driver = drivers.find(d => d.id === trip.driverId)?.name;
-        const itinerary = trip.stops?.map(stop => locations.find(l => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
+        const purpose = (allData.tripPurposes || []).find((p:any) => p.id === trip.purposeId)?.name;
+        const driver = (drivers || []).find((d:any) => d.id === trip.driverId)?.name;
+        const itinerary = trip.stops?.map(stop => (allData.locations || []).find((l:any) => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
         const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
         const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-        return { purpose, driver, itinerary, totalDistance, totalExpenses, expenseTypes };
+        return { purpose, driver, itinerary, totalDistance, totalExpenses, expenseTypes: allData.expenseTypes };
     }
     
     const getMaintenanceDetails = (maint: MaintenanceRecord) => {
-        const type = maintenanceTypes.find(t => t.id === maint.maintenanceTypeId)?.name;
-        const serviceCenter = serviceCenters.find(s => s.id === maint.serviceCenterId)?.name;
+        const type = maintenanceTypes.find((t:any) => t.id === maint.maintenanceTypeId)?.name;
+        const serviceCenter = serviceCenters.find((s:any) => s.id === maint.serviceCenterId)?.name;
         const partsCost = maint.parts?.reduce((acc, p) => acc + (p.price * p.quantity), 0) || 0;
         const expensesCost = maint.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0;
         const totalCost = partsCost + expensesCost;
-        return { type, serviceCenter, totalCost, parts };
+        return { type, serviceCenter, totalCost, parts: allData.parts };
     }
     
     const getAccidentDetails = (acc: Accident) => {
-        const type = accidentTypes.find(t => t.id === acc.accidentTypeId)?.name;
-        const severity = severityLevels.find(s => s.id === acc.severityLevelId)?.name;
-        const driver = drivers.find(d => d.id === acc.driverId)?.name;
+        const type = accidentTypes.find((t:any) => t.id === acc.accidentTypeId)?.name;
+        const severity = severityLevels.find((s:any) => s.id === acc.severityLevelId)?.name;
+        const driver = drivers.find((d:any) => d.id === acc.driverId)?.name;
         return { type, severity, driver };
     }
 
@@ -296,7 +295,7 @@ export default function VehicleLifecycleReportPage() {
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle..."}
+                                {selectedVehicleId ? (vehicles || []).find((v:any) => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -305,7 +304,7 @@ export default function VehicleLifecycleReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {(vehicles || []).map((vehicle) => (
+                                    {(vehicles || []).map((vehicle: any) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id);
                                         setOpen(false);
