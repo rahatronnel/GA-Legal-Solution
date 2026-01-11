@@ -1,6 +1,7 @@
 
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VehicleLifecycleReportPage from "./vehicle-lifecycle/page";
 import MaintenanceCostSummaryPage from "./maintenance-cost-summary/page";
@@ -14,6 +15,16 @@ import VehicleAccidentReportPage from "./vehicle-accident/page";
 import DriverAccidentReportPage from "./driver-accident/page";
 
 export default function ReportsPage() {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null; // or a loading skeleton
+    }
+
     return (
         <Tabs defaultValue="lifecycle" orientation="vertical" className="w-full">
              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">

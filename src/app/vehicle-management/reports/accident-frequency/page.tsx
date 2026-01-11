@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -19,6 +19,11 @@ export default function AccidentFrequencyPage() {
         to: endOfMonth(new Date())
     });
     const [chartData, setChartData] = useState<any[]>([]);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleGenerateReport = () => {
         if (!dateRange?.from || !dateRange?.to) {
@@ -58,6 +63,9 @@ export default function AccidentFrequencyPage() {
         handleGenerateReport();
     }, [accidents]);
 
+    if (!mounted) {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

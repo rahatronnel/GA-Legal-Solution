@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useDashboardData } from './vehicle-management-provider';
 import { Car, Users, Wrench, AlertTriangle, Route } from 'lucide-react';
@@ -12,6 +12,11 @@ import { format, parseISO, subMonths, startOfMonth, endOfMonth, eachMonthOfInter
 export function Dashboard() {
     const { data = {}, isLoading } = useDashboardData() || {};
     const { vehicles = [], drivers = [], trips = [], accidents = [], maintenanceRecords = [] } = data;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const summaryStats = React.useMemo(() => ({
         totalVehicles: vehicles.length,
@@ -84,7 +89,7 @@ export function Dashboard() {
 
     }, [accidents]);
 
-    if (isLoading) {
+    if (isLoading || !mounted) {
         return <p>Loading dashboard...</p>;
     }
 
