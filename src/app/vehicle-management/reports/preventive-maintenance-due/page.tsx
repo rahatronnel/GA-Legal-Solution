@@ -1,7 +1,7 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, differenceInDays, parseISO } from 'date-fns';
@@ -19,12 +19,13 @@ import type { MaintenanceRecord } from '../../components/maintenance-entry-form'
 import type { Vehicle } from '../../components/vehicle-table';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { Driver } from '../../components/driver-entry-form';
+import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function PreventiveMaintenanceDuePage() {
-    const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
-    const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-    const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+    const vm = useVehicleManagement();
+    if (!vm) return null; // Build-safe guard
+    const { data, isLoading } = vm;
+    const { maintenanceRecords = [], vehicles = [], maintenanceTypes = [], drivers = [] } = data;
     
     const [days, setDays] = useState(30);
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
@@ -45,13 +46,13 @@ export default function PreventiveMaintenanceDuePage() {
             .filter(h => h.effectiveDate && h.driverId)
             .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
         if (sortedHistory.length === 0) return null;
-        return drivers.find(d => d.id === sortedHistory[0].driverId) || null;
+        return drivers.find((d: Driver) => d.id === sortedHistory[0].driverId) || null;
     };
 
     const handleGenerateReport = () => {
         const today = new Date();
         const data = maintenanceRecords
-            .filter(rec => {
+            .filter((rec: MaintenanceRecord) => {
                 if (!rec.upcomingServiceDate) return false;
                 if (selectedVehicleId && rec.vehicleId !== selectedVehicleId) return false;
                 if (selectedMaintenanceTypeId && rec.maintenanceTypeId !== selectedMaintenanceTypeId) return false;
@@ -59,9 +60,9 @@ export default function PreventiveMaintenanceDuePage() {
                 const daysUntilDue = differenceInDays(parseISO(rec.upcomingServiceDate), today);
                 return daysUntilDue <= days;
             })
-            .map(rec => {
-                const vehicle = vehicles.find(v => v.id === rec.vehicleId);
-                const maintenanceType = maintenanceTypes.find(mt => mt.id === rec.maintenanceTypeId);
+            .map((rec: MaintenanceRecord) => {
+                const vehicle = vehicles.find((v: Vehicle) => v.id === rec.vehicleId);
+                const maintenanceType = maintenanceTypes.find((mt: MaintenanceType) => mt.id === rec.maintenanceTypeId);
                 const driver = vehicle ? getCurrentDriver(vehicle) : null;
                 return { 
                     ...rec, 
@@ -72,7 +73,7 @@ export default function PreventiveMaintenanceDuePage() {
                     driver,
                 };
             })
-            .sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+            .sort((a: any, b: any) => a.daysUntilDue - b.daysUntilDue);
         setReportData(data);
     };
 
@@ -83,8 +84,8 @@ export default function PreventiveMaintenanceDuePage() {
         return <Badge>Due in {days} day(s)</Badge>;
     };
 
-    if (!mounted) {
-        return null;
+    if (!mounted || isLoading) {
+        return <p>Loading report data...</p>;
     }
 
     return (
@@ -102,7 +103,7 @@ export default function PreventiveMaintenanceDuePage() {
                      <Popover open={vehiclePopoverOpen} onOpenChange={setVehiclePopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={vehiclePopoverOpen} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Filter by Vehicle..."}
+                                {selectedVehicleId ? vehicles.find((v: Vehicle) => v.id === selectedVehicleId)?.registrationNumber : "Filter by Vehicle..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -113,7 +114,7 @@ export default function PreventiveMaintenanceDuePage() {
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandGroup>
                                     <CommandItem onSelect={() => { setSelectedVehicleId(undefined); setVehiclePopoverOpen(false); }}>All Vehicles</CommandItem>
-                                    {vehicles.map((v) => (
+                                    {vehicles.map((v: Vehicle) => (
                                     <CommandItem key={v.id} value={v.registrationNumber} onSelect={() => {setSelectedVehicleId(v.id); setVehiclePopoverOpen(false);}}>
                                         <Check className={cn("mr-2 h-4 w-4", selectedVehicleId === v.id ? "opacity-100" : "opacity-0")} />
                                         {v.registrationNumber}
@@ -128,7 +129,7 @@ export default function PreventiveMaintenanceDuePage() {
                     <Popover open={typePopoverOpen} onOpenChange={setTypePopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={typePopoverOpen} className="w-[250px] justify-between">
-                                {selectedMaintenanceTypeId ? maintenanceTypes.find(t => t.id === selectedMaintenanceTypeId)?.name : "Filter by Maintenance Type..."}
+                                {selectedMaintenanceTypeId ? maintenanceTypes.find((t: MaintenanceType) => t.id === selectedMaintenanceTypeId)?.name : "Filter by Maintenance Type..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -139,7 +140,7 @@ export default function PreventiveMaintenanceDuePage() {
                                 <CommandEmpty>No type found.</CommandEmpty>
                                 <CommandGroup>
                                      <CommandItem onSelect={() => { setSelectedMaintenanceTypeId(undefined); setTypePopoverOpen(false); }}>All Types</CommandItem>
-                                    {maintenanceTypes.map((t) => (
+                                    {maintenanceTypes.map((t: MaintenanceType) => (
                                     <CommandItem key={t.id} value={t.name} onSelect={() => {setSelectedMaintenanceTypeId(t.id); setTypePopoverOpen(false);}}>
                                         <Check className={cn("mr-2 h-4 w-4", selectedMaintenanceTypeId === t.id ? "opacity-100" : "opacity-0")} />
                                         {t.name}

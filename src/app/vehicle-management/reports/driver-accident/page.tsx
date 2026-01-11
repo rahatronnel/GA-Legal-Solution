@@ -19,12 +19,13 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import type { Accident } from '../../components/accident-entry-form';
 import type { Vehicle } from '../../components/vehicle-table';
 import type { Driver } from '../../components/driver-entry-form';
-import { useReportsData } from '../../components/vehicle-management-provider';
+import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 export default function DriverAccidentReportPage() {
-    const reportsData = useReportsData();
-    const { accidents = [], vehicles = [], drivers = [] } = reportsData?.data || {};
-    const { isLoading } = reportsData || { isLoading: true };
+    const vm = useVehicleManagement();
+    if (!vm) return null; // Build-safe guard
+    const { data, isLoading } = vm;
+    const { accidents = [], vehicles = [], drivers = [] } = data;
 
     const [selectedDriverId, setSelectedDriverId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -47,11 +48,11 @@ export default function DriverAccidentReportPage() {
     const handleGenerateReport = () => {
         let filteredDrivers = drivers;
         if (selectedDriverId) {
-            filteredDrivers = drivers.filter(d => d.id === selectedDriverId);
+            filteredDrivers = drivers.filter((d: Driver) => d.id === selectedDriverId);
         }
 
-        const data = filteredDrivers.map(driver => {
-            let driverAccidents = accidents.filter(acc => acc.driverId === driver.id);
+        const data = filteredDrivers.map((driver: Driver) => {
+            let driverAccidents = accidents.filter((acc: Accident) => acc.driverId === driver.id);
 
             if (dateRange?.from && dateRange?.to) {
                 driverAccidents = driverAccidents.filter(acc => {
@@ -62,12 +63,12 @@ export default function DriverAccidentReportPage() {
             }
             
             return { ...driver, accidents: driverAccidents };
-        }).filter(d => d.accidents.length > 0);
+        }).filter((d: any) => d.accidents.length > 0);
 
         setReportData(data);
     };
 
-    const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+    const getVehicleReg = (vehicleId: string) => (vehicles.find((v: Vehicle) => v.id === vehicleId) as Vehicle)?.registrationNumber || 'N/A';
 
     if (!mounted || isLoading) {
         return <p>Loading report data...</p>;
@@ -84,7 +85,7 @@ export default function DriverAccidentReportPage() {
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedDriverId ? drivers.find(d => d.id === selectedDriverId)?.name : "Select Driver (Optional)"}
+                                {selectedDriverId ? drivers.find((d: Driver) => d.id === selectedDriverId)?.name : "Select Driver (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -95,7 +96,7 @@ export default function DriverAccidentReportPage() {
                                 <CommandList>
                                 <CommandGroup>
                                     <CommandItem onSelect={() => { setSelectedDriverId(undefined); setOpen(false); }}>All Drivers</CommandItem>
-                                    {drivers.map((driver) => (
+                                    {drivers.map((driver: Driver) => (
                                     <CommandItem
                                         key={driver.id}
                                         value={driver.name}

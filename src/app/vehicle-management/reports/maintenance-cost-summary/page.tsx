@@ -12,7 +12,7 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { Vehicle } from '../../components/vehicle-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useReportsData } from '../../components/vehicle-management-provider';
+import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 interface ReportData {
     totalRecords: number;
@@ -24,9 +24,10 @@ interface ReportData {
 }
 
 export default function MaintenanceCostSummaryPage() {
-    const reportsData = useReportsData();
-    const { maintenanceRecords: records = [], maintenanceTypes = [], vehicles = [] } = reportsData?.data || {};
-    const { isLoading } = reportsData || { isLoading: true };
+    const vm = useVehicleManagement();
+    if (!vm) return null; // Build-safe guard
+    const { data, isLoading } = vm;
+    const { maintenanceRecords: records = [], maintenanceTypes = [], vehicles = [] } = data;
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -41,7 +42,7 @@ export default function MaintenanceCostSummaryPage() {
         let filteredRecords = records;
 
         if (dateRange?.from && dateRange?.to) {
-            filteredRecords = records.filter(rec => {
+            filteredRecords = records.filter((rec: MaintenanceRecord) => {
                 if (!rec.serviceDate) return false;
                 const serviceDate = parseISO(rec.serviceDate);
                 return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
@@ -53,7 +54,7 @@ export default function MaintenanceCostSummaryPage() {
         const costByMaintenanceType: { [key: string]: { name: string; cost: number; count: number } } = {};
         const costByVehicle: { [key: string]: { reg: string; make: string; model: string; cost: number; count: number } } = {};
 
-        filteredRecords.forEach(rec => {
+        filteredRecords.forEach((rec: MaintenanceRecord) => {
             const partsCost = rec.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
             const expensesCost = rec.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
             const recordTotalCost = partsCost + expensesCost;
@@ -64,7 +65,7 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Maintenance Type
             if (rec.maintenanceTypeId) {
                 if (!costByMaintenanceType[rec.maintenanceTypeId]) {
-                    const type = maintenanceTypes.find(t => t.id === rec.maintenanceTypeId);
+                    const type = maintenanceTypes.find((t: MaintenanceType) => t.id === rec.maintenanceTypeId);
                     costByMaintenanceType[rec.maintenanceTypeId] = { name: type?.name || 'Unknown', cost: 0, count: 0 };
                 }
                 costByMaintenanceType[rec.maintenanceTypeId].cost += recordTotalCost;
@@ -74,8 +75,8 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Vehicle
             if (rec.vehicleId) {
                 if (!costByVehicle[rec.vehicleId]) {
-                    const vehicle = vehicles.find(v => v.id === rec.vehicleId);
-                    costByVehicle[rec.vehicleId] = { reg: vehicle?.registrationNumber || 'Unknown', make: vehicle?.make || '', model: vehicle?.model || '', cost: 0, count: 0 };
+                    const vehicle = vehicles.find((v: Vehicle) => v.id === rec.vehicleId);
+                    costByVehicle[rec.vehicleId] = { reg: vehicle?.registrationNumber || 'Unknown', make: (vehicle as any)?.make || '', model: vehicle?.model || '', cost: 0, count: 0 };
                 }
                 costByVehicle[rec.vehicleId].cost += recordTotalCost;
                 costByVehicle[rec.vehicleId].count++;
