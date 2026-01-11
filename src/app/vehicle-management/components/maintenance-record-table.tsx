@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, X } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, X, Printer } from 'lucide-react';
 import { MaintenanceEntryForm, type MaintenanceRecord } from './maintenance-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -23,20 +23,21 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 
 export function MaintenanceRecordTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { maintenanceRecords: records, vehicles = [], maintenanceTypes = [], drivers = [], serviceCenters = [], employees = [] } = data;
+  const { handlePrint } = usePrint();
+  const firestore = useFirestore();
+  const maintenanceRecordsRef = useMemoFirebase(() => firestore ? collection(firestore, 'maintenanceRecords') : null, [firestore]);
   
-  const setRecords = (updater: React.SetStateAction<MaintenanceRecord[]>) => {
-    setData(prev => ({...prev, maintenanceRecords: typeof updater === 'function' ? updater(prev.maintenanceRecords || []) : updater }));
-  };
+  const { data, isLoading: isLoadingData } = useVehicleManagement();
+  const { maintenanceRecords: records, vehicles = [], maintenanceTypes = [], drivers = [], serviceCenters = [], employees = [] } = data;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<MaintenanceRecord> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,11 +46,6 @@ export function MaintenanceRecordTable() {
   const [driverFilter, setDriverFilter] = useState('all');
   const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
   
   const getVehicleReg = (vehicleId: string) => vehicles.find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
   const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t:any) => t.id === typeId)?.name || 'N/A';
@@ -96,32 +92,17 @@ export function MaintenanceRecordTable() {
   };
 
   const handleSave = (data: Partial<MaintenanceRecord>, id?: string) => {
-    if (id) {
-        setRecords(prev => (prev || []).map(rec => (rec.id === id ? { ...rec, ...data } as MaintenanceRecord : rec)));
-        toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
-    } else {
-        const newRecord: MaintenanceRecord = { 
-            id: Date.now().toString(), 
-            ...initialMaintenanceData,
-            ...data,
-            parts: data.parts || [],
-            expenses: data.expenses || [],
-            documents: data.documents || {},
-        } as MaintenanceRecord;
-        setRecords(prev => [...(prev || []), newRecord]);
-        toast({ title: 'Success', description: 'Maintenance record added successfully.' });
+    if (!maintenanceRecordsRef) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+      return;
     }
-  };
-
-  const initialMaintenanceData = {
-    vehicleId: '',
-    maintenanceTypeId: '',
-    serviceCenterId: '',
-    serviceDate: '',
-    upcomingServiceDate: '',
-    description: '',
-    monitoringEmployeeId: '',
-    driverId: '',
+    if (id) {
+      setDocumentNonBlocking(doc(maintenanceRecordsRef, id), data, { merge: true });
+      toast({ title: 'Success', description: 'Maintenance record updated successfully.' });
+    } else {
+      addDocumentNonBlocking(maintenanceRecordsRef, data);
+      toast({ title: 'Success', description: 'Maintenance record added successfully.' });
+    }
   };
 
   const handleDelete = (record: MaintenanceRecord) => {
@@ -130,9 +111,9 @@ export function MaintenanceRecordTable() {
   };
 
   const confirmDelete = () => {
-    if (currentItem?.id) {
-        setRecords(prev => (prev || []).filter(t => t.id !== currentItem.id));
-        toast({ title: 'Success', description: 'Maintenance record deleted successfully.' });
+    if (currentItem?.id && maintenanceRecordsRef) {
+      deleteDocumentNonBlocking(doc(maintenanceRecordsRef, currentItem.id));
+      toast({ title: 'Success', description: 'Maintenance record deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
     setCurrentItem(null);
@@ -210,7 +191,7 @@ export function MaintenanceRecordTable() {
             </TableRow>
             </TableHeader>
             <TableBody>
-            {isLoading ? (
+            {isLoadingData ? (
                 <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredRecords && filteredRecords.length > 0 ? (
                 filteredRecords.map((record) => (
@@ -260,4 +241,3 @@ export function MaintenanceRecordTable() {
     </TooltipProvider>
   );
 }
-
