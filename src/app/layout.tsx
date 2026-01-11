@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
+import { FirebaseClientProvider } from '@/firebase';
 
 export default function RootLayout({
   children,
@@ -22,6 +23,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className={cn('font-body antialiased')}>
+        <FirebaseClientProvider>
           <PrintProvider>
             <div className="app-container">
               {children}
@@ -31,6 +33,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </PrintProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

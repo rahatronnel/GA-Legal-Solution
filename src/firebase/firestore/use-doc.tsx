@@ -51,21 +51,18 @@ export function useDoc<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    if (isUserLoading) {
-      setIsLoading(true);
+    if (isUserLoading || !user) {
+      // Don't fetch if user is loading or not logged in.
+      // Set loading to true if user is loading, false otherwise.
+      setIsLoading(isUserLoading);
+      setData(null);
       return;
     }
 
-    if (!user) {
-        setIsLoading(false);
-        setData(null);
-        return;
-    }
-
     if (!memoizedDocRef) {
+      // No document to fetch, not an error, but we're not loading anything.
+      setIsLoading(false);
       setData(null);
-      setIsLoading(true); // If no ref, we are in a loading state until we get one
-      setError(null);
       return;
     }
 
@@ -78,12 +75,13 @@ export function useDoc<T = any>(
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
-          setData(null);
+          setData(null); // Document does not exist
         }
         setError(null);
         setIsLoading(false);
       },
       (error: FirestoreError) => {
+        console.error(`Firestore error on path: ${memoizedDocRef.path}`, error);
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,

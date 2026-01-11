@@ -1,11 +1,11 @@
-
 "use client";
 
+import React from 'react';
+import dynamic from 'next/dynamic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleHeader } from '@/app/components/module-header';
 
-import { Dashboard } from "./components/Dashboard";
 import { TripTable } from "./components/trip-table";
 import { VehicleTable } from "./components/vehicle-table";
 import { DriverTable } from "./components/driver-table";
@@ -25,6 +25,14 @@ import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-ty
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Dynamically import the Dashboard component with SSR turned off
+const Dashboard = dynamic(() => import('./components/Dashboard').then(mod => mod.Dashboard), {
+    ssr: false,
+    loading: () => <Skeleton className="w-full h-[500px]" />
+});
+
 
 export default function VehicleManagementPage() {
   return (

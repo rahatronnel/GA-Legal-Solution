@@ -12,7 +12,6 @@ import { BillTypeTable } from "./components/bill-type-table";
 import { BillCategoryTable } from "./components/bill-category-table";
 import { BillTable } from "./components/bill-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MasterDataProvider } from "./components/bill-flow-provider";
 import { BillItemMasterTable } from "./components/bill-item-master-table";
 import { BillItemCategoryTable } from "./components/bill-item-category-table";
 import { useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useCollection } from "@/firebase";
@@ -198,7 +197,6 @@ export default function BillFlowPage() {
     return (
       <div className="space-y-6">
         <ModuleHeader />
-        <MasterDataProvider>
           <Tabs defaultValue="dashboard" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -296,7 +294,6 @@ export default function BillFlowPage() {
               <ApprovalSettingsTab />
             </TabsContent>
           </Tabs>
-        </MasterDataProvider>
       </div>
     );
 }

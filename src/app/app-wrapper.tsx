@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
-import { ChangePasswordDialog } from '@/app/components/change-password-dialog';
+import { ChangePasswordDialog } from '@/components/change-password-dialog';
 import LoginPage from './login/page';
 import { collection, doc } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
@@ -39,6 +39,7 @@ import type { OrganizationSettings } from './settings/page';
 
 
 // Lazy load all page components to prevent their data providers from running before auth is checked.
+// Crucially, disable SSR for all detail pages.
 const moduleComponents: { [key:string]: React.ComponentType } = {
     '/vehicle-management': dynamic(() => import('./vehicle-management/page')),
     '/user-management': dynamic(() => import('./user-management/page')),
@@ -168,14 +169,17 @@ export function AppWrapper() {
 
   useEffect(() => {
     if (orgSettings?.favicon) {
-      const link: HTMLLinkElement = document.querySelector("link[rel~='icon']") || document.createElement('link');
-      link.rel = 'icon';
+      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+      if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+      }
       link.href = orgSettings.favicon;
       const mimeType = orgSettings.favicon.match(/data:(image\/[^;]+);/);
       if (mimeType && mimeType[1]) {
         link.type = mimeType[1];
       }
-      document.head.appendChild(link);
     }
   }, [orgSettings]);
 

@@ -62,11 +62,39 @@ export const VehicleManagementProvider = ({ children }: { children: React.ReactN
 
 export function useVehicleManagement() {
     const context = useContext(VehicleManagementContext);
-    if (!context) {
+    if (context === undefined) {
         if (typeof window === 'undefined') {
-            return null; // Prevents Vercel build crash
+            return null; // Build-safe guard
         }
         throw new Error('useVehicleManagement must be used within a VehicleManagementProvider');
     }
+    return context;
+}
+
+export const useDriverData = () => {
+    const context = useVehicleManagement();
+    if (!context) return { drivers: [], vehicles: [], isLoading: true };
+    return { 
+        drivers: context.data.drivers, 
+        vehicles: context.data.vehicles,
+        isLoading: context.isLoading 
+    };
+};
+
+export const useVehicleData = () => {
+    const context = useVehicleManagement();
+    if (!context) return { vehicles: [], drivers: [], vehicleTypes: [], vehicleBrands: [], isLoading: true };
+    return {
+        vehicles: context.data.vehicles,
+        drivers: context.data.drivers,
+        vehicleTypes: context.data.vehicleTypes,
+        vehicleBrands: context.data.vehicleBrands,
+        isLoading: context.isLoading
+    };
+};
+
+export const useDashboardData = () => {
+    const context = useVehicleManagement();
+    if (!context) return { data: {}, isLoading: true };
     return context;
 }

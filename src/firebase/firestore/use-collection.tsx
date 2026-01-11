@@ -65,21 +65,18 @@ export function useCollection<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    if (isUserLoading) {
-      setIsLoading(true);
-      return;
-    }
-    
-    if (!user) {
-        setIsLoading(false);
+    if (isUserLoading || !user) {
+        // Don't fetch if user is loading or not logged in.
+        // Set loading to true if user is loading, false otherwise.
+        setIsLoading(isUserLoading);
         setData(null);
         return;
     }
     
     if (!memoizedTargetRefOrQuery) {
+      // No query to run, not an error, but we're not loading anything.
+      setIsLoading(false);
       setData(null);
-      setIsLoading(true); 
-      setError(null);
       return;
     }
     
@@ -102,6 +99,7 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
+        console.error(`Firestore error on collection`, error)
         const path: string =
           memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
