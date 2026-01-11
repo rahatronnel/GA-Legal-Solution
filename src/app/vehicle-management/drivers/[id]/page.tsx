@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Phone, Cake, VenetianMask, UserSquare2, Download, Printer,
-    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock, Wrench, AlertTriangle, Eye
+    Home, Mail, ShieldCheck, Calendar, Briefcase, Car, Users, Clock, Wrench, AlertTriangle, Eye, Building
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
