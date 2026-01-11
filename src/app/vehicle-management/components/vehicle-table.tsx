@@ -26,7 +26,7 @@ import { usePrint } from './print-provider';
 import type { Driver } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useVehicleManagement } from './vehicle-management-provider';
+import { useVehicleData } from './vehicle-management-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
@@ -54,22 +54,16 @@ const getCurrentDriver = (vehicle: Vehicle, drivers: Driver[]) => {
 
 export function VehicleTable() {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { vehicles, drivers, vehicleTypes, vehicleBrands } = data;
+  const { vehicles, drivers, vehicleTypes, vehicleBrands, isLoading } = useVehicleData();
   const firestore = useFirestore();
   const vehiclesRef = useMemoFirebase(() => firestore ? collection(firestore, 'vehicles') : null, [firestore]);
   
-  const setVehicles = (updater: React.SetStateAction<Vehicle[]>) => {
-    // This is a dummy function now, real updates go to Firestore.
-  };
-
   const { handlePrint } = usePrint();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [currentVehicle, setCurrentVehicle] = useState<Partial<Vehicle> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,12 +72,6 @@ export function VehicleTable() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  useEffect(() => {
-    // Faking a loading state
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-  
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
   const filteredVehicles = useMemo(() => {
@@ -263,32 +251,26 @@ export function VehicleTable() {
 
   return (
     <TooltipProvider>
-    <Card>
-        <CardHeader>
-            <CardTitle>Vehicles</CardTitle>
-            <CardDescription>Manage all vehicles in your organization.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="flex flex-col gap-4 mb-4">
-              <div className="flex flex-col sm:flex-row gap-2">
-                 <div className="relative w-full sm:flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative w-full sm:flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
                     type="search"
                     placeholder="Search by ID or Reg No..."
                     className="w-full rounded-lg bg-background pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                />
                 </div>
                 <div className="flex justify-end gap-2 flex-wrap">
-                  <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
-                  <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-                  <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" /> Upload
-                  </label>
-                  <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
-                  <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
+                <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Vehicle</Button>
+                <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
+                <label htmlFor="upload-excel-vehicles" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+                    <Upload className="mr-2 h-4 w-4" /> Upload
+                </label>
+                <Input id="upload-excel-vehicles" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+                <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive" disabled={safeVehicles.length === 0}>
                             <Trash className="mr-2 h-4 w-4" /> Delete All
@@ -308,44 +290,44 @@ export function VehicleTable() {
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
-                  </AlertDialog>
+                </AlertDialog>
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
+            </div>
+            <div className="flex flex-wrap gap-2">
                 <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
-                  <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Ownership..." /></SelectTrigger>
-                  <SelectContent>
+                <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Ownership..." /></SelectTrigger>
+                <SelectContent>
                     <SelectItem value="all">All Ownerships</SelectItem>
                     <SelectItem value="Company">Company</SelectItem>
                     <SelectItem value="Rental">Rental</SelectItem>
-                  </SelectContent>
+                </SelectContent>
                 </Select>
                 <Select value={driverFilter} onValueChange={setDriverFilter}>
-                  <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
-                  <SelectContent>
+                <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
+                <SelectContent>
                     <SelectItem value="all">All Drivers</SelectItem>
                     {(drivers || []).map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
-                  </SelectContent>
+                </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Category..." /></SelectTrigger>
-                  <SelectContent>
+                <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Category..." /></SelectTrigger>
+                <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     {(vehicleTypes || []).map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}
-                  </SelectContent>
+                </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Status..." /></SelectTrigger>
-                  <SelectContent>
+                <SelectTrigger className="w-full sm:w-auto flex-grow"><SelectValue placeholder="Filter by Status..." /></SelectTrigger>
+                <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
                     <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
+                </SelectContent>
                 </Select>
-              </div>
             </div>
-          <div className="border rounded-lg">
+            </div>
+        <div className="border rounded-lg">
             <Table>
                 <TableHeader>
                 <TableRow>
@@ -364,69 +346,67 @@ export function VehicleTable() {
                     </TableRow>
                 ) : filteredVehicles && filteredVehicles.length > 0 ? (
                     filteredVehicles.map((v) => {
-                      const brand = (vehicleBrands || []).find(b => b.id === v.brandId);
-                      return (
+                    const brand = (vehicleBrands || []).find(b => b.id === v.brandId);
+                    return (
                         <TableRow key={v.id}>
                             <TableCell>{v.vehicleIdCode}</TableCell>
                             <TableCell>{v.registrationNumber}</TableCell>
                             <TableCell>{brand?.name} {v.model}</TableCell>
                             <TableCell>{getCurrentDriver(v, (drivers || []))?.name || 'N/A'}</TableCell>
                             <TableCell>
-                               <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
+                                <Badge variant={getStatusVariant(v.status)}>{v.status || 'N/A'}</Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
+                                <div className="flex justify-end gap-2">
                                 <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                      <Link href={`/vehicle-management/vehicles/${v.id}`}>
-                                        <Eye className="h-4 w-4" />
-                                      </Link>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>View Vehicle</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}>
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Edit Vehicle</TooltipContent>
-                                </Tooltip>
-                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(v, 'vehicle')}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                        <Link href={`/vehicle-management/vehicles/${v.id}`}>
+                                        <Eye className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>View Vehicle</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(v)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Edit Vehicle</TooltipContent>
+                                </Tooltip>
+                                    <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(v, 'vehicle')}>
                                         <Printer className="h-4 w-4" />
-                                      </Button>
+                                        </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Print</TooltipContent>
-                                  </Tooltip>
+                                    </Tooltip>
                                 <Tooltip>
-                                  <TooltipTrigger asChild>
+                                    <TooltipTrigger asChild>
                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(v)}>
-                                      <Trash2 className="h-4 w-4" />
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete Vehicle</TooltipContent>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Delete Vehicle</TooltipContent>
                                 </Tooltip>
-                              </div>
+                                </div>
                             </TableCell>
                         </TableRow>
-                      )
+                    )
                     })
                 ) : (
                     <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                       No vehicles found for the selected filters.
+                        No vehicles found for the selected filters.
                     </TableCell>
                     </TableRow>
                 )}
                 </TableBody>
             </Table>
-          </div>
-        </CardContent>
-    </Card>
+        </div>
 
       <VehicleEntryForm
         isOpen={isFormOpen}
@@ -452,5 +432,3 @@ export function VehicleTable() {
     </TooltipProvider>
   );
 }
-
-    

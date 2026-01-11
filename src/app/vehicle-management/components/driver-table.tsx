@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -22,35 +22,25 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
-import { useVehicleManagement } from './vehicle-management-provider';
+import type { Vehicle } from './vehicle-table';
+import { useDriverData } from './vehicle-management-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function DriverTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data, setData } = useVehicleManagement();
-  const { vehicles, drivers } = data;
+  const { drivers, vehicles, isLoading } = useDriverData();
   const { handlePrint } = usePrint();
   
   const driversRef = useMemoFirebase(() => firestore ? collection(firestore, 'drivers') : null, [firestore]);
-
-  const setDrivers = (updater: React.SetStateAction<Driver[]>) => {
-    // This is now a dummy function, as direct updates go to Firestore
-    // However, it could be used for optimistic UI updates in the future
-  }
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   const safeDrivers = Array.isArray(drivers) ? drivers : [];
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
@@ -264,9 +254,11 @@ export function DriverTable() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">Loading...</TableCell>
-              </TableRow>
+              Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell colSpan={5}><Skeleton className="h-10 w-full" /></TableCell>
+                    </TableRow>
+              ))
             ) : filteredDrivers.length > 0 ? (
               filteredDrivers.map((driver) => (
                 <TableRow key={driver.id}>
