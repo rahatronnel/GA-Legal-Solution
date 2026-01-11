@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,9 +22,10 @@ import type { Driver } from '../../components/driver-entry-form';
 import { useReportsData } from '../../components/vehicle-management-provider';
 
 export default function DriverAccidentReportPage() {
-    const { data: reportContextData, isLoading } = useReportsData() || { data: {}, isLoading: true };
-    const { accidents = [], vehicles = [], drivers = [] } = reportContextData;
-    
+    const reportsData = useReportsData();
+    const { accidents = [], vehicles = [], drivers = [] } = reportsData?.data || {};
+    const { isLoading } = reportsData || { isLoading: true };
+
     const [selectedDriverId, setSelectedDriverId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<any[]>([]);
@@ -33,10 +35,13 @@ export default function DriverAccidentReportPage() {
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    useEffect(() => {
         if (!isLoading) {
             handleGenerateReport();
         }
-    }, [isLoading]);
+    }, [isLoading, accidents, drivers, vehicles]);
 
 
     const handleGenerateReport = () => {
@@ -65,7 +70,7 @@ export default function DriverAccidentReportPage() {
     const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
 
     if (!mounted || isLoading) {
-        return null;
+        return <p>Loading report data...</p>;
     }
 
     return (

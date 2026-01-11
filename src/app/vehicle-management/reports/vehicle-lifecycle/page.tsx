@@ -19,16 +19,7 @@ import type { Trip } from '@/app/vehicle-management/components/trip-entry-form';
 import type { MaintenanceRecord } from '@/app/vehicle-management/components/maintenance-entry-form';
 import type { Accident } from '@/app/vehicle-management/components/accident-entry-form';
 import type { Driver } from '@/app/vehicle-management/components/driver-entry-form';
-import type { VehicleBrand } from '@/app/vehicle-management/components/vehicle-brand-table';
-import type { TripPurpose } from '@/app/vehicle-management/components/trip-purpose-table';
-import type { MaintenanceType } from '@/app/vehicle-management/components/maintenance-type-table';
-import type { AccidentType } from '@/app/vehicle-management/components/accident-type-table';
-import type { Part as PartType } from '@/app/vehicle-management/components/part-table';
-import type { ServiceCenter } from '@/app/vehicle-management/components/service-center-table';
-import type { Location } from '@/app/vehicle-management/components/location-table';
-import type { SeverityLevel } from '@/app/vehicle-management/components/severity-level-table';
-import type { ExpenseType } from '@/app/vehicle-management/components/expense-type-table';
-import { useReportsData } from '../../components/vehicle-management-provider';
+import { useVehicleManagement } from '../../components/vehicle-management-provider';
 
 // --- Helper Components ---
 
@@ -169,7 +160,15 @@ const AccidentDetailDialog: React.FC<{ accident: Accident; onOpenChange: (open: 
 // --- Main Page Component ---
 
 export default function VehicleLifecycleReportPage() {
-    const { data, isLoading } = useReportsData() || { data: {}, isLoading: true };
+    const vm = useVehicleManagement();
+    
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
+    const [reportData, setReportData] = useState<any | null>(null);
+    const [open, setOpen] = useState(false);
+    const [modalContent, setModalContent] = useState<{type: 'trip' | 'maintenance' | 'accident', data: any, parentData: any} | null>(null);
+
+    if (!vm) return null; // Build-safe guard
+    const { data, isLoading } = vm;
     const { 
         vehicles = [], 
         accidents = [], 
@@ -180,16 +179,6 @@ export default function VehicleLifecycleReportPage() {
         accidentTypes = [],
         severityLevels = []
     } = data;
-    
-    // For simplicity, this report uses the main data context.
-    // In a larger app, you might create a specific provider for this complex report.
-    const allData = useReportsData()?.data || {};
-
-    
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
-    const [reportData, setReportData] = useState<any | null>(null);
-    const [open, setOpen] = useState(false);
-    const [modalContent, setModalContent] = useState<{type: 'trip' | 'maintenance' | 'accident', data: any, parentData: any} | null>(null);
 
     const handleGenerateReport = () => {
         if (!selectedVehicleId) {
@@ -203,10 +192,10 @@ export default function VehicleLifecycleReportPage() {
             return;
         }
 
-        const vehicleTrips = (allData.trips || []).filter((t:any) => t.vehicleId === selectedVehicleId);
+        const vehicleTrips = (data.trips || []).filter((t:any) => t.vehicleId === selectedVehicleId);
         const vehicleMaintenance = maintenanceRecords.filter((m:any) => m.vehicleId === selectedVehicleId);
         const vehicleAccidents = accidents.filter((a:any) => a.vehicleId === selectedVehicleId);
-        const brand = (allData.vehicleBrands || []).find((b:any) => b.id === vehicle.brandId);
+        const brand = (data.vehicleBrands || []).find((b:any) => b.id === vehicle.brandId);
 
         const photoExtractor = (records: any[], prefix: string, idField: string) => {
             const photos: { src: string, label: string }[] = [];
@@ -247,12 +236,12 @@ export default function VehicleLifecycleReportPage() {
     }
     
     const getTripDetails = (trip: Trip) => {
-        const purpose = (allData.tripPurposes || []).find((p:any) => p.id === trip.purposeId)?.name;
+        const purpose = (data.tripPurposes || []).find((p:any) => p.id === trip.purposeId)?.name;
         const driver = (drivers || []).find((d:any) => d.id === trip.driverId)?.name;
-        const itinerary = trip.stops?.map(stop => (allData.locations || []).find((l:any) => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
+        const itinerary = trip.stops?.map(stop => (data.locations || []).find((l:any) => l.id === stop.locationId)?.name).filter(Boolean).join(' -> ') || 'N/A';
         const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
         const totalExpenses = trip.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
-        return { purpose, driver, itinerary, totalDistance, totalExpenses, expenseTypes: allData.expenseTypes };
+        return { purpose, driver, itinerary, totalDistance, totalExpenses, expenseTypes: data.expenseTypes };
     }
     
     const getMaintenanceDetails = (maint: MaintenanceRecord) => {
@@ -261,7 +250,7 @@ export default function VehicleLifecycleReportPage() {
         const partsCost = maint.parts?.reduce((acc, p) => acc + (p.price * p.quantity), 0) || 0;
         const expensesCost = maint.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0;
         const totalCost = partsCost + expensesCost;
-        return { type, serviceCenter, totalCost, parts: allData.parts };
+        return { type, serviceCenter, totalCost, parts: data.parts };
     }
     
     const getAccidentDetails = (acc: Accident) => {

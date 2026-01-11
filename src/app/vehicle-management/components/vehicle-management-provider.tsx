@@ -37,6 +37,7 @@ const MasterDataContext = createContext<any>(undefined);
 const DashboardDataContext = createContext<any>(undefined);
 const ReportsDataContext = createContext<any>(undefined);
 
+const VehicleManagementContext = createContext<any>(undefined);
 
 // --- Provider Implementations ---
 
@@ -140,10 +141,9 @@ export const ReportsDataProvider = ({ children }: { children: React.ReactNode })
     const { data: parts, isLoading: l5 } = useCollection<Part>(useMemoFirebase(() => collection(firestore, 'parts'), [firestore]));
     const { data: serviceCenters, isLoading: l6 } = useCollection<ServiceCenter>(useMemoFirebase(() => collection(firestore, 'serviceCenters'), [firestore]));
     const { data: maintenanceTypes, isLoading: l7 } = useCollection<MaintenanceType>(useMemoFirebase(() => collection(firestore, 'maintenanceTypes'), [firestore]));
-    const value = useMemo(() => ({ data: { accidents: accidents||[], maintenanceRecords: maintenanceRecords||[], vehicles: vehicles||[], drivers: drivers||[], parts: parts||[], serviceCenters: serviceCenters||[], maintenanceTypes: maintenanceTypes||[] }, isLoading: l1||l2||l3||l4||l5||l6||l7 }), [accidents, maintenanceRecords, vehicles, drivers, parts, serviceCenters, maintenanceTypes, l1,l2,l3,l4,l5,l6,l7]);
+    const value = useMemo(() => ({ accidents: accidents||[], maintenanceRecords: maintenanceRecords||[], vehicles: vehicles||[], drivers: drivers||[], parts: parts||[], serviceCenters: serviceCenters||[], maintenanceTypes: maintenanceTypes||[], isLoading: l1||l2||l3||l4||l5||l6||l7 }), [accidents, maintenanceRecords, vehicles, drivers, parts, serviceCenters, maintenanceTypes, l1,l2,l3,l4,l5,l6,l7]);
     return <ReportsDataContext.Provider value={value}>{children}</ReportsDataContext.Provider>;
 }
-
 
 // --- Hooks for Consuming Data ---
 
@@ -156,8 +156,6 @@ export const useMasterData = () => useContext(MasterDataContext);
 export const useDashboardData = () => useContext(DashboardDataContext);
 export const useReportsData = () => useContext(ReportsDataContext);
 
-
-const VehicleManagementContext = createContext<any>(undefined);
 
 export const VehicleManagementProvider = ({ children }: { children: React.ReactNode }) => {
     const firestore = useFirestore();
@@ -188,6 +186,11 @@ export const VehicleManagementProvider = ({ children }: { children: React.ReactN
 
 export function useVehicleManagement() {
     const context = useContext(VehicleManagementContext);
-    if (!context) throw new Error('useVehicleManagement must be used within a VehicleManagementProvider');
+    if (!context) {
+        if (typeof window === 'undefined') {
+            return null; // Prevents build crash on server
+        }
+        throw new Error('useVehicleManagement must be used within a VehicleManagementProvider');
+    }
     return context;
 }

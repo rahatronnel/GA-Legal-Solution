@@ -1,17 +1,18 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
-import { DollarSign, Wrench, Package, Car } from 'lucide-react';
+import { DollarSign, Wrench, Package } from 'lucide-react';
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
 import { isWithinInterval, parseISO } from 'date-fns';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { Vehicle } from '../../components/vehicle-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useReportsData } from '../../components/vehicle-management-provider';
 
 interface ReportData {
     totalRecords: number;
@@ -23,9 +24,9 @@ interface ReportData {
 }
 
 export default function MaintenanceCostSummaryPage() {
-    const [records] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
-    const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
-    const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
+    const reportsData = useReportsData();
+    const { maintenanceRecords: records = [], maintenanceTypes = [], vehicles = [] } = reportsData?.data || {};
+    const { isLoading } = reportsData || { isLoading: true };
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -97,8 +98,8 @@ export default function MaintenanceCostSummaryPage() {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
     
-    if (!mounted) {
-        return null;
+    if (!mounted || isLoading) {
+        return <p>Loading report data...</p>;
     }
 
     return (
