@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -150,7 +151,7 @@ const ModuleDashboard = () => {
                 ))}
             </div>
              <footer className="absolute bottom-4 text-xs text-muted-foreground">
-                developed and maintain by "A Dedicated Team"
+                © 2024 GA & Legal Solution
             </footer>
         </div>
     );
