@@ -109,7 +109,7 @@ export function BillTable() {
         const billingPeriodMatch = !billingPeriodRange?.from || (bill.billingPeriodFrom && isWithinInterval(parseISO(bill.billingPeriodFrom), { start: billingPeriodRange.from, end: billingPeriodRange.to || billingPeriodRange.from }));
 
         return searchTermMatch && vendorMatch && statusMatch && typeMatch && categoryMatch && departmentMatch && poMatch && woMatch && amountMatch && billDateMatch && billingPeriodMatch;
-    });
+    }).sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
   }, [safeBills, searchTerm, vendorFilter, statusFilter, billTypeFilter, billCategoryFilter, departmentFilter, poFilter, woFilter, amountFilter, billDateRange, billingPeriodRange, vendors]);
 
   const clearFilters = () => {
