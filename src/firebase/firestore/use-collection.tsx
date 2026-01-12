@@ -10,7 +10,6 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useUser } from '@/firebase';
@@ -60,24 +59,30 @@ export function useCollection<T = any>(
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
 
-  const { isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // SECURITY: Do not attempt to fetch data if there's no authenticated user OR if auth state is still loading.
-    // This prevents "Missing or insufficient permissions" errors on initial load.
-    const auth = getAuth();
-    if (isUserLoading || !auth.currentUser) {
-        setIsLoading(true); // Remain in loading state until auth is resolved
-        setData(null);
-        return;
+    // When auth is still loading, we are in a loading state.
+    if (isUserLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    // When there is no authenticated user, we stop and clear data.
+    // This is a crucial security step.
+    if (!user) {
+      setIsLoading(false);
+      setData(null);
+      return;
     }
     
     if (!memoizedTargetRefOrQuery) {
+      // If there's no query, we are not fetching data. It's not an error, but we're not loading anything.
+      setIsLoading(false);
       setData(null);
-      setIsLoading(true); // If no query, we are in a loading state until we get one
       setError(null);
       return;
     }
@@ -121,7 +126,8 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading]);
+  }, [memoizedTargetRefOrQuery, user, isUserLoading]);
 
   return { data, isLoading, error };
 }
+

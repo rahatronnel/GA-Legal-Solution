@@ -9,9 +9,9 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useUser } from '@/firebase';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -45,22 +45,30 @@ export function useDoc<T = any>(
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
+  const { user, isUserLoading } = useUser();
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start as true
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // SECURITY: Do not attempt to fetch data if there's no authenticated user.
-    const auth = getAuth();
-    if (!auth.currentUser) {
-        setIsLoading(true);
-        setData(null);
-        return;
+    // When auth is still loading, we are in a loading state.
+    if (isUserLoading) {
+      setIsLoading(true);
+      return;
+    }
+    
+    // When there is no authenticated user, we stop and clear data.
+    // This is a crucial security step.
+    if (!user) {
+      setIsLoading(false);
+      setData(null);
+      return;
     }
 
     if (!memoizedDocRef) {
+      // If there's no ref, we are not fetching data. It's not an error, but we're not loading anything.
+      setIsLoading(false);
       setData(null);
-      setIsLoading(true); // If no ref, we are in a loading state until we get one
       setError(null);
       return;
     }
@@ -94,7 +102,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef]);
+  }, [memoizedDocRef, user, isUserLoading]);
 
   return { data, isLoading, error };
 }
