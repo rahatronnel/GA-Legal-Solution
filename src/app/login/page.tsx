@@ -3,24 +3,22 @@
 
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { initiateEmailSignIn, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
+import {
+  initiateEmailSignIn,
+  useFirestore,
+  useDoc,
+  useMemoFirebase,
+  useAuth,
+} from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useState } from 'react';
@@ -28,51 +26,37 @@ import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '../settings/page';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { User, Lock } from 'lucide-react';
 
 function LoginPageContent() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-  const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
-
+  const settingsDocRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'settings', 'organization') : null),
+    [firestore]
+  );
+  const { data: orgSettings, isLoading: isLoadingSettings } =
+    useDoc<OrganizationSettings>(settingsDocRef);
 
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
-      if (!email || !password) {
-        throw new Error('Email and password are required.');
-      }
       await initiateEmailSignIn(auth, email, password);
-    } catch (error: any) {
-      console.error('Sign-in failed:', error);
-      let description = 'An unknown error occurred. Please try again.';
-      switch (error.code) {
-        case 'auth/user-not-found':
-        case 'auth/invalid-email':
-          description = 'No account found with this email address.';
-          break;
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          description = 'Incorrect password. Please try again.';
-          break;
-        case 'auth/too-many-requests':
-            description = 'Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.';
-            break;
-      }
-      
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Sign-in Failed',
-        description: description,
+        description: 'Invalid credentials.',
       });
     } finally {
       setIsLoading(false);
@@ -80,154 +64,172 @@ function LoginPageContent() {
   };
 
   const handlePasswordReset = async () => {
-      if (!resetEmail) {
-          toast({ variant: 'destructive', title: 'Email Required', description: 'Please enter your email address.' });
-          return;
-      }
-      setIsResetting(true);
-      try {
-        await sendPasswordResetEmail(auth, resetEmail);
-        toast({
-            title: 'Password Reset Email Sent',
-            description: `If an account exists for ${resetEmail}, you will receive an email with instructions to reset your password.`,
-        });
-        setIsResetDialogOpen(false);
-        setResetEmail('');
-      } catch (error: any) {
-          console.error("Password reset failed:", error);
-          let description = 'An unknown error occurred. Please try again.';
-            if (error.code === 'auth/user-not-found') {
-                description = 'No account found with this email address.';
-            }
-          toast({
-              variant: 'destructive',
-              title: 'Failed to Send',
-              description: description,
-          });
-      } finally {
-          setIsResetting(false);
-      }
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({
+        title: 'Reset email sent',
+        description: 'Check your inbox.',
+      });
+      setIsResetDialogOpen(false);
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send reset email.',
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
-
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
-      <div className="flex items-center justify-center py-12 bg-secondary">
-        <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-4 text-center">
+    <div className="relative min-h-screen overflow-hidden">
+
+      {/* 🎥 BACKGROUND IMAGE */}
+      <Image
+        src="https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc"
+        alt="Background"
+        fill
+        priority
+        className="object-cover scale-105"
+      />
+
+      {/* DARK CINEMATIC OVERLAY */}
+      <div className="absolute inset-0 bg-black/50" />
+
+      {/* 🌈 ANIMATED COLOR WAVES */}
+      <div className="absolute -left-40 bottom-0 h-[520px] w-[520px] bg-orange-500/40 rounded-full blur-3xl animate-waveSlow" />
+      <div className="absolute -right-40 top-0 h-[520px] w-[520px] bg-pink-500/40 rounded-full blur-3xl animate-waveSlower" />
+      <div className="absolute right-10 bottom-20 h-[420px] w-[420px] bg-purple-500/40 rounded-full blur-3xl animate-waveSlow" />
+
+      {/* 💎 GLASS SPHERE */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center">
+        <div className="relative w-[380px] h-[480px] rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_0_120px_rgba(255,255,255,0.25)] flex flex-col justify-center px-8 animate-floatSlow overflow-hidden">
+
+          {/* ✨ GLASS LIGHT SWEEP */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-30 animate-shine" />
+
+          <div className="relative z-10 text-center mb-6">
             {isLoadingSettings ? (
-              <div className="flex flex-col items-center gap-4">
-                <Skeleton className="h-24 w-24 rounded-full" />
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
+              <Skeleton className="h-20 w-20 rounded-full mx-auto mb-4" />
             ) : (
-              <>
-                {orgSettings?.logo && (
-                  <div className="flex justify-center mb-4">
-                    <Image
-                      src={orgSettings.logo}
-                      alt="Organization Logo"
-                      width={100}
-                      height={100}
-                      className="rounded-full object-contain"
-                      priority
-                    />
-                  </div>
-                )}
-                <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
-                <p className="text-balance text-muted-foreground">
-                  Enter your credentials to access the system
-                </p>
-              </>
+              orgSettings?.logo && (
+                <div className="mx-auto mb-4 h-20 w-20 relative">
+                  <Image
+                    src={orgSettings.logo}
+                    alt="Organization Logo"
+                    layout="fill"
+                    objectFit="contain"
+                  />
+                </div>
+              )
             )}
+            <h1 className="text-white text-2xl font-semibold tracking-wide">
+              Sign in
+            </h1>
           </div>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-                    <DialogTrigger asChild>
-                         <Button variant="link" className="ml-auto inline-block text-sm underline">Forgot your password?</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Forgot Password</DialogTitle>
-                            <DialogDescription>
-                                Enter your email address below. If an account exists, we'll send you a link to reset your password.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="reset-email">Email Address</Label>
-                                <Input
-                                    id="reset-email"
-                                    type="email"
-                                    placeholder="m@example.com"
-                                    value={resetEmail}
-                                    onChange={(e) => setResetEmail(e.target.value)}
-                                    disabled={isResetting}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)} disabled={isResetting}>Cancel</Button>
-                            <Button onClick={handlePasswordReset} disabled={isResetting}>
-                                {isResetting ? 'Sending...' : 'Send Reset Link'}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-              </div>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
-              />
-            </div>
-            <Button onClick={handleSignIn} disabled={isLoading} className="w-full">
-              {isLoading ? 'Signing in...' : 'Login'}
-            </Button>
+
+          {/* USERNAME */}
+          <div className="relative mb-4 z-10">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} />
+            <Input
+              className="pl-12 h-11 rounded-full bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/30"
+              placeholder="Username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
           </div>
+
+          {/* PASSWORD */}
+          <div className="relative mb-6 z-10">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={18} />
+            <Input
+              type="password"
+              className="pl-12 h-11 rounded-full bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/30"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              onKeyUp={(e) => e.key === 'Enter' && handleSignIn()}
+            />
+          </div>
+
+          {/* LOGIN */}
+          <Button
+            onClick={handleSignIn}
+            disabled={isLoading}
+            className="relative z-10 h-11 rounded-full bg-white/90 text-black font-semibold hover:bg-white hover:shadow-[0_0_30px_rgba(255,255,255,0.8)] transition-all"
+          >
+            {isLoading ? 'Signing in…' : 'LOGIN'}
+          </Button>
+
+          {/* FOOTER */}
+          <div className="relative z-10 flex justify-between text-xs text-white/70 mt-4 px-1">
+            <span>Remember me</span>
+            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+              <DialogTrigger className="hover:text-white transition">
+                Forgot password?
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reset Password</DialogTitle>
+                  <DialogDescription>
+                    Enter your email to reset password.
+                  </DialogDescription>
+                </DialogHeader>
+                <Input
+                  placeholder="you@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                />
+                <DialogFooter>
+                  <Button onClick={handlePasswordReset} disabled={isResetting}>
+                    Send Link
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
         </div>
       </div>
-      <div className="hidden bg-muted lg:flex items-center justify-center relative overflow-hidden">
-        <Image
-          src="https://picsum.photos/seed/login/1920/1080"
-          alt="Office Background"
-          data-ai-hint="office building"
-          fill
-          className="object-cover opacity-20"
-        />
-         <div className="z-10 text-center space-y-4 px-8">
-          <h2 className="text-4xl font-bold text-foreground">
-             {orgSettings?.name || 'GA & Legal Solution'}
-          </h2>
-          <p className="text-lg text-muted-foreground">
-             {orgSettings?.slogan || 'Your Trusted Partner in Excellence'}
-          </p>
-        </div>
-      </div>
+
+      {/* 🌟 CUSTOM ANIMATIONS */}
+      <style jsx>{`
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-floatSlow {
+          animation: floatSlow 6s ease-in-out infinite;
+        }
+
+        @keyframes waveSlow {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(40px); }
+        }
+        .animate-waveSlow {
+          animation: waveSlow 12s ease-in-out infinite;
+        }
+
+        .animate-waveSlower {
+          animation: waveSlow 18s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+          0% { transform: translateX(-100%) rotate(25deg); }
+          100% { transform: translateX(100%) rotate(25deg); }
+        }
+        .animate-shine {
+          animation: shine 8s linear infinite;
+        }
+      `}</style>
     </div>
-  )
+  );
 }
 
 export default function LoginPage() {
-    return <LoginPageContent />;
+  return <LoginPageContent />;
 }
