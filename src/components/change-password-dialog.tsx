@@ -205,5 +205,3 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
     </Dialog>
   );
 }
-
-    

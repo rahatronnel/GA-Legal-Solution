@@ -1,15 +1,12 @@
-
 "use client";
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
-import { FirebaseClientProvider, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import type { OrganizationSettings } from './settings/page';
+import { FirebaseClientProvider } from '@/firebase';
 
 
 export default function RootLayout({

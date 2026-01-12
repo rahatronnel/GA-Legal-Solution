@@ -106,8 +106,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     // Seed the superadmin user when auth is ready
     seedSuperadmin(auth);
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
-
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
@@ -148,14 +146,28 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
  * Hook to access core Firebase services and user authentication state.
  * Throws error if core services are not available or used outside provider.
  */
-export const useFirebase = (): FirebaseServicesAndUser => {
+export const useFirebase = (): FirebaseServicesAndUser | {
+    firebaseApp: null;
+    firestore: null;
+    auth: null;
+    user: null;
+    isUserLoading: true;
+    userError: null;
+} => {
   const context = useContext(FirebaseContext);
 
   if (context === undefined) {
+    if (typeof window === 'undefined') {
+        // During SSR, the context might not be available. Return a loading state.
+        return { firebaseApp: null, firestore: null, auth: null, user: null, isUserLoading: true, userError: null };
+    }
     throw new Error('useFirebase must be used within a FirebaseProvider.');
   }
 
   if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
+     if (typeof window === 'undefined') {
+        return { firebaseApp: null, firestore: null, auth: null, user: null, isUserLoading: true, userError: null };
+    }
     throw new Error('Firebase core services not available. Check FirebaseProvider props.');
   }
 
@@ -172,18 +184,21 @@ export const useFirebase = (): FirebaseServicesAndUser => {
 /** Hook to access Firebase Auth instance. */
 export const useAuth = (): Auth => {
   const { auth } = useFirebase();
+  if (!auth) throw new Error("Firebase Auth not available.");
   return auth;
 };
 
 /** Hook to access Firestore instance. */
 export const useFirestore = (): Firestore => {
   const { firestore } = useFirebase();
+  if (!firestore) throw new Error("Firestore not available.");
   return firestore;
 };
 
 /** Hook to access Firebase App instance. */
 export const useFirebaseApp = (): FirebaseApp => {
   const { firebaseApp } = useFirebase();
+  if (!firebaseApp) throw new Error("Firebase App not available.");
   return firebaseApp;
 };
 

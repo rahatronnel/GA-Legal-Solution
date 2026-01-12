@@ -117,7 +117,7 @@ export default function LoginPage() {
       <div className="relative z-10 min-h-screen flex items-center justify-center perspective-[1200px]">
         <div
           className="
-            relative w-[380px] h-[440px] rounded-full
+            relative w-[380px] h-[500px] rounded-full
             bg-white/10 backdrop-blur-2xl
             border border-white/20
             shadow-[0_0_160px_rgba(255,255,255,0.35)]
@@ -152,7 +152,9 @@ export default function LoginPage() {
 
           {/* LOGO + TITLE */}
           <div className="relative z-10 text-center mb-6 flex flex-col items-center">
-            {orgSettings?.logo && !isLoadingSettings && (
+            {isLoadingSettings ? (
+              <Skeleton className="h-[72px] w-[72px] rounded-full mb-5" />
+            ) : orgSettings?.logo && (
               <div
                 className="
                   relative mb-5 h-[72px] w-[72px]
@@ -171,13 +173,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            {isLoadingSettings ? (
-              <Skeleton className="h-6 w-32 mx-auto" />
-            ) : (
-              <h1 className="text-white text-2xl font-medium tracking-wide">
-                Sign in
-              </h1>
-            )}
+            <h1 className="text-white text-2xl font-medium tracking-wide">
+              Sign in
+            </h1>
           </div>
 
           {/* EMAIL */}
