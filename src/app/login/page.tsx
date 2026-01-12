@@ -114,14 +114,27 @@ function LoginPageContent() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
       <div className="flex items-center justify-center py-12 bg-secondary">
         <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
-             {isLoadingSettings ? (
-              <>
-                <Skeleton className="h-8 w-48 mx-auto mb-2" />
-                <Skeleton className="h-4 w-64 mx-auto" />
-              </>
+          <div className="grid gap-4 text-center">
+            {isLoadingSettings ? (
+              <div className="flex flex-col items-center gap-4">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
             ) : (
               <>
+                {orgSettings?.logo && (
+                  <div className="flex justify-center mb-4">
+                    <Image
+                      src={orgSettings.logo}
+                      alt="Organization Logo"
+                      width={100}
+                      height={100}
+                      className="rounded-full object-contain"
+                      priority
+                    />
+                  </div>
+                )}
                 <h1 className="text-3xl font-bold">{orgSettings?.name || 'Welcome'}</h1>
                 <p className="text-balance text-muted-foreground">
                   Enter your credentials to access the system
