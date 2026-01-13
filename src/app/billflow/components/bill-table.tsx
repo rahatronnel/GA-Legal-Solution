@@ -95,7 +95,14 @@ export function BillTable() {
             (getVendorName(bill.vendorId).toLowerCase().includes(searchTerm.toLowerCase()));
 
         const vendorMatch = vendorFilter === 'all' || bill.vendorId === vendorFilter;
-        const statusMatch = statusFilter === 'all' || bill.approvalStatus === parseInt(statusFilter);
+        
+        let statusMatch = true;
+        if (statusFilter === 'pending') {
+            statusMatch = bill.approvalStatus !== 1 && bill.approvalStatus !== 0;
+        } else if (statusFilter !== 'all') {
+            statusMatch = bill.approvalStatus === parseInt(statusFilter);
+        }
+
         const typeMatch = billTypeFilter === 'all' || bill.billTypeId === billTypeFilter;
         const categoryMatch = billCategoryFilter === 'all' || bill.billCategoryId === billCategoryFilter;
         const departmentMatch = departmentFilter === 'all' || bill.departmentName === departmentFilter;
@@ -264,7 +271,7 @@ export function BillTable() {
             <div className="flex items-center gap-2 font-semibold"><Filter className="h-4 w-4" /> Filters</div>
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <Select value={vendorFilter} onValueChange={setVendorFilter}><SelectTrigger><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vendors</SelectItem>{(vendors || []).map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent></Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue placeholder="Filter by Status..." /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="2">Pending</SelectItem><SelectItem value="1">Completed</SelectItem><SelectItem value="0">Rejected</SelectItem></SelectContent></Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue placeholder="Filter by Status..." /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="1">Final Approved</SelectItem></SelectContent></Select>
                 <Select value={billTypeFilter} onValueChange={setBillTypeFilter}><SelectTrigger><SelectValue placeholder="Filter by Bill Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Bill Types</SelectItem>{(billTypes || []).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                 <Select value={billCategoryFilter} onValueChange={setBillCategoryFilter}><SelectTrigger><SelectValue placeholder="Filter by Category..." /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{(billCategories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
                 <Select value={departmentFilter} onValueChange={setDepartmentFilter}><SelectTrigger><SelectValue placeholder="Filter by Department..." /></SelectTrigger><SelectContent><SelectItem value="all">All Departments</SelectItem>{(sections || []).map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select>
@@ -373,5 +380,7 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
+
+    
 
     
