@@ -287,17 +287,6 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       });
     }
   };
-  
-  const getDocumentName = (docType: 'nid' | 'other') => {
-      if (docFiles[docType]) return docFiles[docType]!.name;
-      if (docPreviews[docType] || (employeeData.documents && employeeData.documents[docType])) return `${docType.toUpperCase()} Document`;
-      return null;
-  }
-  
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied!', description: 'Password copied to clipboard.' });
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -455,16 +444,24 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                             )}
                         </div>
                         <div className="col-span-2 space-y-4">
-                            {(['nid', 'other'] as const).map(docType => {
-                                const currentDocName = getDocumentName(docType);
+                           {(['nid', 'other'] as const).map(docType => {
+                                const docPreviewUrl = docPreviews[docType];
                                 const docLabel = { nid: 'NID', other: 'Other Document'}[docType];
-                                
+                                const currentFileName = docFiles[docType]?.name || (docPreviewUrl ? `${docLabel} File` : null);
+
                                 return (
                                     <div className="space-y-2" key={docType}>
                                         <Label>{docLabel}</Label>
-                                        {currentDocName ? (
+                                        {docPreviewUrl ? (
                                             <div className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
-                                                <span>{currentDocName}</span>
+                                                <div className="flex items-center gap-2 truncate">
+                                                    {docPreviewUrl.startsWith('data:image/') ? (
+                                                        <Image src={docPreviewUrl} alt={docLabel} width={32} height={32} className="object-cover rounded-sm" />
+                                                    ) : (
+                                                        <FileSignature className="h-6 w-6 flex-shrink-0" />
+                                                    )}
+                                                    <span className="truncate">{currentFileName}</span>
+                                                </div>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType)}>
                                                     <X className="h-4 w-4" />
                                                 </Button>

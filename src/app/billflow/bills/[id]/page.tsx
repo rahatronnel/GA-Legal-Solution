@@ -232,7 +232,9 @@ function BillProfileContent() {
                                    </AlertDialog>
                                 </>
                              )}
-                             <Button onClick={() => handlePrint(bill, 'bill')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
+                             {bill.approvalStatus === 1 && (
+                                <Button onClick={() => handlePrint(bill, 'bill')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
+                             )}
                              <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
                     </div>
