@@ -203,6 +203,7 @@ function BillProfileContent() {
     
     // A bill is pending approval if its status is not 0 (rejected) or 1 (completed)
     const isPendingApproval = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
+    const isFinalApproved = bill.approvalStatus === 1;
 
     return (
         <div className="space-y-6">
@@ -232,7 +233,7 @@ function BillProfileContent() {
                                    </AlertDialog>
                                 </>
                              )}
-                             {bill.approvalStatus === 1 && (
+                             {isFinalApproved && (
                                 <Button onClick={() => handlePrint(bill, 'bill')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
                              )}
                              <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
