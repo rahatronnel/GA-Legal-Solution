@@ -223,17 +223,15 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields. Passwords must be at least 6 characters.' });
         return;
     }
-    const next = isEditing && step === 1 ? 3 : step + 1;
-    setStep(next);
+    setStep(s => s + 1);
   };
 
   const prevStep = () => {
-      const prev = isEditing && step === 3 ? 1 : step - 1;
-      setStep(prev);
+      setStep(s => s - 1);
   };
   
   const handleSave = async () => {
-    if (!validateStep(1) || !validateStep(2)) {
+    if (!validateStep(1) || (!isEditing && !validateStep(2))) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields before saving. Passwords must be at least 6 characters.' });
         return;
     }
@@ -524,3 +522,5 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     </Dialog>
   );
 }
+
+    
