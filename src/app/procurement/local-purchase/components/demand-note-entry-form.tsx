@@ -31,6 +31,9 @@ export type DemandNoteItem = {
     requiredQty: number;
     unit: string;
     remarks: string;
+    brandName?: string;
+    modelNo?: string;
+    otherDetails?: string;
 };
 
 export type DemandNote = {
@@ -128,7 +131,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     }
 
     // Item handlers
-    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', particulars: '', requiredQty: 1, unit: '', remarks: '' }]);
+    const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', particulars: '', requiredQty: 1, unit: '', remarks: '', brandName: '', modelNo: '', otherDetails: '' }]);
     const removeItem = (id: string) => setItems(prev => prev.filter(item => item.id !== id));
     const updateItem = (id: string, field: keyof DemandNoteItem, value: string | number) => {
         setItems(prev => prev.map(item => {
@@ -211,8 +214,22 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                             <Input value={item.unit} disabled />
                                         </div>
                                      </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Brand Name</Label>
+                                            <Input value={item.brandName || ''} onChange={(e) => updateItem(item.id, 'brandName', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Model No.</Label>
+                                            <Input value={item.modelNo || ''} onChange={(e) => updateItem(item.id, 'modelNo', e.target.value)} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Other Necessary Details</Label>
+                                            <Input value={item.otherDetails || ''} onChange={(e) => updateItem(item.id, 'otherDetails', e.target.value)} />
+                                        </div>
+                                     </div>
                                      <div className="space-y-2">
-                                        <Label>Remarks/Other information</Label>
+                                        <Label>Remarks</Label>
                                         <Input value={item.remarks} onChange={(e) => updateItem(item.id, 'remarks', e.target.value)} />
                                     </div>
                                 </div>

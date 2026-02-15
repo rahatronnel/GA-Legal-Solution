@@ -445,7 +445,10 @@
         "particulars": { "type": "string" },
         "requiredQty": { "type": "number" },
         "unit": { "type": "string" },
-        "remarks": { "type": "string" }
+        "remarks": { "type": "string" },
+        "brandName": { "type": "string" },
+        "modelNo": { "type": "string" },
+        "otherDetails": { "type": "string" }
       },
       "required": ["billItemMasterId", "requiredQty"]
     },
@@ -529,6 +532,7 @@
     
 
     
+
 
 
 
