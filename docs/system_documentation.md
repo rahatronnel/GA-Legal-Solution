@@ -104,6 +104,6 @@ The approval workflow for Demand Notes in the Local Purchase module is configure
 ### Configuration
 - **Location**: Procurement Management -> Local Purchase -> "Settings" Tab.
 - **Functionality**:
-  1. **Department Heads**: The UI lists all available "Sections" (Departments). For each section, the admin must select an employee from a dropdown list to act as the Department Head.
+  1. **Department Heads & Advisors**: The UI lists all available "Sections" (Departments). For each section, the admin must select an employee from dropdown lists to act as the **Department Head** and the **Technical Advisor**.
   2. **Key Roles**: The admin must also assign specific employees to the roles of "Managing Director" and "Factory Director" using searchable dropdowns.
   3. **Saving**: Clicking "Save Settings" stores these assignments in the `/settings/organization` document in Firestore. The specific workflow logic that uses these roles will be defined separately.

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 type DeptHead = {
     sectionId: string;
     headId: string;
+    technicalAdvisorId: string;
 };
 
 const Combobox: React.FC<{
@@ -83,13 +84,23 @@ export function DemandNoteApprovalSettings() {
         }
     }, [orgSettings]);
 
-    const handleDeptHeadChange = (sectionId: string, headId: string) => {
+    const handleDeptHeadChange = (sectionId: string, role: 'headId' | 'technicalAdvisorId', employeeId: string) => {
         setDepartmentHeads(prev => {
-            const existing = prev.find(dh => dh.sectionId === sectionId);
-            if (existing) {
-                return prev.map(dh => dh.sectionId === sectionId ? { ...dh, headId } : dh);
+            const existingIndex = prev.findIndex(dh => dh.sectionId === sectionId);
+            
+            if (existingIndex !== -1) {
+                const updatedHeads = [...prev];
+                const existingEntry = updatedHeads[existingIndex];
+                updatedHeads[existingIndex] = { ...existingEntry, [role]: employeeId };
+                return updatedHeads;
             }
-            return [...prev, { sectionId, headId }];
+            
+            const newEntry: DeptHead = {
+                sectionId,
+                headId: role === 'headId' ? employeeId : '',
+                technicalAdvisorId: role === 'technicalAdvisorId' ? employeeId : '',
+            };
+            return [...prev, newEntry];
         });
     };
     
@@ -118,22 +129,34 @@ export function DemandNoteApprovalSettings() {
             <CardHeader>
                 <CardTitle>Procurement Approval Configuration</CardTitle>
                 <CardDescription>
-                    Assign department heads and key roles for the procurement approval process.
+                    Assign department heads, advisors, and key roles for the procurement approval process.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
                 <div>
-                    <h3 className="text-lg font-medium mb-4">Department Heads</h3>
+                    <h3 className="text-lg font-medium mb-4">Department Heads & Advisors</h3>
                     <div className="space-y-4">
                         {(sections || []).map(section => (
-                            <div key={section.id} className="grid grid-cols-1 md:grid-cols-[200px_1fr] items-center gap-4 p-3 border rounded-lg">
+                            <div key={section.id} className="grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] items-center gap-4 p-3 border rounded-lg">
                                 <Label className="font-semibold">{section.name}</Label>
-                                <Combobox
-                                    items={employees || []}
-                                    value={departmentHeads.find(dh => dh.sectionId === section.id)?.headId || ''}
-                                    onSelect={(employeeId) => handleDeptHeadChange(section.id, employeeId)}
-                                    placeholder="Select Department Head..."
-                                />
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Department Head</Label>
+                                    <Combobox
+                                        items={employees || []}
+                                        value={departmentHeads.find(dh => dh.sectionId === section.id)?.headId || ''}
+                                        onSelect={(employeeId) => handleDeptHeadChange(section.id, 'headId', employeeId)}
+                                        placeholder="Select Head..."
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Technical Advisor</Label>
+                                    <Combobox
+                                        items={employees || []}
+                                        value={departmentHeads.find(dh => dh.sectionId === section.id)?.technicalAdvisorId || ''}
+                                        onSelect={(employeeId) => handleDeptHeadChange(section.id, 'technicalAdvisorId', employeeId)}
+                                        placeholder="Select Advisor..."
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>

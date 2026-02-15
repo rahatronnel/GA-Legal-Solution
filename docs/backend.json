@@ -62,14 +62,15 @@
           "properties": {
             "departmentHeads": {
               "type": "array",
-              "description": "An array mapping sections to their head employees.",
+              "description": "An array mapping sections to their head and technical advisor employees.",
               "items": {
                 "type": "object",
                 "properties": {
                   "sectionId": { "type": "string" },
-                  "headId": { "type": "string" }
+                  "headId": { "type": "string" },
+                  "technicalAdvisorId": { "type": "string" }
                 },
-                "required": ["sectionId", "headId"]
+                "required": ["sectionId", "headId", "technicalAdvisorId"]
               }
             },
             "managingDirectorId": { "type": "string", "description": "Employee ID of the Managing Director." },
@@ -524,5 +525,6 @@
     
 
     
+
 
 
