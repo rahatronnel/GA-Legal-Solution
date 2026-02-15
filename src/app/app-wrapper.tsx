@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,7 @@ import {
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
-import { coreModules, utilityModules } from '@/lib/modules';
+import { coreModules, utilityModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
   AlertDialog,
@@ -52,6 +52,8 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/vehicle-management/maintenance/[id]': dynamic(() => import('./vehicle-management/maintenance/[id]/page'), { ssr: false }),
     '/vehicle-management/accidents/[id]': dynamic(() => import('./vehicle-management/accidents/[id]/page'), { ssr: false }),
     '/user-management/employees/[id]': dynamic(() => import('./user-management/employees/[id]/page'), { ssr: false }),
+    '/procurement/foreign-purchase': dynamic(() => import('./procurement/foreign-purchase/page'), { ssr: false }),
+    '/procurement/local-purchase': dynamic(() => import('./procurement/local-purchase/page'), { ssr: false }),
 };
 
 const ModuleDashboard = () => {    
@@ -140,15 +142,59 @@ const ModuleDashboard = () => {
                  <h1 className="text-5xl font-extrabold tracking-tight text-white">GA & Legal Solution</h1>
                  <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-4xl">
-                {coreModules.map((mod) => (
-                    <Link href={mod.href} key={mod.href}>
-                        <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
-                            <mod.icon className="h-12 w-12 text-primary mb-3" />
-                            <p className="font-semibold text-sm">{mod.name}</p>
-                        </Card>
-                    </Link>
+            <div className="w-full max-w-5xl space-y-8">
+                {/* Major Modules Section */}
+                {majorModules.map((majorMod) => (
+                    <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20">
+                        <CardHeader>
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-primary/10 rounded-lg">
+                                    <majorMod.icon className="h-8 w-8 text-primary" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-2xl">{majorMod.name}</CardTitle>
+                                    <CardDescription>{majorMod.description}</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {majorMod.subModules.map((subMod) => (
+                                    <Link href={subMod.href} key={subMod.href}>
+                                        <Card className="h-full flex flex-col items-center justify-center text-center p-6 transition-all hover:shadow-lg hover:scale-105 hover:bg-primary/5">
+                                            <subMod.icon className="h-12 w-12 text-primary mb-3" />
+                                            <p className="font-semibold text-base">{subMod.name}</p>
+                                        </Card>
+                                    </Link>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 ))}
+                
+                {/* Separator */}
+                <div className="relative py-4">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center">
+                        <span className="bg-background px-3 text-sm text-muted-foreground">
+                            Core Modules
+                        </span>
+                    </div>
+                </div>
+
+                {/* Core Modules Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {coreModules.map((mod) => (
+                        <Link href={mod.href} key={mod.href}>
+                            <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
+                                <mod.icon className="h-12 w-12 text-primary mb-3" />
+                                <p className="font-semibold text-sm">{mod.name}</p>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
             </div>
              <footer className="absolute bottom-4 text-xs text-muted-foreground">
                 © 2024 GA & Legal Solution

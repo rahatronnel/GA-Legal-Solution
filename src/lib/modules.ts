@@ -14,6 +14,7 @@ import {
   Briefcase,
   Archive,
   Receipt,
+  ShoppingCart,
 } from 'lucide-react';
 
 export type Module = {
@@ -41,4 +42,30 @@ export const coreModules: Module[] = [
 export const utilityModules: Module[] = [
   { name: 'User Management', href: '/user-management', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+// New structure for major modules
+export type SubModule = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+export type MajorModule = {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  subModules: SubModule[];
+};
+
+export const majorModules: MajorModule[] = [
+  {
+    name: 'Procurement Mgt',
+    icon: ShoppingCart,
+    description: 'Foreign and Local purchasing management',
+    subModules: [
+      { name: 'Foreign Purchase', href: '/procurement/foreign-purchase', icon: Plane },
+      { name: 'Local Purchase', href: '/procurement/local-purchase', icon: Home },
+    ],
+  },
 ];
