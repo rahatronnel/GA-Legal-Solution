@@ -30,7 +30,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { DemandNote } from '../../components/demand-note-entry-form';
 import { useProcurement } from '../../components/procurement-provider';
 import type { Designation } from '@/app/user-management/components/designation-table';
-import type { OrganizationSettings } from '@/app/settings/page';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 
 
@@ -92,17 +91,22 @@ function DemandNoteProfileContent() {
         return demandNotes.find((dn:any) => dn.id === id) || null;
     }, [id, demandNotes, isLoading]);
 
+    const currentUserEmployee = React.useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.email === user.email);
+    }, [user, employees]);
+
+
     const handleApproval = (status: number) => {
         if (!firestore || !demandNote || !user || !demandNote.approvalFlow?.steps || !employees) return;
     
         const noteRef = doc(firestore, 'demandNotes', demandNote.id);
-        const currentUserEmployee = employees.find(e => e.email === user.email);
-        if (!currentUserEmployee) {
+        const effectiveApproverId = currentUserEmployee?.id;
+        if (!effectiveApproverId) {
             alert('Your employee profile could not be found.');
             return;
         }
 
-        const effectiveApproverId = currentUserEmployee.id;
         const approvalLevels = demandNote.approvalFlow.steps;
         const currentLevel = demandNote.approvalHistory?.length || 0;
     
@@ -169,6 +173,8 @@ function DemandNoteProfileContent() {
     const isPendingApproval = demandNote.approvalStatus !== 0 && demandNote.approvalStatus !== 1;
     const isFinalApproved = demandNote.approvalStatus === 1;
 
+    const canApprove = user?.email === 'superadmin@galsolution.com' || (currentUserEmployee && demandNote.currentApproverId === currentUserEmployee.id);
+
     return (
         <div className="space-y-6">
             <Card>
@@ -179,7 +185,7 @@ function DemandNoteProfileContent() {
                             <CardDescription>Date: {demandNote.date} - Status: <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             {isPendingApproval && (
+                             {isPendingApproval && canApprove && (
                                 <>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
