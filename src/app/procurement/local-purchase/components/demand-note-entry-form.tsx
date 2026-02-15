@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, PlusCircle, Trash2, File as FileIcon, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
@@ -112,21 +112,24 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const progress = Math.round((step / totalSteps) * 100);
 
     useEffect(() => {
-        const loggedInEmployee = employees.find(e => e.email === user?.email);
-        const contactPerson = loggedInEmployee ? loggedInEmployee.fullName : '';
-        const contactNumber = loggedInEmployee ? loggedInEmployee.mobileNumber : '';
-        const department = loggedInEmployee ? loggedInEmployee.departmentId : '';
-
         if (isOpen) {
             setStep(1);
+            const loggedInEmployee = employees.find(e => e.email === user?.email);
+            
             if (isEditing && demandNote) {
                 setNoteData({ ...initialDemandNoteData, ...demandNote });
                 setItems(demandNote.items || []);
                 setDocuments(demandNote.documents || { attachments: [] });
-                setDate(demandNote.date ? new Date(demandNote.date) : new Date());
+                setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
             } else {
+                const today = new Date();
+                const contactPerson = loggedInEmployee ? loggedInEmployee.fullName : '';
+                const contactNumber = loggedInEmployee ? loggedInEmployee.mobileNumber : '';
+                const department = loggedInEmployee ? loggedInEmployee.departmentId : '';
+
                 setNoteData({
                     ...initialDemandNoteData,
+                    date: format(today, 'yyyy-MM-dd'),
                     createdBy: loggedInEmployee?.id || '',
                     contactPersonName: contactPerson,
                     contactPersonNumber: contactNumber,
@@ -134,7 +137,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                 });
                 setItems([]);
                 setDocuments({ attachments: [] });
-                setDate(new Date());
+                setDate(today);
             }
         }
     }, [isOpen, demandNote, isEditing, user, employees]);
