@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -40,7 +39,7 @@ export function DemandNoteTable() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { demandNotes, sections, employees, isLoading } = useProcurement();
+    const { demandNotes, sections, employees, isLoading, orgSettings } = useProcurement();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
 
@@ -61,7 +60,34 @@ export function DemandNoteTable() {
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
-        return safeItems.filter(item => {
+        if (isLoading || !currentUserEmployee) return [];
+
+        let roleBasedFilteredNotes: DemandNote[];
+        const procurementSettings = orgSettings?.procurementSettings;
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
+        const isHighLevelManager = procurementSettings && currentUserEmployee && (
+            procurementSettings.managingDirectorId === currentUserEmployee.id ||
+            procurementSettings.factoryDirectorId === currentUserEmployee.id ||
+            procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
+            procurementSettings.specializedDeptManagerId === currentUserEmployee.id
+        );
+
+        if (isSuperAdmin || isHighLevelManager) {
+            roleBasedFilteredNotes = safeItems;
+        } else {
+            const managedSectionIds = procurementSettings?.departmentHeads
+                ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+                .map(dh => dh.sectionId) || [];
+
+            if (managedSectionIds.length > 0) {
+                roleBasedFilteredNotes = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
+            } else {
+                roleBasedFilteredNotes = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
+            }
+        }
+
+        return roleBasedFilteredNotes.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
@@ -75,7 +101,8 @@ export function DemandNoteTable() {
             
             return searchTermMatch && statusMatch;
         }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [safeItems, searchTerm, statusFilter, sections]);
+    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, orgSettings, user, isLoading]);
+
 
     const approvableNotes = useMemo(() => {
         return filteredItems.filter(item => {
