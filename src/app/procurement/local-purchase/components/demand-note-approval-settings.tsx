@@ -75,12 +75,17 @@ export function DemandNoteApprovalSettings() {
     const [departmentHeads, setDepartmentHeads] = useState<DeptHead[]>([]);
     const [managingDirectorId, setManagingDirectorId] = useState('');
     const [factoryDirectorId, setFactoryDirectorId] = useState('');
+    const [manufacturingDeptManagerId, setManufacturingDeptManagerId] = useState('');
+    const [specializedDeptManagerId, setSpecializedDeptManagerId] = useState('');
+
 
     useEffect(() => {
         if (orgSettings?.procurementSettings) {
             setDepartmentHeads(orgSettings.procurementSettings.departmentHeads || []);
             setManagingDirectorId(orgSettings.procurementSettings.managingDirectorId || '');
             setFactoryDirectorId(orgSettings.procurementSettings.factoryDirectorId || '');
+            setManufacturingDeptManagerId(orgSettings.procurementSettings.manufacturingDeptManagerId || '');
+            setSpecializedDeptManagerId(orgSettings.procurementSettings.specializedDeptManagerId || '');
         }
     }, [orgSettings]);
 
@@ -114,6 +119,8 @@ export function DemandNoteApprovalSettings() {
             departmentHeads,
             managingDirectorId,
             factoryDirectorId,
+            manufacturingDeptManagerId,
+            specializedDeptManagerId,
         };
 
         setDocumentNonBlocking(settingsDocRef, { procurementSettings }, { merge: true });
@@ -181,6 +188,24 @@ export function DemandNoteApprovalSettings() {
                                 value={factoryDirectorId}
                                 onSelect={setFactoryDirectorId}
                                 placeholder="Select Factory Director..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Manufacturing Dept Manager</Label>
+                            <Combobox
+                                items={employees || []}
+                                value={manufacturingDeptManagerId}
+                                onSelect={setManufacturingDeptManagerId}
+                                placeholder="Select Manufacturing Dept Manager..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Specialized Dept. Manager</Label>
+                            <Combobox
+                                items={employees || []}
+                                value={specializedDeptManagerId}
+                                onSelect={setSpecializedDeptManagerId}
+                                placeholder="Select Specialized Dept. Manager..."
                             />
                         </div>
                     </div>
