@@ -28,11 +28,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export type BillItemCategory = {
   id: string;
   name: string;
   code: string;
+  isSpecial?: boolean;
 };
 
 export function BillItemCategoryTable() {
@@ -44,7 +46,7 @@ export function BillItemCategoryTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Partial<BillItemCategory> | null>(null);
-  const [formData, setFormData] = useState({ name: '', code: '' });
+  const [formData, setFormData] = useState({ name: '', code: '', isSpecial: false });
   const [searchTerm, setSearchTerm] = useState('');
 
   const safeItems = useMemo(() => Array.isArray(items) ? items : [], [items]);
@@ -65,7 +67,7 @@ export function BillItemCategoryTable() {
 
   const resetForm = () => {
     setCurrentItem(null);
-    setFormData({ name: '', code: '' });
+    setFormData({ name: '', code: '', isSpecial: false });
   }
 
   const handleAdd = () => {
@@ -75,7 +77,7 @@ export function BillItemCategoryTable() {
 
   const handleEdit = (item: BillItemCategory) => {
     setCurrentItem(item);
-    setFormData({ name: item.name, code: item.code });
+    setFormData({ name: item.name, code: item.code, isSpecial: !!item.isSpecial });
     setIsDialogOpen(true);
   };
 
@@ -117,7 +119,7 @@ export function BillItemCategoryTable() {
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '', code: '' }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '', code: '', isSpecial: false }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'BillItemCategories');
     XLSX.writeFile(wb, 'BillItemCategoryTemplate.xlsx');
@@ -143,6 +145,7 @@ export function BillItemCategoryTable() {
             .map((item: any) => ({ 
                 name: String(item.name || '').trim(),
                 code: String(item.code || '').trim(),
+                isSpecial: ['true', 'yes', '1'].includes(String(item.isSpecial || '').toLowerCase())
             }))
             .filter(item => item.name && item.code)
           
@@ -192,6 +195,7 @@ export function BillItemCategoryTable() {
                 <TableRow>
                     <TableHead>Category Name</TableHead>
                     <TableHead>Code</TableHead>
+                    <TableHead>Special</TableHead>
                     <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -201,6 +205,7 @@ export function BillItemCategoryTable() {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
                       </TableRow>
                     ))
@@ -209,6 +214,7 @@ export function BillItemCategoryTable() {
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.code}</TableCell>
+                        <TableCell>{item.isSpecial ? 'Yes' : 'No'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Tooltip>
@@ -233,7 +239,7 @@ export function BillItemCategoryTable() {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">No bill item categories found.</TableCell>
+                    <TableCell colSpan={4} className="h-24 text-center">No bill item categories found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -256,6 +262,10 @@ export function BillItemCategoryTable() {
              <div className="space-y-2">
               <Label htmlFor="code">Code</Label>
               <Input id="code" value={formData.code} onChange={handleInputChange} />
+            </div>
+            <div className="flex items-center space-x-2 pt-2">
+                <Checkbox id="isSpecial" checked={formData.isSpecial} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSpecial: !!checked }))} />
+                <Label htmlFor="isSpecial">Is Special Item Category</Label>
             </div>
           </div>
           <DialogFooter>

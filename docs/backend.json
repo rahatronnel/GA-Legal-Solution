@@ -396,7 +396,8 @@
       "description": "Defines a category for a billable item.",
       "properties": {
         "name": { "type": "string" },
-        "code": { "type": "string" }
+        "code": { "type": "string" },
+        "isSpecial": { "type": "boolean", "description": "Indicates if this is a special category of item." }
       },
       "required": ["name", "code"]
     },
@@ -526,6 +527,7 @@
     
 
     
+
 
 
 

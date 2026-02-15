@@ -8,6 +8,8 @@ import { DemandNoteApprovalSettings } from './components/demand-note-approval-se
 import { DemandNoteTable } from './components/demand-note-table';
 import { ProcessCodeTable } from './components/process-code-table';
 import { DemandTypeTable } from './components/demand-type-table';
+import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-table';
+import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 
 export default function LocalPurchasePage() {
   return (
@@ -56,9 +58,11 @@ export default function LocalPurchasePage() {
         </TabsContent>
         <TabsContent value="master-data">
              <Tabs defaultValue="process-codes" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
                     <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
+                    <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
+                    <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
                 </TabsList>
                  <TabsContent value="process-codes" className="mt-4">
                     <Card>
@@ -82,6 +86,18 @@ export default function LocalPurchasePage() {
                         </CardContent>
                     </Card>
                  </TabsContent>
+                 <TabsContent value="bill-items" className="mt-4">
+                    <Card>
+                      <CardHeader><CardTitle>Bill Items</CardTitle><CardDescription>Manage the master list of billable items and services.</CardDescription></CardHeader>
+                      <CardContent><BillItemMasterTable /></CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="bill-item-categories" className="mt-4">
+                    <Card>
+                      <CardHeader><CardTitle>Bill Item Categories</CardTitle><CardDescription>Manage categories for your billable items.</CardDescription></CardHeader>
+                      <CardContent><BillItemCategoryTable /></CardContent>
+                    </Card>
+                  </TabsContent>
              </Tabs>
         </TabsContent>
         <TabsContent value="settings">

@@ -30,7 +30,6 @@ import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMasterData } from './bill-flow-provider';
 import type { BillItemCategory } from './bill-item-category-table';
 
 export type BillItemMaster = {
@@ -45,9 +44,14 @@ export type BillItemMaster = {
 export function BillItemMasterTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { billItemCategories, billItemMasters, isLoading } = useMasterData();
   
   const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]);
+  const { data: billItemMasters, isLoading: l1 } = useCollection<BillItemMaster>(dataRef);
+  
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]);
+  const { data: billItemCategories, isLoading: l2 } = useCollection<BillItemCategory>(categoriesRef);
+
+  const isLoading = l1 || l2;
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -56,9 +60,10 @@ export function BillItemMasterTable() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const safeItems = useMemo(() => Array.isArray(billItemMasters) ? billItemMasters : [], [billItemMasters]);
+  const safeCategories = useMemo(() => Array.isArray(billItemCategories) ? billItemCategories : [], [billItemCategories]);
 
   const getCategoryName = (categoryId: string) => {
-      return billItemCategories.find(c => c.id === categoryId)?.name || 'N/A';
+      return safeCategories.find(c => c.id === categoryId)?.name || 'N/A';
   }
 
   const filteredItems = useMemo(() => {
@@ -69,7 +74,7 @@ export function BillItemMasterTable() {
         getCategoryName(p.billItemCategoryId).toLowerCase().includes(lowercasedTerm) ||
         p.description.toLowerCase().includes(lowercasedTerm)
     );
-  }, [safeItems, searchTerm, billItemCategories]);
+  }, [safeItems, searchTerm, safeCategories]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
@@ -158,7 +163,7 @@ export function BillItemMasterTable() {
 
           const newItems = json
             .map(item => {
-                const category = billItemCategories.find(c => c.code === String(item.categoryCode || '').trim());
+                const category = safeCategories.find(c => c.code === String(item.categoryCode || '').trim());
                 return {
                     name: String(item.name || '').trim(),
                     billItemCategoryId: category?.id || '',
@@ -287,7 +292,7 @@ export function BillItemMasterTable() {
               <Select value={formData.billItemCategoryId} onValueChange={handleSelectChange}>
                   <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
                   <SelectContent>
-                      {billItemCategories.map((cat: BillItemCategory) => (
+                      {safeCategories.map((cat: BillItemCategory) => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
                   </SelectContent>
