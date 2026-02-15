@@ -275,7 +275,13 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? demandNote.demandNoteNumber : 'Auto-generated'} disabled /></div>
                             <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
-                            <div className="space-y-2"><Label>Department<MandatoryIndicator/></Label><Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2">
+                                <Label>Department<MandatoryIndicator/></Label>
+                                <Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')} disabled>
+                                    <SelectTrigger><SelectValue placeholder="Auto-selected based on user"/></SelectTrigger>
+                                    <SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
                             <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
