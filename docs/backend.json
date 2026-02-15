@@ -35,6 +35,26 @@
                     }
                 }
             }
+        },
+        "demandNoteApprovalFlow": {
+            "type": "object",
+            "description": "Defines the demand note approval workflow.",
+            "properties": {
+                "effectiveDate": { "type": "string", "format": "date" },
+                "steps": {
+                    "type": "array",
+                    "description": "An ordered list of approval steps for demand notes.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "stepName": { "type": "string" },
+                            "approverId": { "type": "string" },
+                            "statusName": { "type": "string" }
+                        },
+                        "required": ["stepName", "approverId", "statusName"]
+                    }
+                }
+            }
         }
       },
       "required": ["name", "email"]
@@ -370,6 +390,77 @@
         "unitPrice": { "type": "number" }
       },
       "required": ["name", "billItemCategoryId", "unitPrice"]
+    },
+    "ProcessCode": {
+      "title": "Process Code",
+      "type": "object",
+      "description": "Defines a process code for demand notes.",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" }
+      },
+      "required": ["name", "code"]
+    },
+    "DemandType": {
+      "title": "Demand Type",
+      "type": "object",
+      "description": "Defines a type for demand notes.",
+      "properties": {
+        "name": { "type": "string" },
+        "code": { "type": "string" }
+      },
+      "required": ["name", "code"]
+    },
+    "DemandNoteItem": {
+      "title": "Demand Note Item",
+      "type": "object",
+      "description": "Represents a single line item in a demand note.",
+      "properties": {
+        "billItemMasterId": { "type": "string", "description": "Reference to the master item from BillFlow." },
+        "particulars": { "type": "string" },
+        "requiredQty": { "type": "number" },
+        "unit": { "type": "string" },
+        "remarks": { "type": "string" }
+      },
+      "required": ["billItemMasterId", "requiredQty"]
+    },
+    "DemandNote": {
+      "title": "Demand Note",
+      "type": "object",
+      "description": "Represents a requisition for items or services.",
+      "properties": {
+        "demandNoteNumber": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "departmentId": { "type": "string" },
+        "sectionId": { "type": "string" },
+        "processCodeId": { "type": "string" },
+        "demandTypeId": { "type": "string" },
+        "deliveryPlace": { "type": "string" },
+        "contactPersonName": { "type": "string" },
+        "contactPersonNumber": { "type": "string" },
+        "budgetAmount": { "type": "number" },
+        "budgetYearAndListNo": { "type": "string" },
+        "purpose": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/DemandNoteItem" } },
+        "remarks": { "type": "string" },
+        "createdBy": { "type": "string", "description": "Employee ID of the creator." },
+        "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
+        "currentApproverId": { "type": "string" },
+        "approvalHistory": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "level": { "type": "number" },
+                    "approverId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "remarks": { "type": "string" }
+                }
+            }
+        }
+      },
+      "required": ["demandNoteNumber", "date", "departmentId", "purpose"]
     }
   },
   "auth": {
@@ -403,10 +494,14 @@
     "/billCategories/{billCategoryId}": { "schema": { "$ref": "#/entities/BillCategory" }, "description": "Stores master list of bill categories." },
     "/bills/{billId}": { "schema": { "$ref": "#/entities/Bill" }, "description": "Stores all submitted bills." },
     "/billItemCategories/{billItemCategoryId}": { "schema": { "$ref": "#/entities/BillItemCategory" }, "description": "Stores categories for billable items." },
-    "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." }
+    "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." },
+    "/demandNotes/{demandNoteId}": { "schema": { "$ref": "#/entities/DemandNote" }, "description": "Stores all created demand notes." },
+    "/processCodes/{processCodeId}": { "schema": { "$ref": "#/entities/ProcessCode" }, "description": "Stores master data for process codes." },
+    "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." }
   }
 }
     
     
 
     
+
