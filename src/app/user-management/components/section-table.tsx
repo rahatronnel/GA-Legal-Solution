@@ -28,12 +28,14 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 export type Section = {
   id: string;
   name: string;
   sectionCode: string;
+  isManufacturingDept?: boolean;
 };
 
 interface SectionTableProps {
@@ -49,16 +51,20 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<Partial<Section> | null>(null);
-  const [sectionData, setSectionData] = useState({ name: '', sectionCode: '' });
+  const [sectionData, setSectionData] = useState({ name: '', sectionCode: '', isManufacturingDept: false });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setSectionData(prev => ({ ...prev, [id]: value }));
   };
   
+  const handleCheckboxChange = (checked: boolean) => {
+    setSectionData(prev => ({ ...prev, isManufacturingDept: checked }));
+  };
+  
   const resetForm = () => {
     setCurrentSection(null);
-    setSectionData({ name: '', sectionCode: '' });
+    setSectionData({ name: '', sectionCode: '', isManufacturingDept: false });
   }
 
   const handleAdd = () => {
@@ -68,7 +74,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
 
   const handleEdit = (section: Section) => {
     setCurrentSection(section);
-    setSectionData({ name: section.name, sectionCode: section.sectionCode });
+    setSectionData({ name: section.name, sectionCode: section.sectionCode, isManufacturingDept: !!section.isManufacturingDept });
     setIsDialogOpen(true);
   };
 
@@ -112,7 +118,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
   };
 
   const handleDownloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet([{ name: '', sectionCode: '' }]);
+    const ws = XLSX.utils.json_to_sheet([{ name: '', sectionCode: '', isManufacturingDept: false }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sections');
     XLSX.writeFile(wb, 'SectionTemplate.xlsx');
@@ -137,7 +143,8 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
           const newItems = json
             .map((item: any) => ({
               name: String(item.name || '').trim(),
-              sectionCode: String(item.sectionCode || '').trim()
+              sectionCode: String(item.sectionCode || '').trim(),
+              isManufacturingDept: ['true', 'yes', '1'].includes(String(item.isManufacturingDept || '').toLowerCase())
             }))
             .filter(item => item.name && item.sectionCode);
           
@@ -176,6 +183,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
                 <TableRow>
                     <TableHead>Section Name</TableHead>
                     <TableHead>Section Code</TableHead>
+                    <TableHead>Manufacturing Dept</TableHead>
                     <TableHead className="w-[50px] text-right">Actions</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -185,6 +193,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-8 float-right" /></TableCell>
                       </TableRow>
                     ))
@@ -193,6 +202,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
                     <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.sectionCode}</TableCell>
+                        <TableCell>{item.isManufacturingDept ? 'Yes' : 'No'}</TableCell>
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -217,7 +227,7 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
                     ))
                 ) : (
                     <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">No sections found.</TableCell>
+                    <TableCell colSpan={4} className="text-center h-24">No sections found.</TableCell>
                     </TableRow>
                 )}
                 </TableBody>
@@ -244,6 +254,13 @@ export function SectionTable({ sections, isLoading }: SectionTableProps) {
                 Section Code
               </Label>
               <Input id="sectionCode" value={sectionData.sectionCode} onChange={handleInputChange} className="col-span-3" />
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+                <div />
+                <div className="col-span-3 flex items-center space-x-2">
+                    <Checkbox id="isManufacturingDept" checked={sectionData.isManufacturingDept} onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)} />
+                    <Label htmlFor="isManufacturingDept">Is a Manufacturing Department</Label>
+                </div>
             </div>
           </div>
           <DialogFooter>

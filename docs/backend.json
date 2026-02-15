@@ -86,7 +86,8 @@
       "description": "Represents a department or section within the organization.",
       "properties": {
         "name": { "type": "string", "description": "The name of the section." },
-        "sectionCode": { "type": "string", "description": "The unique code for the section." }
+        "sectionCode": { "type": "string", "description": "The unique code for the section." },
+        "isManufacturingDept": { "type": "boolean", "description": "Indicates if this section is a manufacturing department." }
       },
       "required": ["name", "sectionCode"]
     },
@@ -525,6 +526,7 @@
     
 
     
+
 
 
 
