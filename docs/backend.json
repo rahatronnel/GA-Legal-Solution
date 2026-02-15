@@ -55,6 +55,26 @@
                     }
                 }
             }
+        },
+        "procurementSettings": {
+          "type": "object",
+          "description": "Settings specific to the procurement module approvals.",
+          "properties": {
+            "departmentHeads": {
+              "type": "array",
+              "description": "An array mapping sections to their head employees.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sectionId": { "type": "string" },
+                  "headId": { "type": "string" }
+                },
+                "required": ["sectionId", "headId"]
+              }
+            },
+            "managingDirectorId": { "type": "string", "description": "Employee ID of the Managing Director." },
+            "factoryDirectorId": { "type": "string", "description": "Employee ID of the Factory Director." }
+          }
         }
       },
       "required": ["name", "email"]
@@ -504,4 +524,5 @@
     
 
     
+
 
