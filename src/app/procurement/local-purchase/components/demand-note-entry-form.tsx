@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -111,47 +111,44 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const totalSteps = 2;
     const progress = Math.round((step / totalSteps) * 100);
 
-    // This effect resets the form when it opens, or populates it for editing.
-    useEffect(() => {
-        if (isOpen) {
-            setStep(1);
-            if (isEditing && demandNote) {
-                // Editing mode: populate all fields from the passed `demandNote` prop
-                setNoteData({ ...initialDemandNoteData, ...demandNote });
-                setItems(demandNote.items || []);
-                setDocuments(demandNote.documents || { attachments: [] });
-                setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
-            } else {
-                // New note mode: reset to defaults. User-specific data is handled in the next effect.
-                const today = new Date();
-                setNoteData({
-                    ...initialDemandNoteData,
-                    date: format(today, 'yyyy-MM-dd'),
-                });
-                setItems([]);
-                setDocuments({ attachments: [] });
-                setDate(today);
-            }
-        }
-    }, [isOpen, demandNote, isEditing]); // Only run when the dialog state or item to edit changes
+    const departmentName = React.useMemo(() => {
+        if (!noteData.departmentId || !sections || sections.length === 0) return '';
+        return sections.find(s => s.id === noteData.departmentId)?.name || '';
+    }, [noteData.departmentId, sections]);
 
-    // This effect populates user-specific data ONLY for new notes, once the user and employee data is available.
+    // This single effect now handles all initialization logic for the form.
     useEffect(() => {
-        if (isOpen && !isEditing && user && employees.length > 0) {
-            const loggedInEmployee = employees.find(e => e.email === user.email);
-            if (loggedInEmployee) {
-                // Use a functional update to safely merge the new data without overwriting other state.
-                setNoteData(prev => ({
-                    ...prev,
-                    createdBy: loggedInEmployee.id,
-                    contactPersonName: loggedInEmployee.fullName,
-                    contactPersonNumber: loggedInEmployee.mobileNumber,
-                    departmentId: loggedInEmployee.departmentId,
-                    sectionId: loggedInEmployee.departmentId, // Assuming sectionId is the same as departmentId for the user
-                }));
-            }
+        if (!isOpen) return;
+
+        setStep(1);
+
+        if (isEditing && demandNote) {
+            // Editing mode: populate all fields from the passed `demandNote` prop
+            setNoteData({ ...initialDemandNoteData, ...demandNote });
+            setItems(demandNote.items || []);
+            setDocuments(demandNote.documents || { attachments: [] });
+            setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
+        } else {
+            // New note mode: set defaults and user-specific data in one go.
+            const today = new Date();
+            const loggedInEmployee = user && employees.length > 0 
+                ? employees.find(e => e.email === user.email)
+                : null;
+            
+            setNoteData({
+                ...initialDemandNoteData,
+                date: format(today, 'yyyy-MM-dd'),
+                createdBy: loggedInEmployee?.id || '',
+                contactPersonName: loggedInEmployee?.fullName || '',
+                contactPersonNumber: loggedInEmployee?.mobileNumber || '',
+                departmentId: loggedInEmployee?.departmentId || '',
+                sectionId: loggedInEmployee?.departmentId || '',
+            });
+            setItems([]);
+            setDocuments({ attachments: [] });
+            setDate(today);
         }
-    }, [isOpen, isEditing, user, employees]); // Runs when data loads for an open, new-note dialog.
+    }, [isOpen, isEditing, demandNote, user, employees]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value, type } = e.target;
@@ -291,14 +288,12 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                             <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
                             <div className="space-y-2">
                                 <Label>Department<MandatoryIndicator/></Label>
-                                <Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')} disabled>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Auto-selected based on user"/>
-                                    </SelectTrigger>
-                                    <SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                </Select>
+                                <Input value={departmentName} disabled placeholder="Auto-selected based on user" />
                             </div>
-                            <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')} disabled><SelectTrigger><SelectValue placeholder="Auto-selected based on user"/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2">
+                                <Label>Section</Label>
+                                <Input value={departmentName} disabled placeholder="Auto-selected based on user" />
+                            </div>
                             <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Delivery Place</Label><Input id="deliveryPlace" value={noteData.deliveryPlace} onChange={handleInputChange} /></div>
