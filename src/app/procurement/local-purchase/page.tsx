@@ -1,19 +1,24 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ModuleHeader } from '@/app/components/module-header';
 import { DemandNoteApprovalSettings } from './components/demand-note-approval-settings';
+import { DemandNoteTable } from './components/demand-note-table';
+import { ProcessCodeTable } from './components/process-code-table';
+import { DemandTypeTable } from './components/demand-type-table';
 
 export default function LocalPurchasePage() {
   return (
     <div className="space-y-6">
       <ModuleHeader />
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="master-data">Master Data</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard">
@@ -33,8 +38,8 @@ export default function LocalPurchasePage() {
                     <CardTitle>Demand Notes</CardTitle>
                     <CardDescription>Create and manage item requisitions.</CardDescription>
                 </CardHeader>
-                 <CardContent className="h-96 flex items-center justify-center">
-                    <p className="text-muted-foreground">Demand Note table and creation form coming soon...</p>
+                 <CardContent>
+                    <DemandNoteTable />
                 </CardContent>
             </Card>
         </TabsContent>
@@ -48,6 +53,36 @@ export default function LocalPurchasePage() {
                     <p className="text-muted-foreground">Reports coming soon...</p>
                 </CardContent>
             </Card>
+        </TabsContent>
+        <TabsContent value="master-data">
+             <Tabs defaultValue="process-codes" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
+                    <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
+                </TabsList>
+                 <TabsContent value="process-codes" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Process Codes</CardTitle>
+                            <CardDescription>Manage codes that define different stages or processes for demand notes.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ProcessCodeTable />
+                        </CardContent>
+                    </Card>
+                 </TabsContent>
+                 <TabsContent value="demand-types" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Demand Types</CardTitle>
+                            <CardDescription>Manage the various types of demand notes (e.g., General, Urgent).</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DemandTypeTable />
+                        </CardContent>
+                    </Card>
+                 </TabsContent>
+             </Tabs>
         </TabsContent>
         <TabsContent value="settings">
           <DemandNoteApprovalSettings />

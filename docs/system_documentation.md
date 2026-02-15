@@ -97,4 +97,27 @@ The progression of a bill through the approval chain is deterministic and based 
 - `src/app/billflow/bills/[id]/page.tsx`: Contains the primary logic (`handleApproval`) for progressing a single bill through the workflow.
 - `src/app/billflow/components/bill-table.tsx`: Contains the logic for bulk approval and displaying the status of bills in the list.
 
-    
+## 6. Demand Note Approval Workflow
+
+Similar to the BillFlow module, the Local Purchase module features a configurable, multi-step approval workflow for Demand Notes.
+
+### Data Structure
+- **Entity**: `OrganizationSettings`
+- **Key Field**: `demandNoteApprovalFlow`
+  - **Type**: `object`
+  - **Description**: Defines the approval chain for demand notes.
+  - **Properties**:
+    - `effectiveDate` (`string`): The date from which this flow is active.
+    - `steps` (`array`): An ordered array defining the approval sequence, identical in structure to the `approvalFlow`.
+
+The `DemandNote` entity tracks its approval state with the following fields:
+- `approvalStatus`: A number representing the state (0: Rejected, 1: Approved, 2: Pending).
+- `currentApproverId`: The employee ID of the current approver.
+- `approvalHistory`: An audit trail of all approval actions.
+
+### Configuration
+The workflow is configured by a superadmin.
+- **Location**: Procurement Management -> Local Purchase -> "Settings" Tab.
+
+### Workflow Logic
+The logic for creating a new demand note and progressing it through the approval chain mirrors the BillFlow system precisely, using the `demandNoteApprovalFlow` setting instead. Initial `approvalStatus` is `2`, and the `currentApproverId` is set to the first approver in the sequence. Each approval advances the note to the next person in the `steps` array until the final approver marks it as complete (`approvalStatus: 1`).
