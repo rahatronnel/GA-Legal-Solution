@@ -111,37 +111,47 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const totalSteps = 2;
     const progress = Math.round((step / totalSteps) * 100);
 
-    // Combined effect to setup form state when it opens
+    // This effect resets the form when it opens, or populates it for editing.
     useEffect(() => {
         if (isOpen) {
             setStep(1);
             if (isEditing && demandNote) {
-                // Populate form for editing
+                // Editing mode: populate all fields from the passed `demandNote` prop
                 setNoteData({ ...initialDemandNoteData, ...demandNote });
                 setItems(demandNote.items || []);
                 setDocuments(demandNote.documents || { attachments: [] });
                 setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
             } else {
-                // Reset form for creating a new note
+                // New note mode: reset to defaults. User-specific data is handled in the next effect.
                 const today = new Date();
-                const loggedInEmployee = employees.find(e => e.email === user?.email);
-                
                 setNoteData({
                     ...initialDemandNoteData,
                     date: format(today, 'yyyy-MM-dd'),
-                    createdBy: loggedInEmployee?.id || '',
-                    contactPersonName: loggedInEmployee?.fullName || '',
-                    contactPersonNumber: loggedInEmployee?.mobileNumber || '',
-                    departmentId: loggedInEmployee?.departmentId || '',
-                    sectionId: loggedInEmployee?.departmentId || '',
                 });
-
                 setItems([]);
                 setDocuments({ attachments: [] });
                 setDate(today);
             }
         }
-    }, [isOpen, demandNote, isEditing, user, employees]);
+    }, [isOpen, demandNote, isEditing]); // Only run when the dialog state or item to edit changes
+
+    // This effect populates user-specific data ONLY for new notes, once the user and employee data is available.
+    useEffect(() => {
+        if (isOpen && !isEditing && user && employees.length > 0) {
+            const loggedInEmployee = employees.find(e => e.email === user.email);
+            if (loggedInEmployee) {
+                // Use a functional update to safely merge the new data without overwriting other state.
+                setNoteData(prev => ({
+                    ...prev,
+                    createdBy: loggedInEmployee.id,
+                    contactPersonName: loggedInEmployee.fullName,
+                    contactPersonNumber: loggedInEmployee.mobileNumber,
+                    departmentId: loggedInEmployee.departmentId,
+                    sectionId: loggedInEmployee.departmentId, // Assuming sectionId is the same as departmentId for the user
+                }));
+            }
+        }
+    }, [isOpen, isEditing, user, employees]); // Runs when data loads for an open, new-note dialog.
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value, type } = e.target;
@@ -282,7 +292,9 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                             <div className="space-y-2">
                                 <Label>Department<MandatoryIndicator/></Label>
                                 <Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')} disabled>
-                                    <SelectTrigger><SelectValue placeholder="Auto-selected based on user"/></SelectTrigger>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Auto-selected based on user"/>
+                                    </SelectTrigger>
                                     <SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
