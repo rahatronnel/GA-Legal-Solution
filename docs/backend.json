@@ -36,26 +36,6 @@
                 }
             }
         },
-        "demandNoteApprovalFlow": {
-            "type": "object",
-            "description": "Defines the demand note approval workflow.",
-            "properties": {
-                "effectiveDate": { "type": "string", "format": "date" },
-                "steps": {
-                    "type": "array",
-                    "description": "An ordered list of approval steps for demand notes.",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "stepName": { "type": "string" },
-                            "approverId": { "type": "string" },
-                            "statusName": { "type": "string" }
-                        },
-                        "required": ["stepName", "approverId", "statusName"]
-                    }
-                }
-            }
-        },
         "procurementSettings": {
           "type": "object",
           "description": "Settings specific to the procurement module approvals.",
@@ -490,6 +470,22 @@
         "createdBy": { "type": "string", "description": "Employee ID of the creator." },
         "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
         "currentApproverId": { "type": "string" },
+        "approvalFlow": {
+            "type": "object",
+            "description": "The determined approval workflow for this specific demand note.",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "stepName": { "type": "string" },
+                            "approverId": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
         "approvalHistory": {
             "type": "array",
             "items": {
@@ -548,6 +544,7 @@
     
 
     
+
 
 
 

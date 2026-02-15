@@ -34,13 +34,18 @@ export type OrganizationSettings = {
   favicon: string; // Stored as data URL for favicon
   approvalFlow?: {
       effectiveDate: string;
-      defaultPendingStatusName: string;
-      rejectedStatusName: string;
       steps: ApprovalStep[];
-  }
+  };
+  procurementSettings?: {
+      departmentHeads: { sectionId: string; headId: string; technicalAdvisorId: string }[];
+      managingDirectorId: string;
+      factoryDirectorId: string;
+      manufacturingDeptManagerId: string;
+      specializedDeptManagerId: string;
+  };
 };
 
-const initialSettings: Omit<OrganizationSettings, 'approvalFlow'> = {
+const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementSettings'> = {
   name: 'GA & Legal Solution',
   slogan: 'Your Trusted Partner',
   address: 'Head Office: 123 Business Rd, Dhaka, Bangladesh',

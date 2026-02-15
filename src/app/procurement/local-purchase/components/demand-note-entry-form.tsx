@@ -63,6 +63,12 @@ export type DemandNote = {
     documents: {
       attachments: UploadedFile[];
     };
+    approvalFlow?: {
+        steps: { stepName: string; approverId: string; }[];
+    };
+    approvalStatus?: number;
+    currentApproverId?: string;
+    approvalHistory?: any[];
 };
 
 const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'> = {
@@ -93,7 +99,7 @@ interface DemandNoteEntryFormProps {
 export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: DemandNoteEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
-    const { sections, processCodes, demandTypes, billItemMasters, employees } = useProcurement();
+    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings } = useProcurement();
 
     const [step, setStep] = useState(1);
     const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'>>(initialDemandNoteData);
@@ -211,6 +217,44 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             demandNoteNumber: isEditing ? demandNote.demandNoteNumber : `DN-${format(new Date(), 'ddMMyy')}-${Date.now().toString().slice(-4)}`,
         };
         
+        if (!isEditing && orgSettings?.procurementSettings) {
+            const creator = employees.find(e => e.id === noteData.createdBy);
+            const department = sections.find(s => s.id === creator?.departmentId);
+
+            const hasSpecialItem = items.some(item => {
+                const masterItem = billItemMasters.find(m => m.id === item.billItemMasterId);
+                if (!masterItem) return false;
+                const category = billItemCategories.find(c => c.id === masterItem.billItemCategoryId);
+                return category?.isSpecial === true;
+            });
+
+            const approvalFlowSteps = [];
+            const { departmentHeads, managingDirectorId, factoryDirectorId, manufacturingDeptManagerId, specializedDeptManagerId } = orgSettings.procurementSettings;
+            
+            const deptApprovers = departmentHeads.find(dh => dh.sectionId === department?.id);
+            const deptHeadId = deptApprovers?.headId;
+            const techAdvisorId = deptApprovers?.technicalAdvisorId;
+
+            if (hasSpecialItem) {
+                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                if (specializedDeptManagerId) approvalFlowSteps.push({ stepName: 'Specialized Dept. Manager', approverId: specializedDeptManagerId });
+                if (managingDirectorId) approvalFlowSteps.push({ stepName: 'Managing Director', approverId: managingDirectorId });
+            } else if (department?.isManufacturingDept) {
+                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                if (manufacturingDeptManagerId) approvalFlowSteps.push({ stepName: 'Manufacturing Dept. Manager', approverId: manufacturingDeptManagerId });
+            } else {
+                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+            }
+
+            dataToSave.approvalFlow = { steps: approvalFlowSteps };
+            dataToSave.currentApproverId = approvalFlowSteps[0]?.approverId || '';
+            dataToSave.approvalStatus = 2; // Pending
+            dataToSave.approvalHistory = [];
+        }
+
         if (isEditing) dataToSave.id = demandNote.id;
         
         onSave(dataToSave);
