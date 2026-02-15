@@ -111,36 +111,46 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const totalSteps = 2;
     const progress = Math.round((step / totalSteps) * 100);
 
+    // Effect to setup form state when it opens
     useEffect(() => {
         if (isOpen) {
             setStep(1);
-            const loggedInEmployee = employees.find(e => e.email === user?.email);
-            
             if (isEditing && demandNote) {
+                // Populate form for editing
                 setNoteData({ ...initialDemandNoteData, ...demandNote });
                 setItems(demandNote.items || []);
                 setDocuments(demandNote.documents || { attachments: [] });
                 setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
             } else {
+                // Reset form for creating a new note
                 const today = new Date();
-                const contactPerson = loggedInEmployee ? loggedInEmployee.fullName : '';
-                const contactNumber = loggedInEmployee ? loggedInEmployee.mobileNumber : '';
-                const department = loggedInEmployee ? loggedInEmployee.departmentId : '';
-
                 setNoteData({
                     ...initialDemandNoteData,
                     date: format(today, 'yyyy-MM-dd'),
-                    createdBy: loggedInEmployee?.id || '',
-                    contactPersonName: contactPerson,
-                    contactPersonNumber: contactNumber,
-                    departmentId: department
                 });
                 setItems([]);
                 setDocuments({ attachments: [] });
                 setDate(today);
             }
         }
-    }, [isOpen, demandNote, isEditing, user, employees]);
+    }, [isOpen, demandNote, isEditing]);
+
+    // Effect to auto-populate user details for a new note
+    useEffect(() => {
+        if (isOpen && !isEditing && employees.length > 0 && user) {
+            const loggedInEmployee = employees.find(e => e.email === user.email);
+            if (loggedInEmployee && !noteData.createdBy) {
+                setNoteData(prev => ({
+                    ...prev,
+                    createdBy: loggedInEmployee.id,
+                    contactPersonName: loggedInEmployee.fullName,
+                    contactPersonNumber: loggedInEmployee.mobileNumber,
+                    departmentId: loggedInEmployee.departmentId,
+                    sectionId: loggedInEmployee.departmentId, // Auto-populate section as well
+                }));
+            }
+        }
+    }, [isOpen, isEditing, user, employees, noteData.createdBy]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value, type } = e.target;
@@ -285,7 +295,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                     <SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')} disabled><SelectTrigger><SelectValue placeholder="Auto-selected based on user"/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Delivery Place</Label><Input id="deliveryPlace" value={noteData.deliveryPlace} onChange={handleInputChange} /></div>
