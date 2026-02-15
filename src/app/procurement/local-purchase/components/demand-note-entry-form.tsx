@@ -111,7 +111,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const totalSteps = 2;
     const progress = Math.round((step / totalSteps) * 100);
 
-    // Effect to setup form state when it opens
+    // Combined effect to setup form state when it opens
     useEffect(() => {
         if (isOpen) {
             setStep(1);
@@ -124,33 +124,24 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             } else {
                 // Reset form for creating a new note
                 const today = new Date();
+                const loggedInEmployee = employees.find(e => e.email === user?.email);
+                
                 setNoteData({
                     ...initialDemandNoteData,
                     date: format(today, 'yyyy-MM-dd'),
+                    createdBy: loggedInEmployee?.id || '',
+                    contactPersonName: loggedInEmployee?.fullName || '',
+                    contactPersonNumber: loggedInEmployee?.mobileNumber || '',
+                    departmentId: loggedInEmployee?.departmentId || '',
+                    sectionId: loggedInEmployee?.departmentId || '',
                 });
+
                 setItems([]);
                 setDocuments({ attachments: [] });
                 setDate(today);
             }
         }
-    }, [isOpen, demandNote, isEditing]);
-
-    // Effect to auto-populate user details for a new note
-    useEffect(() => {
-        if (isOpen && !isEditing && employees.length > 0 && user) {
-            const loggedInEmployee = employees.find(e => e.email === user.email);
-            if (loggedInEmployee && !noteData.createdBy) {
-                setNoteData(prev => ({
-                    ...prev,
-                    createdBy: loggedInEmployee.id,
-                    contactPersonName: loggedInEmployee.fullName,
-                    contactPersonNumber: loggedInEmployee.mobileNumber,
-                    departmentId: loggedInEmployee.departmentId,
-                    sectionId: loggedInEmployee.departmentId, // Auto-populate section as well
-                }));
-            }
-        }
-    }, [isOpen, isEditing, user, employees, noteData.createdBy]);
+    }, [isOpen, demandNote, isEditing, user, employees]);
     
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value, type } = e.target;
