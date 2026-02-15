@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
@@ -12,12 +11,14 @@ import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-
 import type { DemandNote } from './demand-note-entry-form';
 import type { ProcessCode } from './process-code-table';
 import type { DemandType } from './demand-type-table';
+import type { BillItemCategory } from '@/app/billflow/components/bill-item-category-table';
 
 const ProcurementContext = createContext<{
     employees: Employee[];
     sections: Section[];
     orgSettings: OrganizationSettings | null;
     billItemMasters: BillItemMaster[];
+    billItemCategories: BillItemCategory[];
     demandNotes: DemandNote[];
     processCodes: ProcessCode[];
     demandTypes: DemandType[];
@@ -31,20 +32,22 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
     const { data: sections, isLoading: l2 } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
     const { data: orgSettings, isLoading: l3 } = useDoc<OrganizationSettings>(useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]));
     const { data: billItemMasters, isLoading: l4 } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
-    const { data: demandNotes, isLoading: l5 } = useCollection<DemandNote>(useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]));
-    const { data: processCodes, isLoading: l6 } = useCollection<ProcessCode>(useMemoFirebase(() => firestore ? collection(firestore, 'processCodes') : null, [firestore]));
-    const { data: demandTypes, isLoading: l7 } = useCollection<DemandType>(useMemoFirebase(() => firestore ? collection(firestore, 'demandTypes') : null, [firestore]));
+    const { data: billItemCategories, isLoading: l5 } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
+    const { data: demandNotes, isLoading: l6 } = useCollection<DemandNote>(useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]));
+    const { data: processCodes, isLoading: l7 } = useCollection<ProcessCode>(useMemoFirebase(() => firestore ? collection(firestore, 'processCodes') : null, [firestore]));
+    const { data: demandTypes, isLoading: l8 } = useCollection<DemandType>(useMemoFirebase(() => firestore ? collection(firestore, 'demandTypes') : null, [firestore]));
 
     const value = useMemo(() => ({
         employees: employees || [],
         sections: sections || [],
         orgSettings: orgSettings || null,
         billItemMasters: billItemMasters || [],
+        billItemCategories: billItemCategories || [],
         demandNotes: demandNotes || [],
         processCodes: processCodes || [],
         demandTypes: demandTypes || [],
-        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7,
-    }), [employees, sections, orgSettings, billItemMasters, demandNotes, processCodes, demandTypes, l1, l2, l3, l4, l5, l6, l7]);
+        isLoading: l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8,
+    }), [employees, sections, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, l1, l2, l3, l4, l5, l6, l7, l8]);
 
     return <ProcurementContext.Provider value={value}>{children}</ProcurementContext.Provider>;
 }
@@ -58,6 +61,7 @@ export function useProcurement() {
                 sections: [],
                 orgSettings: null,
                 billItemMasters: [],
+                billItemCategories: [],
                 demandNotes: [],
                 processCodes: [],
                 demandTypes: [],
