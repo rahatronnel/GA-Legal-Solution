@@ -9,9 +9,10 @@ import type { Trip } from './trip-entry-form';
 import type { Accident } from './accident-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import type { Bill } from '@/app/billflow/components/bill-entry-form';
+import type { DemandNote } from '@/app/procurement/local-purchase/components/demand-note-entry-form';
 
-type PrintableItem = Driver | Vehicle | Employee | Trip | Accident | Vendor | Bill;
-type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip' | 'accident' | 'vendor' | 'bill';
+type PrintableItem = Driver | Vehicle | Employee | Trip | Accident | Vendor | Bill | DemandNote;
+type PrintType = 'driver' | 'vehicle' | 'employee' | 'trip' | 'accident' | 'vendor' | 'bill' | 'demand-note';
 
 interface PrintContextType {
   itemToPrint: PrintableItem | null;

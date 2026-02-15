@@ -37,6 +37,11 @@ import { BillPrintLayout } from '@/app/billflow/components/bill-print-layout';
 import type { BillType } from '@/app/billflow/components/bill-type-table';
 import type { BillCategory } from '@/app/billflow/components/bill-category-table';
 import type { BillItemCategory } from '@/app/billflow/components/bill-item-category-table';
+import type { DemandNote } from '@/app/procurement/local-purchase/components/demand-note-entry-form';
+import { DemandNotePrintLayout } from '@/app/procurement/local-purchase/components/demand-note-print-layout';
+import type { ProcessCode } from '@/app/procurement/local-purchase/components/process-code-table';
+import type { DemandType } from '@/app/procurement/local-purchase/components/demand-type-table';
+import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-table';
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
@@ -66,13 +71,16 @@ export const PrintDriver = () => {
   // Settings Data
   const { data: organizationSettings } = useCollection<OrganizationSettings>(useMemoFirebase(() => firestore ? collection(firestore, 'settings') : null, [firestore]));
   
-  // BillFlow Data
+  // BillFlow & Procurement Data
   const { data: vendors } = useCollection<Vendor>(useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]));
   const { data: vendorCategories } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
   const { data: vendorNatures } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
   const { data: billTypes } = useCollection<BillType>(useMemoFirebase(() => firestore ? collection(firestore, 'billTypes') : null, [firestore]));
   const { data: billCategories } = useCollection<BillCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billCategories') : null, [firestore]));
   const { data: billItemCategories } = useCollection<BillItemCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemCategories') : null, [firestore]));
+  const { data: processCodes } = useCollection<ProcessCode>(useMemoFirebase(() => firestore ? collection(firestore, 'processCodes') : null, [firestore]));
+  const { data: demandTypes } = useCollection<DemandType>(useMemoFirebase(() => firestore ? collection(firestore, 'demandTypes') : null, [firestore]));
+  const { data: billItemMasters } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
 
 
   if (!itemToPrint) {
@@ -102,6 +110,23 @@ export const PrintDriver = () => {
               const billCategory = billCategories?.find(bc => bc.id === bill.billCategoryId);
               const employee = employees?.find(e => e.id === bill.entryBy);
               return <BillPrintLayout bill={bill} vendor={vendor} billType={billType} billCategory={billCategory} billItemCategories={billItemCategories || []} employee={employee} employees={employees || []} designations={designations || []} orgSettings={orgSettings} />;
+           case 'demand-note':
+                const demandNote = itemToPrint as DemandNote;
+                const dnCreator = employees?.find(e => e.id === demandNote.createdBy);
+                const dnDept = sections?.find(s => s.id === demandNote.departmentId);
+                const dnProcessCode = processCodes?.find(p => p.id === demandNote.processCodeId);
+                const dnDemandType = demandTypes?.find(d => d.id === demandNote.demandTypeId);
+                return <DemandNotePrintLayout 
+                    demandNote={demandNote}
+                    creator={dnCreator}
+                    department={dnDept}
+                    processCode={dnProcessCode}
+                    demandType={dnDemandType}
+                    billItemMasters={billItemMasters || []}
+                    employees={employees || []} 
+                    designations={designations || []} 
+                    orgSettings={orgSettings} 
+                />;
           default:
               return null;
       }

@@ -54,6 +54,7 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/user-management/employees/[id]': dynamic(() => import('./user-management/employees/[id]/page'), { ssr: false }),
     '/procurement/foreign-purchase': dynamic(() => import('./procurement/foreign-purchase/page'), { ssr: false }),
     '/procurement/local-purchase': dynamic(() => import('./procurement/local-purchase/page'), { ssr: false }),
+    '/procurement/local-purchase/demand-notes/[id]': dynamic(() => import('./procurement/local-purchase/demand-notes/[id]/page'), { ssr: false }),
 };
 
 const ModuleDashboard = () => {    
