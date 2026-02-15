@@ -471,6 +471,22 @@
         "purpose": { "type": "string" },
         "items": { "type": "array", "items": { "$ref": "#/entities/DemandNoteItem" } },
         "remarks": { "type": "string" },
+        "documents": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "file": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
         "createdBy": { "type": "string", "description": "Employee ID of the creator." },
         "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
         "currentApproverId": { "type": "string" },
@@ -532,6 +548,7 @@
     
 
     
+
 
 
 

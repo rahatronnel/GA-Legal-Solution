@@ -17,12 +17,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, File as FileIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
+import { Progress } from '@/components/ui/progress';
+
+export type UploadedFile = {
+  id: string;
+  name: string;
+  file: string; // data URL
+}
 
 export type DemandNoteItem = {
     id: string;
@@ -53,9 +60,12 @@ export type DemandNote = {
     items: DemandNoteItem[];
     remarks: string;
     createdBy: string;
+    documents: {
+      attachments: UploadedFile[];
+    };
 };
 
-const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items'> = {
+const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'> = {
     date: format(new Date(), 'yyyy-MM-dd'),
     departmentId: '',
     sectionId: '',
@@ -85,11 +95,15 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const { user } = useUser();
     const { sections, processCodes, demandTypes, billItemMasters, employees } = useProcurement();
 
-    const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items'>>(initialDemandNoteData);
+    const [step, setStep] = useState(1);
+    const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'>>(initialDemandNoteData);
     const [items, setItems] = useState<DemandNoteItem[]>([]);
+    const [documents, setDocuments] = useState<{ attachments: UploadedFile[] }>({ attachments: [] });
     const [date, setDate] = useState<Date | undefined>(new Date());
 
     const isEditing = demandNote && demandNote.id;
+    const totalSteps = 2;
+    const progress = Math.round((step / totalSteps) * 100);
 
     useEffect(() => {
         const loggedInEmployee = employees.find(e => e.email === user?.email);
@@ -98,9 +112,11 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         const department = loggedInEmployee ? loggedInEmployee.departmentId : '';
 
         if (isOpen) {
+            setStep(1);
             if (isEditing && demandNote) {
                 setNoteData({ ...initialDemandNoteData, ...demandNote });
                 setItems(demandNote.items || []);
+                setDocuments(demandNote.documents || { attachments: [] });
                 setDate(demandNote.date ? new Date(demandNote.date) : new Date());
             } else {
                 setNoteData({
@@ -111,6 +127,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     departmentId: department
                 });
                 setItems([]);
+                setDocuments({ attachments: [] });
                 setDate(new Date());
             }
         }
@@ -149,16 +166,48 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             return item;
         }));
     };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            try {
+              const dataUrl = await imageToDataUrl(file);
+              setDocuments(prev => ({ attachments: [...prev.attachments, { id: Date.now().toString(), name: file.name, file: dataUrl }] }));
+            } catch (error) {
+               console.error("Error processing document:", error);
+               toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
+            }
+        }
+    };
     
-    const handleSave = () => {
+    const removeDocument = (fileId: string) => {
+        setDocuments(prev => ({ attachments: prev.attachments.filter(doc => doc.id !== fileId)}));
+    };
+    
+    const validateStep1 = () => {
         if (!noteData.departmentId || !noteData.date) {
             toast({ variant: 'destructive', title: 'Missing Fields', description: 'Date and Department are required.' });
+            return false;
+        }
+        return true;
+    }
+
+    const nextStep = () => {
+        if (!validateStep1()) return;
+        setStep(s => s + 1);
+    };
+    const prevStep = () => setStep(s => s - 1);
+    
+    const handleSave = () => {
+        if (!validateStep1()) {
+            toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please go back and fill in all required fields.'});
             return;
         }
 
         const dataToSave: Partial<DemandNote> = {
             ...noteData,
             items,
+            documents,
             demandNoteNumber: isEditing ? demandNote.demandNoteNumber : `DN-${format(new Date(), 'ddMMyy')}-${Date.now().toString().slice(-4)}`,
         };
         
@@ -174,73 +223,99 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                  <DialogHeader>
                     <DialogTitle>{isEditing ? 'Edit Demand Note' : 'Create Demand Note'}</DialogTitle>
                     <DialogDescription>Fill in the details for the requisition.</DialogDescription>
+                    <Progress value={progress} className="w-full mt-2" />
                 </DialogHeader>
                 <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? demandNote.demandNoteNumber : 'Auto-generated'} disabled /></div>
-                        <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
-                        <div className="space-y-2"><Label>Department<MandatoryIndicator/></Label><Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                        <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                        <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                        <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                        <div className="space-y-2"><Label>Delivery Place</Label><Input id="deliveryPlace" value={noteData.deliveryPlace} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount} onChange={handleInputChange} /></div>
-                        <div className="space-y-2 md:col-span-2"><Label>Budget Year & List No.</Label><Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo} onChange={handleInputChange} /></div>
-                        <div className="space-y-2 md:col-span-3"><Label>Purpose of Requisition</Label><Textarea id="purpose" value={noteData.purpose} onChange={handleInputChange} /></div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Items</h3><Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4"/>Add Item</Button></div>
-                        <div className="space-y-3 max-h-[40vh] overflow-y-auto">
-                            {items.map((item, index) => (
-                                <div key={item.id} className="p-3 border rounded-lg space-y-2">
-                                     <div className="flex justify-between items-center"><Label className="text-base">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
-                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <div className="space-y-2 md:col-span-2">
-                                            <Label>Particulars</Label>
-                                            <Select value={item.billItemMasterId} onValueChange={(v) => updateItem(item.id, 'billItemMasterId', v)}>
-                                                <SelectTrigger><SelectValue placeholder="Select from master list..."/></SelectTrigger>
-                                                <SelectContent>{billItemMasters.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Required Qty</Label>
-                                            <Input type="number" value={item.requiredQty} onChange={(e) => updateItem(item.id, 'requiredQty', parseFloat(e.target.value) || 0)} />
-                                        </div>
-                                         <div className="space-y-2">
-                                            <Label>Unit</Label>
-                                            <Input value={item.unit} disabled />
-                                        </div>
-                                     </div>
-                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>Brand Name</Label>
-                                            <Input value={item.brandName || ''} onChange={(e) => updateItem(item.id, 'brandName', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Model No.</Label>
-                                            <Input value={item.modelNo || ''} onChange={(e) => updateItem(item.id, 'modelNo', e.target.value)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Other Necessary Details</Label>
-                                            <Input value={item.otherDetails || ''} onChange={(e) => updateItem(item.id, 'otherDetails', e.target.value)} />
-                                        </div>
-                                     </div>
-                                     <div className="space-y-2">
-                                        <Label>Remarks</Label>
-                                        <Input value={item.remarks} onChange={(e) => updateItem(item.id, 'remarks', e.target.value)} />
-                                    </div>
-                                </div>
-                            ))}
-                            {items.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No items added yet.</p>}
+                    {step === 1 && (
+                        <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? demandNote.demandNoteNumber : 'Auto-generated'} disabled /></div>
+                            <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
+                            <div className="space-y-2"><Label>Department<MandatoryIndicator/></Label><Select value={noteData.departmentId} onValueChange={handleSelectChange('departmentId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Section</Label><Select value={noteData.sectionId} onValueChange={handleSelectChange('sectionId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Delivery Place</Label><Input id="deliveryPlace" value={noteData.deliveryPlace} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount} onChange={handleInputChange} /></div>
+                            <div className="space-y-2 md:col-span-2"><Label>Budget Year & List No.</Label><Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo} onChange={handleInputChange} /></div>
+                            <div className="space-y-2 md:col-span-3"><Label>Purpose of Requisition</Label><Textarea id="purpose" value={noteData.purpose} onChange={handleInputChange} /></div>
                         </div>
-                    </div>
+                        
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Items</h3><Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4"/>Add Item</Button></div>
+                            <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+                                {items.map((item, index) => (
+                                    <div key={item.id} className="p-3 border rounded-lg space-y-2">
+                                         <div className="flex justify-between items-center"><Label className="text-base">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
+                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label>Particulars</Label>
+                                                <Select value={item.billItemMasterId} onValueChange={(v) => updateItem(item.id, 'billItemMasterId', v)}>
+                                                    <SelectTrigger><SelectValue placeholder="Select from master list..."/></SelectTrigger>
+                                                    <SelectContent>{billItemMasters.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Required Qty</Label>
+                                                <Input type="number" value={item.requiredQty} onChange={(e) => updateItem(item.id, 'requiredQty', parseFloat(e.target.value) || 0)} />
+                                            </div>
+                                             <div className="space-y-2">
+                                                <Label>Unit</Label>
+                                                <Input value={item.unit} disabled />
+                                            </div>
+                                         </div>
+                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Brand Name</Label>
+                                                <Input value={item.brandName || ''} onChange={(e) => updateItem(item.id, 'brandName', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Model No.</Label>
+                                                <Input value={item.modelNo || ''} onChange={(e) => updateItem(item.id, 'modelNo', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Other Necessary Details</Label>
+                                                <Input value={item.otherDetails || ''} onChange={(e) => updateItem(item.id, 'otherDetails', e.target.value)} />
+                                            </div>
+                                         </div>
+                                         <div className="space-y-2">
+                                            <Label>Remarks</Label>
+                                            <Input value={item.remarks} onChange={(e) => updateItem(item.id, 'remarks', e.target.value)} />
+                                        </div>
+                                    </div>
+                                ))}
+                                {items.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No items added yet.</p>}
+                            </div>
+                        </div>
+                        </>
+                    )}
+                     {step === 2 && (
+                        <div className="space-y-6">
+                            <h3 className="font-semibold text-lg">Step 2: Attachments (Optional)</h3>
+                            <div className="space-y-2 p-3 border rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <Label className="font-medium">Attachments</Label>
+                                    <Label htmlFor="file-upload-attachments" className="cursor-pointer text-sm text-primary hover:underline">Add File(s)</Label>
+                                    <Input id="file-upload-attachments" type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileChange} />
+                                </div>
+                                <div className="space-y-1">
+                                    {(documents.attachments || []).map(file => (
+                                        <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
+                                            <div className="flex items-center gap-2 truncate"><FileIcon className="h-4 w-4 flex-shrink-0" /><span className="truncate">{file.name}</span></div>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(file.id)}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ))}
+                                    {(documents.attachments || []).length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSave}>{isEditing ? 'Update Note' : 'Save Note'}</Button>
+                <DialogFooter className="flex justify-between w-full pt-4 border-t">
+                    <div>{step > 1 && <Button variant="outline" onClick={prevStep}>Previous</Button>}</div>
+                    <div>{step < totalSteps ? <Button onClick={nextStep}>Next</Button> : <Button onClick={handleSave}>{isEditing ? 'Update Note' : 'Save Note'}</Button>}</div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
