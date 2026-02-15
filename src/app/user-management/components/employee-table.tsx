@@ -18,25 +18,15 @@ import * as XLSX from 'xlsx';
 import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound, Copy } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser, recreateUserWithPassword } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -71,6 +61,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
   const [searchTerm, setSearchTerm] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  
+  const getSectionName = (sectionId: string) => {
+      if(!sections || sections.length === 0) return 'N/A';
+      return sections.find(s => s.id === sectionId)?.name || 'N/A';
+  }
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
@@ -79,9 +74,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     return employees.filter(emp => 
       (emp.fullName && emp.fullName.toLowerCase().includes(lowercasedTerm)) ||
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
-      (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm))
+      (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
+      (getSectionName(emp.departmentId).toLowerCase().includes(lowercasedTerm))
     );
-  }, [employees, searchTerm]);
+  }, [employees, searchTerm, sections]);
 
   const handleAdd = () => {
     setCurrentEmployee(null);
@@ -276,13 +272,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by name, ID, mobile..."
+            placeholder="Search by name, ID, email..."
             className="w-full rounded-lg bg-background pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Employee</Button>
             <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
             <Label htmlFor="upload-excel-employees" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
@@ -300,6 +296,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
               <TableHead>Email</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Section</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[200px] text-right">Actions</TableHead>
             </TableRow>
@@ -308,6 +305,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
             {!employees ? (
                 Array.from({length: 5}).map((_, i) => (
                     <TableRow key={i}>
+                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-full" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-full" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-full" /></TableCell>
@@ -356,6 +354,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                   </TableCell>
                   <TableCell>{employee.mobileNumber}</TableCell>
                   <TableCell>{employee.role}</TableCell>
+                  <TableCell>{getSectionName(employee.departmentId)}</TableCell>
                   <TableCell>{employee.status}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -403,7 +402,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                     {searchTerm ? `No employees found for "${searchTerm}".` : "No employees found."}
                 </TableCell>
               </TableRow>
@@ -488,3 +487,5 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     </TooltipProvider>
   );
 }
+
+    
