@@ -60,7 +60,7 @@ export type MajorModule = {
 
 export const majorModules: MajorModule[] = [
   {
-    name: 'Procurement Mgt',
+    name: 'Procurement Management',
     icon: ShoppingCart,
     description: 'Foreign and Local purchasing management',
     subModules: [
