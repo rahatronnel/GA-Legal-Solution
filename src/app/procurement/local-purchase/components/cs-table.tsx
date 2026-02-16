@@ -83,7 +83,7 @@ export function ComparativeStatementTable() {
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Tooltip>
-                                                    <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4" /></Button></TooltipTrigger>
+                                                    <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger>
                                                     <TooltipContent>View</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
@@ -110,5 +110,3 @@ export function ComparativeStatementTable() {
         </TooltipProvider>
     );
 }
-
-  

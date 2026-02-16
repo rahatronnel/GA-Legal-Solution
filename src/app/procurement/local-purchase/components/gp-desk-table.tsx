@@ -12,7 +12,7 @@ import { Search, Eye, Printer, Users, FilePlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, addDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -84,8 +84,7 @@ const MultiSelectPopover: React.FC<{
 };
 
 export default function GPDeskTable() {
-    const { user } = useUser();
-    const { demandNotes, sections, employees, vendors, isLoading, orgSettings } = useProcurement();
+    const { user, demandNotes, sections, employees, vendors, comparativeStatements, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -149,7 +148,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern]);
 
     const handleOpenAssignVendors = (note: DemandNote) => {
         setCurrentNote(note);
@@ -249,7 +248,9 @@ export default function GPDeskTable() {
                                 </TableRow>
                               ))
                         ) : filteredItems.length > 0 ? (
-                            filteredItems.map(item => (
+                            filteredItems.map(item => {
+                                const csExists = comparativeStatements.some(cs => cs.demandNoteId === item.id);
+                                return (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
@@ -264,13 +265,18 @@ export default function GPDeskTable() {
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Create CS</TooltipContent></Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0}><FilePlus className="h-4 w-4" /></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{csExists ? 'CS already created' : 'Create CS'}</TooltipContent>
+                                            </Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                            )})
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
@@ -319,7 +325,3 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
-
-  
-
-    
