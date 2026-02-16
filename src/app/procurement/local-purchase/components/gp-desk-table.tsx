@@ -7,17 +7,19 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, Printer } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
 import type { DemandNote } from './demand-note-entry-form';
 import { Button } from '@/components/ui/button';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 export default function GPDeskTable() {
     const { user } = useUser();
     const { demandNotes, sections, employees, isLoading, orgSettings } = useProcurement();
+    const { handlePrint } = usePrint();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [assignedToFilter, setAssignedToFilter] = useState('all');
@@ -66,7 +68,7 @@ export default function GPDeskTable() {
             
             return searchTermMatch && assignedToMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, currentUserEmployee, user, isGPOfficer, isGPConcern]);
+    }, [safeItems, searchTerm, assignedToFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
 
 
     return (
@@ -103,8 +105,8 @@ export default function GPDeskTable() {
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Assigned To</TableHead>
-                                <TableHead>Assigned Date</TableHead>
-                                <TableHead className="w-[80px] text-right">Actions</TableHead>
+                                <TableHead>Assigned Date & Time</TableHead>
+                                <TableHead className="w-[120px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -120,9 +122,12 @@ export default function GPDeskTable() {
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>{getEmployeeName(item.gpConcernOfficerId || '')}</TableCell>
-                                    <TableCell>{item.gpAssignedDate ? new Date(item.gpAssignedDate).toLocaleDateString() : 'N/A'}</TableCell>
+                                    <TableCell>{item.gpAssignedDate ? new Date(item.gpAssignedDate).toLocaleString() : 'N/A'}</TableCell>
                                     <TableCell className="text-right">
-                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                        <div className="flex justify-end gap-2">
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
