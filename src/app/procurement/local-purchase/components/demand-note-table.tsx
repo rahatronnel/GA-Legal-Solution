@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, Check, X } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Hand } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -33,6 +33,8 @@ import { Badge } from '@/components/ui/badge';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 
 export function DemandNoteTable() {
@@ -49,11 +51,20 @@ export function DemandNoteTable() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+    const [selectedConcernOfficerId, setSelectedConcernOfficerId] = useState('');
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
+    
+    const { isGPOfficer, gpConcernOfficers } = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        const GPO = !!(settings?.generalPurchaseOfficerId && currentUserEmployee && settings.generalPurchaseOfficerId === currentUserEmployee.id);
+        const officers = settings?.gpConcernOfficerIds?.map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
+        return { isGPOfficer: GPO, gpConcernOfficers: officers };
+    }, [orgSettings, currentUserEmployee, employees]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
@@ -62,31 +73,36 @@ export function DemandNoteTable() {
     const filteredItems = useMemo(() => {
         if (isLoading || !currentUserEmployee) return [];
 
-        let roleBasedFilteredNotes: DemandNote[];
-        const procurementSettings = orgSettings?.procurementSettings;
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+        
+        let roleBasedFilteredNotes: DemandNote[];
 
-        const isHighLevelManager = procurementSettings && currentUserEmployee && (
-            procurementSettings.managingDirectorId === currentUserEmployee.id ||
-            procurementSettings.factoryDirectorId === currentUserEmployee.id ||
-            procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
-            procurementSettings.specializedDeptManagerId === currentUserEmployee.id
-        );
-
-        if (isSuperAdmin || isHighLevelManager) {
-            roleBasedFilteredNotes = safeItems;
+        if (isGPOfficer) {
+            roleBasedFilteredNotes = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus === 'Pending');
         } else {
-            const managedSectionIds = procurementSettings?.departmentHeads
-                ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
-                .map(dh => dh.sectionId) || [];
+            const procurementSettings = orgSettings?.procurementSettings;
+            const isHighLevelManager = procurementSettings && (
+                procurementSettings.managingDirectorId === currentUserEmployee.id ||
+                procurementSettings.factoryDirectorId === currentUserEmployee.id ||
+                procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
+                procurementSettings.specializedDeptManagerId === currentUserEmployee.id
+            );
 
-            if (managedSectionIds.length > 0) {
-                roleBasedFilteredNotes = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
+            if (isSuperAdmin || isHighLevelManager) {
+                roleBasedFilteredNotes = safeItems;
             } else {
-                roleBasedFilteredNotes = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
+                const managedSectionIds = procurementSettings?.departmentHeads
+                    ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+                    .map(dh => dh.sectionId) || [];
+
+                if (managedSectionIds.length > 0) {
+                    roleBasedFilteredNotes = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
+                } else {
+                    roleBasedFilteredNotes = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
+                }
             }
         }
-
+        
         return roleBasedFilteredNotes.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,7 +117,8 @@ export function DemandNoteTable() {
             
             return searchTermMatch && statusMatch;
         }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, orgSettings, user, isLoading]);
+
+    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, user, isLoading, orgSettings, isGPOfficer]);
 
 
     const approvableNotes = useMemo(() => {
@@ -111,6 +128,10 @@ export function DemandNoteTable() {
             return isPending && isApprover;
         });
     }, [filteredItems, currentUserEmployee]);
+    
+    const allSelectableIds = useMemo(() => {
+        return isGPOfficer ? filteredItems.map(i => i.id) : approvableNotes.map(n => n.id);
+    }, [isGPOfficer, filteredItems, approvableNotes]);
 
     const handleAdd = () => {
         setCurrentItem(null);
@@ -206,6 +227,36 @@ export function DemandNoteTable() {
         setSelectedRows([]);
     };
     
+    const handleOpenAssignDialog = () => {
+        if (selectedRows.length === 0) {
+            toast({ variant: 'destructive', title: 'No notes selected' });
+            return;
+        }
+        setIsAssignDialogOpen(true);
+    };
+
+    const handleConfirmAssignment = () => {
+        if (!selectedConcernOfficerId) {
+            toast({ variant: 'destructive', title: 'Please select a concern officer.' });
+            return;
+        }
+        if (!dataRef || !currentUserEmployee) return;
+
+        selectedRows.forEach(noteId => {
+            const noteRef = doc(dataRef, noteId);
+            setDocumentNonBlocking(noteRef, {
+                gpConcernOfficerId: selectedConcernOfficerId,
+                gpAssignedBy: currentUserEmployee.id,
+                gpAssignedDate: new Date().toISOString(),
+                gpStatus: 'Assigned',
+            }, { merge: true });
+        });
+
+        toast({ title: 'Success', description: `${selectedRows.length} notes assigned.` });
+        setSelectedRows([]);
+        setIsAssignDialogOpen(false);
+    };
+
     const canPerformBulkAction = selectedRows.length > 0;
 
     return (
@@ -235,11 +286,15 @@ export function DemandNoteTable() {
                         </Select>
                     </div>
                      <div className="flex items-center gap-2">
-                        {canPerformBulkAction && (
-                            <>
-                                <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
-                            </>
+                        {isGPOfficer ? (
+                            canPerformBulkAction && <Button size="sm" onClick={handleOpenAssignDialog}><Hand className="mr-2 h-4 w-4"/>Assign Selected</Button>
+                        ) : (
+                            canPerformBulkAction && (
+                                <>
+                                    <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
+                                </>
+                            )
                         )}
                         <Button onClick={handleAdd}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Demand Note
@@ -252,10 +307,9 @@ export function DemandNoteTable() {
                             <TableRow>
                                 <TableHead className="w-[50px]">
                                      <Checkbox
-                                        checked={selectedRows.length === approvableNotes.length && approvableNotes.length > 0}
+                                        checked={allSelectableIds.length > 0 && selectedRows.length === allSelectableIds.length}
                                         onCheckedChange={(checked) => {
-                                           const allApprovableIds = approvableNotes.map(b => b.id);
-                                           setSelectedRows(checked ? allApprovableIds : []);
+                                           setSelectedRows(checked ? allSelectableIds : []);
                                         }}
                                         aria-label="Select all approvable notes"
                                     />
@@ -277,14 +331,16 @@ export function DemandNoteTable() {
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const isPending = item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                                const canApprove = currentUserEmployee && (item.currentApproverId === currentUserEmployee.id || user?.email === 'superadmin@galsolution.com');
+                                const isApprover = currentUserEmployee && item.currentApproverId === currentUserEmployee.id;
+                                const canSelect = isGPOfficer || (isPending && isApprover);
+                                
                                 return (
                                 <TableRow key={item.id} data-state={selectedRows.includes(item.id) ? "selected" : ""}>
                                     <TableCell>
                                         <Checkbox
                                             checked={selectedRows.includes(item.id)}
                                             onCheckedChange={() => toggleRowSelection(item.id)}
-                                            disabled={!isPending || !canApprove}
+                                            disabled={!canSelect}
                                             aria-label={`Select note ${item.demandNoteNumber}`}
                                         />
                                     </TableCell>
@@ -331,6 +387,32 @@ export function DemandNoteTable() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Assign Demand Notes</DialogTitle>
+                        <DialogDescription>
+                            You are assigning {selectedRows.length} note(s). Select a GP Concern Officer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label>GP Concern Officer</Label>
+                        <Select value={selectedConcernOfficerId} onValueChange={setSelectedConcernOfficerId}>
+                            <SelectTrigger><SelectValue placeholder="Select an officer..." /></SelectTrigger>
+                            <SelectContent>
+                                {gpConcernOfficers.map(officer => (
+                                    <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleConfirmAssignment}>Confirm Assignment</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

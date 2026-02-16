@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -180,7 +179,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
           const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
           if (!json[0] || !('userIdCode' in json[0]) || !('email' in json[0])) {
-             throw new Error('Invalid Excel file format. Required columns are: userIdCode, email.');
+             throw new Error(`Invalid Excel format. Required columns are: userIdCode, email.`);
           }
 
           const processedData: ProcessedEmployee[] = [];
@@ -487,5 +486,3 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     </TooltipProvider>
   );
 }
-
-    
