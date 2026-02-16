@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -62,8 +61,10 @@ export function DemandNoteTable() {
     
     const { isGPOfficer, gpConcernOfficers } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        const GPO = !!(settings?.generalPurchaseOfficerId && currentUserEmployee && settings.generalPurchaseOfficerId === currentUserEmployee.id);
-        const officers = settings?.gpConcernOfficerIds?.map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
+        if (!settings || !currentUserEmployee) return { isGPOfficer: false, gpConcernOfficers: [] };
+
+        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
         return { isGPOfficer: GPO, gpConcernOfficers: officers };
     }, [orgSettings, currentUserEmployee, employees]);
 
@@ -72,15 +73,15 @@ export function DemandNoteTable() {
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-        if (isLoading || !currentUserEmployee) return [];
+        if (isLoading) return [];
 
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
         const lowercasedTerm = searchTerm.toLowerCase();
-        
-        // GP Officer View: Special queue for assignment
+
+        // Case 1: GP Officer View
         if (isGPOfficer) {
             return safeItems.filter(note => {
-                const isReadyForAssignment = note.approvalStatus === 1 && note.gpStatus === 'Pending';
+                const isReadyForAssignment = note.approvalStatus === 1; // Only show approved notes
                 if (!isReadyForAssignment) return false;
 
                 const searchTermMatch = !searchTerm ||
@@ -91,12 +92,15 @@ export function DemandNoteTable() {
             }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         }
 
-        // Standard Views for all other users
+        // Case 2: Standard Views (Superadmin, Managers, Employees)
         let roleBasedFilteredNotes: DemandNote[];
 
         if (isSuperAdmin) {
             roleBasedFilteredNotes = safeItems;
         } else {
+            // This logic requires an employee record, so we check for it here.
+            if (!currentUserEmployee) return [];
+
             const procurementSettings = orgSettings?.procurementSettings;
             const isHighLevelManager = procurementSettings && (
                 procurementSettings.managingDirectorId === currentUserEmployee.id ||
@@ -115,12 +119,13 @@ export function DemandNoteTable() {
                 if (managedSectionIds.length > 0) {
                     roleBasedFilteredNotes = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
                 } else {
+                    // Default to only seeing notes created by the user
                     roleBasedFilteredNotes = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
                 }
             }
         }
         
-        // Apply search and status filters for standard views
+        // Apply final search and status filters for these standard views
         return roleBasedFilteredNotes.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(lowercasedTerm) ||
@@ -148,7 +153,7 @@ export function DemandNoteTable() {
     }, [filteredItems, currentUserEmployee]);
     
     const allSelectableIds = useMemo(() => {
-        return isGPOfficer ? filteredItems.map(i => i.id) : approvableNotes.map(n => n.id);
+        return isGPOfficer ? filteredItems.filter(i => i.gpStatus === 'Pending').map(i => i.id) : approvableNotes.map(n => n.id);
     }, [isGPOfficer, filteredItems, approvableNotes]);
 
     const handleAdd = () => {
@@ -353,9 +358,9 @@ export function DemandNoteTable() {
                               ))
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
-                                const isPending = item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                                const isApprover = currentUserEmployee && item.currentApproverId === currentUserEmployee.id;
-                                const canSelect = isGPOfficer || (isPending && isApprover);
+                                const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
+                                const isPendingForGP = isGPOfficer && item.approvalStatus === 1 && item.gpStatus === 'Pending';
+                                const canSelect = isPendingForCurrentUser || isPendingForGP;
                                 
                                 return (
                                 <TableRow key={item.id} data-state={selectedRows.includes(item.id) ? "selected" : ""}>
