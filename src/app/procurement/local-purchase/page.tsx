@@ -37,9 +37,12 @@ export default function LocalPurchasePage() {
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
 
   const getGridCols = () => {
-    let count = 3; // Dashboard, Demand Notes, Vendors
-    if (showGPDesk) count++;
-    if (isSuperAdmin) count += 2; // Master Data, Settings
+    let count = 2; // Dashboard, Demand Notes
+    if (isSuperAdmin) {
+      count = 6; // All tabs are visible
+    } else if (showGPDesk) {
+      count = 3; // Dashboard, Demand Notes, GP Desk
+    }
     return `repeat(${count}, minmax(0, 1fr))`;
   }
 
@@ -50,7 +53,7 @@ export default function LocalPurchasePage() {
         <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
-            <TabsTrigger value="vendors">Vendors</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="vendors">Vendors</TabsTrigger>}
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
@@ -77,19 +80,21 @@ export default function LocalPurchasePage() {
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="vendors">
-            <LegacyBillFlowProvider>
-                <Card>
-                  <CardHeader>
-                      <CardTitle>Vendors</CardTitle>
-                      <CardDescription>Manage your organization's vendors and their information.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <VendorTable />
-                  </CardContent>
-                </Card>
-            </LegacyBillFlowProvider>
-        </TabsContent>
+        {isSuperAdmin && (
+          <TabsContent value="vendors">
+              <LegacyBillFlowProvider>
+                  <Card>
+                    <CardHeader>
+                        <CardTitle>Vendors</CardTitle>
+                        <CardDescription>Manage your organization's vendors and their information.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <VendorTable />
+                    </CardContent>
+                  </Card>
+              </LegacyBillFlowProvider>
+          </TabsContent>
+        )}
          {showGPDesk && (
             <TabsContent value="gp-desk">
                 <Card>
