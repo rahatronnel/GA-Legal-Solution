@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users } from 'lucide-react';
+import { Search, Eye, Printer, Users, FilePlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ChevronsUpDown, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { ComparativeStatementForm } from './cs-entry-form';
 
 const MultiSelectPopover: React.FC<{
     items: Vendor[];
@@ -97,6 +98,9 @@ export default function GPDeskTable() {
     const [currentNote, setCurrentNote] = useState<DemandNote | null>(null);
     const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
 
+    const [isCsFormOpen, setIsCsFormOpen] = useState(false);
+    const [currentNoteForCs, setCurrentNoteForCs] = useState<DemandNote | null>(null);
+
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
         return employees.find(e => e.email === user.email);
@@ -145,12 +149,32 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern]);
 
     const handleOpenAssignVendors = (note: DemandNote) => {
         setCurrentNote(note);
         setSelectedVendorIds(note.quotations?.map(q => q.vendorId) || []);
         setIsAssignVendorOpen(true);
+    };
+    
+    const handleCreateCs = (note: DemandNote) => {
+        if (!note.quotations || note.quotations.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'Cannot Create CS',
+                description: 'You must assign vendors and upload their quotations before creating a Comparative Statement.',
+            });
+            return;
+        }
+        setCurrentNoteForCs(note);
+        setIsCsFormOpen(true);
+    };
+
+    const handleSaveCs = (csData: any) => {
+        if (!firestore) return;
+        const csRef = collection(firestore, 'comparativeStatements');
+        addDocumentNonBlocking(csRef, csData);
+        toast({ title: 'Success', description: 'Comparative Statement saved successfully.' });
     };
 
     const handleConfirmVendorAssignment = () => {
@@ -159,10 +183,8 @@ export default function GPDeskTable() {
         const noteRef = doc(firestore, 'demandNotes', currentNote.id);
         const existingQuotations = currentNote.quotations || [];
 
-        // Create a map of existing quotations for quick lookup
         const existingMap = new Map(existingQuotations.map(q => [q.vendorId, q]));
 
-        // Create the new list, preserving existing file data
         const newQuotations: Quotation[] = selectedVendorIds.map(vendorId => {
             const existing = existingMap.get(vendorId);
             return existing || { vendorId, fileName: '', fileDataUrl: '' };
@@ -242,6 +264,7 @@ export default function GPDeskTable() {
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Create CS</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
                                         </div>
@@ -284,6 +307,17 @@ export default function GPDeskTable() {
                 </DialogContent>
             </Dialog>
 
+            {isCsFormOpen && (
+                 <ComparativeStatementForm
+                    isOpen={isCsFormOpen}
+                    setIsOpen={setIsCsFormOpen}
+                    demandNote={currentNoteForCs}
+                    onSave={handleSaveCs}
+                />
+            )}
+
         </TooltipProvider>
     );
 }
+
+  

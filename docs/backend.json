@@ -524,6 +524,60 @@
         }
       },
       "required": ["demandNoteNumber", "date", "departmentId", "purpose"]
+    },
+    "ComparativeStatement": {
+      "title": "Comparative Statement",
+      "description": "A comparative statement of quotations from multiple vendors for a demand note.",
+      "type": "object",
+      "properties": {
+        "csNumber": { "type": "string", "description": "Unique identifier for the CS." },
+        "csDate": { "type": "string", "format": "date", "description": "Date the CS was created." },
+        "demandNoteId": { "type": "string", "description": "The ID of the related demand note." },
+        "items": {
+          "type": "array",
+          "description": "The list of items being compared.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "demandNoteItemId": { "type": "string" },
+              "particulars": { "type": "string" },
+              "unit": { "type": "string" },
+              "quantity": { "type": "number" },
+              "vendorQuotes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "vendorId": { "type": "string" },
+                    "unitPrice": { "type": "number" }
+                  },
+                  "required": ["vendorId"]
+                }
+              }
+            }
+          }
+        },
+        "vendorDetails": {
+          "type": "array",
+          "description": "Details for each vendor in the comparison.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "vendorId": { "type": "string" },
+              "discountType": { "type": "string", "enum": ["Percentage", "Amount"] },
+              "discountValue": { "type": "number" },
+              "deliveryTerms": { "type": "string" },
+              "vatAndTax": { "type": "string" },
+              "paymentTerms": { "type": "string" },
+              "warranty": { "type": "string" },
+              "sampleConfirmed": { "type": "string", "enum": ["Yes", "No", "N/A"] }
+            },
+            "required": ["vendorId"]
+          }
+        },
+        "createdBy": { "type": "string", "description": "Employee ID of the creator." }
+      },
+      "required": ["csNumber", "csDate", "demandNoteId"]
     }
   },
   "auth": {
@@ -560,7 +614,8 @@
     "/billItemMasters/{billItemMasterId}": { "schema": { "$ref": "#/entities/BillItemMaster" }, "description": "Stores the master list of billable items and services." },
     "/demandNotes/{demandNoteId}": { "schema": { "$ref": "#/entities/DemandNote" }, "description": "Stores all created demand notes." },
     "/processCodes/{processCodeId}": { "schema": { "$ref": "#/entities/ProcessCode" }, "description": "Stores master data for process codes." },
-    "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." }
+    "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." },
+    "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." }
   }
 }
     
@@ -578,3 +633,6 @@
 
 
 
+
+
+  

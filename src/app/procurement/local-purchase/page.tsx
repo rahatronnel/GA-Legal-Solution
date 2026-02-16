@@ -18,6 +18,7 @@ import { VendorTable } from '@/app/billflow/components/vendor-table';
 import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-table';
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
 import { LegacyBillFlowProvider } from '@/app/billflow/components/bill-flow-provider';
+import { ComparativeStatementTable } from './components/cs-table';
 
 export default function LocalPurchasePage() {
   const { user } = useUser();
@@ -39,7 +40,7 @@ export default function LocalPurchasePage() {
   const getGridCols = () => {
     let count = 2; // Dashboard, Demand Notes
     if (isSuperAdmin) {
-      count = 6; // All tabs are visible
+      count = 7; // All tabs are visible
     } else if (showGPDesk) {
       count = 3; // Dashboard, Demand Notes, GP Desk
     }
@@ -55,6 +56,7 @@ export default function LocalPurchasePage() {
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="vendors">Vendors</TabsTrigger>}
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="cs">CS</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
         </TabsList>
@@ -104,6 +106,19 @@ export default function LocalPurchasePage() {
                     </CardHeader>
                     <CardContent>
                         <GPDeskTable />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
+        {isSuperAdmin && (
+            <TabsContent value="cs">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Comparative Statements</CardTitle>
+                        <CardDescription>Review and manage all generated comparative statements.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ComparativeStatementTable />
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -181,3 +196,5 @@ export default function LocalPurchasePage() {
     </div>
   );
 }
+
+  
