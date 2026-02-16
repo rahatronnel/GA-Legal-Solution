@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users, FilePlus, Hand } from 'lucide-react';
+import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronsUpDown, Check } from 'lucide-react';
+import { ChevronsUpDown, Check, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ComparativeStatementForm } from './cs-entry-form';
@@ -134,15 +134,12 @@ export default function GPDeskTable() {
         // Notes for the GP desk are those that have been fully approved.
         const isApprovedForGP = (note: DemandNote) => Number(note.approvalStatus) === 1;
 
-        if (isSuperAdmin) {
-            // Superadmin sees ALL notes that are approved (assigned or not).
+        if (isSuperAdmin || isGPOfficer) {
+            // Superadmin and GP Officer see ALL notes that are approved (assigned or not).
             baseList = safeItems.filter(isApprovedForGP);
-        } else if (isGPOfficer) {
-            // The GP Officer's main queue is for approved notes that are awaiting assignment.
-            baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpStatus !== 'Assigned');
         } else if (isGPConcern) {
             // GP Concern officers only see notes specifically assigned to them.
-            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
+            baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpConcernOfficerId === currentUserEmployee?.id);
         } else {
             // Other roles don't see the GP Desk.
             baseList = [];
