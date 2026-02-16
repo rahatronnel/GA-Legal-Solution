@@ -72,7 +72,7 @@ export function DemandNoteTable() {
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
-
+    
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -82,6 +82,7 @@ export function DemandNoteTable() {
         if (isSuperAdmin) {
             baseList = safeItems;
         } else if (isGPOfficer) {
+            // GP Officer sees only fully approved notes pending their action
             baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus === 'Pending');
         } else if (currentUserEmployee) {
             const procurementSettings = orgSettings?.procurementSettings;
@@ -102,6 +103,7 @@ export function DemandNoteTable() {
                 if (managedSectionIds.length > 0) {
                     baseList = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
                 } else {
+                    // Regular employee sees only their own notes
                     baseList = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
                 }
             }
@@ -109,12 +111,14 @@ export function DemandNoteTable() {
             baseList = [];
         }
     
+        // Apply UI filters on top of the role-based base list
         const finalList = baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
     
-            if (isSuperAdmin || isGPOfficer) {
+            // The status filter should NOT apply to the GP Officer's special view
+            if (isGPOfficer || isSuperAdmin) {
                 return searchTermMatch;
             }
             
@@ -335,16 +339,23 @@ export function DemandNoteTable() {
                                 <TableHead>Date</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>GP Status</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                         {isLoading ? (
-                             Array.from({length: 3}).map((_, i) => (
+                            Array.from({length: 3}).map((_, i) => (
                                 <TableRow key={i}>
-                                  <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-5"/></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                                 </TableRow>
-                              ))
+                            ))
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
@@ -365,6 +376,13 @@ export function DemandNoteTable() {
                                     <TableCell>{item.date}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell><Badge variant={getStatusVariant(item.approvalStatus)}>{getDemandNoteStatusText(item)}</Badge></TableCell>
+                                    <TableCell>
+                                        {item.gpStatus ? (
+                                            <Badge variant={item.gpStatus === 'Assigned' ? 'default' : 'secondary'}>{item.gpStatus}</Badge>
+                                        ) : (
+                                            <Badge variant="outline">N/A</Badge>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
@@ -376,7 +394,7 @@ export function DemandNoteTable() {
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No demand notes found.
                                 </TableCell>
                             </TableRow>
