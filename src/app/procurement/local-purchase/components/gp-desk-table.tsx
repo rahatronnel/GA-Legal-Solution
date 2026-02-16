@@ -131,17 +131,23 @@ export default function GPDeskTable() {
         if (isLoading) return [];
         let baseList: DemandNote[];
     
-        // Notes for the GP desk are those that have been fully approved.
+        const settings = orgSettings?.procurementSettings;
+        const canSuperadminViewAll = settings?.canSuperadminViewAllGpDesk;
+        const canGpoViewAll = settings?.canGpOfficerViewAllGpDesk;
+    
         const isApprovedForGP = (note: DemandNote) => Number(note.approvalStatus) === 1;
 
-        if (isSuperAdmin || isGPOfficer) {
-            // Superadmin and GP Officer see ALL notes that are approved (assigned or not).
+        if (isSuperAdmin && canSuperadminViewAll) {
             baseList = safeItems.filter(isApprovedForGP);
+        } else if (isGPOfficer) {
+            if (canGpoViewAll) {
+                baseList = safeItems.filter(isApprovedForGP);
+            } else {
+                baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpStatus !== 'Assigned');
+            }
         } else if (isGPConcern) {
-            // GP Concern officers only see notes specifically assigned to them.
             baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpConcernOfficerId === currentUserEmployee?.id);
         } else {
-            // Other roles don't see the GP Desk.
             baseList = [];
         }
         
@@ -158,7 +164,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName, orgSettings]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -336,3 +342,5 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
+
+    

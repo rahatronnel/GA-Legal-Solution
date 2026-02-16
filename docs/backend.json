@@ -62,7 +62,10 @@
               "type": "array",
               "description": "A list of employee IDs who are eligible GP Concern Officers.",
               "items": { "type": "string" }
-            }
+            },
+            "canSuperadminViewAllGpDesk": { "type": "boolean", "description": "If true, superadmin can see all approved demand notes in the GP Desk." },
+            "canGpOfficerViewApprovedInDemandList": { "type": "boolean", "description": "If true, GP Officer can see approved notes in the main Demand Note list." },
+            "canGpOfficerViewAllGpDesk": { "type": "boolean", "description": "If true, GP Officer can see all approved notes in GP Desk, not just unassigned ones." }
           }
         }
       },
@@ -636,3 +639,4 @@
 
 
   
+    
