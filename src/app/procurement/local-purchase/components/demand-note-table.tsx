@@ -82,8 +82,8 @@ export function DemandNoteTable() {
         if (isSuperAdmin) {
             baseList = safeItems;
         } else if (isGPOfficer) {
-            // GP Officer sees only fully approved notes pending their action
-            baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus === 'Pending');
+            // GP Officer sees only fully approved notes that have not yet been assigned.
+            baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus !== 'Assigned');
         } else if (currentUserEmployee) {
             const procurementSettings = orgSettings?.procurementSettings;
             const isHighLevelManager = procurementSettings && (
@@ -146,7 +146,7 @@ export function DemandNoteTable() {
     }, [filteredItems, currentUserEmployee]);
     
     const allSelectableIds = useMemo(() => {
-        return isGPOfficer ? filteredItems.filter(i => i.gpStatus === 'Pending').map(i => i.id) : approvableNotes.map(n => n.id);
+        return isGPOfficer ? filteredItems.filter(i => i.gpStatus !== 'Assigned' && i.approvalStatus === 1).map(i => i.id) : approvableNotes.map(n => n.id);
     }, [isGPOfficer, filteredItems, approvableNotes]);
 
     const handleAdd = () => {
@@ -292,7 +292,7 @@ export function DemandNoteTable() {
                                 className="pl-8"
                             />
                         </div>
-                        {!isGPOfficer && (
+                        {!(isGPOfficer || user?.email === 'superadmin@galsolution.com') && (
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Filter by Status..." />
@@ -359,7 +359,7 @@ export function DemandNoteTable() {
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
-                                const isPendingForGP = isGPOfficer && item.approvalStatus === 1 && item.gpStatus === 'Pending';
+                                const isPendingForGP = isGPOfficer && item.approvalStatus === 1 && item.gpStatus !== 'Assigned';
                                 const canSelect = isPendingForCurrentUser || isPendingForGP;
                                 
                                 return (
@@ -377,8 +377,8 @@ export function DemandNoteTable() {
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell><Badge variant={getStatusVariant(item.approvalStatus)}>{getDemandNoteStatusText(item)}</Badge></TableCell>
                                     <TableCell>
-                                        {item.gpStatus ? (
-                                            <Badge variant={item.gpStatus === 'Assigned' ? 'default' : 'secondary'}>{item.gpStatus}</Badge>
+                                        {item.approvalStatus === 1 ? (
+                                            <Badge variant={item.gpStatus === 'Assigned' ? 'default' : 'secondary'}>{item.gpStatus || 'Pending'}</Badge>
                                         ) : (
                                             <Badge variant="outline">N/A</Badge>
                                         )}
@@ -454,5 +454,7 @@ export function DemandNoteTable() {
         </TooltipProvider>
     );
 }
+
+    
 
     
