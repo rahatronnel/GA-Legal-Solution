@@ -128,16 +128,23 @@ export default function GPDeskTable() {
     
 
     const filteredItems = useMemo(() => {
+        if (isLoading) return [];
         let baseList: DemandNote[];
+    
+        // Notes for the GP desk are those that have been fully approved.
+        const isApprovedForGP = (note: DemandNote) => Number(note.approvalStatus) === 1;
 
-        if (isSuperAdmin || isGPOfficer) {
-            // Superadmin and GP Officer see all fully approved notes on the GP Desk
-            baseList = safeItems.filter(note => note.approvalStatus === 1);
+        if (isSuperAdmin) {
+            // Superadmin sees ALL notes that are approved (assigned or not).
+            baseList = safeItems.filter(isApprovedForGP);
+        } else if (isGPOfficer) {
+            // The GP Officer's main queue is for approved notes that are awaiting assignment.
+            baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpStatus !== 'Assigned');
         } else if (isGPConcern) {
-            // GP Concern officers only see notes specifically assigned to them
+            // GP Concern officers only see notes specifically assigned to them.
             baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
         } else {
-            // Other roles don't see the GP Desk
+            // Other roles don't see the GP Desk.
             baseList = [];
         }
         
@@ -154,7 +161,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
