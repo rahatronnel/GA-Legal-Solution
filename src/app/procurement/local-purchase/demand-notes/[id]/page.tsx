@@ -106,7 +106,7 @@ function DemandNoteProfileContent() {
             alert('Your employee profile could not be found.');
             return;
         }
-
+    
         const approvalLevels = demandNote.approvalFlow.steps;
         const currentLevel = demandNote.approvalHistory?.length || 0;
     
@@ -118,35 +118,27 @@ function DemandNoteProfileContent() {
             remarks: `Manually updated from details page`,
         };
     
-        let newApprovalStatus: number | undefined;
-        let nextApproverId: string;
-        const gpStatusUpdate: { gpStatus?: 'Pending' } = {};
+        let updatePayload: Partial<DemandNote> = {
+            approvalHistory: [...(demandNote.approvalHistory || []), newHistoryEntry],
+        };
     
         if (status === 1) { // If the action is "Approve"
             const nextLevel = currentLevel + 1;
             if (nextLevel < approvalLevels.length) {
-                newApprovalStatus = getNextApprovalStatusCode(currentLevel);
-                nextApproverId = approvalLevels[nextLevel].approverId;
+                updatePayload.approvalStatus = getNextApprovalStatusCode(currentLevel);
+                updatePayload.currentApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                newApprovalStatus = 1; // Completed
-                nextApproverId = '';
-                gpStatusUpdate.gpStatus = 'Pending';
+                // This is the final approval
+                updatePayload.approvalStatus = 1; // Completed
+                updatePayload.currentApproverId = '';
+                updatePayload.gpStatus = 'Pending';
             }
         } else { // If the action is "Reject"
-            newApprovalStatus = 0; // Rejected
-            nextApproverId = '';
+            updatePayload.approvalStatus = 0; // Rejected
+            updatePayload.currentApproverId = '';
         }
     
-        setDocumentNonBlocking(
-            noteRef,
-            {
-                approvalStatus: newApprovalStatus,
-                currentApproverId: nextApproverId,
-                approvalHistory: [...(demandNote.approvalHistory || []), newHistoryEntry],
-                ...gpStatusUpdate,
-            },
-            { merge: true }
-        );
+        setDocumentNonBlocking(noteRef, updatePayload, { merge: true });
     };
 
     if (isLoading || demandNote === undefined) {

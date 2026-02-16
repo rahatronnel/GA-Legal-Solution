@@ -60,14 +60,34 @@ export function DemandNoteTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
     
-    const { isGPOfficer, gpConcernOfficers } = useMemo(() => {
+    const { isGPOfficer, isGPConcern, gpConcernOfficers, isSuperAdmin, isManager } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!settings || !employees) return { isGPOfficer: false, gpConcernOfficers: [] };
+        if (!currentUserEmployee || !employees) {
+            const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+            return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [], isSuperAdmin: superAdminCheck, isManager: false };
+        }
 
-        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee?.id;
-        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
-        return { isGPOfficer: GPO, gpConcernOfficers: officers };
-    }, [orgSettings, currentUserEmployee, employees]);
+        const superAdmin = user?.email === 'superadmin@galsolution.com';
+        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
+        const officers = (settings?.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
+        const manager = settings && (
+            settings.managingDirectorId === currentUserEmployee.id ||
+            settings.factoryDirectorId === currentUserEmployee.id ||
+            settings.manufacturingDeptManagerId === currentUserEmployee.id ||
+            settings.specializedDeptManagerId === currentUserEmployee.id
+        );
+
+        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdmin, isManager: manager };
+    }, [orgSettings, currentUserEmployee, employees, user]);
+
+    const userRoleText = useMemo(() => {
+        if (isSuperAdmin) return "Role: Superadmin";
+        if (isGPOfficer) return "Role: GP Officer";
+        if (isGPConcern) return "Role: GP Concern Officer";
+        if (isManager) return "Role: Manager";
+        return "Role: Employee";
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
@@ -75,27 +95,18 @@ export function DemandNoteTable() {
     
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
     
         let baseList: DemandNote[];
     
         if (isSuperAdmin) {
             baseList = safeItems;
         } else if (isGPOfficer) {
-            // GP Officer sees only fully approved notes that have not yet been assigned.
             baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus !== 'Assigned');
         } else if (currentUserEmployee) {
-            const procurementSettings = orgSettings?.procurementSettings;
-            const isHighLevelManager = procurementSettings && (
-                procurementSettings.managingDirectorId === currentUserEmployee.id ||
-                procurementSettings.factoryDirectorId === currentUserEmployee.id ||
-                procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
-                procurementSettings.specializedDeptManagerId === currentUserEmployee.id
-            );
-    
-            if (isHighLevelManager) {
+            if (isManager) {
                 baseList = safeItems;
             } else {
+                const procurementSettings = orgSettings?.procurementSettings;
                 const managedSectionIds = procurementSettings?.departmentHeads
                     ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
                     .map(dh => dh.sectionId) || [];
@@ -103,7 +114,6 @@ export function DemandNoteTable() {
                 if (managedSectionIds.length > 0) {
                     baseList = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
                 } else {
-                    // Regular employee sees only their own notes
                     baseList = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
                 }
             }
@@ -111,30 +121,30 @@ export function DemandNoteTable() {
             baseList = [];
         }
     
-        // Apply UI filters on top of the role-based base list
         const finalList = baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-    
-            // The status filter should NOT apply to the GP Officer's special view
-            if (isGPOfficer || isSuperAdmin) {
-                return searchTermMatch;
-            }
             
-            const statusMatch = statusFilter === 'all' 
+            // For most users, the status filter applies.
+            let statusMatch = statusFilter === 'all' 
                 ? true
                 : (statusFilter === 'pending'
                     ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
                     : item.approvalStatus === parseInt(statusFilter, 10)
                   );
             
+            // The GP Officer's view should NOT be affected by the status filter.
+            if (isGPOfficer) {
+                statusMatch = true;
+            }
+            
             return searchTermMatch && statusMatch;
         });
     
         return finalList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, user, isLoading, orgSettings, isGPOfficer]);
+    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isGPOfficer, isManager, isSuperAdmin]);
 
 
     const approvableNotes = useMemo(() => {
@@ -215,31 +225,26 @@ export function DemandNoteTable() {
                 remarks: `Bulk action from list view`,
             };
 
-            let newApprovalStatus: number | undefined;
-            let nextApproverId: string;
-            const gpStatusUpdate: { gpStatus?: 'Pending' } = {};
+            let updatePayload: Partial<DemandNote> = {
+                approvalHistory: [...(note.approvalHistory || []), newHistoryEntry],
+            };
 
             if (status === 1) { // Approved
                 const nextLevel = currentLevel + 1;
                 if (nextLevel < approvalLevels.length) {
-                    newApprovalStatus = getNextApprovalStatusCode(currentLevel);
-                    nextApproverId = approvalLevels[nextLevel].approverId;
+                    updatePayload.approvalStatus = getNextApprovalStatusCode(currentLevel);
+                    updatePayload.currentApproverId = approvalLevels[nextLevel].approverId;
                 } else {
-                    newApprovalStatus = 1; // Completed
-                    nextApproverId = '';
-                    gpStatusUpdate.gpStatus = 'Pending';
+                    updatePayload.approvalStatus = 1; // Completed
+                    updatePayload.currentApproverId = '';
+                    updatePayload.gpStatus = 'Pending';
                 }
             } else { // Rejected
-                newApprovalStatus = 0;
-                nextApproverId = '';
+                updatePayload.approvalStatus = 0;
+                updatePayload.currentApproverId = '';
             }
 
-            setDocumentNonBlocking(noteRef, {
-                approvalStatus: newApprovalStatus,
-                currentApproverId: nextApproverId,
-                approvalHistory: [...(note.approvalHistory || []), newHistoryEntry],
-                ...gpStatusUpdate,
-            }, { merge: true });
+            setDocumentNonBlocking(noteRef, updatePayload, { merge: true });
         });
         
         toast({ title: 'Success', description: `${selectedRows.length} notes have been processed.` });
@@ -292,7 +297,7 @@ export function DemandNoteTable() {
                                 className="pl-8"
                             />
                         </div>
-                        {!(isGPOfficer || user?.email === 'superadmin@galsolution.com') && (
+                        {!(isGPOfficer) && (
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Filter by Status..." />
@@ -307,6 +312,7 @@ export function DemandNoteTable() {
                         )}
                     </div>
                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{userRoleText}</Badge>
                         {isGPOfficer ? (
                             canPerformBulkAction && <Button size="sm" onClick={handleOpenAssignDialog}><Hand className="mr-2 h-4 w-4"/>Assign Selected</Button>
                         ) : (
@@ -454,7 +460,3 @@ export function DemandNoteTable() {
         </TooltipProvider>
     );
 }
-
-    
-
-    
