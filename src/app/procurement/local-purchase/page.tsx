@@ -33,21 +33,20 @@ export default function LocalPurchasePage() {
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
 
   const getGridCols = () => {
-    let count = 3;
+    let count = 2; // Dashboard, Demand Notes
     if (showGPDesk) count++;
-    if (isSuperAdmin) count += 2;
+    if (isSuperAdmin) count += 2; // Master Data, Settings
     return `repeat(${count}, minmax(0, 1fr))`;
   }
 
   return (
     <div className="space-y-6">
       <ModuleHeader />
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs defaultValue="demand-notes" className="w-full">
         <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
-            <TabsTrigger value="reports">Reports</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
         </TabsList>
@@ -86,17 +85,6 @@ export default function LocalPurchasePage() {
                 </Card>
             </TabsContent>
         )}
-        <TabsContent value="reports">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Reports</CardTitle>
-                    <CardDescription>Analyze procurement data.</CardDescription>
-                </CardHeader>
-                 <CardContent className="h-96 flex items-center justify-center">
-                    <p className="text-muted-foreground">Reports coming soon...</p>
-                </CardContent>
-            </Card>
-        </TabsContent>
         {isSuperAdmin && (
           <>
             <TabsContent value="master-data">

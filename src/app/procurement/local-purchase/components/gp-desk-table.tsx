@@ -34,10 +34,13 @@ export default function GPDeskTable() {
 
     const { isGPOfficer, isGPConcern, gpConcernOfficers } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee?.id;
-        const GPC = settings?.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
-        const officers = employees.filter(e => settings?.gpConcernOfficerIds?.includes(e.id));
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers };
+        if (!settings || !currentUserEmployee || !employees) return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [] };
+        
+        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
+        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
+        
+        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers as any[] };
     }, [orgSettings, currentUserEmployee, employees]);
     
 
