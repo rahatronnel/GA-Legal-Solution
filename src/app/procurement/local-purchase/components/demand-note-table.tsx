@@ -74,12 +74,11 @@ export function DemandNoteTable() {
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-    
         if (isLoading) return [];
-    
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
         let baseList: DemandNote[];
-    
+
         // 1. Establish the base list based on the user's primary role.
         if (isSuperAdmin) {
             baseList = safeItems;
@@ -116,14 +115,19 @@ export function DemandNoteTable() {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-    
-            // The status filter should NOT apply to the GP Officer's special queue view.
-            let statusMatch = true;
-            if (!isGPOfficer && statusFilter !== 'all') {
-                statusMatch = statusFilter === 'pending'
-                    ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
-                    : (item.approvalStatus === parseInt(statusFilter));
+
+            // For Superadmin and GP Officer, the status filter should be completely ignored.
+            if (isSuperAdmin || isGPOfficer) {
+                return searchTermMatch;
             }
+            
+            // For all other users, apply the status filter as normal.
+            const statusMatch = statusFilter === 'all' 
+                ? true
+                : (statusFilter === 'pending'
+                    ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
+                    : item.approvalStatus === parseInt(statusFilter)
+                  );
             
             return searchTermMatch && statusMatch;
         });
