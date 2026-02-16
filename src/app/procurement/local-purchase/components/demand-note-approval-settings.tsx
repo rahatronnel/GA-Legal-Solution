@@ -37,20 +37,20 @@ const Combobox: React.FC<{
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="w-full justify-between">
-                    {selectedEmployee ? selectedEmployee.fullName : placeholder}
+                    {selectedEmployee ? `${selectedEmployee.fullName} (${selectedEmployee.userIdCode})` : placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
-                    <CommandInput placeholder="Search employee..." />
+                    <CommandInput placeholder="Search employee by name or code..." />
                     <CommandList>
                         <CommandEmpty>No employee found.</CommandEmpty>
                         <CommandGroup>
                             {items.map(employee => (
                                 <CommandItem
                                     key={employee.id}
-                                    value={employee.fullName}
+                                    value={`${employee.fullName} ${employee.userIdCode}`}
                                     onSelect={() => {
                                         onSelect(employee.id);
                                         setOpen(false);
@@ -91,7 +91,7 @@ const MultiSelectPopover: React.FC<{
                 <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-10">
                     <div className="flex flex-wrap gap-1">
                         {selectedEmployees.length > 0
-                            ? selectedEmployees.map(emp => <Badge key={emp.id} variant="secondary">{emp.fullName}</Badge>)
+                            ? selectedEmployees.map(emp => <Badge key={emp.id} variant="secondary">{emp.fullName} ({emp.userIdCode})</Badge>)
                             : placeholder
                         }
                     </div>
@@ -100,7 +100,7 @@ const MultiSelectPopover: React.FC<{
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
-                    <CommandInput placeholder="Search employees..." />
+                    <CommandInput placeholder="Search employees by name or code..." />
                      <ScrollArea className="h-48">
                         <CommandList>
                         <CommandEmpty>No employees found.</CommandEmpty>
@@ -108,11 +108,11 @@ const MultiSelectPopover: React.FC<{
                             {items.map(employee => (
                                 <CommandItem
                                     key={employee.id}
-                                    value={employee.fullName}
+                                    value={`${employee.fullName} ${employee.userIdCode}`}
                                     onSelect={() => handleSelect(employee.id)}
                                 >
                                     <Check className={cn("mr-2 h-4 w-4", selectedIds.includes(employee.id) ? "opacity-100" : "opacity-0")} />
-                                    {employee.fullName}
+                                    {employee.fullName} ({employee.userIdCode})
                                 </CommandItem>
                             ))}
                         </CommandGroup>
