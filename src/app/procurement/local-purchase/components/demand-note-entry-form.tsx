@@ -69,10 +69,14 @@ export type DemandNote = {
     approvalStatus?: number;
     currentApproverId?: string;
     approvalHistory?: any[];
+    gpConcernOfficerId?: string;
+    gpAssignedBy?: string;
+    gpAssignedDate?: string;
+    gpStatus?: 'Pending' | 'Assigned';
 };
 
 const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'> = {
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: '',
     departmentId: '',
     sectionId: '',
     processCodeId: '',
@@ -119,9 +123,9 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     // This single effect now handles all initialization logic for the form.
     useEffect(() => {
         if (!isOpen) return;
-
+    
         setStep(1);
-
+    
         if (isEditing && demandNote) {
             // Editing mode: populate all fields from the passed `demandNote` prop
             setNoteData({ ...initialDemandNoteData, ...demandNote });
@@ -130,11 +134,12 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
         } else {
             // New note mode: set defaults and user-specific data in one go.
-            const today = new Date();
             const loggedInEmployee = user && employees.length > 0 
                 ? employees.find(e => e.email === user.email)
                 : null;
             
+            const today = new Date();
+
             setNoteData({
                 ...initialDemandNoteData,
                 date: format(today, 'yyyy-MM-dd'),
@@ -142,7 +147,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                 contactPersonName: loggedInEmployee?.fullName || '',
                 contactPersonNumber: loggedInEmployee?.mobileNumber || '',
                 departmentId: loggedInEmployee?.departmentId || '',
-                sectionId: loggedInEmployee?.departmentId || '',
+                sectionId: loggedInEmployee?.departmentId || '', // Assuming section is same as department for now
             });
             setItems([]);
             setDocuments({ attachments: [] });
@@ -228,42 +233,45 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             demandNoteNumber: isEditing ? demandNote.demandNoteNumber : `DN-${format(new Date(), 'ddMMyy')}-${Date.now().toString().slice(-4)}`,
         };
         
-        if (!isEditing && orgSettings?.procurementSettings) {
-            const creator = employees.find(e => e.id === noteData.createdBy);
-            const department = sections.find(s => s.id === creator?.departmentId);
+        if (!isEditing) {
+            dataToSave.gpStatus = 'Pending';
+            if (orgSettings?.procurementSettings) {
+                const creator = employees.find(e => e.id === noteData.createdBy);
+                const department = sections.find(s => s.id === creator?.departmentId);
 
-            const hasSpecialItem = items.some(item => {
-                const masterItem = billItemMasters.find(m => m.id === item.billItemMasterId);
-                if (!masterItem) return false;
-                const category = billItemCategories.find(c => c.id === masterItem.billItemCategoryId);
-                return category?.isSpecial === true;
-            });
+                const hasSpecialItem = items.some(item => {
+                    const masterItem = billItemMasters.find(m => m.id === item.billItemMasterId);
+                    if (!masterItem) return false;
+                    const category = billItemCategories.find(c => c.id === masterItem.billItemCategoryId);
+                    return category?.isSpecial === true;
+                });
 
-            const approvalFlowSteps = [];
-            const { departmentHeads, managingDirectorId, factoryDirectorId, manufacturingDeptManagerId, specializedDeptManagerId } = orgSettings.procurementSettings;
-            
-            const deptApprovers = departmentHeads.find(dh => dh.sectionId === department?.id);
-            const deptHeadId = deptApprovers?.headId;
-            const techAdvisorId = deptApprovers?.technicalAdvisorId;
+                const approvalFlowSteps = [];
+                const { departmentHeads, managingDirectorId, factoryDirectorId, manufacturingDeptManagerId, specializedDeptManagerId } = orgSettings.procurementSettings;
+                
+                const deptApprovers = departmentHeads.find(dh => dh.sectionId === department?.id);
+                const deptHeadId = deptApprovers?.headId;
+                const techAdvisorId = deptApprovers?.technicalAdvisorId;
 
-            if (hasSpecialItem) {
-                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
-                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
-                if (specializedDeptManagerId) approvalFlowSteps.push({ stepName: 'Specialized Dept. Manager', approverId: specializedDeptManagerId });
-                if (managingDirectorId) approvalFlowSteps.push({ stepName: 'Managing Director', approverId: managingDirectorId });
-            } else if (department?.isManufacturingDept) {
-                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
-                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
-                if (manufacturingDeptManagerId) approvalFlowSteps.push({ stepName: 'Manufacturing Dept. Manager', approverId: manufacturingDeptManagerId });
-            } else {
-                if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
-                if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                if (hasSpecialItem) {
+                    if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                    if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                    if (specializedDeptManagerId) approvalFlowSteps.push({ stepName: 'Specialized Dept. Manager', approverId: specializedDeptManagerId });
+                    if (managingDirectorId) approvalFlowSteps.push({ stepName: 'Managing Director', approverId: managingDirectorId });
+                } else if (department?.isManufacturingDept) {
+                    if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                    if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                    if (manufacturingDeptManagerId) approvalFlowSteps.push({ stepName: 'Manufacturing Dept. Manager', approverId: manufacturingDeptManagerId });
+                } else {
+                    if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
+                    if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
+                }
+
+                dataToSave.approvalFlow = { steps: approvalFlowSteps };
+                dataToSave.currentApproverId = approvalFlowSteps[0]?.approverId || '';
+                dataToSave.approvalStatus = 2; // Pending
+                dataToSave.approvalHistory = [];
             }
-
-            dataToSave.approvalFlow = { steps: approvalFlowSteps };
-            dataToSave.currentApproverId = approvalFlowSteps[0]?.approverId || '';
-            dataToSave.approvalStatus = 2; // Pending
-            dataToSave.approvalHistory = [];
         }
 
         if (isEditing) dataToSave.id = demandNote.id;
@@ -288,11 +296,11 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                             <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
                             <div className="space-y-2">
                                 <Label>Department<MandatoryIndicator/></Label>
-                                <Input value={departmentName} disabled placeholder="Auto-selected based on user" />
+                                <Input value={departmentName} disabled />
                             </div>
                             <div className="space-y-2">
                                 <Label>Section</Label>
-                                <Input value={departmentName} disabled placeholder="Auto-selected based on user" />
+                                <Input value={departmentName} disabled />
                             </div>
                             <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>

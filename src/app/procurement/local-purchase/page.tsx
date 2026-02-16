@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,18 +11,42 @@ import { DemandTypeTable } from './components/demand-type-table';
 import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-table';
 import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { useUser } from '@/firebase';
+import { useProcurement } from './components/procurement-provider';
+import GPDeskTable from './components/gp-desk-table';
+import React from 'react';
 
 export default function LocalPurchasePage() {
   const { user } = useUser();
+  const { orgSettings, employees, isLoading } = useProcurement();
+
+  const currentUserEmployee = React.useMemo(() => {
+    if (isLoading || !user || !employees) return null;
+    return employees.find(e => e.email === user.email);
+  }, [user, employees, isLoading]);
+
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const procurementSettings = orgSettings?.procurementSettings;
+
+  const isGPOfficer = procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+  const isGPConcern = procurementSettings?.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
+  
+  const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
+
+  const getGridCols = () => {
+    let count = 3;
+    if (showGPDesk) count++;
+    if (isSuperAdmin) count += 2;
+    return `repeat(${count}, minmax(0, 1fr))`;
+  }
 
   return (
     <div className="space-y-6">
       <ModuleHeader />
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${isSuperAdmin ? 5 : 3}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
+            {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
             <TabsTrigger value="reports">Reports</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
@@ -48,6 +73,19 @@ export default function LocalPurchasePage() {
                 </CardContent>
             </Card>
         </TabsContent>
+         {showGPDesk && (
+            <TabsContent value="gp-desk">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>General Purchase Desk</CardTitle>
+                        <CardDescription>Manage demand notes assigned for purchasing.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <GPDeskTable />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
         <TabsContent value="reports">
             <Card>
                 <CardHeader>
