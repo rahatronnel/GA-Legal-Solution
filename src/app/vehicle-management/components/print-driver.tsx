@@ -42,6 +42,8 @@ import { DemandNotePrintLayout } from '@/app/procurement/local-purchase/componen
 import type { ProcessCode } from '@/app/procurement/local-purchase/components/process-code-table';
 import type { DemandType } from '@/app/procurement/local-purchase/components/demand-type-table';
 import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-table';
+import type { ComparativeStatement } from '@/app/procurement/local-purchase/components/cs-entry-form';
+import { CSPrintLayout } from '@/app/procurement/local-purchase/components/cs-print-layout';
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
@@ -81,6 +83,8 @@ export const PrintDriver = () => {
   const { data: processCodes } = useCollection<ProcessCode>(useMemoFirebase(() => firestore ? collection(firestore, 'processCodes') : null, [firestore]));
   const { data: demandTypes } = useCollection<DemandType>(useMemoFirebase(() => firestore ? collection(firestore, 'demandTypes') : null, [firestore]));
   const { data: billItemMasters } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
+  const { data: demandNotes } = useCollection<DemandNote>(useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]));
+  const { data: comparativeStatements } = useCollection<ComparativeStatement>(useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]));
 
 
   if (!itemToPrint) {
@@ -127,6 +131,15 @@ export const PrintDriver = () => {
                     designations={designations || []} 
                     orgSettings={orgSettings} 
                 />;
+          case 'comparative-statement':
+              const cs = itemToPrint as ComparativeStatement;
+              const relatedDN = demandNotes?.find(dn => dn.id === cs.demandNoteId);
+              return <CSPrintLayout 
+                  cs={cs} 
+                  demandNote={relatedDN} 
+                  vendors={vendors || []} 
+                  orgSettings={orgSettings} 
+              />
           default:
               return null;
       }
