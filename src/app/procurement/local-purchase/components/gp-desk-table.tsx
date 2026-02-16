@@ -12,7 +12,7 @@ import { Search, Eye, Printer, Users, FilePlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
+import { useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -149,7 +149,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
 
     const handleOpenAssignVendors = (note: DemandNote) => {
         setCurrentNote(note);
@@ -162,7 +162,7 @@ export default function GPDeskTable() {
             toast({
                 variant: 'destructive',
                 title: 'Cannot Create CS',
-                description: 'You must assign vendors and upload their quotations before creating a Comparative Statement.',
+                description: 'You must assign vendors before creating a Comparative Statement.',
             });
             return;
         }
@@ -321,3 +321,5 @@ export default function GPDeskTable() {
 }
 
   
+
+    
