@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users, FilePlus } from 'lucide-react';
+import { Search, Eye, Printer, Users, FilePlus, Hand } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -26,6 +26,7 @@ import { ChevronsUpDown, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ComparativeStatementForm } from './cs-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 const MultiSelectPopover: React.FC<{
     items: Vendor[];
@@ -110,32 +111,37 @@ export default function GPDeskTable() {
 
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
-    const { isGPOfficer, isGPConcern, gpConcernOfficers } = useMemo(() => {
+    const { isGPOfficer, isGPConcern, gpConcernOfficers, isSuperAdmin } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!settings || !currentUserEmployee || !employees) return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [] };
+        if (!settings || !currentUserEmployee || !employees) {
+            const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+            return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [], isSuperAdmin: superAdminCheck };
+        }
         
+        const superAdmin = user?.email === 'superadmin@galsolution.com';
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
         const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
         
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers as any[] };
-    }, [orgSettings, currentUserEmployee, employees]);
+        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers as Employee[], isSuperAdmin: superAdmin };
+    }, [orgSettings, currentUserEmployee, employees, user]);
     
 
     const filteredItems = useMemo(() => {
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+        let baseList: DemandNote[];
 
-        let assignedNotes = safeItems.filter(note => note.gpStatus === 'Assigned');
-
-        if (!isSuperAdmin && !isGPOfficer) {
-            if (isGPConcern) {
-                assignedNotes = assignedNotes.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
-            } else {
-                return []; // Regular users shouldn't see the GP desk
-            }
+        if (isSuperAdmin || isGPOfficer) {
+            // Superadmin and GP Officer see all fully approved notes on the GP Desk
+            baseList = safeItems.filter(note => note.approvalStatus === 1);
+        } else if (isGPConcern) {
+            // GP Concern officers only see notes specifically assigned to them
+            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
+        } else {
+            // Other roles don't see the GP Desk
+            baseList = [];
         }
         
-        return assignedNotes.filter(item => {
+        return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
@@ -148,7 +154,8 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName]);
+
 
     const handleOpenAssignVendors = (note: DemandNote) => {
         setCurrentNote(note);
