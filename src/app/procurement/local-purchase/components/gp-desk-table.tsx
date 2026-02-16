@@ -4,25 +4,98 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Eye, Search, Printer } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Search, Eye, Printer, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
-import { useUser } from '@/firebase';
-import type { DemandNote } from './demand-note-entry-form';
-import { Button } from '@/components/ui/button';
+import { useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronsUpDown, Check } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+
+const MultiSelectPopover: React.FC<{
+    items: Vendor[];
+    selectedIds: string[];
+    onSelectionChange: (ids: string[]) => void;
+    placeholder: string;
+}> = ({ items, selectedIds, onSelectionChange, placeholder }) => {
+    const [open, setOpen] = useState(false);
+
+    const handleSelect = (id: string) => {
+        const newSelectedIds = selectedIds.includes(id)
+            ? selectedIds.filter(selectedId => selectedId !== id)
+            : [...selectedIds, id];
+        onSelectionChange(newSelectedIds);
+    };
+
+    const selectedItems = items.filter(item => selectedIds.includes(item.id));
+
+    return (
+         <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-10">
+                    <div className="flex flex-wrap gap-1">
+                        {selectedItems.length > 0
+                            ? selectedItems.map(item => <Badge key={item.id} variant="secondary">{item.vendorName}</Badge>)
+                            : placeholder
+                        }
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                    <CommandInput placeholder="Search vendors..." />
+                     <ScrollArea className="h-48">
+                        <CommandList>
+                        <CommandEmpty>No vendors found.</CommandEmpty>
+                        <CommandGroup>
+                            {items.map(item => (
+                                <CommandItem
+                                    key={item.id}
+                                    value={`${item.vendorName} ${item.vendorId}`}
+                                    onSelect={() => handleSelect(item.id)}
+                                >
+                                    <Check className={cn("mr-2 h-4 w-4", selectedIds.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                    {item.vendorName}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                     </ScrollArea>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};
 
 export default function GPDeskTable() {
     const { user } = useUser();
-    const { demandNotes, sections, employees, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, sections, employees, vendors, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
+    const { toast } = useToast();
+    const firestore = useFirestore();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [assignedToFilter, setAssignedToFilter] = useState('all');
+    const [vendorAssignmentFilter, setVendorAssignmentFilter] = useState('all');
+
+    const [isAssignVendorOpen, setIsAssignVendorOpen] = useState(false);
+    const [currentNote, setCurrentNote] = useState<DemandNote | null>(null);
+    const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -66,9 +139,39 @@ export default function GPDeskTable() {
 
             const assignedToMatch = assignedToFilter === 'all' || item.gpConcernOfficerId === assignedToFilter;
             
-            return searchTermMatch && assignedToMatch;
+            const vendorAssignmentMatch = vendorAssignmentFilter === 'all' || 
+                (vendorAssignmentFilter === 'assigned' && item.quotations && item.quotations.length > 0) ||
+                (vendorAssignmentFilter === 'not_assigned' && (!item.quotations || item.quotations.length === 0));
+
+            return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [safeItems, searchTerm, assignedToFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, currentUserEmployee, user, isGPOfficer, isGPConcern, getDepartmentName]);
+
+    const handleOpenAssignVendors = (note: DemandNote) => {
+        setCurrentNote(note);
+        setSelectedVendorIds(note.quotations?.map(q => q.vendorId) || []);
+        setIsAssignVendorOpen(true);
+    };
+
+    const handleConfirmVendorAssignment = () => {
+        if (!currentNote || !firestore) return;
+        
+        const noteRef = doc(firestore, 'demandNotes', currentNote.id);
+        const existingQuotations = currentNote.quotations || [];
+
+        // Create a map of existing quotations for quick lookup
+        const existingMap = new Map(existingQuotations.map(q => [q.vendorId, q]));
+
+        // Create the new list, preserving existing file data
+        const newQuotations: Quotation[] = selectedVendorIds.map(vendorId => {
+            const existing = existingMap.get(vendorId);
+            return existing || { vendorId, fileName: '', fileDataUrl: '' };
+        });
+
+        setDocumentNonBlocking(noteRef, { quotations: newQuotations }, { merge: true });
+        toast({ title: 'Success', description: 'Vendor assignments have been updated.' });
+        setIsAssignVendorOpen(false);
+    };
 
 
     return (
@@ -86,14 +189,20 @@ export default function GPDeskTable() {
                             />
                         </div>
                         <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Filter by Assigned To..." />
-                            </SelectTrigger>
+                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
                                 {gpConcernOfficers.map(officer => (
                                     <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
                                 ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={vendorAssignmentFilter} onValueChange={setVendorAssignmentFilter}>
+                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Vendor Status..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Vendor Statuses</SelectItem>
+                                <SelectItem value="assigned">Assigned</SelectItem>
+                                <SelectItem value="not_assigned">Not Assigned</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -106,14 +215,15 @@ export default function GPDeskTable() {
                                 <TableHead>Department</TableHead>
                                 <TableHead>Assigned To</TableHead>
                                 <TableHead>Assigned Date & Time</TableHead>
-                                <TableHead className="w-[120px] text-right">Actions</TableHead>
+                                <TableHead>Vendor Assignment</TableHead>
+                                <TableHead className="w-[160px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                         {isLoading ? (
                              Array.from({length: 3}).map((_, i) => (
                                 <TableRow key={i}>
-                                  <TableCell colSpan={5}><Skeleton className="h-5 w-full" /></TableCell>
+                                  <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
                                 </TableRow>
                               ))
                         ) : filteredItems.length > 0 ? (
@@ -123,8 +233,15 @@ export default function GPDeskTable() {
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>{getEmployeeName(item.gpConcernOfficerId || '')}</TableCell>
                                     <TableCell>{item.gpAssignedDate ? new Date(item.gpAssignedDate).toLocaleString() : 'N/A'}</TableCell>
+                                    <TableCell>
+                                        {item.quotations && item.quotations.length > 0
+                                            ? <Badge variant="default">Assigned</Badge>
+                                            : <Badge variant="secondary">Not Assigned</Badge>
+                                        }
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
                                         </div>
@@ -133,7 +250,7 @@ export default function GPDeskTable() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     No assigned demand notes found.
                                 </TableCell>
                             </TableRow>
@@ -142,6 +259,31 @@ export default function GPDeskTable() {
                     </Table>
                 </div>
             </div>
+
+            <Dialog open={isAssignVendorOpen} onOpenChange={setIsAssignVendorOpen}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Assign Vendors for {currentNote?.demandNoteNumber}</DialogTitle>
+                        <DialogDescription>
+                            Select one or more vendors to request quotations from for this demand note.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label>Vendors</Label>
+                        <MultiSelectPopover
+                            items={vendors || []}
+                            selectedIds={selectedVendorIds}
+                            onSelectionChange={setSelectedVendorIds}
+                            placeholder="Select vendors to assign..."
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignVendorOpen(false)}>Cancel</Button>
+                        <Button onClick={handleConfirmVendorAssignment}>Confirm Assignment</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </TooltipProvider>
     );
 }

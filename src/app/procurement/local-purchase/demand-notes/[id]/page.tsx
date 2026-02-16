@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -5,13 +6,13 @@ import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon, ChevronsUpDown, PlusCircle } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase, useDoc } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -22,18 +23,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import type { DemandNote, Quotation } from '../../components/demand-note-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { useProcurement } from '../../components/procurement-provider';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
-import { cn, imageToDataUrl } from '@/lib/utils';
+import { imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -78,35 +76,25 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
     );
 };
 
-const QuotationManager: React.FC<{ demandNote: DemandNote, vendors: Vendor[], isReadOnly: boolean }> = ({ demandNote, vendors, isReadOnly }) => {
+const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; isReadOnly: boolean }> = ({ demandNote, vendors, isReadOnly }) => {
     const { toast } = useToast();
     const firestore = useFirestore();
     const [quotations, setQuotations] = useState<Quotation[]>([]);
-    const [popoverOpen, setPopoverOpen] = useState(false);
 
     useEffect(() => {
         setQuotations(demandNote.quotations || []);
     }, [demandNote.quotations]);
-
-    const handleVendorSelectionChange = (vendorId: string) => {
-        if (!quotations.find(q => q.vendorId === vendorId)) {
-            setQuotations(prev => [...prev, { vendorId, fileName: '', fileDataUrl: '' }]);
-        }
-    };
-    
-    const handleRemoveVendor = (vendorId: string) => {
-        setQuotations(prev => prev.filter(q => q.vendorId !== vendorId));
-    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, vendorId: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             try {
                 const dataUrl = await imageToDataUrl(file);
-                const updatedQuotations = quotations.map(q => 
-                    q.vendorId === vendorId ? { ...q, fileName: file.name, fileDataUrl: dataUrl } : q
+                setQuotations(prev => 
+                    prev.map(q => 
+                        q.vendorId === vendorId ? { ...q, fileName: file.name, fileDataUrl: dataUrl } : q
+                    )
                 );
-                setQuotations(updatedQuotations);
                 toast({ title: "File Ready", description: `${file.name} is ready to be saved.` });
             } catch (err) {
                 toast({ variant: 'destructive', title: 'Upload failed' });
@@ -122,7 +110,6 @@ const QuotationManager: React.FC<{ demandNote: DemandNote, vendors: Vendor[], is
     };
     
     const assignedVendors = useMemo(() => vendors.filter(v => quotations.some(q => q.vendorId === v.id)), [quotations, vendors]);
-    const unassignedVendors = useMemo(() => vendors.filter(v => !quotations.some(q => q.vendorId === v.id)), [quotations, vendors]);
 
     return (
         <Card>
@@ -130,27 +117,8 @@ const QuotationManager: React.FC<{ demandNote: DemandNote, vendors: Vendor[], is
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle>Vendor Quotations</CardTitle>
-                        <CardDescription>Assign vendors and manage their quotations for this demand note.</CardDescription>
+                        <CardDescription>Upload and manage quotations from assigned vendors.</CardDescription>
                     </div>
-                     {!isReadOnly && (
-                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Assign Vendor</Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[300px] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search vendor..." />
-                                    <CommandList><CommandEmpty>No vendor found.</CommandEmpty><CommandGroup>
-                                        {unassignedVendors.map(vendor => (
-                                            <CommandItem key={vendor.id} onSelect={() => { handleVendorSelectionChange(vendor.id); setPopoverOpen(false); }}>
-                                                {vendor.vendorName}
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup></CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -172,14 +140,13 @@ const QuotationManager: React.FC<{ demandNote: DemandNote, vendors: Vendor[], is
                                             <Label htmlFor={`upload-${vendor.id}`} className="cursor-pointer"><Upload className="mr-2 h-4 w-4"/> {quotation?.fileDataUrl ? 'Replace' : 'Upload'}</Label>
                                         </Button>
                                         <Input id={`upload-${vendor.id}`} type="file" className="hidden" onChange={(e) => handleFileUpload(e, vendor.id)} />
-                                        <Button size="sm" variant="destructive" onClick={() => handleRemoveVendor(vendor.id)}><X className="h-4 w-4"/></Button>
                                      </div>
                                  )}
                             </div>
                         )
-                    }) : <p className="text-sm text-muted-foreground text-center py-4">No vendors assigned.</p>}
+                    }) : <p className="text-sm text-muted-foreground text-center py-4">No vendors assigned for quotation. Please assign vendors from the GP Desk.</p>}
                 </div>
-                {!isReadOnly && assignedVendors.length > 0 && <Button onClick={handleSave}>Save Quotations</Button>}
+                {!isReadOnly && assignedVendors.length > 0 && <Button onClick={handleSave}>Save Quotation Changes</Button>}
             </CardContent>
         </Card>
     );
