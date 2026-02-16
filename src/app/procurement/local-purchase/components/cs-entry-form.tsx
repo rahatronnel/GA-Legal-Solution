@@ -18,6 +18,7 @@ import { useProcurement } from './procurement-provider';
 import type { DemandNote } from './demand-note-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type ComparativeStatementItem = {
     demandNoteItemId: string;
@@ -265,5 +266,3 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         </Dialog>
     );
 }
-
-  
