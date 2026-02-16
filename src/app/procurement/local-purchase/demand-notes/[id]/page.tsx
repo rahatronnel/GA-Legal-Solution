@@ -1,12 +1,12 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon, ChevronsUpDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -26,12 +26,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import type { DemandNote } from '../../components/demand-note-entry-form';
+import type { DemandNote, Quotation } from '../../components/demand-note-entry-form';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { useProcurement } from '../../components/procurement-provider';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
-
+import { cn, imageToDataUrl } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -73,6 +78,113 @@ const DocumentViewer = ({ files, categoryLabel }: { files: { name: string; file:
     );
 };
 
+const QuotationManager: React.FC<{ demandNote: DemandNote, vendors: Vendor[], isReadOnly: boolean }> = ({ demandNote, vendors, isReadOnly }) => {
+    const { toast } = useToast();
+    const firestore = useFirestore();
+    const [quotations, setQuotations] = useState<Quotation[]>([]);
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
+    useEffect(() => {
+        setQuotations(demandNote.quotations || []);
+    }, [demandNote.quotations]);
+
+    const handleVendorSelectionChange = (vendorId: string) => {
+        if (!quotations.find(q => q.vendorId === vendorId)) {
+            setQuotations(prev => [...prev, { vendorId, fileName: '', fileDataUrl: '' }]);
+        }
+    };
+    
+    const handleRemoveVendor = (vendorId: string) => {
+        setQuotations(prev => prev.filter(q => q.vendorId !== vendorId));
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, vendorId: string) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                const dataUrl = await imageToDataUrl(file);
+                const updatedQuotations = quotations.map(q => 
+                    q.vendorId === vendorId ? { ...q, fileName: file.name, fileDataUrl: dataUrl } : q
+                );
+                setQuotations(updatedQuotations);
+                toast({ title: "File Ready", description: `${file.name} is ready to be saved.` });
+            } catch (err) {
+                toast({ variant: 'destructive', title: 'Upload failed' });
+            }
+        }
+    };
+
+    const handleSave = () => {
+        if (!firestore) return;
+        const noteRef = doc(firestore, 'demandNotes', demandNote.id);
+        setDocumentNonBlocking(noteRef, { quotations }, { merge: true });
+        toast({ title: 'Success', description: 'Quotations saved successfully.' });
+    };
+    
+    const assignedVendors = useMemo(() => vendors.filter(v => quotations.some(q => q.vendorId === v.id)), [quotations, vendors]);
+    const unassignedVendors = useMemo(() => vendors.filter(v => !quotations.some(q => q.vendorId === v.id)), [quotations, vendors]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Vendor Quotations</CardTitle>
+                        <CardDescription>Assign vendors and manage their quotations for this demand note.</CardDescription>
+                    </div>
+                     {!isReadOnly && (
+                        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/>Assign Vendor</Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search vendor..." />
+                                    <CommandList><CommandEmpty>No vendor found.</CommandEmpty><CommandGroup>
+                                        {unassignedVendors.map(vendor => (
+                                            <CommandItem key={vendor.id} onSelect={() => { handleVendorSelectionChange(vendor.id); setPopoverOpen(false); }}>
+                                                {vendor.vendorName}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup></CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-3">
+                    {assignedVendors.length > 0 ? assignedVendors.map(vendor => {
+                        const quotation = quotations.find(q => q.vendorId === vendor.id);
+                        return (
+                            <div key={vendor.id} className="p-4 border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="font-semibold">{vendor.vendorName}</div>
+                                {quotation?.fileDataUrl ? (
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                        <Link href={quotation.fileDataUrl} download={quotation.fileName} className="text-sm text-primary hover:underline truncate" target="_blank" rel="noopener noreferrer">{quotation.fileName}</Link>
+                                    </div>
+                                ) : <div className="text-sm text-muted-foreground">No quotation uploaded.</div>}
+                                 {!isReadOnly && (
+                                     <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" asChild>
+                                            <Label htmlFor={`upload-${vendor.id}`} className="cursor-pointer"><Upload className="mr-2 h-4 w-4"/> {quotation?.fileDataUrl ? 'Replace' : 'Upload'}</Label>
+                                        </Button>
+                                        <Input id={`upload-${vendor.id}`} type="file" className="hidden" onChange={(e) => handleFileUpload(e, vendor.id)} />
+                                        <Button size="sm" variant="destructive" onClick={() => handleRemoveVendor(vendor.id)}><X className="h-4 w-4"/></Button>
+                                     </div>
+                                 )}
+                            </div>
+                        )
+                    }) : <p className="text-sm text-muted-foreground text-center py-4">No vendors assigned.</p>}
+                </div>
+                {!isReadOnly && assignedVendors.length > 0 && <Button onClick={handleSave}>Save Quotations</Button>}
+            </CardContent>
+        </Card>
+    );
+};
+
 
 function DemandNoteProfileContent() {
     const router = useRouter();
@@ -82,7 +194,7 @@ function DemandNoteProfileContent() {
     const { handlePrint } = usePrint();
     const { id } = params;
     
-    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, isLoading } = useProcurement();
+    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, isLoading, orgSettings } = useProcurement();
 
     const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
@@ -96,6 +208,10 @@ function DemandNoteProfileContent() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+    const isAssignedGPConcern = demandNote?.gpConcernOfficerId === currentUserEmployee?.id;
+    const isReadOnly = !isSuperAdmin && !isGPOfficer && !isAssignedGPConcern;
 
     const handleApproval = (status: number) => {
         if (!firestore || !demandNote || !user || !demandNote.approvalFlow?.steps || !employees) return;
@@ -209,6 +325,7 @@ function DemandNoteProfileContent() {
                     <Tabs defaultValue="overview">
                         <TabsList className="mb-4">
                             <TabsTrigger value="overview">Overview</TabsTrigger>
+                            <TabsTrigger value="quotations">Quotations</TabsTrigger>
                             <TabsTrigger value="documents">Documents</TabsTrigger>
                         </TabsList>
                         <TabsContent value="overview" className="space-y-6">
@@ -309,6 +426,9 @@ function DemandNoteProfileContent() {
                                     </Table>
                                 </CardContent>
                             </Card>
+                        </TabsContent>
+                        <TabsContent value="quotations">
+                            <QuotationManager demandNote={demandNote} vendors={vendors} isReadOnly={isReadOnly} />
                         </TabsContent>
                         <TabsContent value="documents">
                             <div className="space-y-6">

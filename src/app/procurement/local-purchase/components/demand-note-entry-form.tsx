@@ -43,6 +43,12 @@ export type DemandNoteItem = {
     otherDetails?: string;
 };
 
+export type Quotation = {
+    vendorId: string;
+    fileName: string;
+    fileDataUrl: string;
+};
+
 export type DemandNote = {
     id: string;
     demandNoteNumber: string;
@@ -73,6 +79,7 @@ export type DemandNote = {
     gpAssignedBy?: string;
     gpAssignedDate?: string;
     gpStatus?: 'Pending' | 'Assigned';
+    quotations?: Quotation[];
 };
 
 const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'> = {

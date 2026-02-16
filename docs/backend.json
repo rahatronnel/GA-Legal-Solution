@@ -508,7 +508,20 @@
         "gpConcernOfficerId": { "type": "string", "description": "Employee ID of the assigned GP Concern Officer." },
         "gpAssignedBy": { "type": "string", "description": "Employee ID of the GP Officer who assigned the note." },
         "gpAssignedDate": { "type": "string", "format": "date-time" },
-        "gpStatus": { "type": "string", "enum": ["Pending", "Assigned"], "description": "The status of the General Purchase assignment." }
+        "gpStatus": { "type": "string", "enum": ["Pending", "Assigned"], "description": "The status of the General Purchase assignment." },
+        "quotations": {
+          "type": "array",
+          "description": "A list of quotations received from vendors for this demand note.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "vendorId": { "type": "string" },
+              "fileName": { "type": "string" },
+              "fileDataUrl": { "type": "string" }
+            },
+            "required": ["vendorId", "fileName", "fileDataUrl"]
+          }
+        }
       },
       "required": ["demandNoteNumber", "date", "departmentId", "purpose"]
     }
@@ -554,6 +567,7 @@
     
 
     
+
 
 
 

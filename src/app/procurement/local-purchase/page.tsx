@@ -14,6 +14,10 @@ import { useUser } from '@/firebase';
 import { useProcurement } from './components/procurement-provider';
 import GPDeskTable from './components/gp-desk-table';
 import React from 'react';
+import { VendorTable } from '@/app/billflow/components/vendor-table';
+import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-table';
+import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
+import { LegacyBillFlowProvider } from '@/app/billflow/components/bill-flow-provider';
 
 export default function LocalPurchasePage() {
   const { user } = useUser();
@@ -33,7 +37,7 @@ export default function LocalPurchasePage() {
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
 
   const getGridCols = () => {
-    let count = 2; // Dashboard, Demand Notes
+    let count = 3; // Dashboard, Demand Notes, Vendors
     if (showGPDesk) count++;
     if (isSuperAdmin) count += 2; // Master Data, Settings
     return `repeat(${count}, minmax(0, 1fr))`;
@@ -46,6 +50,7 @@ export default function LocalPurchasePage() {
         <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
+            <TabsTrigger value="vendors">Vendors</TabsTrigger>
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
@@ -72,6 +77,19 @@ export default function LocalPurchasePage() {
                 </CardContent>
             </Card>
         </TabsContent>
+        <TabsContent value="vendors">
+            <LegacyBillFlowProvider>
+                <Card>
+                  <CardHeader>
+                      <CardTitle>Vendors</CardTitle>
+                      <CardDescription>Manage your organization's vendors and their information.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <VendorTable />
+                  </CardContent>
+                </Card>
+            </LegacyBillFlowProvider>
+        </TabsContent>
          {showGPDesk && (
             <TabsContent value="gp-desk">
                 <Card>
@@ -89,11 +107,13 @@ export default function LocalPurchasePage() {
           <>
             <TabsContent value="master-data">
                 <Tabs defaultValue="process-codes" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-6">
                         <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
                         <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
                         <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
                         <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
+                        <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
+                        <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
                     </TabsList>
                     <TabsContent value="process-codes" className="mt-4">
                         <Card>
@@ -128,6 +148,22 @@ export default function LocalPurchasePage() {
                         <CardHeader><CardTitle>Bill Item Categories</CardTitle><CardDescription>Manage categories for your billable items.</CardDescription></CardHeader>
                         <CardContent><BillItemCategoryTable /></CardContent>
                         </Card>
+                    </TabsContent>
+                    <TabsContent value="vendor-categories" className="mt-4">
+                        <LegacyBillFlowProvider>
+                            <Card>
+                                <CardHeader><CardTitle>Vendor Categories</CardTitle><CardDescription>Manage the categories for your vendors.</CardDescription></CardHeader>
+                                <CardContent><VendorCategoryTable /></CardContent>
+                            </Card>
+                        </LegacyBillFlowProvider>
+                    </TabsContent>
+                    <TabsContent value="vendor-nature" className="mt-4">
+                         <LegacyBillFlowProvider>
+                            <Card>
+                                <CardHeader><CardTitle>Vendor Nature of Business</CardTitle><CardDescription>Manage the nature of business for your vendors.</CardDescription></CardHeader>
+                                <CardContent><VendorNatureOfBusinessTable /></CardContent>
+                            </Card>
+                        </LegacyBillFlowProvider>
                     </TabsContent>
                 </Tabs>
             </TabsContent>
