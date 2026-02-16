@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -71,10 +72,28 @@ export function DemandNoteTable() {
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
+        if (isSuperAdmin) {
+            let roleBasedFilteredNotes = safeItems;
+             return roleBasedFilteredNotes.filter(item => {
+                const searchTermMatch = !searchTerm ||
+                    item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
+
+                let statusMatch = true;
+                if (statusFilter === 'pending') {
+                    statusMatch = item.approvalStatus !== 1 && item.approvalStatus !== 0;
+                } else if (statusFilter !== 'all') {
+                    statusMatch = item.approvalStatus === parseInt(statusFilter);
+                }
+                
+                return searchTermMatch && statusMatch;
+            }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        }
+
         if (isLoading || !currentUserEmployee) return [];
 
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-        
         let roleBasedFilteredNotes: DemandNote[];
 
         if (isGPOfficer) {
@@ -88,7 +107,7 @@ export function DemandNoteTable() {
                 procurementSettings.specializedDeptManagerId === currentUserEmployee.id
             );
 
-            if (isSuperAdmin || isHighLevelManager) {
+            if (isHighLevelManager) {
                 roleBasedFilteredNotes = safeItems;
             } else {
                 const managedSectionIds = procurementSettings?.departmentHeads
@@ -201,6 +220,7 @@ export function DemandNoteTable() {
 
             let newApprovalStatus: number | undefined;
             let nextApproverId: string;
+            const gpStatusUpdate: { gpStatus?: 'Pending' } = {};
 
             if (status === 1) { // Approved
                 const nextLevel = currentLevel + 1;
@@ -210,6 +230,7 @@ export function DemandNoteTable() {
                 } else {
                     newApprovalStatus = 1; // Completed
                     nextApproverId = '';
+                    gpStatusUpdate.gpStatus = 'Pending';
                 }
             } else { // Rejected
                 newApprovalStatus = 0;
@@ -220,6 +241,7 @@ export function DemandNoteTable() {
                 approvalStatus: newApprovalStatus,
                 currentApproverId: nextApproverId,
                 approvalHistory: [...(note.approvalHistory || []), newHistoryEntry],
+                ...gpStatusUpdate,
             }, { merge: true });
         });
         

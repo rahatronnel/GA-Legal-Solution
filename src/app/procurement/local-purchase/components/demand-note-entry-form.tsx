@@ -234,7 +234,6 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         };
         
         if (!isEditing) {
-            dataToSave.gpStatus = 'Pending';
             if (orgSettings?.procurementSettings) {
                 const creator = employees.find(e => e.id === noteData.createdBy);
                 const department = sections.find(s => s.id === creator?.departmentId);

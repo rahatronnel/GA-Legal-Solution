@@ -120,6 +120,7 @@ function DemandNoteProfileContent() {
     
         let newApprovalStatus: number | undefined;
         let nextApproverId: string;
+        const gpStatusUpdate: { gpStatus?: 'Pending' } = {};
     
         if (status === 1) { // If the action is "Approve"
             const nextLevel = currentLevel + 1;
@@ -129,6 +130,7 @@ function DemandNoteProfileContent() {
             } else {
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
+                gpStatusUpdate.gpStatus = 'Pending';
             }
         } else { // If the action is "Reject"
             newApprovalStatus = 0; // Rejected
@@ -141,6 +143,7 @@ function DemandNoteProfileContent() {
                 approvalStatus: newApprovalStatus,
                 currentApproverId: nextApproverId,
                 approvalHistory: [...(demandNote.approvalHistory || []), newHistoryEntry],
+                ...gpStatusUpdate,
             },
             { merge: true }
         );
