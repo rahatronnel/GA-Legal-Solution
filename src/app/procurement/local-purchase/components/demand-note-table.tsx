@@ -76,10 +76,9 @@ export function DemandNoteTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-
+    
         let baseList: DemandNote[];
-
-        // 1. Establish the base list based on the user's primary role.
+    
         if (isSuperAdmin) {
             baseList = safeItems;
         } else if (isGPOfficer) {
@@ -107,32 +106,28 @@ export function DemandNoteTable() {
                 }
             }
         } else {
-            baseList = []; // Default to empty if no role matches
+            baseList = [];
         }
     
-        // 2. Apply secondary UI filters on top of the role-based list.
         const finalList = baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-
-            // For Superadmin and GP Officer, the status filter should be completely ignored.
+    
             if (isSuperAdmin || isGPOfficer) {
                 return searchTermMatch;
             }
             
-            // For all other users, apply the status filter as normal.
             const statusMatch = statusFilter === 'all' 
                 ? true
                 : (statusFilter === 'pending'
                     ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
-                    : item.approvalStatus === parseInt(statusFilter)
+                    : item.approvalStatus === parseInt(statusFilter, 10)
                   );
             
             return searchTermMatch && statusMatch;
         });
     
-        // 3. Sort and return the final list.
         return finalList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, user, isLoading, orgSettings, isGPOfficer]);
@@ -441,3 +436,5 @@ export function DemandNoteTable() {
         </TooltipProvider>
     );
 }
+
+    
