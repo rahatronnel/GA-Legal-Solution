@@ -73,31 +73,29 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+        if (isLoading || !currentUserEmployee) return [];
 
-        if (isSuperAdmin) {
-            let roleBasedFilteredNotes = safeItems;
-             return roleBasedFilteredNotes.filter(item => {
+        const lowercasedTerm = searchTerm.toLowerCase();
+        
+        // GP Officer View: Special queue for assignment
+        if (isGPOfficer) {
+            return safeItems.filter(note => {
+                const isReadyForAssignment = note.approvalStatus === 1 && note.gpStatus === 'Pending';
+                if (!isReadyForAssignment) return false;
+
                 const searchTermMatch = !searchTerm ||
-                    item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-
-                let statusMatch = true;
-                if (statusFilter === 'pending') {
-                    statusMatch = item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                } else if (statusFilter !== 'all') {
-                    statusMatch = item.approvalStatus === parseInt(statusFilter);
-                }
+                    note.demandNoteNumber.toLowerCase().includes(lowercasedTerm) ||
+                    getDepartmentName(note.departmentId).toLowerCase().includes(lowercasedTerm);
                 
-                return searchTermMatch && statusMatch;
+                return searchTermMatch;
             }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         }
 
-        if (isLoading || !currentUserEmployee) return [];
-
+        // Standard Views for all other users
         let roleBasedFilteredNotes: DemandNote[];
 
-        if (isGPOfficer) {
-            roleBasedFilteredNotes = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus === 'Pending');
+        if (isSuperAdmin) {
+            roleBasedFilteredNotes = safeItems;
         } else {
             const procurementSettings = orgSettings?.procurementSettings;
             const isHighLevelManager = procurementSettings && (
@@ -122,10 +120,11 @@ export function DemandNoteTable() {
             }
         }
         
+        // Apply search and status filters for standard views
         return roleBasedFilteredNotes.filter(item => {
             const searchTermMatch = !searchTerm ||
-                item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
+                item.demandNoteNumber.toLowerCase().includes(lowercasedTerm) ||
+                getDepartmentName(item.departmentId).toLowerCase().includes(lowercasedTerm);
 
             let statusMatch = true;
             if (statusFilter === 'pending') {
@@ -295,17 +294,19 @@ export function DemandNoteTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filter by Status..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="1">Approved</SelectItem>
-                                <SelectItem value="0">Rejected</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {!isGPOfficer && (
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Filter by Status..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="1">Approved</SelectItem>
+                                    <SelectItem value="0">Rejected</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
                      <div className="flex items-center gap-2">
                         {isGPOfficer ? (
