@@ -75,76 +75,62 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-
+    
         if (isLoading) return [];
+    
+        let baseList: DemandNote[];
+    
+        // 1. Establish the base list based on the user's primary role.
         if (isSuperAdmin) {
-            // Superadmin sees all notes, but can still filter by search term and status
-            return safeItems.filter(item => {
-                const searchTermMatch = !searchTerm ||
-                    item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-                let statusMatch = true;
-                if (statusFilter !== 'all') {
-                    statusMatch = statusFilter === 'pending' ?
-                        (item.approvalStatus !== 1 && item.approvalStatus !== 0) :
-                        (item.approvalStatus === parseInt(statusFilter));
-                }
-                return searchTermMatch && statusMatch;
-            }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
-        
-        if (isGPOfficer) {
-            return safeItems.filter(note => {
-                const isReadyForAssignment = note.approvalStatus === 1 && note.gpStatus === 'Pending';
-                if (!isReadyForAssignment) return false;
-
-                return !searchTerm ||
-                    note.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    getDepartmentName(note.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-            }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
-
-        if (!currentUserEmployee) return [];
-
-        const procurementSettings = orgSettings?.procurementSettings;
-        const isHighLevelManager = procurementSettings && (
-            procurementSettings.managingDirectorId === currentUserEmployee.id ||
-            procurementSettings.factoryDirectorId === currentUserEmployee.id ||
-            procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
-            procurementSettings.specializedDeptManagerId === currentUserEmployee.id
-        );
-
-        let roleBasedFilteredNotes: DemandNote[];
-
-        if (isHighLevelManager) {
-            roleBasedFilteredNotes = safeItems;
-        } else {
-            const managedSectionIds = procurementSettings?.departmentHeads
-                ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
-                .map(dh => dh.sectionId) || [];
-
-            if (managedSectionIds.length > 0) {
-                roleBasedFilteredNotes = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
+            baseList = safeItems;
+        } else if (isGPOfficer) {
+            baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus === 'Pending');
+        } else if (currentUserEmployee) {
+            const procurementSettings = orgSettings?.procurementSettings;
+            const isHighLevelManager = procurementSettings && (
+                procurementSettings.managingDirectorId === currentUserEmployee.id ||
+                procurementSettings.factoryDirectorId === currentUserEmployee.id ||
+                procurementSettings.manufacturingDeptManagerId === currentUserEmployee.id ||
+                procurementSettings.specializedDeptManagerId === currentUserEmployee.id
+            );
+    
+            if (isHighLevelManager) {
+                baseList = safeItems;
             } else {
-                roleBasedFilteredNotes = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
+                const managedSectionIds = procurementSettings?.departmentHeads
+                    ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+                    .map(dh => dh.sectionId) || [];
+    
+                if (managedSectionIds.length > 0) {
+                    baseList = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
+                } else {
+                    baseList = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
+                }
             }
+        } else {
+            baseList = []; // Default to empty if no role matches
         }
-        
-        return roleBasedFilteredNotes.filter(item => {
+    
+        // 2. Apply secondary UI filters on top of the role-based list.
+        const finalList = baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-
+    
+            // The status filter should NOT apply to the GP Officer's special queue view.
             let statusMatch = true;
-            if (statusFilter !== 'all') {
-                statusMatch = statusFilter === 'pending' ?
-                    (item.approvalStatus !== 1 && item.approvalStatus !== 0) :
-                    (item.approvalStatus === parseInt(statusFilter));
+            if (!isGPOfficer && statusFilter !== 'all') {
+                statusMatch = statusFilter === 'pending'
+                    ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
+                    : (item.approvalStatus === parseInt(statusFilter));
             }
             
             return searchTermMatch && statusMatch;
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
+        });
+    
+        // 3. Sort and return the final list.
+        return finalList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
     }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, user, isLoading, orgSettings, isGPOfficer]);
 
 
