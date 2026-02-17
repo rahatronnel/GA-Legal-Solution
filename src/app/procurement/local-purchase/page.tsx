@@ -28,11 +28,11 @@ export default function LocalPurchasePage() {
     const settings = orgSettings?.procurementSettings;
     const superAdmin = user?.email === 'superadmin@galsolution.com';
     if (!settings || !employees || employees.length === 0 || !user) {
-      return { isSuperAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
     const currentUserEmployee = employees.find(e => e.email === user?.email);
     if (!currentUserEmployee) {
-      return { isSuperAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
