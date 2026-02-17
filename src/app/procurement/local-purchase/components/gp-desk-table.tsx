@@ -102,22 +102,17 @@ export default function GPDeskTable() {
     const [isCsFormOpen, setIsCsFormOpen] = useState(false);
     const [currentNoteForCs, setCurrentNoteForCs] = useState<DemandNote | null>(null);
 
-    const currentUserEmployee = useMemo(() => {
-        if (!user || !employees) return null;
-        return employees.find(e => e.email === user.email);
-    }, [user, employees]);
-    
-    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager } = useMemo(() => {
+    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager, currentUserEmployee } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false };
+            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false };
+            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -128,7 +123,7 @@ export default function GPDeskTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager: manager };
+        return { isGPOfficer: GPO, isSuperAdmin, isGPConcern: GPC, isManager, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
     
     useEffect(() => {
@@ -260,7 +255,7 @@ export default function GPDeskTable() {
                         </div>
                         <Badge variant="outline">{userRoleText}</Badge>
                         <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager}>
-                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
+                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
                                 {gpConcernOfficers.map(officer => (
@@ -284,7 +279,7 @@ export default function GPDeskTable() {
                             <TableRow>
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Department</TableHead>
-                                <TableHead>Assigned To</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Vendor Assignment</TableHead>
                                 <TableHead>CS Prepared</TableHead>
                                 <TableHead className="w-[160px] text-right">Actions</TableHead>
@@ -405,4 +400,3 @@ export default function GPDeskTable() {
     );
 }
 
-    
