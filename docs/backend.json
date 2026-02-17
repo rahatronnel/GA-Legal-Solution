@@ -571,7 +571,8 @@
               "discountType": { "type": "string", "enum": ["Percentage", "Amount"] },
               "discountValue": { "type": "number" },
               "deliveryTerms": { "type": "string" },
-              "vatAndTax": { "type": "string" },
+              "vatPercentage": { "type": "number", "description": "VAT percentage for this vendor's quote." },
+              "taxPercentage": { "type": "number", "description": "Tax percentage for this vendor's quote." },
               "paymentTerms": { "type": "string" },
               "warranty": { "type": "string" },
               "sampleConfirmed": { "type": "string", "enum": ["Yes", "No", "N/A"] }

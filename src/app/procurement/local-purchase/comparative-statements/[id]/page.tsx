@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Separator } from '@/components/ui/separator';
 
 function ComparativeStatementView() {
     const params = useParams();
@@ -35,7 +36,7 @@ function ComparativeStatementView() {
 
     const vendorTotals = useMemo(() => {
         if (!cs) return {};
-        const totals: { [vendorId: string]: { subtotal: number; discount: number; grandTotal: number } } = {};
+        const totals: { [vendorId: string]: { subtotal: number; discount: number; vatAmount: number; taxAmount: number; grandTotal: number } } = {};
         
         cs.vendorDetails.forEach((vd: any) => {
             const subtotal = cs.items.reduce((acc: number, item: any) => {
@@ -45,12 +46,17 @@ function ComparativeStatementView() {
             
             let discount = 0;
             if (vd.discountType === 'Percentage') {
-                discount = subtotal * (vd.discountValue / 100);
+                discount = subtotal * ((vd.discountValue || 0) / 100);
             } else {
-                discount = vd.discountValue;
+                discount = vd.discountValue || 0;
             }
             
-            totals[vd.vendorId] = { subtotal, discount, grandTotal: subtotal - discount };
+            const subTotalAfterDiscount = subtotal - discount;
+            const vatAmount = subTotalAfterDiscount * ((vd.vatPercentage || 0) / 100);
+            const taxAmount = subTotalAfterDiscount * ((vd.taxPercentage || 0) / 100);
+            const grandTotal = subTotalAfterDiscount + vatAmount + taxAmount;
+
+            totals[vd.vendorId] = { subtotal, discount, vatAmount, taxAmount, grandTotal };
         });
         
         return totals;
@@ -126,26 +132,13 @@ function ComparativeStatementView() {
                                     })}
                                 </TableRow>
                             ))}
+                            {/* Footer Totals */}
+                            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Subtotal</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.subtotal)}</TableCell>))}</TableRow>
+                            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Discount</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.discount)}</TableCell>))}</TableRow>
+                            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">VAT</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.vatAmount)}</TableCell>))}</TableRow>
+                            <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Tax</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.taxAmount)}</TableCell>))}</TableRow>
+                            <TableRow className="text-lg font-extrabold bg-muted"><TableCell colSpan={3} className="text-right">Grand Total</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.grandTotal)}</TableCell>))}</TableRow>
                         </TableBody>
-                        {/* Footer Totals */}
-                        <TableRow className="font-bold bg-muted/50">
-                            <TableCell colSpan={3} className="text-right">Subtotal</TableCell>
-                            {participatingVendors.map((vendor: any) => (
-                                <TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.subtotal)}</TableCell>
-                            ))}
-                        </TableRow>
-                        <TableRow className="font-bold bg-muted/50">
-                             <TableCell colSpan={3} className="text-right">Discount</TableCell>
-                            {participatingVendors.map((vendor: any) => (
-                                <TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.discount)}</TableCell>
-                            ))}
-                        </TableRow>
-                         <TableRow className="text-lg font-extrabold bg-muted">
-                            <TableCell colSpan={3} className="text-right">Grand Total</TableCell>
-                            {participatingVendors.map((vendor: any) => (
-                                <TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.grandTotal)}</TableCell>
-                            ))}
-                        </TableRow>
                     </Table>
                 </CardContent>
             </Card>
@@ -163,14 +156,19 @@ function ComparativeStatementView() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {(['deliveryTerms', 'vatAndTax', 'paymentTerms', 'warranty', 'sampleConfirmed'] as const).map(term => (
+                            {(['deliveryTerms', 'paymentTerms', 'warranty', 'sampleConfirmed', 'vatPercentage', 'taxPercentage'] as const).map(term => {
+                                const termLabel = term.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                const isPercent = term.includes('Percentage');
+                                return (
                                 <TableRow key={term}>
-                                    <TableCell className="font-medium">{term.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</TableCell>
+                                    <TableCell className="font-medium">{termLabel}</TableCell>
                                     {cs.vendorDetails.map((detail: any) => (
-                                        <TableCell key={detail.vendorId} className={`text-center ${detail.vendorId === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{detail[term]}</TableCell>
+                                        <TableCell key={detail.vendorId} className={`text-center ${detail.vendorId === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                            {isPercent ? `${detail[term] || 0}%` : detail[term]}
+                                        </TableCell>
                                     ))}
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </CardContent>

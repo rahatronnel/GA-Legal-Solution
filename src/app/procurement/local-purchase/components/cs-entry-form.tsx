@@ -19,6 +19,7 @@ import type { DemandNote } from './demand-note-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export type ComparativeStatementItem = {
     demandNoteItemId: string;
@@ -36,7 +37,8 @@ export type VendorDetail = {
     discountType: 'Percentage' | 'Amount';
     discountValue: number;
     deliveryTerms: string;
-    vatAndTax: string;
+    vatPercentage: number;
+    taxPercentage: number;
     paymentTerms: string;
     warranty: string;
     sampleConfirmed: 'Yes' | 'No' | 'N/A';
@@ -82,7 +84,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 demandNoteItemId: item.id,
                 particulars: item.particulars,
                 unit: item.unit,
-                quantity: item.requiredQty,
+                requiredQty: item.requiredQty,
                 vendorQuotes: assignedVendors.map(v => ({ vendorId: v.id, unitPrice: 0 })),
             }));
             
@@ -91,7 +93,8 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 discountType: 'Amount',
                 discountValue: 0,
                 deliveryTerms: '',
-                vatAndTax: '',
+                vatPercentage: 0,
+                taxPercentage: 0,
                 paymentTerms: '',
                 warranty: '',
                 sampleConfirmed: 'N/A',
@@ -147,12 +150,18 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         let discount = 0;
         if (vendorDetail) {
             if (vendorDetail.discountType === 'Percentage') {
-                discount = itemTotal * (vendorDetail.discountValue / 100);
+                discount = itemTotal * ((vendorDetail.discountValue || 0) / 100);
             } else {
-                discount = vendorDetail.discountValue;
+                discount = vendorDetail.discountValue || 0;
             }
         }
-        return { itemTotal, discount, grandTotal: itemTotal - discount };
+        
+        const subTotalAfterDiscount = itemTotal - discount;
+        const vatAmount = subTotalAfterDiscount * ((vendorDetail?.vatPercentage || 0) / 100);
+        const taxAmount = subTotalAfterDiscount * ((vendorDetail?.taxPercentage || 0) / 100);
+        const grandTotal = subTotalAfterDiscount + vatAmount + taxAmount;
+
+        return { itemTotal, discount, grandTotal, vatAmount, taxAmount };
     };
 
     const nextStep = () => setStep(s => Math.min(s + 1, totalSteps -1));
@@ -221,21 +230,29 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                  </CardContent>
                              </Card>
                              <Card>
-                                 <CardHeader><CardTitle>Commercial Terms</CardTitle></CardHeader>
+                                 <CardHeader><CardTitle>Commercial Terms & Calculation</CardTitle></CardHeader>
                                  <CardContent className="space-y-4">
-                                     <div className="grid grid-cols-3 gap-4 items-end">
+                                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                                         <div className="space-y-2"><Label>Discount Type</Label>
                                             <Select value={currentVendorDetails?.discountType} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Amount">Amount</SelectItem><SelectItem value="Percentage">Percentage</SelectItem></SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="space-y-2"><Label>Discount Value</Label><Input type="number" value={currentVendorDetails?.discountValue} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)}/></div>
-                                        <div className="space-y-2"><Label>Grand Total</Label><Input value={currentVendorTotals?.grandTotal.toFixed(2)} disabled/></div>
+                                        <div className="space-y-2"><Label>Discount Value</Label><Input type="number" value={currentVendorDetails?.discountValue || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2"><Label>VAT %</Label><Input type="number" value={currentVendorDetails?.vatPercentage || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatPercentage', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2"><Label>Tax %</Label><Input type="number" value={currentVendorDetails?.taxPercentage || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'taxPercentage', parseFloat(e.target.value) || 0)}/></div>
                                      </div>
-                                      <div className="grid grid-cols-2 gap-4">
+                                      <div className="p-4 border rounded-lg bg-muted/50 mt-4 space-y-2 text-sm">
+                                        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
+                                        <div className="flex justify-between"><span className="text-muted-foreground">Discount:</span><span>- {currentVendorTotals?.discount.toFixed(2)}</span></div>
+                                        <div className="flex justify-between"><span className="text-muted-foreground">VAT Amount:</span><span>+ {currentVendorTotals?.vatAmount.toFixed(2)}</span></div>
+                                        <div className="flex justify-between"><span className="text-muted-foreground">Tax Amount:</span><span>+ {currentVendorTotals?.taxAmount.toFixed(2)}</span></div>
+                                        <Separator />
+                                        <div className="flex justify-between font-bold text-base"><span className="text-foreground">Grand Total:</span><span>{currentVendorTotals?.grandTotal.toFixed(2)}</span></div>
+                                    </div>
+                                      <div className="grid grid-cols-2 gap-4 pt-4">
                                         <div className="space-y-2"><Label>Delivery Terms</Label><Textarea value={currentVendorDetails?.deliveryTerms} onChange={e => handleVendorDetailChange(currentVendor.id, 'deliveryTerms', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>VAT & Tax</Label><Textarea value={currentVendorDetails?.vatAndTax} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatAndTax', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Warranty</Label><Textarea value={currentVendorDetails?.warranty} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Quality/Sample Confirmation</Label>
