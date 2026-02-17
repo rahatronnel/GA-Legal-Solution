@@ -742,3 +742,4 @@ export function ComparativeStatementTable() {
         </TooltipProvider>
     );
 }
+
