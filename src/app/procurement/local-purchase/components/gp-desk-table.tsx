@@ -146,21 +146,11 @@ export default function GPDeskTable() {
         
         let baseList: DemandNote[];
 
-        // Determine the base list based on user role
-        if (isSuperAdmin && orgSettings?.procurementSettings?.canSuperadminViewAllGpDesk) {
-            // Superadmin sees all fully approved notes if setting is true.
+        if (isSuperAdmin || isGPOfficer) {
             baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
-        } else if (isGPOfficer && orgSettings?.procurementSettings?.canGpOfficerViewAllGpDesk) {
-            // GP Officer sees all fully approved notes if setting is true.
-            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
-        } else if (isGPOfficer) {
-            // GP Officer by default sees only unassigned approved notes.
-            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1 && note.gpStatus !== 'Assigned');
         } else if (isGPConcern) {
-            // GP Concern officers only see notes assigned to them.
             baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
         } else {
-            // All other employees see an empty list.
             baseList = [];
         }
         
@@ -177,7 +167,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee, orgSettings]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
