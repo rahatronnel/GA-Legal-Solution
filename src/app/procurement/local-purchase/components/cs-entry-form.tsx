@@ -80,8 +80,8 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const progress = Math.round((step / totalSteps) * 100);
 
     useEffect(() => {
-        if (isOpen && demandNote) {
-            const loggedInEmployee = user && employees ? employees.find(e => e.email === user.email) : null;
+        if (isOpen && demandNote && user && employees && employees.length > 0) {
+            const loggedInEmployee = employees.find(e => e.email === user.email);
             setStep(0);
             const initialItems: ComparativeStatementItem[] = demandNote.items.map(item => ({
                 demandNoteItemId: item.id,

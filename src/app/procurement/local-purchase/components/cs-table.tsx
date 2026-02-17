@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -25,7 +26,11 @@ export function ComparativeStatementTable() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
-    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
+    
+    const getEmployeeName = (id?: string) => {
+        if (!id || !employees || employees.length === 0) return 'N/A';
+        return employees.find(e => e.id === id)?.fullName || 'N/A';
+    }
 
     const formatDateTime = (isoString: string) => {
         if (!isoString) return { date: '', time: '' };
@@ -45,11 +50,11 @@ export function ComparativeStatementTable() {
         const superAdmin = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
         if (!settings || !employees || employees.length === 0 || !user) {
-          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -60,7 +65,7 @@ export function ComparativeStatementTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, currentUserEmployee: currentEmp };
+        return { isSuperAdmin, isGPOfficer: GPO, isManager, isGPConcern: GPC, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
