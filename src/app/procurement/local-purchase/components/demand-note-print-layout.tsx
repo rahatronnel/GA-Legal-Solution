@@ -12,6 +12,7 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { ProcessCode } from './process-code-table';
 import type { DemandType } from './demand-type-table';
 import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-table';
+import type { Location } from '@/app/vehicle-management/components/location-table';
 
 interface PrintHeaderProps {
   orgSettings: OrganizationSettings;
@@ -107,13 +108,14 @@ interface DemandNotePrintLayoutProps {
   department?: Section;
   processCode?: ProcessCode;
   demandType?: DemandType;
+  deliveryPlace?: Location;
   billItemMasters: BillItemMaster[];
   employees: Employee[];
   designations: Designation[];
   orgSettings: OrganizationSettings;
 }
 
-export const DemandNotePrintLayout: React.FC<DemandNotePrintLayoutProps> = ({ demandNote, creator, department, processCode, demandType, billItemMasters, employees, designations, orgSettings }) => {
+export const DemandNotePrintLayout: React.FC<DemandNotePrintLayoutProps> = ({ demandNote, creator, department, processCode, demandType, deliveryPlace, billItemMasters, employees, designations, orgSettings }) => {
     let pageCounter = 1;
     
     return (
@@ -130,7 +132,7 @@ export const DemandNotePrintLayout: React.FC<DemandNotePrintLayoutProps> = ({ de
                                <InfoRow label="Department" value={department?.name} />
                                <InfoRow label="Process Code" value={processCode?.name} />
                                <InfoRow label="Demand Type" value={demandType?.name} />
-                               <InfoRow label="Delivery Place" value={demandNote.deliveryPlace} />
+                               <InfoRow label="Delivery Place" value={deliveryPlace?.name} />
                                <InfoRow label="Contact Person" value={demandNote.contactPersonName} />
                             </div>
                         </div>
@@ -172,3 +174,5 @@ export const DemandNotePrintLayout: React.FC<DemandNotePrintLayoutProps> = ({ de
         </div>
     );
 };
+
+    

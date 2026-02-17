@@ -169,7 +169,7 @@ function DemandNoteProfileContent() {
     const { handlePrint } = usePrint();
     const { id } = params;
     
-    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, locations, isLoading, orgSettings } = useProcurement();
 
     const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
@@ -244,6 +244,7 @@ function DemandNoteProfileContent() {
     const section = sections?.find((s:any) => s.id === demandNote.sectionId);
     const processCode = processCodes?.find((p:any) => p.id === demandNote.processCodeId);
     const demandType = demandTypes?.find((d:any) => d.id === demandNote.demandTypeId);
+    const deliveryPlace = locations?.find((l:any) => l.id === demandNote.deliveryPlace);
     const createdBy = employees?.find((e:any) => e.id === demandNote.createdBy);
     
     const getStatusVariant = (status: number | undefined) => {
@@ -379,7 +380,7 @@ function DemandNoteProfileContent() {
                                     <InfoItem icon={Building} label="Section" value={section?.name} />
                                     <InfoItem icon={Hash} label="Process Code" value={processCode?.name} />
                                     <InfoItem icon={FileText} label="Demand Type" value={demandType?.name} />
-                                    <InfoItem icon={MapPin} label="Delivery Place" value={demandNote.deliveryPlace} />
+                                    <InfoItem icon={MapPin} label="Delivery Place" value={deliveryPlace?.name} />
                                     <InfoItem icon={User} label="Contact Person" value={demandNote.contactPersonName} />
                                     <InfoItem icon={Phone} label="Contact Number" value={demandNote.contactPersonNumber} />
                                     <InfoItem icon={User} label="Created By" value={createdBy?.fullName} />
@@ -444,3 +445,5 @@ function DemandNoteProfileContent() {
 export default function DemandNotePage() {
     return <DemandNoteProfileContent />;
 }
+
+    

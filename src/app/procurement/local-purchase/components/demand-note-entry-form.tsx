@@ -113,7 +113,7 @@ interface DemandNoteEntryFormProps {
 export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: DemandNoteEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
-    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings } = useProcurement();
+    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings, locations } = useProcurement();
 
     const [step, setStep] = useState(1);
     const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'>>(initialDemandNoteData);
@@ -314,7 +314,15 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                             </div>
                             <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
-                            <div className="space-y-2"><Label>Delivery Place</Label><Input id="deliveryPlace" value={noteData.deliveryPlace} onChange={handleInputChange} /></div>
+                            <div className="space-y-2">
+                                <Label>Delivery Place</Label>
+                                <Select value={noteData.deliveryPlace} onValueChange={handleSelectChange('deliveryPlace')}>
+                                    <SelectTrigger><SelectValue placeholder="Select delivery place..."/></SelectTrigger>
+                                    <SelectContent>
+                                        {(locations || []).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName} onChange={handleInputChange} /></div>
                             <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber} onChange={handleInputChange} /></div>
                             <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount} onChange={handleInputChange} /></div>
@@ -400,5 +408,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         </Dialog>
     );
 }
+
+    
 
     

@@ -19,6 +19,7 @@ import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-t
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
 import { LegacyBillFlowProvider } from '@/app/billflow/components/bill-flow-provider';
 import { ComparativeStatementTable } from './components/cs-table';
+import { LocationTable } from '@/app/vehicle-management/components/location-table';
 
 export default function LocalPurchasePage() {
   const { user } = useUser();
@@ -30,7 +31,7 @@ export default function LocalPurchasePage() {
     if (!settings || !employees || employees.length === 0 || !user) {
       return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
-    const currentUserEmployee = employees.find(e => e.email === user?.email);
+    const currentUserEmployee = employees.find(e => e.email === user.email);
     if (!currentUserEmployee) {
       return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
@@ -127,7 +128,7 @@ export default function LocalPurchasePage() {
           <>
             <TabsContent value="master-data">
                 <Tabs defaultValue="vendors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-7">
+                    <TabsList className="grid w-full grid-cols-8">
                         <TabsTrigger value="vendors">Vendors</TabsTrigger>
                         <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
                         <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
@@ -135,6 +136,7 @@ export default function LocalPurchasePage() {
                         <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
                         <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
                         <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
+                        <TabsTrigger value="delivery-places">Delivery Places</TabsTrigger>
                     </TabsList>
                     <TabsContent value="vendors" className="mt-4">
                         <LegacyBillFlowProvider>
@@ -194,6 +196,12 @@ export default function LocalPurchasePage() {
                             </Card>
                         </LegacyBillFlowProvider>
                     </TabsContent>
+                    <TabsContent value="delivery-places" className="mt-4">
+                        <Card>
+                            <CardHeader><CardTitle>Delivery Places</CardTitle><CardDescription>Manage predefined locations for delivery.</CardDescription></CardHeader>
+                            <CardContent><LocationTable /></CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </TabsContent>
             <TabsContent value="settings">
@@ -205,3 +213,5 @@ export default function LocalPurchasePage() {
     </div>
   );
 }
+
+    

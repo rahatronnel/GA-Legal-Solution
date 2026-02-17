@@ -120,12 +120,14 @@ export const PrintDriver = () => {
                 const dnDept = sections?.find(s => s.id === demandNote.departmentId);
                 const dnProcessCode = processCodes?.find(p => p.id === demandNote.processCodeId);
                 const dnDemandType = demandTypes?.find(d => d.id === demandNote.demandTypeId);
+                const dnDeliveryPlace = locations?.find(l => l.id === demandNote.deliveryPlace);
                 return <DemandNotePrintLayout 
                     demandNote={demandNote}
                     creator={dnCreator}
                     department={dnDept}
                     processCode={dnProcessCode}
                     demandType={dnDemandType}
+                    deliveryPlace={dnDeliveryPlace}
                     billItemMasters={billItemMasters || []}
                     employees={employees || []} 
                     designations={designations || []} 
@@ -151,3 +153,5 @@ export const PrintDriver = () => {
     </div>
   );
 };
+
+    
