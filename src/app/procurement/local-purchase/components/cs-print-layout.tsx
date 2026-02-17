@@ -54,11 +54,12 @@ const PrintFooter: React.FC<{
         .map(h => {
             const employee = employees?.find(e => e.id === h.approverId);
             const designation = designations?.find(d => d.id === employee?.designationId);
+            const step = cs.approvalFlow?.steps?.[h.level];
             return {
                 ...h,
                 employee,
                 designation,
-                title: h.stepName || 'Approved By'
+                title: step?.stepName || 'Approved By'
             };
         });
     
