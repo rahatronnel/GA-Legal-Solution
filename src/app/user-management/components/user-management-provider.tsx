@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
@@ -7,11 +8,13 @@ import { collection } from 'firebase/firestore';
 import type { Employee } from './employee-entry-form';
 import type { Section } from './section-table';
 import type { Designation } from './designation-table';
+import type { Department } from './department-table';
 
 export type UserManagementData = {
     employees: Employee[];
     sections: Section[];
     designations: Designation[];
+    departments: Department[];
     isLoading: boolean;
 };
 
@@ -27,19 +30,22 @@ const UserManagementDataContent = ({ children }: { children: React.ReactNode }) 
     const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
     const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
     const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+    const departmentsRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
 
     const { data: employees, isLoading: l1 } = useCollection<Employee>(employeesRef);
     const { data: sections, isLoading: l2 } = useCollection<Section>(sectionsRef);
     const { data: designations, isLoading: l3 } = useCollection<Designation>(designationsRef);
+    const { data: departments, isLoading: l4 } = useCollection<Department>(departmentsRef);
     
-    const isLoading = l1 || l2 || l3;
+    const isLoading = l1 || l2 || l3 || l4;
 
     const data = useMemo(() => ({
         employees: employees || [],
         sections: sections || [],
         designations: designations || [],
+        departments: departments || [],
         isLoading,
-    }), [employees, sections, designations, isLoading]);
+    }), [employees, sections, designations, departments, isLoading]);
 
     const value = useMemo(() => ({
         data,

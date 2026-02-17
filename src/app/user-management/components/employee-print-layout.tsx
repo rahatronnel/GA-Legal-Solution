@@ -7,6 +7,7 @@ import type { Section } from './section-table';
 import type { Designation } from './designation-table';
 import { Badge } from '@/components/ui/badge';
 import type { OrganizationSettings } from '@/app/settings/page';
+import type { Department } from './department-table';
 
 
 interface PrintHeaderProps {
@@ -83,16 +84,18 @@ const InfoRow: React.FC<{ label: string, value?: React.ReactNode, fullWidth?: bo
 interface EmployeePrintLayoutProps {
   employee: Employee;
   sections: Section[];
+  departments: Department[];
   designations: Designation[];
   orgSettings: OrganizationSettings;
 }
 
 
-export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employee, sections, designations, orgSettings }) => {
+export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employee, sections, designations, departments, orgSettings }) => {
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
     let pageCounter = 1;
 
-    const department = sections.find(s => s.id === employee.departmentId);
+    const department = departments.find(d => d.id === employee.departmentId);
+    const section = sections.find(s => s.id === employee.sectionId);
     const designation = designations.find(d => d.id === employee.designationId);
     const formatDate = (dateString: string) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
     const getStatusVariant = (status: Employee['status']) => status === 'Active' ? 'default' : 'destructive';
@@ -146,7 +149,8 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                     <div>
                         <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Employment Details</h4>
                         <div className="grid grid-cols-2 gap-x-6">
-                             <InfoRow label="Department / Section" value={department?.name} />
+                             <InfoRow label="Department" value={department?.name} />
+                             <InfoRow label="Section" value={section?.name} />
                              <InfoRow label="Designation" value={designation?.name} />
                              <InfoRow label="Joining Date" value={formatDate(employee.joiningDate)} />
                              <InfoRow label="User Role" value={employee.role} />

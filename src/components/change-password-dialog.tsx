@@ -25,6 +25,7 @@ import { User, Mail, Phone, Building, Briefcase } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Designation } from '../app/user-management/components/designation-table';
 import type { Section } from '../app/user-management/components/section-table';
+import type { Department } from '@/app/user-management/components/department-table';
 
 
 const InfoItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode}> = ({ icon: Icon, label, value }) => (
@@ -58,6 +59,9 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
 
   const sectionsRef = useMemoFirebase(() => (firestore && isOpen) ? collection(firestore, 'sections') : null, [firestore, isOpen]);
   const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+  
+  const departmentsRef = useMemoFirebase(() => (firestore && isOpen) ? collection(firestore, 'departments') : null, [firestore, isOpen]);
+  const { data: departments, isLoading: isLoadingDepartments } = useCollection<Department>(departmentsRef);
 
   const employee = useMemo(() => {
     if (!user || !employees) return null;
@@ -73,11 +77,19 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
   }, [employee, designations]);
 
   const departmentName = useMemo(() => {
+    if (employee && departments) {
+      return departments.find(d => d.id === employee.departmentId)?.name || 'N/A';
+    }
+    return 'N/A';
+  }, [employee, departments]);
+
+  const sectionName = useMemo(() => {
     if (employee && sections) {
-      return sections.find(s => s.id === employee.departmentId)?.name || 'N/A';
+      return sections.find(s => s.id === employee.sectionId)?.name || 'N/A';
     }
     return 'N/A';
   }, [employee, sections]);
+
 
   useEffect(() => {
       // Reset state when dialog closes
@@ -131,7 +143,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
     }
   };
   
-  const isComponentLoading = isUserLoading || isLoadingEmployees || (isOpen && (isLoadingDesignations || isLoadingSections));
+  const isComponentLoading = isUserLoading || isLoadingEmployees || (isOpen && (isLoadingDesignations || isLoadingSections || isLoadingDepartments));
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -170,6 +182,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
                   <InfoItem icon={Mail} label="Email" value={employee.email} />
                   <InfoItem icon={Phone} label="Mobile Number" value={employee.mobileNumber} />
                   <InfoItem icon={Building} label="Department" value={departmentName} />
+                  <InfoItem icon={Building} label="Section" value={sectionName} />
                 </div>
             </div>
         ) : (

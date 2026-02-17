@@ -7,6 +7,7 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { type Employee } from '@/app/user-management/components/employee-entry-form';
 import { type Section } from '@/app/user-management/components/section-table';
 import { type Designation } from '@/app/user-management/components/designation-table';
+import { type Department } from '@/app/user-management/components/department-table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -98,11 +99,14 @@ export default function EmployeeProfilePage() {
 
   const sectionsRef = useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]);
   const { data: sections, isLoading: isLoadingSections } = useCollection<Section>(sectionsRef);
+
+  const departmentsRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
+  const { data: departments, isLoading: isLoadingDepartments } = useCollection<Department>(departmentsRef);
   
   const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
   const { data: designations, isLoading: isLoadingDesignations } = useCollection<Designation>(designationsRef);
   
-  const isLoading = isLoadingEmployee || isLoadingSections || isLoadingDesignations;
+  const isLoading = isLoadingEmployee || isLoadingSections || isLoadingDesignations || isLoadingDepartments;
 
   if (isLoading) {
     return (
@@ -120,7 +124,8 @@ export default function EmployeeProfilePage() {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
   }
 
-  const department = sections?.find(s => s.id === employee.departmentId);
+  const department = departments?.find(s => s.id === employee.departmentId);
+  const section = sections?.find(s => s.id === employee.sectionId);
   const designation = designations?.find(d => d.id === employee.designationId);
   
   const formatDate = (dateString: string) => {
@@ -172,7 +177,8 @@ export default function EmployeeProfilePage() {
                     <Card>
                         <CardHeader><CardTitle>Employment Details</CardTitle></CardHeader>
                         <CardContent className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                            <InfoItem icon={Building} label="Department / Section" value={department?.name} />
+                            <InfoItem icon={Building} label="Department" value={department?.name} />
+                            <InfoItem icon={Building} label="Section" value={section?.name} />
                             <InfoItem icon={Briefcase} label="Designation" value={designation?.name} />
                             <InfoItem icon={Calendar} label="Joining Date" value={formatDate(employee.joiningDate)} />
                             <InfoItem icon={UserCheck} label="User Role" value={employee.role} />
@@ -191,11 +197,9 @@ export default function EmployeeProfilePage() {
                         </Card>
                     )}
                 </TabsContent>
-                <TabsContent value="documents" className="pt-4">
-                    <div className="space-y-6">
-                        <DocumentViewer doc={employee.documents.nid} label="National ID (NID)" />
-                        <DocumentViewer doc={employee.documents.other} label="Other Document" />
-                    </div>
+                <TabsContent value="documents" className="pt-4 space-y-6">
+                    <DocumentViewer doc={employee.documents.nid} label="National ID (NID)" />
+                    <DocumentViewer doc={employee.documents.other} label="Other Document" />
                 </TabsContent>
             </Tabs>
         </div>

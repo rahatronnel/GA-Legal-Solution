@@ -86,6 +86,16 @@
       },
       "required": ["name", "email"]
     },
+    "Department": {
+      "title": "Department",
+      "type": "object",
+      "description": "Represents an organizational department.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the department." },
+        "code": { "type": "string", "description": "The unique code for the department." }
+      },
+      "required": ["name", "code"]
+    },
     "Section": {
       "title": "Section",
       "type": "object",
@@ -120,6 +130,7 @@
         "status": { "type": "string", "enum": ["Active", "Inactive"] },
         "username": { "type": "string" },
         "departmentId": { "type": "string" },
+        "sectionId": { "type": "string" },
         "designationId": { "type": "string" },
         "joiningDate": { "type": "string", "format": "date" },
         "address": { "type": "string" },
@@ -653,6 +664,7 @@
   },
   "firestore": {
     "/settings/organization": { "schema": { "$ref": "#/entities/OrganizationSettings" }, "description": "Stores the single, global configuration for the organization." },
+    "/departments/{departmentId}": { "schema": { "$ref": "#/entities/Department" }, "description": "Stores organizational departments." },
     "/sections/{sectionId}": { "schema": { "$ref": "#/entities/Section" }, "description": "Stores organization sections or departments." },
     "/designations/{designationId}": { "schema": { "$ref": "#/entities/Designation" }, "description": "Stores job titles and designations." },
     "/employees/{employeeId}": { "schema": { "$ref": "#/entities/Employee" }, "description": "Stores employee profiles." },
@@ -705,6 +717,7 @@
     
 
     
+
 
 
 

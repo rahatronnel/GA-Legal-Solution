@@ -12,10 +12,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Home as HomeIcon } from "lucide-react";
 import { ModuleHeader } from '@/app/components/module-header';
+import { DepartmentTable } from "./components/department-table";
 
 function UserManagementContent() {
   const { data } = useUserManagement();
-  const { employees, sections, designations, isLoading } = data;
+  const { employees, sections, designations, departments, isLoading } = data;
 
   return (
     <div className="space-y-6">
@@ -24,6 +25,7 @@ function UserManagementContent() {
         <div className="flex items-center">
             <TabsList>
             <TabsTrigger value="employees">Employees</TabsTrigger>
+            <TabsTrigger value="departments">Departments</TabsTrigger>
             <TabsTrigger value="sections">Sections</TabsTrigger>
             <TabsTrigger value="designations">Designations</TabsTrigger>
             </TabsList>
@@ -40,7 +42,19 @@ function UserManagementContent() {
                         setEmployees={() => {}} // This will now be handled by firestore hooks
                         sections={sections || []}
                         designations={designations || []}
+                        departments={departments || []}
                     />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="departments">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Departments</CardTitle>
+                    <CardDescription>Manage the different departments within your organization.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <DepartmentTable departments={departments || []} isLoading={isLoading} />
                 </CardContent>
             </Card>
         </TabsContent>
