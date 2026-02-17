@@ -84,7 +84,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 demandNoteItemId: item.id,
                 particulars: item.particulars,
                 unit: item.unit,
-                requiredQty: item.requiredQty,
+                quantity: item.requiredQty,
                 vendorQuotes: assignedVendors.map(v => ({ vendorId: v.id, unitPrice: 0 })),
             }));
             
