@@ -32,11 +32,11 @@ export function ComparativeStatementTable() {
         const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
         if (!settings || !employees || employees.length === 0 || !user) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
