@@ -137,8 +137,9 @@ function ComparativeStatementView() {
                                     return (
                                         <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
                                             <div className="flex flex-col items-center justify-center gap-1">
-                                                <span>{vendor.vendorName}</span>
-                                                {vendor.id === bestOfferVendorId && <Badge className="ml-2 bg-green-600">Best Offer</Badge>}
+                                                <span className="font-semibold">{vendor.vendorName}</span>
+                                                <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
+                                                {vendor.id === bestOfferVendorId && <Badge className="mt-1 bg-green-600">Best Offer</Badge>}
                                                 {quotation?.fileDataUrl && (
                                                     <Button variant="outline" size="sm" className="h-6 px-2 mt-1" onClick={() => setViewingQuotation({vendorName: vendor.vendorName, fileDataUrl: quotation.fileDataUrl, fileName: quotation.fileName})}>
                                                         <FileText className="h-3 w-3 mr-1" /> View Quotation
@@ -188,7 +189,12 @@ function ComparativeStatementView() {
                             <TableRow>
                                 <TableHead className="min-w-[200px]">Term</TableHead>
                                 {participatingVendors.map((vendor: any) => (
-                                     <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{vendor.vendorName}</TableHead>
+                                     <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                        <div className="flex flex-col items-center justify-center gap-1">
+                                            <span className="font-semibold">{vendor.vendorName}</span>
+                                            <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
+                                        </div>
+                                     </TableHead>
                                 ))}
                             </TableRow>
                         </TableHeader>
