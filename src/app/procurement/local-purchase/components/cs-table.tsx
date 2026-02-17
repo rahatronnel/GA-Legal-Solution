@@ -73,17 +73,17 @@ export function ComparativeStatementTable() {
 
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
-    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee } = useMemo(() => {
+    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover, currentUserEmployee } = useMemo(() => {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
 
         if (!settings || !employees || employees.length === 0 || !user) {
-          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, isCsApprover: false, currentUserEmployee: null };
         }
         
         const currentEmp = employees.find(e => e.email === user.email);
         if (!currentEmp) {
-          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, isCsApprover: false, currentUserEmployee: null };
         }
 
         const isGPOfficer = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -93,8 +93,30 @@ export function ComparativeStatementTable() {
             settings.factoryDirectorId === currentEmp.id ||
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
+            
+        let csApproverCheck = false;
+        const csRoles = settings.csApprovalRoles;
+        if (csRoles) {
+            const roleIds = [
+                csRoles.purchaseManagerId,
+                csRoles.purchaseDeptTaId,
+                csRoles.viceFactoryManagerId,
+                csRoles.accountsManagerId,
+                csRoles.gmSalesDeptId,
+                csRoles.gmAdministrationId,
+            ];
+            if (roleIds.includes(currentEmp.id)) {
+                csApproverCheck = true;
+            }
+        }
+        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) {
+            csApproverCheck = true;
+        }
+        if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) {
+            csApproverCheck = true;
+        }
         
-        return { isSuperAdmin: superAdminCheck, isGPOfficer, isManager, isGPConcern, currentUserEmployee: currentEmp };
+        return { isSuperAdmin: superAdminCheck, isGPOfficer, isManager, isGPConcern, isCsApprover: csApproverCheck, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
     const gpConcernOfficers = useMemo(() => {
@@ -112,21 +134,21 @@ export function ComparativeStatementTable() {
         if (isGPOfficer) return "Role: GP Officer";
         if (isManager) return "Role: Manager";
         if (isGPConcern) return "Role: GP Concern Officer";
+        if (isCsApprover) return "Role: CS Approver";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
 
     const filteredItems = useMemo(() => {
         const canViewAll = isSuperAdmin || isGPOfficer || isManager;
-        let itemsToFilter: any[];
+        let itemsToFilter: ComparativeStatement[];
 
         if (canViewAll) {
             itemsToFilter = [...safeItems];
-        } else if (isGPConcern) {
-             if (currentUserEmployee) {
-                itemsToFilter = safeItems.filter(cs => cs.createdBy === currentUserEmployee.id);
-            } else {
-                itemsToFilter = [];
-            }
+        } else if (currentUserEmployee) {
+            itemsToFilter = safeItems.filter(cs => 
+                cs.createdBy === currentUserEmployee.id || 
+                cs.currentApproverId === currentUserEmployee.id
+            );
         } else {
             itemsToFilter = [];
         }
@@ -143,7 +165,7 @@ export function ComparativeStatementTable() {
             
             return searchTermMatch && gpConcernMatch && vendorMatch;
         });
-    }, [safeItems, searchTerm, gpConcernFilter, vendorFilter, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee, employees, vendors]);
+    }, [safeItems, searchTerm, gpConcernFilter, vendorFilter, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover, currentUserEmployee, employees, vendors]);
     
     const calculateVendorTotals = (cs: ComparativeStatement) => {
         if (!cs || !cs.vendorDetails || !cs.items) return [];
