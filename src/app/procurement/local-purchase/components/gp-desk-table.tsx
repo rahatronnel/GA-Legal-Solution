@@ -129,27 +129,9 @@ export default function GPDeskTable() {
 
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
-        let baseList: DemandNote[];
-    
-        const settings = orgSettings?.procurementSettings;
-        const canSuperadminViewAll = settings?.canSuperadminViewAllGpDesk;
-        const canGpoViewAll = settings?.canGpOfficerViewAllGpDesk;
-    
+        
         const isApprovedForGP = (note: DemandNote) => Number(note.approvalStatus) === 1;
-
-        if (isSuperAdmin && canSuperadminViewAll) {
-            baseList = safeItems.filter(isApprovedForGP);
-        } else if (isGPOfficer) {
-            if (canGpoViewAll) {
-                baseList = safeItems.filter(isApprovedForGP);
-            } else {
-                baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpStatus !== 'Assigned');
-            }
-        } else if (isGPConcern) {
-            baseList = safeItems.filter(note => isApprovedForGP(note) && note.gpConcernOfficerId === currentUserEmployee?.id);
-        } else {
-            baseList = [];
-        }
+        const baseList: DemandNote[] = safeItems.filter(isApprovedForGP);
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
@@ -164,7 +146,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee?.id, getDepartmentName, orgSettings]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -281,7 +263,7 @@ export default function GPDeskTable() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isGPOfficer}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0}><FilePlus className="h-4 w-4" /></Button>
@@ -342,5 +324,7 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
+
+    
 
     
