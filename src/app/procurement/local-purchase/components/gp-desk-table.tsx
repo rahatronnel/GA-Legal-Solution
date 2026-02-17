@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -111,12 +112,12 @@ export default function GPDeskTable() {
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
+            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
+            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -127,14 +128,14 @@ export default function GPDeskTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager };
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager: manager };
     }, [orgSettings, employees, user]);
     
     useEffect(() => {
-        if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
+        if (isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager) {
             setAssignedToFilter(currentUserEmployee?.id || 'all');
         }
-    }, [isGPConcern, isSuperAdmin, isGPOfficer, currentUserEmployee]);
+    }, [isGPConcern, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
     const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -162,7 +163,8 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        const canViewAll = isSuperAdmin || (isGPOfficer && orgSettings?.procurementSettings?.canGpOfficerViewAllGpDesk);
+        const canViewAllGPO = isGPOfficer && orgSettings?.procurementSettings?.canGpOfficerViewAllGpDesk;
+        const canViewAll = isSuperAdmin || canViewAllGPO;
 
         let baseList: DemandNote[];
 
@@ -257,7 +259,7 @@ export default function GPDeskTable() {
                             />
                         </div>
                         <Badge variant="outline">{userRoleText}</Badge>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
@@ -402,3 +404,5 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
+
+    
