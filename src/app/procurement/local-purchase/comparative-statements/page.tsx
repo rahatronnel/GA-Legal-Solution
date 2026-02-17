@@ -16,8 +16,8 @@ function CsApprovalInfo() {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                    <Info className="h-4 w-4 text-primary" />
+                <Button variant="ghost" size="icon">
+                    <Info className="h-5 w-5 text-yellow-500" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
@@ -60,12 +60,10 @@ function CsApprovalInfo() {
 export default function ComparativeStatementsPage() {
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Comparative Statements</CardTitle>
-                    <CardDescription>Review and manage all generated comparative statements.</CardDescription>
-                </div>
+            <CardHeader className="items-center text-center">
                 <CsApprovalInfo />
+                <CardTitle>Comparative Statements</CardTitle>
+                <CardDescription>Review and manage all generated comparative statements.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ComparativeStatementTable />
