@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -595,8 +596,36 @@ export function ComparativeStatementTable() {
                         <Badge variant="outline">{userRoleText}</Badge>
                         {canPerformBulkAction && (
                             <>
-                                <Button size="sm" variant="outline" onClick={() => handleOpenBulkConfirm('approve')}><Check className="mr-2 h-4 w-4"/>Approve</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleOpenBulkConfirm('reject')}><X className="mr-2 h-4 w-4"/>Reject</Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button size="sm" variant="outline"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Confirm Bulk Approval</AlertDialogTitle><AlertDialogDescription>Are you sure you want to approve {selectedRows.length} comparative statement(s)?</AlertDialogDescription></AlertDialogHeader>
+                                        <ScrollArea className="max-h-60 p-4 border rounded-md">
+                                            <ul className="list-disc pl-5 space-y-2 text-sm">
+                                                {selectedRows.map(id => {
+                                                    const cs = comparativeStatements.find(c => c.id === id);
+                                                    if (!cs) return null;
+                                                    const vendor = vendors.find(v => v.id === cs.selectedVendorId);
+                                                    const totals = calculateVendorTotals(cs);
+                                                    const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
+                                                    return (
+                                                        <li key={id}>
+                                                            <strong>{cs.csNumber}</strong>: Approve vendor <strong>{vendor?.vendorName || 'N/A'}</strong> for <strong>{formatCurrency(amount)}</strong>
+                                                        </li>
+                                                    )
+                                                })}
+                                            </ul>
+                                        </ScrollArea>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => processBulkAction()}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Confirm Bulk Rejection</AlertDialogTitle><AlertDialogDescription>Are you sure you want to reject {selectedRows.length} comparative statement(s)? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => processBulkAction()} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </>
                         )}
                     </div>
@@ -656,26 +685,17 @@ export function ComparativeStatementTable() {
                                             <TableCell>{cs.csNumber}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
-                                                    <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">
+                                                  <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">
                                                         {getDemandNoteNumber(cs.demandNoteId)}
-                                                    </Link>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button
-                                                              variant="ghost"
-                                                              size="icon"
-                                                              className="h-6 w-6"
-                                                              onClick={() => {
-                                                                const dnNumber = getDemandNoteNumber(cs.demandNoteId);
-                                                                navigator.clipboard.writeText(dnNumber);
-                                                                toast({ title: 'Copied!', description: 'Demand Note number copied to clipboard.' });
-                                                              }}
-                                                            >
-                                                              <Copy className="h-3 w-3" />
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>Copy DN Number</TooltipContent>
-                                                    </Tooltip>
+                                                  </Link>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { const dnNumber = getDemandNoteNumber(cs.demandNoteId); navigator.clipboard.writeText(dnNumber); toast({ title: 'Copied!'});}}>
+                                                        <Copy className="h-3 w-3" />
+                                                      </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Copy DN Number</TooltipContent>
+                                                  </Tooltip>
                                                 </div>
                                             </TableCell>
                                             <TableCell>{getEmployeeName(demandNote?.gpConcernOfficerId)}</TableCell>
@@ -695,14 +715,14 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                     {canCreatePO && (
+                                                     {canCreatePO && cs.approvalStatus === 1 && !poExists && (
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)} disabled={cs.approvalStatus !== 1 || poExists}>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)}>
                                                                     <span>📄</span>
                                                                 </Button>
                                                             </TooltipTrigger>
-                                                            <TooltipContent>{poExists ? 'PO already created' : 'Create Purchase Order'}</TooltipContent>
+                                                            <TooltipContent>Create Purchase Order</TooltipContent>
                                                         </Tooltip>
                                                     )}
                                                     {canSelectVendor && (
@@ -842,7 +862,7 @@ export function ComparativeStatementTable() {
                                 const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                 return (
                                     <li key={id}>
-                                        <strong>{cs.csNumber}</strong>: Vendor <strong>{vendor?.vendorName || 'N/A'}</strong> for <strong>{formatCurrency(amount)}</strong>
+                                        <strong>{cs.csNumber}</strong>: Approve vendor <strong>{vendor?.vendorName || 'N/A'}</strong> for <strong>{formatCurrency(amount)}</strong>
                                     </li>
                                 )
                             })}
