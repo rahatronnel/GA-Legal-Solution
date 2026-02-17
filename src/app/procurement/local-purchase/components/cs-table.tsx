@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -25,6 +24,7 @@ export function ComparativeStatementTable() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
+    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
@@ -53,13 +53,12 @@ export function ComparativeStatementTable() {
     const filteredItems = useMemo(() => {
         let itemsToFilter = [...safeItems];
 
-        // If user is NOT a superadmin, GPO, or Manager, they must be a GP concern officer
-        // In that case, only show CS they created.
-        if (!isSuperAdmin && !isGPOfficer && !isManager) {
-             if (isGPConcern && currentUserEmployee) {
+        // If user is a GP Concern officer but not a manager or admin, filter to their created CS
+        if (isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager) {
+             if (currentUserEmployee) {
                 itemsToFilter = itemsToFilter.filter(cs => cs.createdBy === currentUserEmployee.id);
             } else {
-                return []; // If not any of these roles, show nothing.
+                return []; // Should not happen if they are a concern officer
             }
         }
         
@@ -68,9 +67,10 @@ export function ComparativeStatementTable() {
         const lowercasedTerm = searchTerm.toLowerCase();
         return itemsToFilter.filter(cs =>
             cs.csNumber.toLowerCase().includes(lowercasedTerm) ||
-            getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(lowercasedTerm)
+            getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(lowercasedTerm) ||
+            getEmployeeName(cs.createdBy).toLowerCase().includes(lowercasedTerm)
         );
-    }, [safeItems, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee]);
+    }, [safeItems, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee, employees]);
 
 
     return (
@@ -81,7 +81,7 @@ export function ComparativeStatementTable() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search by CS or DN number..."
+                            placeholder="Search by CS, DN, GP Concern..."
                             className="w-full rounded-lg bg-background pl-8"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -95,6 +95,7 @@ export function ComparativeStatementTable() {
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>CS Date</TableHead>
                                 <TableHead>Demand Note Number</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -104,6 +105,7 @@ export function ComparativeStatementTable() {
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                                     </TableRow>
@@ -118,6 +120,7 @@ export function ComparativeStatementTable() {
                                                 {getDemandNoteNumber(cs.demandNoteId)}
                                             </Link>
                                         </TableCell>
+                                        <TableCell>{getEmployeeName(cs.createdBy)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Tooltip>
@@ -138,7 +141,7 @@ export function ComparativeStatementTable() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">No comparative statements found.</TableCell>
+                                    <TableCell colSpan={5} className="h-24 text-center">No comparative statements found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
