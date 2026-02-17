@@ -616,6 +616,7 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -627,7 +628,7 @@ export function ComparativeStatementTable() {
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-5" /></TableCell>
-                                        <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
+                                        <TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredItems.length > 0 ? (
@@ -636,8 +637,11 @@ export function ComparativeStatementTable() {
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
-                                    const canSelectVendor = (isSuperAdmin || (currentUserEmployee && cs.vendorSelectorId === currentUserEmployee.id)) && cs.approvalStatus === 2;
+                                    const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
+                                    const isNoteConcernOfficer = currentUserEmployee?.id === demandNote?.gpConcernOfficerId;
+                                    const canSelectVendor = (isSuperAdmin || isNoteConcernOfficer) && cs.approvalStatus === 2;
                                     const poExists = (purchaseOrders || []).some(po => po.csId === cs.id);
+                                    const canCreatePO = (isGPOfficer || isSuperAdmin || isNoteConcernOfficer);
 
                                     return (
                                         <TableRow key={cs.id} data-state={selectedRows.includes(cs.id) ? "selected" : ""}>
@@ -674,6 +678,7 @@ export function ComparativeStatementTable() {
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
+                                            <TableCell>{getEmployeeName(demandNote?.gpConcernOfficerId)}</TableCell>
                                             <TableCell>
                                                 {cs.selectedVendorId ? (
                                                     <div className="flex flex-col">
@@ -690,7 +695,7 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                     {(isGPOfficer || isGPConcern || isSuperAdmin) && (
+                                                     {canCreatePO && (
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
                                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)} disabled={cs.approvalStatus !== 1 || poExists}>

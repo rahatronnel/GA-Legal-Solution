@@ -8,6 +8,7 @@ import type { PurchaseOrder } from './po-entry-form';
 export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, isLoading } = useProcurement();
     const getVendorName = (vendorId: string) => vendors?.find((v:any) => v.id === vendorId)?.vendorName || 'N/A';
+    const getDemandNoteNumber = (dnId: string) => demandNotes?.find(dn => dn.id === dnId)?.demandNoteNumber || 'N/A';
     
     const getGPConcernName = (po: PurchaseOrder) => {
         const demandNote = demandNotes?.find(dn => dn.id === po.demandNoteId);
@@ -21,6 +22,15 @@ export function PurchaseOrderTable() {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
+    const formatDateTime = (isoString?: string) => {
+        if (!isoString) return 'N/A';
+        try {
+            return new Date(isoString).toLocaleString();
+        } catch {
+            return 'N/A';
+        }
+    }
+
     if (isLoading) return <p>Loading Purchase Orders...</p>;
 
     return (
@@ -31,7 +41,8 @@ export function PurchaseOrderTable() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>PO Number</TableHead>
-                            <TableHead>Date</TableHead>
+                            <TableHead>PO Date</TableHead>
+                            <TableHead>Demand Note #</TableHead>
                             <TableHead>Vendor</TableHead>
                             <TableHead>GP Concern</TableHead>
                             <TableHead>Amount</TableHead>
@@ -44,7 +55,8 @@ export function PurchaseOrderTable() {
                             purchaseOrders.map((po: PurchaseOrder) => (
                                 <TableRow key={po.id}>
                                     <TableCell>{po.poNumber}</TableCell>
-                                    <TableCell>{po.poDate}</TableCell>
+                                    <TableCell>{formatDateTime(po.createdAt)}</TableCell>
+                                    <TableCell>{getDemandNoteNumber(po.demandNoteId)}</TableCell>
                                     <TableCell>{getVendorName(po.vendorId)}</TableCell>
                                     <TableCell>{getGPConcernName(po)}</TableCell>
                                     <TableCell>{formatCurrency(po.netPayableAmount)}</TableCell>
@@ -55,7 +67,7 @@ export function PurchaseOrderTable() {
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow><TableCell colSpan={7} className="h-24 text-center">No Purchase Orders found.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={8} className="h-24 text-center">No Purchase Orders found.</TableCell></TableRow>
                         )}
                     </TableBody>
                 </Table>
