@@ -106,18 +106,26 @@ export default function GPDeskTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
     
-    useEffect(() => {
+    const { isGPOfficer, isSuperAdmin, isGPConcern } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!currentUserEmployee || !settings) return;
-        
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-        const isGPOfficer = settings.generalPurchaseOfficerId === currentUserEmployee.id;
-        const isGPConcern = settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
+        const superAdmin = user?.email === 'superadmin@galsolution.com';
 
-        if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
-            setAssignedToFilter(currentUserEmployee.id);
+        if (!settings || (!currentUserEmployee && !superAdmin)) {
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false };
         }
+        
+        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee?.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
+        
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
     }, [orgSettings, currentUserEmployee, user]);
+
+    
+    useEffect(() => {
+        if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
+            setAssignedToFilter(currentUserEmployee?.id || 'all');
+        }
+    }, [isGPConcern, isSuperAdmin, isGPOfficer, currentUserEmployee]);
 
     const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -137,7 +145,15 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        const baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
+        let baseList: DemandNote[];
+
+        if (isSuperAdmin || isGPOfficer) {
+            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
+        } else if (isGPConcern) {
+            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
+        } else {
+            return [];
+        }
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
@@ -152,7 +168,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -214,7 +230,7 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
@@ -240,8 +256,9 @@ export default function GPDeskTable() {
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Assigned To</TableHead>
-                                <TableHead>Assigned Date & Time</TableHead>
+                                <TableHead>Assigned Date &amp; Time</TableHead>
                                 <TableHead>Vendor Assignment</TableHead>
+                                <TableHead>CS Prepared</TableHead>
                                 <TableHead className="w-[160px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -249,24 +266,41 @@ export default function GPDeskTable() {
                         {isLoading ? (
                              Array.from({length: 3}).map((_, i) => (
                                 <TableRow key={i}>
-                                  <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
+                                  <TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell>
                                 </TableRow>
                               ))
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
-                                const csExists = comparativeStatements.some(cs => cs.demandNoteId === item.id);
+                                const cs = comparativeStatements.find(cs => cs.demandNoteId === item.id);
                                 const isCurrentUserAssigned = currentUserEmployee?.id === item.gpConcernOfficerId;
                                 return (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>{getEmployeeName(item.gpConcernOfficerId || '')}</TableCell>
-                                    <TableCell>{item.gpAssignedDate ? new Date(item.gpAssignedDate).toLocaleString() : 'N/A'}</TableCell>
+                                    <TableCell>
+                                        {item.gpAssignedDate ? (
+                                            <div className="flex flex-col">
+                                                <span>{new Date(item.gpAssignedDate).toLocaleDateString()}</span>
+                                                <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
+                                            </div>
+                                        ) : 'N/A'}
+                                    </TableCell>
                                     <TableCell>
                                         {item.quotations && item.quotations.length > 0
                                             ? <Badge variant="default">Assigned</Badge>
                                             : <Badge variant="secondary">Not Assigned</Badge>
                                         }
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        {cs ? (
+                                            <div className="flex flex-col items-center">
+                                                <Badge variant="default">Yes</Badge>
+                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleString()}</span>
+                                            </div>
+                                        ) : (
+                                            <Badge variant="secondary">No</Badge>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
@@ -275,7 +309,7 @@ export default function GPDeskTable() {
                                                 <TooltipTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0 || !isCurrentUserAssigned}><FilePlus className="h-4 w-4" /></Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent>{csExists ? 'CS already created' : 'Create CS'}</TooltipContent>
+                                                <TooltipContent>{cs ? 'CS already created' : 'Create CS'}</TooltipContent>
                                             </Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
@@ -285,7 +319,7 @@ export default function GPDeskTable() {
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     No assigned demand notes found.
                                 </TableCell>
                             </TableRow>
