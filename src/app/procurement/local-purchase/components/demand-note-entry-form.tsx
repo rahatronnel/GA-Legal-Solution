@@ -267,7 +267,6 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
                     if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
                     if (specializedDeptManagerId) approvalFlowSteps.push({ stepName: 'Specialized Dept. Manager', approverId: specializedDeptManagerId });
-                    if (specializedDeptTaId) approvalFlowSteps.push({ stepName: 'Specialized Dept. TA', approverId: specializedDeptTaId });
                     if (managingDirectorId) approvalFlowSteps.push({ stepName: 'Managing Director', approverId: managingDirectorId });
                 } else if (department?.isManufacturingDept) {
                     if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
@@ -409,6 +408,8 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         </Dialog>
     );
 }
+
+    
 
     
 
