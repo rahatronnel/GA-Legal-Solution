@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -174,16 +175,13 @@ export default function LocalPurchasePage() {
   const canViewPoTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
 
   const getGridCols = () => {
-    const tabsToShow = new Set(['dashboard', 'demand-notes']);
-    if (showGPDesk) tabsToShow.add('gp-desk');
-    if (canViewCsTab) tabsToShow.add('cs');
-    if (canViewPoTab) tabsToShow.add('po');
-    if (isSuperAdmin) {
-        tabsToShow.add('master-data');
-        tabsToShow.add('settings');
-    }
-    return `repeat(${tabsToShow.size}, minmax(0, 1fr))`;
-  }
+    let count = 2; // Dashboard & Demand Notes
+    if (showGPDesk) count++;
+    if (canViewCsTab) count++;
+    if (canViewPoTab) count++;
+    if (isSuperAdmin) count += 2; // Master Data & Settings
+    return `repeat(${count}, minmax(0, 1fr))`;
+  };
 
   return (
     <div className="space-y-6">

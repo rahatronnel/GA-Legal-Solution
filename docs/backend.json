@@ -80,6 +80,14 @@
                   "description": "The basis for determining the amount used for the CS approval workflow."
                 }
               }
+            },
+            "poSettings": {
+              "type": "object",
+              "description": "Settings for Purchase Orders.",
+              "properties": {
+                "mandatoryTerms": { "type": "string", "description": "Default mandatory terms for a PO." },
+                "otherTerms": { "type": "string", "description": "Default other terms for a PO." }
+              }
             }
           }
         }
@@ -695,7 +703,11 @@
         "expectedDeliveryDate": { "type": "string", "format": "date" },
         "status": { "type": "string", "enum": ["Pending", "Partially Delivered", "Completed", "Cancelled"] },
         "createdBy": { "type": "string", "description": "Employee ID of the creator." },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "comments": { "type": "string", "description": "Additional comments on the PO." },
+        "confirmedBySupplier": { "type": "boolean", "description": "Indicates if the supplier has confirmed the order." },
+        "mandatoryTerms": { "type": "string", "description": "The mandatory terms and conditions for this PO." },
+        "otherTerms": { "type": "string", "description": "Other terms and conditions for this PO." }
       },
       "required": ["poNumber", "poDate", "demandNoteId", "vendorId", "totalAmount"]
     }
@@ -762,6 +774,7 @@
     
 
     
+
 
 
 

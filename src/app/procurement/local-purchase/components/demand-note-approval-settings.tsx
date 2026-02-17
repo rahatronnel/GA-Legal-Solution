@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -19,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 type DeptHead = {
     sectionId: string;
@@ -150,6 +152,9 @@ export function DemandNoteApprovalSettings() {
     const [gmSalesDeptId, setGmSalesDeptId] = useState('');
     const [gmAdministrationId, setGmAdministrationId] = useState('');
     const [approvalAmountBasis, setApprovalAmountBasis] = useState<'Minimum' | 'Average' | 'Maximum'>('Minimum');
+    
+    const [mandatoryTerms, setMandatoryTerms] = useState('');
+    const [otherTerms, setOtherTerms] = useState('');
 
 
     useEffect(() => {
@@ -181,6 +186,10 @@ export function DemandNoteApprovalSettings() {
                 setGmSalesDeptId(gmSalesDeptId);
                 setGmAdministrationId(gmAdministrationId);
                 setApprovalAmountBasis(approvalAmountBasis as any);
+            }
+            if (settings.poSettings) {
+                setMandatoryTerms(settings.poSettings.mandatoryTerms || '');
+                setOtherTerms(settings.poSettings.otherTerms || '');
             }
         }
     }, [orgSettings]);
@@ -228,6 +237,10 @@ export function DemandNoteApprovalSettings() {
                 gmSalesDeptId,
                 gmAdministrationId,
                 approvalAmountBasis,
+            },
+            poSettings: {
+                mandatoryTerms,
+                otherTerms,
             }
         };
 
@@ -402,6 +415,23 @@ export function DemandNoteApprovalSettings() {
                                 placeholder="Select one or more concern officers..."
                             />
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Purchase Order Settings</CardTitle>
+                    <CardDescription>Set default terms and conditions that will appear on all Purchase Orders.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Mandatory Terms & Conditions</Label>
+                        <Textarea value={mandatoryTerms} onChange={(e) => setMandatoryTerms(e.target.value)} rows={5} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Other Terms & Conditions</Label>
+                        <Textarea value={otherTerms} onChange={(e) => setOtherTerms(e.target.value)} rows={5} />
                     </div>
                 </CardContent>
             </Card>
