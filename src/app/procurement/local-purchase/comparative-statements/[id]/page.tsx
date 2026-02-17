@@ -218,12 +218,12 @@ function ComparativeStatementView() {
             </Card>
 
              <Dialog open={!!viewingQuotation} onOpenChange={(open) => !open && setViewingQuotation(null)}>
-                <DialogContent className="max-w-4xl h-[90vh]">
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Quotation: {viewingQuotation?.vendorName}</DialogTitle>
                         <DialogDescription>{viewingQuotation?.fileName}</DialogDescription>
                     </DialogHeader>
-                    <div className="h-full py-4 relative">
+                    <div className="flex-grow relative">
                         {viewingQuotation?.fileDataUrl.startsWith('data:image/') ? (
                             <Image src={viewingQuotation.fileDataUrl} alt={`Quotation from ${viewingQuotation.vendorName}`} fill className="object-contain" />
                         ) : (
