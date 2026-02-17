@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2 } from 'lucid
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -84,7 +85,8 @@ const MultiSelectPopover: React.FC<{
 };
 
 export default function GPDeskTable() {
-    const { user, demandNotes, sections, employees, vendors, comparativeStatements, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, sections, employees, vendors, comparativeStatements, isLoading, orgSettings } = useProcurement();
+    const { user } = useUser();
     const { handlePrint } = usePrint();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -107,14 +109,17 @@ export default function GPDeskTable() {
 
     const { isGPOfficer, isSuperAdmin, isGPConcern } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!currentUserEmployee) {
-            const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false };
+        if (!currentUserEmployee && user?.email !== 'superadmin@galsolution.com') {
+             return { isGPOfficer: false, isSuperAdmin: false, isGPConcern: false };
+        }
+        
+        const superAdmin = user?.email === 'superadmin@galsolution.com';
+        if (superAdmin) {
+            return { isGPOfficer: false, isSuperAdmin: true, isGPConcern: false };
         }
 
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
-        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee.id;
-        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
+        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
         
         return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
     }, [orgSettings, currentUserEmployee, user]);
@@ -143,16 +148,13 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        let baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
+        let baseList: DemandNote[];
 
         if (isSuperAdmin || isGPOfficer) {
-            // Superadmin and GP Officer see all approved notes.
-            // No additional filtering on baseList is needed here.
+            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
         } else if (isGPConcern) {
-            // GP Concern officers only see notes assigned to them.
-            baseList = baseList.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
+            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
         } else {
-            // All other employees see an empty list.
             return [];
         }
         
