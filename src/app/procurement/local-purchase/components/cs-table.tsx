@@ -17,14 +17,31 @@ import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement } from './cs-entry-form';
+import { useToast } from '@/hooks/use-toast';
+import { collection, doc } from 'firebase/firestore';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 export function ComparativeStatementTable() {
     const { comparativeStatements, demandNotes, isLoading, employees, orgSettings } = useProcurement();
     const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+
+    const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
+
     const [searchTerm, setSearchTerm] = useState('');
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     
@@ -55,7 +72,7 @@ export function ComparativeStatementTable() {
           return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
         
-        const currentEmp = employees.find(e => e.email === user?.email);
+        const currentEmp = employees.find(e => e.email === user.email);
         if (!currentEmp) {
           return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
@@ -131,6 +148,20 @@ export function ComparativeStatementTable() {
     };
     
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    
+    const handleDelete = (cs: ComparativeStatement) => {
+        setCurrentItem(cs);
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (currentItem && csRef) {
+            deleteDocumentNonBlocking(doc(csRef, currentItem.id));
+            toast({ title: "Success", description: "Comparative Statement deleted." });
+        }
+        setIsDeleteConfirmOpen(false);
+        setCurrentItem(null);
+    };
 
 
     return (
@@ -218,7 +249,7 @@ export function ComparativeStatementTable() {
                                                         <TooltipContent>Edit</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
+                                                        <TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(cs)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
                                                         <TooltipContent>Delete</TooltipContent>
                                                     </Tooltip>
                                                 </div>
@@ -235,6 +266,21 @@ export function ComparativeStatementTable() {
                     </Table>
                 </div>
             </div>
+            
+            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure?</DialogTitle>
+                        <DialogDescription>
+                            This action cannot be undone. This will permanently delete CS "{currentItem?.csNumber}".
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </TooltipProvider>
     );
 }
