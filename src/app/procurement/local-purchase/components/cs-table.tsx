@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon, User as UserIcon } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -37,7 +37,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 export function ComparativeStatementTable() {
-    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors } = useProcurement();
+    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors, designations } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -142,7 +142,7 @@ export function ComparativeStatementTable() {
         const canViewAll = isSuperAdmin || isGPOfficer || isManager;
         let itemsToFilter: ComparativeStatement[];
 
-        if (canViewAll) {
+        if (canViewAll || isCsApprover) {
             itemsToFilter = [...safeItems];
         } else if (currentUserEmployee) {
             itemsToFilter = safeItems.filter(cs => 
@@ -388,7 +388,7 @@ export function ComparativeStatementTable() {
             </Dialog>
 
              <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Approval Status for {selectedCsForStatus?.csNumber}</DialogTitle>
                     </DialogHeader>
@@ -397,6 +397,7 @@ export function ComparativeStatementTable() {
                             {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                                 const historyEntry = selectedCsForStatus.approvalHistory?.find(h => h.level === index);
                                 const approver = employees?.find(e => e.id === step.approverId);
+                                const designation = designations?.find(d => d.id === approver?.designationId);
                                 
                                 let status: 'approved' | 'pending' | 'upcoming' | 'rejected' = 'upcoming';
                                 const isPending = selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 1;
@@ -406,16 +407,27 @@ export function ComparativeStatementTable() {
                                 else if (selectedCsForStatus.currentApproverId === step.approverId && isPending) status = 'pending';
 
                                 return (
-                                    <li key={index} className="flex items-center gap-4">
+                                    <li key={index} className="flex items-start gap-4">
                                         <div>
-                                            {status === 'approved' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                                            {status === 'pending' && <Hourglass className="h-5 w-5 text-orange-500" />}
-                                            {status === 'upcoming' && <MoreHorizontal className="h-5 w-5 text-muted-foreground" />}
-                                            {status === 'rejected' && <XIcon className="h-5 w-5 text-destructive" />}
+                                            {status === 'approved' && <CheckCircle className="h-6 w-6 text-green-500" />}
+                                            {status === 'pending' && <Hourglass className="h-6 w-6 text-orange-500 animate-spin" />}
+                                            {status === 'upcoming' && <MoreHorizontal className="h-6 w-6 text-muted-foreground" />}
+                                            {status === 'rejected' && <XIcon className="h-6 w-6 text-destructive" />}
                                         </div>
-                                        <div>
-                                            <p className="font-semibold">{step.stepName}</p>
-                                            <p className="text-sm text-muted-foreground">{approver?.fullName || 'N/A'}</p>
+                                        <div className="flex-1 flex gap-4 items-center">
+                                            <Avatar className="h-10 w-10 border">
+                                                <AvatarImage src={approver?.profilePicture} alt={approver?.fullName} />
+                                                <AvatarFallback>{approver?.fullName?.charAt(0) || <UserIcon />}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold">{step.stepName}</p>
+                                                <p className="text-sm">{approver?.fullName || 'N/A'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
+                                                {historyEntry && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {historyEntry.status} on {formatDateTime(historyEntry.timestamp)?.date}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </li>
                                 );
