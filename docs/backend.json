@@ -62,6 +62,18 @@
               "type": "array",
               "description": "A list of employee IDs who are eligible GP Concern Officers.",
               "items": { "type": "string" }
+            },
+            "csApprovalRoles": {
+              "type": "object",
+              "description": "Defines the roles for the Comparative Statement (CS) approval workflow.",
+              "properties": {
+                "purchaseManagerId": { "type": "string", "description": "Employee ID of the Purchase Manager." },
+                "purchaseDeptTaId": { "type": "string", "description": "Employee ID of the Purchase Department Technical Advisor." },
+                "viceFactoryManagerId": { "type": "string", "description": "Employee ID of the Vice Factory Manager." },
+                "accountsManagerId": { "type": "string", "description": "Employee ID of the Accounts Manager." },
+                "gmSalesDeptId": { "type": "string", "description": "Employee ID of the GM of Sales Department." },
+                "gmAdministrationId": { "type": "string", "description": "Employee ID of the GM of Administration." }
+              }
             }
           }
         }
@@ -642,5 +654,6 @@
     
 
     
+
 
 

@@ -140,6 +140,13 @@ export function DemandNoteApprovalSettings() {
     const [specializedDeptManagerId, setSpecializedDeptManagerId] = useState('');
     const [generalPurchaseOfficerId, setGeneralPurchaseOfficerId] = useState('');
     const [gpConcernOfficerIds, setGpConcernOfficerIds] = useState<string[]>([]);
+    
+    const [purchaseManagerId, setPurchaseManagerId] = useState('');
+    const [purchaseDeptTaId, setPurchaseDeptTaId] = useState('');
+    const [viceFactoryManagerId, setViceFactoryManagerId] = useState('');
+    const [accountsManagerId, setAccountsManagerId] = useState('');
+    const [gmSalesDeptId, setGmSalesDeptId] = useState('');
+    const [gmAdministrationId, setGmAdministrationId] = useState('');
 
     useEffect(() => {
         if (orgSettings?.procurementSettings) {
@@ -151,6 +158,23 @@ export function DemandNoteApprovalSettings() {
             setSpecializedDeptManagerId(settings.specializedDeptManagerId || '');
             setGeneralPurchaseOfficerId(settings.generalPurchaseOfficerId || '');
             setGpConcernOfficerIds(settings.gpConcernOfficerIds || []);
+            
+            if (settings.csApprovalRoles) {
+                const {
+                    purchaseManagerId = '',
+                    purchaseDeptTaId = '',
+                    viceFactoryManagerId = '',
+                    accountsManagerId = '',
+                    gmSalesDeptId = '',
+                    gmAdministrationId = ''
+                } = settings.csApprovalRoles;
+                setPurchaseManagerId(purchaseManagerId);
+                setPurchaseDeptTaId(purchaseDeptTaId);
+                setViceFactoryManagerId(viceFactoryManagerId);
+                setAccountsManagerId(accountsManagerId);
+                setGmSalesDeptId(gmSalesDeptId);
+                setGmAdministrationId(gmAdministrationId);
+            }
         }
     }, [orgSettings]);
 
@@ -188,6 +212,14 @@ export function DemandNoteApprovalSettings() {
             specializedDeptManagerId,
             generalPurchaseOfficerId,
             gpConcernOfficerIds,
+            csApprovalRoles: {
+                purchaseManagerId,
+                purchaseDeptTaId,
+                viceFactoryManagerId,
+                accountsManagerId,
+                gmSalesDeptId,
+                gmAdministrationId,
+            }
         };
 
         setDocumentNonBlocking(settingsDocRef, { procurementSettings }, { merge: true });
@@ -276,6 +308,41 @@ export function DemandNoteApprovalSettings() {
                                     placeholder="Select Specialized Dept. Manager..."
                                 />
                             </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>CS Approval Roles</CardTitle>
+                    <CardDescription>Assign employees to key roles for the Comparative Statement approval workflow.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Purchase Manager</Label>
+                            <Combobox items={employees || []} value={purchaseManagerId} onSelect={setPurchaseManagerId} placeholder="Select Purchase Manager..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Purchase Department TA</Label>
+                            <Combobox items={employees || []} value={purchaseDeptTaId} onSelect={setPurchaseDeptTaId} placeholder="Select Purchase TA..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Vice Factory Manager</Label>
+                            <Combobox items={employees || []} value={viceFactoryManagerId} onSelect={setViceFactoryManagerId} placeholder="Select Vice Factory Manager..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">Accounts Manager</Label>
+                            <Combobox items={employees || []} value={accountsManagerId} onSelect={setAccountsManagerId} placeholder="Select Accounts Manager..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">GM Sales Department</Label>
+                            <Combobox items={employees || []} value={gmSalesDeptId} onSelect={setGmSalesDeptId} placeholder="Select GM Sales..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="font-semibold">GM-Administration</Label>
+                            <Combobox items={employees || []} value={gmAdministrationId} onSelect={setGmAdministrationId} placeholder="Select GM Administration..."/>
                         </div>
                     </div>
                 </CardContent>
