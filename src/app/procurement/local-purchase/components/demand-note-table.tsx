@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Hand } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Hand, Printer } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 
 export function DemandNoteTable() {
@@ -43,6 +44,7 @@ export function DemandNoteTable() {
     const firestore = useFirestore();
     const { user } = useUser();
     const { demandNotes, sections, employees, isLoading, orgSettings } = useProcurement();
+    const { handlePrint } = usePrint();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
 
@@ -62,30 +64,34 @@ export function DemandNoteTable() {
     
     const { isGPOfficer, isGPConcern, gpConcernOfficers, isSuperAdmin, isManager } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!currentUserEmployee || !employees) {
-            const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-            return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [], isSuperAdmin: superAdminCheck, isManager: false };
+        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+
+        if (!settings || !employees || !user) {
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, currentUserEmployee: null };
+        }
+        
+        const currentEmp = employees.find(e => e.email === user?.email);
+        if (!currentEmp) {
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, currentUserEmployee: null };
         }
 
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
-        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee?.id;
-        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
-        const officers = (settings?.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
-        const manager = settings && (
-            settings.managingDirectorId === currentUserEmployee.id ||
-            settings.factoryDirectorId === currentUserEmployee.id ||
-            settings.manufacturingDeptManagerId === currentUserEmployee.id ||
-            settings.specializedDeptManagerId === currentUserEmployee.id
-        );
-
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdmin, isManager: manager };
-    }, [orgSettings, currentUserEmployee, employees, user]);
+        const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
+        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
+        const manager = 
+            settings.managingDirectorId === currentEmp.id ||
+            settings.factoryDirectorId === currentEmp.id ||
+            settings.manufacturingDeptManagerId === currentEmp.id ||
+            settings.specializedDeptManagerId === currentEmp.id;
+        
+        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdminCheck, isManager: manager, currentUserEmployee: currentEmp };
+    }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
-        if (isGPConcern) return "Role: GP Concern Officer";
         if (isManager) return "Role: Manager";
+        if (isGPConcern) return "Role: GP Concern Officer";
         return "Role: Employee";
     }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
 
@@ -394,6 +400,7 @@ export function DemandNoteTable() {
                                         <div className="flex justify-end gap-2">
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(item)}><Edit className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
                                             <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(item)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                                         </div>
                                     </TableCell>
@@ -462,4 +469,3 @@ export function DemandNoteTable() {
     );
 }
 
-    
