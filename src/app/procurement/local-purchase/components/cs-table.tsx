@@ -32,7 +32,7 @@ export function ComparativeStatementTable() {
         return employees.find(e => e.id === id)?.fullName || 'N/A';
     }
 
-    const formatDateTime = (isoString: string) => {
+    const formatDateTime = (isoString?: string) => {
         if (!isoString) return { date: '', time: '' };
         try {
             const d = new Date(isoString);
@@ -47,25 +47,27 @@ export function ComparativeStatementTable() {
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
     const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee } = useMemo(() => {
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
+
         if (!settings || !employees || employees.length === 0 || !user) {
           return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
+        
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
           return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
 
-        const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
-        const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
-        const manager = 
+        const isGPOfficer = settings.generalPurchaseOfficerId === currentEmp.id;
+        const isGPConcern = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
+        const isManager = 
             settings.managingDirectorId === currentEmp.id ||
             settings.factoryDirectorId === currentEmp.id ||
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isSuperAdmin, isGPOfficer: GPO, isManager, isGPConcern: GPC, currentUserEmployee: currentEmp };
+        return { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
@@ -157,8 +159,8 @@ export function ComparativeStatementTable() {
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span>{getEmployeeName(cs.createdBy)}</span>
-                                                    <span className="text-xs text-muted-foreground">{date}</span>
-                                                    <span className="text-xs text-muted-foreground">{time}</span>
+                                                    {date && <span className="text-xs text-muted-foreground">{date}</span>}
+                                                    {time && <span className="text-xs text-muted-foreground">{time}</span>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
