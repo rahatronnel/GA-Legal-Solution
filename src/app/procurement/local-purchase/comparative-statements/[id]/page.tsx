@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Award, Copy } from 'lucide-react';
+import { ArrowLeft, Printer, Award, Copy, FileText } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -14,6 +14,8 @@ import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 function ComparativeStatementView() {
     const params = useParams();
@@ -21,6 +23,8 @@ function ComparativeStatementView() {
     const { toast } = useToast();
     const { handlePrint } = usePrint();
     const { comparativeStatements, demandNotes, vendors, isLoading } = useProcurement();
+
+    const [viewingQuotation, setViewingQuotation] = useState<{ vendorName: string; fileDataUrl: string; fileName: string; } | null>(null);
 
     const cs = useMemo(() => {
         if (isLoading || !comparativeStatements) return undefined;
@@ -128,12 +132,22 @@ function ComparativeStatementView() {
                                 <TableHead className="min-w-[200px]">Item</TableHead>
                                 <TableHead>Unit</TableHead>
                                 <TableHead>Qty</TableHead>
-                                {participatingVendors.map((vendor: any) => (
-                                    <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
-                                        {vendor.vendorName}
-                                        {vendor.id === bestOfferVendorId && <Badge className="ml-2 bg-green-600">Best Offer</Badge>}
-                                    </TableHead>
-                                ))}
+                                {participatingVendors.map((vendor: any) => {
+                                    const quotation = demandNote?.quotations?.find((q: any) => q.vendorId === vendor.id);
+                                    return (
+                                        <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                            <div className="flex flex-col items-center justify-center gap-1">
+                                                <span>{vendor.vendorName}</span>
+                                                {vendor.id === bestOfferVendorId && <Badge className="ml-2 bg-green-600">Best Offer</Badge>}
+                                                {quotation?.fileDataUrl && (
+                                                    <Button variant="outline" size="sm" className="h-6 px-2 mt-1" onClick={() => setViewingQuotation({vendorName: vendor.vendorName, fileDataUrl: quotation.fileDataUrl, fileName: quotation.fileName})}>
+                                                        <FileText className="h-3 w-3 mr-1" /> View Quotation
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableHead>
+                                    )
+                                })}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -196,6 +210,24 @@ function ComparativeStatementView() {
                     </Table>
                 </CardContent>
             </Card>
+
+             <Dialog open={!!viewingQuotation} onOpenChange={(open) => !open && setViewingQuotation(null)}>
+                <DialogContent className="max-w-4xl h-[90vh]">
+                    <DialogHeader>
+                        <DialogTitle>Quotation: {viewingQuotation?.vendorName}</DialogTitle>
+                        <DialogDescription>{viewingQuotation?.fileName}</DialogDescription>
+                    </DialogHeader>
+                    <div className="h-full py-4 relative">
+                        {viewingQuotation?.fileDataUrl.startsWith('data:image/') ? (
+                            <Image src={viewingQuotation.fileDataUrl} alt={`Quotation from ${viewingQuotation.vendorName}`} fill className="object-contain" />
+                        ) : (
+                            <object data={viewingQuotation?.fileDataUrl} type="application/pdf" width="100%" height="100%">
+                                <p>It appears you don't have a PDF plugin for this browser. You can <a href={viewingQuotation?.fileDataUrl} download={viewingQuotation?.fileName} className="text-primary underline">download the PDF file.</a></p>
+                            </object>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
 
         </div>
     );
