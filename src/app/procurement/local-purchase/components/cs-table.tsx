@@ -306,22 +306,25 @@ export function ComparativeStatementTable() {
         if (isSuperAdmin || isGPOfficer || isManager || isCsApprover) {
             itemsToFilter = [...safeItems];
         } else if (currentUserEmployee) {
-            itemsToFilter = safeItems.filter(cs => 
-                cs.createdBy === currentUserEmployee.id || 
-                cs.currentApproverId === currentUserEmployee.id ||
-                cs.vendorSelectorId === currentUserEmployee.id
-            );
+            itemsToFilter = safeItems.filter(cs => {
+                const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
+                return cs.createdBy === currentUserEmployee.id || 
+                       cs.currentApproverId === currentUserEmployee.id ||
+                       cs.vendorSelectorId === currentUserEmployee.id ||
+                       (demandNote && demandNote.gpConcernOfficerId === currentUserEmployee.id);
+            });
         } else {
             itemsToFilter = [];
         }
         
         return itemsToFilter.filter(cs => {
+            const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
             const searchTermMatch = !searchTerm ||
                 cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                getEmployeeName(cs.createdBy).toLowerCase().includes(searchTerm.toLowerCase());
+                getEmployeeName(demandNote?.gpConcernOfficerId).toLowerCase().includes(searchTerm.toLowerCase());
             
-            const gpConcernMatch = gpConcernFilter === 'all' || cs.createdBy === gpConcernFilter;
+            const gpConcernMatch = gpConcernFilter === 'all' || demandNote?.gpConcernOfficerId === gpConcernFilter;
 
             const vendorMatch = vendorFilter === 'all' || cs.vendorDetails.some((vd: any) => vd.vendorId === vendorFilter);
             
@@ -599,7 +602,10 @@ export function ComparativeStatementTable() {
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Confirm Bulk Approval</AlertDialogTitle><AlertDialogDescription>Are you sure you want to approve {selectedRows.length} comparative statement(s)?</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirm Bulk Approval</AlertDialogTitle>
+                                            <AlertDialogDescription>Are you sure you want to approve the following {selectedRows.length} comparative statement(s)?</AlertDialogDescription>
+                                        </AlertDialogHeader>
                                         <ScrollArea className="max-h-60 p-4 border rounded-md">
                                             <ul className="list-disc pl-5 space-y-2 text-sm">
                                                 {selectedRows.map(id => {
@@ -616,14 +622,23 @@ export function ComparativeStatementTable() {
                                                 })}
                                             </ul>
                                         </ScrollArea>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => processBulkAction()}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => processBulkAction()}>Confirm Approval</AlertDialogAction>
+                                        </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Confirm Bulk Rejection</AlertDialogTitle><AlertDialogDescription>Are you sure you want to reject {selectedRows.length} comparative statement(s)? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => processBulkAction()} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirm Bulk Rejection</AlertDialogTitle>
+                                            <AlertDialogDescription>Are you sure you want to reject {selectedRows.length} comparative statement(s)? This action cannot be undone.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => processBulkAction()} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction>
+                                        </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
                             </>
@@ -665,12 +680,12 @@ export function ComparativeStatementTable() {
                                     const {date: selectionDate, time: selectionTime} = formatDateTime(cs.vendorSelectionDate);
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
-                                    const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
+                                    const canSelectForApproval = approvableCS.some(approvable => approvable.id === cs.id);
                                     const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
-                                    const isNoteConcernOfficer = currentUserEmployee?.id === demandNote?.gpConcernOfficerId;
-                                    const canSelectVendor = (isSuperAdmin || isNoteConcernOfficer) && cs.approvalStatus === 2;
+                                    const isCurrentConcernOfficer = currentUserEmployee?.id === demandNote?.gpConcernOfficerId;
+                                    const canSelectVendor = (isSuperAdmin || isCurrentConcernOfficer) && cs.approvalStatus === 2;
                                     const poExists = (purchaseOrders || []).some(po => po.csId === cs.id);
-                                    const canCreatePO = (isGPOfficer || isSuperAdmin || isNoteConcernOfficer);
+                                    const canCreatePO = (isGPOfficer || isSuperAdmin || isCurrentConcernOfficer);
 
                                     return (
                                         <TableRow key={cs.id} data-state={selectedRows.includes(cs.id) ? "selected" : ""}>
@@ -678,7 +693,7 @@ export function ComparativeStatementTable() {
                                                 <Checkbox
                                                     checked={selectedRows.includes(cs.id)}
                                                     onCheckedChange={() => toggleRowSelection(cs.id)}
-                                                    disabled={!canSelect}
+                                                    disabled={!canSelectForApproval}
                                                     aria-label={`Select CS ${cs.csNumber}`}
                                                 />
                                             </TableCell>
