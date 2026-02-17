@@ -116,26 +116,19 @@ export default function GPDeskTable() {
             .filter(Boolean) as Employee[];
     }, [orgSettings, employees]);
 
-    const { isGPOfficer, isGPConcern, isSuperAdmin } = useMemo(() => {
+    const { isGPOfficer, isSuperAdmin } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         if (!settings || !currentUserEmployee) {
             const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-            return { isGPOfficer: false, isGPConcern: false, isSuperAdmin: superAdminCheck };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck };
         }
         
         const superAdmin = user?.email === 'superadmin@galsolution.com';
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
-        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
         
-        return { isGPOfficer: GPO, isGPConcern: GPC, isSuperAdmin: superAdmin };
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin };
     }, [orgSettings, currentUserEmployee, user]);
     
-    useEffect(() => {
-        if (isGPConcern && !isGPOfficer && !isSuperAdmin && currentUserEmployee) {
-            setAssignedToFilter(currentUserEmployee.id);
-        }
-    }, [isGPConcern, isGPOfficer, isSuperAdmin, currentUserEmployee]);
-
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
@@ -144,15 +137,8 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        let baseList: DemandNote[];
-
-        if (isSuperAdmin || isGPOfficer) {
-            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
-        } else if (isGPConcern) {
-            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
-        } else {
-            baseList = [];
-        }
+        // Anyone can view all approved notes in the GP Desk.
+        const baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
@@ -167,7 +153,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isSuperAdmin, isGPOfficer, isGPConcern, currentUserEmployee]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -229,10 +215,10 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
-                                {(isGPOfficer || isSuperAdmin) && <SelectItem value="all">All Concern Officers</SelectItem>}
+                                <SelectItem value="all">All Concern Officers</SelectItem>
                                 {gpConcernOfficers.map(officer => (
                                     <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
                                 ))}
