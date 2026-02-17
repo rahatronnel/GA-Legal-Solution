@@ -18,6 +18,7 @@ import type { DemandNote } from './demand-note-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/firebase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type PurchaseOrder = {
   id: string;
@@ -158,7 +159,10 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
     setIsOpen(false);
   }
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const formatCurrency = (amount: number | undefined) => {
+    if (typeof amount !== 'number') return 'N/A';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -213,12 +217,12 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
           {/* Totals Section */}
           <div className="flex justify-end">
              <div className="w-full max-w-sm space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(poData.totalAmount || 0)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Discount:</span><span>- {formatCurrency(poData.discountAmount || 0)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">VAT:</span><span>+ {formatCurrency(poData.vatAmount || 0)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax:</span><span>+ {formatCurrency(poData.taxAmount || 0)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(poData.totalAmount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Discount:</span><span>- {formatCurrency(poData.discountAmount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">VAT:</span><span>+ {formatCurrency(poData.vatAmount)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Tax:</span><span>+ {formatCurrency(poData.taxAmount)}</span></div>
                 <Separator/>
-                <div className="flex justify-between font-bold text-base"><span className="text-foreground">Grand Total:</span><span>{formatCurrency(poData.netPayableAmount || 0)}</span></div>
+                <div className="flex justify-between font-bold text-base"><span className="text-foreground">Grand Total:</span><span>{formatCurrency(poData.netPayableAmount)}</span></div>
             </div>
           </div>
           
