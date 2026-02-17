@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -257,7 +258,7 @@ export default function GPDeskTable() {
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Assigned To</TableHead>
-                                <TableHead>Assigned Date & Time</TableHead>
+                                <TableHead>Assigned Date &amp; Time</TableHead>
                                 <TableHead>Vendor Assignment</TableHead>
                                 <TableHead className="w-[160px] text-right">Actions</TableHead>
                             </TableRow>
@@ -347,3 +348,6 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
+
+
+    
