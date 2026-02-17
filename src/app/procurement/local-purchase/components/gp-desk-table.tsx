@@ -106,26 +106,34 @@ export default function GPDeskTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
-    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
-
-    const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
-
-    const { isGPOfficer, isGPConcern, gpConcernOfficers, isSuperAdmin } = useMemo(() => {
+    const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!settings || !currentUserEmployee || !employees) {
+        if (!settings || !employees) {
+            return [];
+        }
+        return (settings.gpConcernOfficerIds || [])
+            .map(id => employees.find(e => e.id === id))
+            .filter(Boolean) as Employee[];
+    }, [orgSettings, employees]);
+
+    const { isGPOfficer, isGPConcern, isSuperAdmin } = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !currentUserEmployee) {
             const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-            return { isGPOfficer: false, isGPConcern: false, gpConcernOfficers: [], isSuperAdmin: superAdminCheck };
+            return { isGPOfficer: false, isGPConcern: false, isSuperAdmin: superAdminCheck };
         }
         
         const superAdmin = user?.email === 'superadmin@galsolution.com';
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
-        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
         
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers as Employee[], isSuperAdmin: superAdmin };
-    }, [orgSettings, currentUserEmployee, employees, user]);
+        return { isGPOfficer: GPO, isGPConcern: GPC, isSuperAdmin: superAdmin };
+    }, [orgSettings, currentUserEmployee, user]);
     
+    const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
+    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
+
+    const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
@@ -315,7 +323,7 @@ export default function GPDeskTable() {
             {isCsFormOpen && (
                  <ComparativeStatementForm
                     isOpen={isCsFormOpen}
-                    setIsOpen={setIsCsFormOpen}
+                    setIsopen={setIsCsFormOpen}
                     demandNote={currentNoteForCs}
                     onSave={handleSaveCs}
                 />
@@ -324,7 +332,5 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
-
-    
 
     
