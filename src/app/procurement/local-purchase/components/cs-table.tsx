@@ -36,9 +36,10 @@ import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -199,8 +200,11 @@ export function ComparativeStatementTable() {
     
     const [isVendorSelectionOpen, setIsVendorSelectionOpen] = useState(false);
     const [selectedCsForVendor, setSelectedCsForVendor] = useState<ComparativeStatement | null>(null);
+    const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false);
+    const [bulkActionType, setBulkActionType] = useState<'approve' | 'reject' | null>(null);
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
+    const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
     
     const getEmployeeName = (id?: string) => {
         if (!id || !employees || employees.length === 0) return 'N/A';
@@ -218,6 +222,8 @@ export function ComparativeStatementTable() {
             return { date: 'N/A', time: 'N/A' };
         }
     }
+    
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
@@ -335,11 +341,13 @@ export function ComparativeStatementTable() {
 
     const allSelectableIds = useMemo(() => approvableCS.map(cs => cs.id), [approvableCS]);
     
-     const handleApproval = (csId: string, status: number, vendorName: string) => {
+     const handleApproval = (csId: string, status: number) => {
         if (!firestore || !currentUserEmployee || !csRef) return;
 
         const cs = comparativeStatements.find(c => c.id === csId);
         if (!cs || !cs.approvalFlow?.steps) return;
+        
+        const vendorName = getVendorName(cs.selectedVendorId);
 
         const csDocRef = doc(csRef, csId);
         const approvalLevels = cs.approvalFlow.steps;
@@ -379,15 +387,19 @@ export function ComparativeStatementTable() {
         toast({ title: 'Success', description: `CS ${cs.csNumber} has been ${status === 1 ? 'approved' : 'rejected'}.` });
     };
 
-    const handleBulkApproval = (status: number) => {
+    const handleOpenBulkConfirm = (type: 'approve' | 'reject') => {
         if (selectedRows.length === 0) return;
-        // For simplicity, bulk approval will not have the vendor name confirmation
-        // It's a quick action for users who have already reviewed.
+        setBulkActionType(type);
+        setIsBulkConfirmOpen(true);
+    };
+
+    const processBulkAction = () => {
+        if (!bulkActionType) return;
         selectedRows.forEach(csId => {
-            const cs = comparativeStatements.find(c => c.id === csId);
-            if(cs) handleApproval(csId, status, cs.selectedVendorId ? getEmployeeName(cs.selectedVendorId) : 'N/A');
+            handleApproval(csId, bulkActionType === 'approve' ? 1 : 0);
         });
         setSelectedRows([]);
+        setIsBulkConfirmOpen(false);
     };
     
     const toggleRowSelection = (id: string) => {
@@ -397,11 +409,12 @@ export function ComparativeStatementTable() {
     const canPerformBulkAction = selectedRows.length > 0;
     
     const calculateVendorTotals = (cs: ComparativeStatement) => {
-        if (!cs || !cs.vendorDetails || !cs.items) return [];
+        if (!cs) return {};
+        const totals: { [vendorId: string]: { grandTotal: number } } = {};
         
-        return cs.vendorDetails.map(vd => {
+        cs.vendorDetails.forEach((vd) => {
             const subtotal = cs.items.reduce((acc, item) => {
-                const quote = item.vendorQuotes.find(q => q.vendorId === vd.vendorId);
+                const quote = item.vendorQuotes.find((q) => q.vendorId === vd.vendorId);
                 return acc + (item.quantity * (quote?.unitPrice || 0));
             }, 0);
             
@@ -415,11 +428,11 @@ export function ComparativeStatementTable() {
             const subTotalAfterDiscount = subtotal - discount;
             const vatAmount = subTotalAfterDiscount * ((vd.vatPercentage || 0) / 100);
             const taxAmount = subTotalAfterDiscount * ((vd.taxPercentage || 0) / 100);
-            return subTotalAfterDiscount + vatAmount + taxAmount;
+            totals[vd.vendorId] = { grandTotal: subTotalAfterDiscount + vatAmount + taxAmount };
         });
+        
+        return totals;
     };
-    
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     
     const handleDelete = (cs: ComparativeStatement) => {
         setCurrentItem(cs);
@@ -519,8 +532,8 @@ export function ComparativeStatementTable() {
                         <Badge variant="outline">{userRoleText}</Badge>
                         {canPerformBulkAction && (
                             <>
-                                <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject</Button>
+                                <Button size="sm" variant="outline" onClick={() => handleOpenBulkConfirm('approve')}><Check className="mr-2 h-4 w-4"/>Approve</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleOpenBulkConfirm('reject')}><X className="mr-2 h-4 w-4"/>Reject</Button>
                             </>
                         )}
                     </div>
@@ -540,7 +553,7 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
-                                <TableHead>Created By</TableHead>
+                                <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
@@ -563,8 +576,7 @@ export function ComparativeStatementTable() {
                                 filteredItems.map((cs) => {
                                     const {date, time} = formatDateTime(cs.csDate);
                                     const totals = calculateVendorTotals(cs);
-                                    const minAmount = totals.length > 0 ? Math.min(...totals) : 0;
-                                    const maxAmount = totals.length > 0 ? Math.max(...totals) : 0;
+                                    const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
                                     const canSelectVendor = (isSuperAdmin || (currentUserEmployee && cs.vendorSelectorId === currentUserEmployee.id)) && cs.approvalStatus === 2;
 
@@ -603,27 +615,12 @@ export function ComparativeStatementTable() {
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span>{getEmployeeName(cs.createdBy)}</span>
-                                                    {date && <span className="text-xs text-muted-foreground">{date}</span>}
-                                                    {time && <span className="text-xs text-muted-foreground">{time}</span>}
-                                                </div>
-                                            </TableCell>
+                                            <TableCell>{getVendorName(cs.selectedVendorId) || 'Not Selected'}</TableCell>
                                             <TableCell>
                                                 <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex flex-col items-end">
-                                                    <span className="flex items-center text-red-500 font-semibold">
-                                                        <ArrowUp className="h-3 w-3 mr-1" />
-                                                        {formatCurrency(maxAmount)}
-                                                    </span>
-                                                    <span className="flex items-center text-green-500 font-semibold">
-                                                        <ArrowDown className="h-3 w-3 mr-1" />
-                                                        {formatCurrency(minAmount)}
-                                                    </span>
-                                                </div>
+                                            <TableCell className="text-right font-semibold">
+                                                {cs.selectedVendorId ? formatCurrency(amount) : 'N/A'}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
@@ -739,7 +736,39 @@ export function ComparativeStatementTable() {
                 vendors={vendors || []}
             />
 
+            <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Bulk {bulkActionType === 'approve' ? 'Approval' : 'Rejection'}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You are about to {bulkActionType} the following {selectedRows.length} item(s):
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <ScrollArea className="max-h-60 p-4 border rounded-md">
+                        <ul className="list-disc pl-5 space-y-2 text-sm">
+                            {selectedRows.map(id => {
+                                const cs = comparativeStatements.find(c => c.id === id);
+                                if (!cs) return null;
+                                const vendor = vendors.find(v => v.id === cs.selectedVendorId);
+                                const totals = calculateVendorTotals(cs);
+                                const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
+                                return (
+                                    <li key={id}>
+                                        <strong>{cs.csNumber}</strong>: Vendor <strong>{vendor?.vendorName || 'N/A'}</strong> for <strong>{formatCurrency(amount)}</strong>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </ScrollArea>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={processBulkAction} className={bulkActionType === 'reject' ? 'bg-destructive hover:bg-destructive/90' : ''}>
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
         </TooltipProvider>
     );
 }
-

@@ -151,6 +151,9 @@ function ComparativeStatementView() {
     if (isLoading) return <p>Loading Comparative Statement...</p>;
     if (cs === null) notFound();
     if (!cs) return null;
+    
+    const selectedVendor = vendors?.find(v => v.id === cs.selectedVendorId);
+    const selectedVendorTotal = cs.selectedVendorId ? vendorTotals[cs.selectedVendorId]?.grandTotal : 0;
 
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString();
@@ -178,7 +181,7 @@ function ComparativeStatementView() {
                         <div className="flex items-center gap-2">
                             {canApprove && (
                                 <>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Approve CS?</AlertDialogTitle><AlertDialogDescription>This will move the CS to the next step.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Approve CS?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to approve the selection of vendor <strong className="text-foreground">{selectedVendor?.vendorName || 'N/A'}</strong> for a total of <strong className="text-foreground">{formatCurrency(selectedVendorTotal || 0)}</strong>? This will move the CS to the next step.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                  <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject CS?</AlertDialogTitle><AlertDialogDescription>This will stop the approval process.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={()=>handleApproval(0)}>Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                 </>
                             )}
@@ -365,5 +368,3 @@ function ComparativeStatementView() {
 export default function ComparativeStatementPage() {
     return <TooltipProvider><ComparativeStatementView /></TooltipProvider>;
 }
-
-    
