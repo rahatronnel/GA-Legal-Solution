@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
+import { Badge } from '@/components/ui/badge';
 
 export function ComparativeStatementTable() {
     const { comparativeStatements, demandNotes, isLoading, employees, orgSettings } = useProcurement();
@@ -50,19 +51,33 @@ export function ComparativeStatementTable() {
         return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
-    const filteredItems = useMemo(() => {
-        let itemsToFilter = [...safeItems];
+    const userRoleText = useMemo(() => {
+        if (isSuperAdmin) return "Role: Superadmin";
+        if (isGPOfficer) return "Role: GP Officer";
+        if (isManager) return "Role: Manager";
+        if (isGPConcern) return "Role: GP Concern Officer";
+        return "Role: Employee";
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
 
-        // If user is a GP Concern officer but not a manager or admin, filter to their created CS
-        if (isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager) {
+    const filteredItems = useMemo(() => {
+        const canViewAll = isSuperAdmin || isGPOfficer || isManager;
+        let itemsToFilter: any[];
+
+        if (canViewAll) {
+            itemsToFilter = [...safeItems];
+        } else if (isGPConcern) {
              if (currentUserEmployee) {
-                itemsToFilter = itemsToFilter.filter(cs => cs.createdBy === currentUserEmployee.id);
+                itemsToFilter = safeItems.filter(cs => cs.createdBy === currentUserEmployee.id);
             } else {
-                return []; // Should not happen if they are a concern officer
+                itemsToFilter = [];
             }
+        } else {
+            itemsToFilter = [];
         }
         
-        if (!searchTerm) return itemsToFilter;
+        if (!searchTerm) {
+            return itemsToFilter;
+        }
 
         const lowercasedTerm = searchTerm.toLowerCase();
         return itemsToFilter.filter(cs =>
@@ -77,15 +92,18 @@ export function ComparativeStatementTable() {
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <div className="relative w-full sm:max-w-xs">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search by CS, DN, GP Concern..."
-                            className="w-full rounded-lg bg-background pl-8"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex items-center gap-2">
+                        <div className="relative w-full sm:max-w-xs">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="Search by CS, DN, GP Concern..."
+                                className="w-full rounded-lg bg-background pl-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                         <Badge variant="outline">{userRoleText}</Badge>
                     </div>
                 </div>
                 <div className="border rounded-lg">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -107,20 +106,29 @@ export default function GPDeskTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
     
-    const { isGPOfficer, isSuperAdmin, isGPConcern } = useMemo(() => {
+    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
-        if (!settings || (!currentUserEmployee && !superAdmin)) {
-            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false };
+        if (!settings || !employees || !user) {
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
         }
         
-        const GPO = currentUserEmployee && settings.generalPurchaseOfficerId === currentUserEmployee.id;
-        const GPC = currentUserEmployee && !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
-        
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
-    }, [orgSettings, currentUserEmployee, user]);
+        const currentEmp = employees.find(e => e.email === user?.email);
+        if (!currentEmp) {
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
+        }
 
+        const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
+        const manager = 
+            settings.managingDirectorId === currentEmp.id ||
+            settings.factoryDirectorId === currentEmp.id ||
+            settings.manufacturingDeptManagerId === currentEmp.id ||
+            settings.specializedDeptManagerId === currentEmp.id;
+        
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager };
+    }, [orgSettings, employees, user]);
     
     useEffect(() => {
         if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
@@ -138,6 +146,14 @@ export default function GPDeskTable() {
             .filter(Boolean) as Employee[];
     }, [orgSettings, employees]);
 
+    const userRoleText = useMemo(() => {
+        if (isSuperAdmin) return "Role: Superadmin";
+        if (isGPOfficer) return "Role: GP Officer";
+        if (isManager) return "Role: Manager";
+        if (isGPConcern) return "Role: GP Concern Officer";
+        return "Role: Employee";
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
+
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
@@ -146,14 +162,19 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
+        const canViewAll = isSuperAdmin || (isGPOfficer && orgSettings?.procurementSettings?.canGpOfficerViewAllGpDesk);
+
         let baseList: DemandNote[];
 
-        if (isSuperAdmin || isGPOfficer) {
+        if (canViewAll) {
             baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
         } else if (isGPConcern) {
             baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
-        } else {
-            return [];
+        } else if (isGPOfficer) { // GP officer but without the 'view all' setting
+             baseList = safeItems.filter(note => note.approvalStatus === 1 && !note.gpStatus);
+        }
+        else {
+            baseList = [];
         }
         
         return baseList.filter(item => {
@@ -169,7 +190,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee, orgSettings]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -235,6 +256,7 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
+                        <Badge variant="outline">{userRoleText}</Badge>
                         <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
@@ -282,13 +304,15 @@ export default function GPDeskTable() {
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>
-                                        {getEmployeeName(item.gpConcernOfficerId || '')}
-                                        {item.gpAssignedDate && (
-                                            <div className="flex flex-col text-xs text-muted-foreground">
-                                                <span>{new Date(item.gpAssignedDate).toLocaleDateString()}</span>
-                                                <span>{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
-                                            </div>
-                                        )}
+                                        <div className="flex flex-col">
+                                            <span>{getEmployeeName(item.gpConcernOfficerId || '')}</span>
+                                            {item.gpAssignedDate && (
+                                                <>
+                                                    <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleDateString()}</span>
+                                                    <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
+                                                </>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         {item.quotations && item.quotations.length > 0 ? (
@@ -378,5 +402,3 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
-
-    
