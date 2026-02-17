@@ -116,19 +116,26 @@ export default function GPDeskTable() {
             .filter(Boolean) as Employee[];
     }, [orgSettings, employees]);
 
-    const { isGPOfficer, isSuperAdmin } = useMemo(() => {
+    const { isGPOfficer, isSuperAdmin, isGPConcern } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        if (!settings || !currentUserEmployee) {
+        if (!currentUserEmployee) {
             const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false };
         }
-        
+
         const superAdmin = user?.email === 'superadmin@galsolution.com';
-        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
         
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin };
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
     }, [orgSettings, currentUserEmployee, user]);
     
+    useEffect(() => {
+        if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
+            setAssignedToFilter(currentUserEmployee?.id || 'all');
+        }
+    }, [isGPConcern, isSuperAdmin, isGPOfficer, currentUserEmployee]);
+
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
@@ -137,15 +144,21 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        // Anyone can view all approved notes in the GP Desk.
-        const baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
+        let baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
+
+        if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
+            baseList = baseList.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id);
+        } else if (!isGPConcern && !isSuperAdmin && !isGPOfficer) {
+            return [];
+        }
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
 
-            const assignedToMatch = assignedToFilter === 'all' || item.gpConcernOfficerId === assignedToFilter;
+            const canUseFilter = isSuperAdmin || isGPOfficer;
+            const assignedToMatch = !canUseFilter || assignedToFilter === 'all' || item.gpConcernOfficerId === assignedToFilter;
             
             const vendorAssignmentMatch = vendorAssignmentFilter === 'all' || 
                 (vendorAssignmentFilter === 'assigned' && item.quotations && item.quotations.length > 0) ||
@@ -153,7 +166,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPConcern, isSuperAdmin, isGPOfficer, currentUserEmployee]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -215,7 +228,7 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
