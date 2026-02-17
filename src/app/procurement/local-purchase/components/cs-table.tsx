@@ -17,7 +17,7 @@ import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement, VendorDetail } from './cs-entry-form';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +40,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from 'date-fns';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -188,6 +189,8 @@ export function ComparativeStatementTable() {
     const { handlePrint } = usePrint();
 
     const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
+    const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+
 
     const [searchTerm, setSearchTerm] = useState('');
     const [gpConcernFilter, setGpConcernFilter] = useState('all');
@@ -215,7 +218,7 @@ export function ComparativeStatementTable() {
         if (!isoString) return { date: '', time: '' };
         try {
             const d = new Date(isoString);
-            const date = d.toLocaleDateString();
+            const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric'});
             const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return { date, time };
         } catch {
@@ -396,9 +399,67 @@ export function ComparativeStatementTable() {
     const processBulkAction = () => {
         if (!bulkActionType) return;
         selectedRows.forEach(csId => {
-            handleApproval(csId, bulkActionType === 'approve' ? 1 : 0);
+            const cs = comparativeStatements.find(c => c.id === csId);
+            if (!cs || !cs.approvalFlow?.steps || !currentUserEmployee) return;
+    
+            const noteRef = doc(csRef, csId);
+            const approvalLevels = cs.approvalFlow.steps;
+            const currentLevel = cs.approvalHistory?.length || 0;
+    
+            const newHistoryEntry = {
+                approverId: currentUserEmployee.id,
+                status: bulkActionType === 'approve' ? 'Approved' : 'Rejected',
+                timestamp: new Date().toISOString(),
+                level: currentLevel,
+                remarks: `Bulk action from list view`,
+            };
+    
+            let updatePayload: Partial<ComparativeStatement> = {
+                approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry],
+            };
+            
+            let newApprovalStatus: number | undefined;
+    
+            if (bulkActionType === 'approve') {
+                const nextLevel = currentLevel + 1;
+                if (nextLevel >= approvalLevels.length) {
+                    newApprovalStatus = 1; // Completed
+                    updatePayload.currentApproverId = '';
+    
+                    // CREATE PO for bulk action
+                    if (poCollectionRef && cs.selectedVendorId) {
+                        const poData = getPODataFromCS(cs);
+                        if (poData) {
+                            const newPO = {
+                                 poNumber: `PO-${cs.csNumber}`,
+                                 poDate: format(new Date(), 'yyyy-MM-dd'),
+                                 demandNoteId: cs.demandNoteId,
+                                 csId: cs.id,
+                                 vendorId: cs.selectedVendorId,
+                                 ...poData,
+                                 status: 'Pending',
+                                 createdBy: currentUserEmployee.id,
+                                 createdAt: new Date().toISOString(),
+                            };
+                            addDocumentNonBlocking(poCollectionRef, newPO);
+                        }
+                    }
+                } else {
+                    newApprovalStatus = getNextApprovalStatusCode(currentLevel);
+                    updatePayload.currentApproverId = approvalLevels[nextLevel].approverId;
+                }
+            } else {
+                newApprovalStatus = 0; // Rejected
+                updatePayload.currentApproverId = '';
+            }
+    
+            updatePayload.approvalStatus = newApprovalStatus;
+            setDocumentNonBlocking(noteRef, updatePayload, { merge: true });
         });
+        
+        toast({ title: 'Success', description: `${selectedRows.length} CS have been processed.` });
         setSelectedRows([]);
+        setBulkActionType(null);
         setIsBulkConfirmOpen(false);
     };
     
@@ -410,7 +471,7 @@ export function ComparativeStatementTable() {
     
     const calculateVendorTotals = (cs: ComparativeStatement) => {
         if (!cs) return {};
-        const totals: { [vendorId: string]: { grandTotal: number } } = {};
+        const totals: { [vendorId: string]: { subtotal: number; discount: number; vatAmount: number; taxAmount: number; grandTotal: number } } = {};
         
         cs.vendorDetails.forEach((vd) => {
             const subtotal = cs.items.reduce((acc, item) => {
@@ -428,10 +489,47 @@ export function ComparativeStatementTable() {
             const subTotalAfterDiscount = subtotal - discount;
             const vatAmount = subTotalAfterDiscount * ((vd.vatPercentage || 0) / 100);
             const taxAmount = subTotalAfterDiscount * ((vd.taxPercentage || 0) / 100);
-            totals[vd.vendorId] = { grandTotal: subTotalAfterDiscount + vatAmount + taxAmount };
+            const grandTotal = subTotalAfterDiscount + vatAmount + taxAmount;
+
+            totals[vd.vendorId] = { subtotal, discount, vatAmount, taxAmount, grandTotal };
         });
         
         return totals;
+    };
+    
+    const getPODataFromCS = (cs: ComparativeStatement) => {
+        if (!cs || !cs.selectedVendorId) return null;
+    
+        const selectedVendorDetails = cs.vendorDetails.find(vd => vd.vendorId === cs.selectedVendorId);
+        if (!selectedVendorDetails) return null;
+    
+        const totals = calculateVendorTotals(cs)[cs.selectedVendorId];
+        if (!totals) return null;
+
+        const poItems = cs.items.map(item => {
+            const quote = item.vendorQuotes.find(q => q.vendorId === cs.selectedVendorId);
+            const unitPrice = quote?.unitPrice || 0;
+            return {
+                demandNoteItemId: item.demandNoteItemId,
+                particulars: item.particulars,
+                unit: item.unit,
+                quantity: item.quantity,
+                unitPrice: unitPrice,
+                totalPrice: item.quantity * unitPrice,
+            };
+        });
+    
+        return {
+            items: poItems,
+            totalAmount: totals.subtotal,
+            discountAmount: totals.discount,
+            vatAmount: totals.vatAmount,
+            taxAmount: totals.taxAmount,
+            netPayableAmount: totals.grandTotal,
+            deliveryTerms: selectedVendorDetails.deliveryTerms || '',
+            paymentTerms: selectedVendorDetails.paymentTerms || '',
+            warranty: selectedVendorDetails.warranty || '',
+        };
     };
     
     const handleDelete = (cs: ComparativeStatement) => {

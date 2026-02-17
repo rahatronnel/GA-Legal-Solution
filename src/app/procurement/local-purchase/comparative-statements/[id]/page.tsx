@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -17,11 +16,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { getCSStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 
 
 function ComparativeStatementView() {
@@ -32,6 +32,7 @@ function ComparativeStatementView() {
     const { comparativeStatements, demandNotes, vendors, employees, designations, orgSettings, isLoading } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
+    const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
     const [viewingQuotation, setViewingQuotation] = useState<{ vendorName: string; fileDataUrl: string; fileName: string; } | null>(null);
 
@@ -77,8 +78,51 @@ function ComparativeStatementView() {
                 newApprovalStatus = getNextApprovalStatusCode(currentLevel);
                 nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
+                // This is the final approval
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
+
+                // CREATE PURCHASE ORDER
+                if (poCollectionRef && cs.selectedVendorId) {
+                    const selectedVendorDetails = cs.vendorDetails.find(vd => vd.vendorId === cs.selectedVendorId);
+                    const totals = vendorTotals[cs.selectedVendorId];
+
+                    const poItems = cs.items.map(item => {
+                        const quote = item.vendorQuotes.find(q => q.vendorId === cs.selectedVendorId);
+                        const unitPrice = quote?.unitPrice || 0;
+                        return {
+                            demandNoteItemId: item.demandNoteItemId,
+                            particulars: item.particulars,
+                            unit: item.unit,
+                            quantity: item.quantity,
+                            unitPrice: unitPrice,
+                            totalPrice: item.quantity * unitPrice,
+                        };
+                    });
+
+                    const newPO = {
+                        poNumber: `PO-${cs.csNumber}`,
+                        poDate: format(new Date(), 'yyyy-MM-dd'),
+                        demandNoteId: cs.demandNoteId,
+                        csId: cs.id,
+                        vendorId: cs.selectedVendorId,
+                        items: poItems,
+                        totalAmount: totals?.subtotal,
+                        discountAmount: totals?.discount,
+                        vatAmount: totals?.vatAmount,
+                        taxAmount: totals?.taxAmount,
+                        netPayableAmount: totals?.grandTotal,
+                        deliveryTerms: selectedVendorDetails?.deliveryTerms || '',
+                        paymentTerms: selectedVendorDetails?.paymentTerms || '',
+                        warranty: selectedVendorDetails?.warranty || '',
+                        status: 'Pending',
+                        createdBy: currentUserEmployee.id,
+                        createdAt: new Date().toISOString(),
+                    };
+
+                    addDocumentNonBlocking(poCollectionRef, newPO);
+                    toast({ title: 'Purchase Order Created', description: `PO for ${cs.csNumber} has been automatically generated.` });
+                }
             }
         } else { // Rejected
             newApprovalStatus = 0;
@@ -212,11 +256,12 @@ function ComparativeStatementView() {
                                         {participatingVendors.map((vendor: any) => {
                                             const quotation = demandNote?.quotations?.find((q: any) => q.vendorId === vendor.id);
                                             return (
-                                                <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                                <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-2 border-primary' : ''}`}>
                                                     <div className="flex flex-col items-center justify-center gap-1">
                                                         <span className="font-semibold">{vendor.vendorName}</span>
                                                         <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
                                                         {vendor.id === bestOfferVendorId && <Badge className="mt-1 bg-green-600">Best Offer</Badge>}
+                                                        {vendor.id === cs.selectedVendorId && <Badge variant="default" className="mt-1">Selected</Badge>}
                                                         {quotation?.fileDataUrl && (
                                                             <Button variant="outline" size="sm" className="h-6 px-2 mt-1" onClick={() => setViewingQuotation({vendorName: vendor.vendorName, fileDataUrl: quotation.fileDataUrl, fileName: quotation.fileName})}>
                                                                 <FileText className="h-3 w-3 mr-1" /> View Quotation
@@ -239,7 +284,7 @@ function ComparativeStatementView() {
                                                 const unitPrice = quote?.unitPrice || 0;
                                                 const totalPrice = item.quantity * unitPrice;
                                                 return (
-                                                    <TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                                    <TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>
                                                         <div className="font-semibold">{formatCurrency(unitPrice)}</div>
                                                         <div className="text-xs text-muted-foreground">Total: {formatCurrency(totalPrice)}</div>
                                                     </TableCell>
@@ -247,11 +292,11 @@ function ComparativeStatementView() {
                                             })}
                                         </TableRow>
                                     ))}
-                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Subtotal</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.subtotal)}</TableCell>))}</TableRow>
-                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Discount</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.discount)}</TableCell>))}</TableRow>
-                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">VAT</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.vatAmount)}</TableCell>))}</TableRow>
-                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Tax</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.taxAmount)}</TableCell>))}</TableRow>
-                                    <TableRow className="text-lg font-extrabold bg-muted"><TableCell colSpan={3} className="text-right">Grand Total</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.grandTotal)}</TableCell>))}</TableRow>
+                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Subtotal</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.subtotal)}</TableCell>))}</TableRow>
+                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Discount</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.discount)}</TableCell>))}</TableRow>
+                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">VAT</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.vatAmount)}</TableCell>))}</TableRow>
+                                    <TableRow className="bg-muted/30"><TableCell colSpan={3} className="text-right font-semibold">Tax</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center font-semibold ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.taxAmount)}</TableCell>))}</TableRow>
+                                    <TableRow className="text-lg font-extrabold bg-muted"><TableCell colSpan={3} className="text-right">Grand Total</TableCell>{participatingVendors.map((vendor: any) => (<TableCell key={vendor.id} className={`text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-x-2 border-b-2 border-primary' : ''}`}>{formatCurrency(vendorTotals[vendor.id]?.grandTotal)}</TableCell>))}</TableRow>
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -265,7 +310,7 @@ function ComparativeStatementView() {
                                     <TableRow>
                                         <TableHead className="min-w-[200px]">Term</TableHead>
                                         {participatingVendors.map((vendor: any) => (
-                                            <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                            <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-2 border-primary' : ''}`}>
                                                 <div className="flex flex-col items-center justify-center gap-1">
                                                     <span className="font-semibold">{vendor.vendorName}</span>
                                                     <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
@@ -282,7 +327,7 @@ function ComparativeStatementView() {
                                         <TableRow key={term}>
                                             <TableCell className="font-medium">{termLabel}</TableCell>
                                             {cs.vendorDetails.map((detail: any) => (
-                                                <TableCell key={detail.vendorId} className={`text-center ${detail.vendorId === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                                <TableCell key={detail.vendorId} className={`text-center ${detail.vendorId === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${detail.vendorId === cs.selectedVendorId ? 'border-x-2 border-primary' : ''}`}>
                                                     {isPercent ? `${detail[term] || 0}%` : detail[term]}
                                                 </TableCell>
                                             ))}
