@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -307,7 +308,7 @@ export default function GPDeskTable() {
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserAssigned}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0 || !isCurrentUserAssigned}><FilePlus className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={!!cs || !item.quotations || item.quotations.length === 0 || !isCurrentUserAssigned}><FilePlus className="h-4 w-4" /></Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>{cs ? 'CS already created' : 'Create CS'}</TooltipContent>
                                             </Tooltip>
