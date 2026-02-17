@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -43,14 +42,14 @@ export function ComparativeStatementTable() {
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
     const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee } = useMemo(() => {
-        const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
+        const settings = orgSettings?.procurementSettings;
         if (!settings || !employees || employees.length === 0 || !user) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -124,7 +123,6 @@ export function ComparativeStatementTable() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>CS Number</TableHead>
-                                <TableHead>CS Date</TableHead>
                                 <TableHead>Demand Note Number</TableHead>
                                 <TableHead>GP Concern</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
@@ -135,7 +133,6 @@ export function ComparativeStatementTable() {
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
@@ -147,7 +144,6 @@ export function ComparativeStatementTable() {
                                     return (
                                         <TableRow key={cs.id}>
                                             <TableCell>{cs.csNumber}</TableCell>
-                                            <TableCell>{date}</TableCell>
                                             <TableCell>
                                                 <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">
                                                     {getDemandNoteNumber(cs.demandNoteId)}
