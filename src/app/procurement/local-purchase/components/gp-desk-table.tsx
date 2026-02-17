@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -107,12 +106,12 @@ export default function GPDeskTable() {
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -123,7 +122,7 @@ export default function GPDeskTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isSuperAdmin, isGPConcern: GPC, isManager, currentUserEmployee: currentEmp };
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager: manager, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
     
     useEffect(() => {
@@ -399,4 +398,3 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
-
