@@ -17,23 +17,61 @@ import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
+import { useUser } from '@/firebase';
 
 export function ComparativeStatementTable() {
-    const { comparativeStatements, demandNotes, isLoading } = useProcurement();
+    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings } = useProcurement();
+    const { user } = useUser();
     const [searchTerm, setSearchTerm] = useState('');
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
 
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
+    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee } = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        const superAdmin = user?.email === 'superadmin@galsolution.com';
+        if (!settings || !employees || employees.length === 0 || !user) {
+          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+        }
+        const currentEmp = employees.find(e => e.email === user?.email);
+        if (!currentEmp) {
+          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+        }
+
+        const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
+        const manager = 
+            settings.managingDirectorId === currentEmp.id ||
+            settings.factoryDirectorId === currentEmp.id ||
+            settings.manufacturingDeptManagerId === currentEmp.id ||
+            settings.specializedDeptManagerId === currentEmp.id;
+        
+        return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, currentUserEmployee: currentEmp };
+    }, [orgSettings, employees, user]);
+
     const filteredItems = useMemo(() => {
-        if (!searchTerm) return safeItems;
+        let itemsToFilter = [...safeItems];
+
+        // If user is NOT a superadmin, GPO, or Manager, they must be a GP concern officer
+        // In that case, only show CS they created.
+        if (!isSuperAdmin && !isGPOfficer && !isManager) {
+             if (isGPConcern && currentUserEmployee) {
+                itemsToFilter = itemsToFilter.filter(cs => cs.createdBy === currentUserEmployee.id);
+            } else {
+                return []; // If not any of these roles, show nothing.
+            }
+        }
+        
+        if (!searchTerm) return itemsToFilter;
+
         const lowercasedTerm = searchTerm.toLowerCase();
-        return safeItems.filter(cs =>
+        return itemsToFilter.filter(cs =>
             cs.csNumber.toLowerCase().includes(lowercasedTerm) ||
             getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(lowercasedTerm)
         );
-    }, [safeItems, searchTerm, demandNotes]);
+    }, [safeItems, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee]);
+
 
     return (
         <TooltipProvider>

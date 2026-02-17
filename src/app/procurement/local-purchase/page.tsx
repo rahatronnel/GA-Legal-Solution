@@ -24,27 +24,44 @@ export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
 
-  const currentUserEmployee = React.useMemo(() => {
-    if (isLoading || !user || !employees) return null;
-    return employees.find(e => e.email === user.email);
-  }, [user, employees, isLoading]);
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager } = React.useMemo(() => {
+    const settings = orgSettings?.procurementSettings;
+    const superAdmin = user?.email === 'superadmin@galsolution.com';
+    if (!settings || !employees || employees.length === 0 || !user) {
+      return { isSuperAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+    }
+    const currentUserEmployee = employees.find(e => e.email === user?.email);
+    if (!currentUserEmployee) {
+      return { isSuperAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+    }
 
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  const procurementSettings = orgSettings?.procurementSettings;
-
-  const isGPOfficer = procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
-  const isGPConcern = procurementSettings?.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
+    const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+    const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
+    const manager = 
+        settings.managingDirectorId === currentUserEmployee.id ||
+        settings.factoryDirectorId === currentUserEmployee.id ||
+        settings.manufacturingDeptManagerId === currentUserEmployee.id ||
+        settings.specializedDeptManagerId === currentUserEmployee.id;
+    
+    return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isGPConcern: GPC, isManager: manager };
+  }, [orgSettings, employees, user, isLoading]);
   
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
+  const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
 
   const getGridCols = () => {
-    let count = 2; // Dashboard, Demand Notes
+    const tabsToShow = new Set(['dashboard', 'demand-notes']);
     if (isSuperAdmin) {
-      count = 7; // All tabs are visible
-    } else if (showGPDesk) {
-      count = 3; // Dashboard, Demand Notes, GP Desk
+        tabsToShow.add('vendors');
+        tabsToShow.add('gp-desk');
+        tabsToShow.add('cs');
+        tabsToShow.add('master-data');
+        tabsToShow.add('settings');
+    } else {
+        if (showGPDesk) tabsToShow.add('gp-desk');
+        if (canViewCsTab) tabsToShow.add('cs');
     }
-    return `repeat(${count}, minmax(0, 1fr))`;
+    return `repeat(${tabsToShow.size}, minmax(0, 1fr))`;
   }
 
   return (
@@ -56,7 +73,7 @@ export default function LocalPurchasePage() {
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="vendors">Vendors</TabsTrigger>}
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="cs">CS</TabsTrigger>}
+            {canViewCsTab && <TabsTrigger value="cs">CS</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
         </TabsList>
@@ -110,7 +127,7 @@ export default function LocalPurchasePage() {
                 </Card>
             </TabsContent>
         )}
-        {isSuperAdmin && (
+        {canViewCsTab && (
             <TabsContent value="cs">
                 <Card>
                     <CardHeader>
@@ -196,5 +213,3 @@ export default function LocalPurchasePage() {
     </div>
   );
 }
-
-  
