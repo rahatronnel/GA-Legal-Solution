@@ -50,6 +50,8 @@ export type ComparativeStatement = {
     csNumber: string;
     csDate: string;
     demandNoteId: string;
+    selectedVendorId?: string;
+    vendorSelectorId?: string;
     items: ComparativeStatementItem[];
     vendorDetails: VendorDetail[];
     createdBy: string;
@@ -247,8 +249,9 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         
         // 3. Set initial approval state
         dataToSave.approvalFlow = { steps: approvalSteps };
-        dataToSave.approvalStatus = approvalSteps.length > 0 ? 2 : 1;
-        dataToSave.currentApproverId = approvalSteps[0]?.approverId || '';
+        dataToSave.approvalStatus = 2; // Pending Vendor Selection
+        dataToSave.currentApproverId = ''; // No approver until vendor is selected
+        dataToSave.vendorSelectorId = dataToSave.createdBy; // The creator selects the vendor
         dataToSave.approvalHistory = [];
         
         onSave(dataToSave);

@@ -6,7 +6,7 @@ import type { ComparativeStatement } from '../components/cs-entry-form';
 const statusMap: { [key: number]: string } = {
     0: 'Rejected',
     1: 'Completed',
-    2: 'Pending',
+    2: 'Pending Vendor Selection',
     3: 'Pending Review',
     4: 'Reviewed',
     5: 'Checked',

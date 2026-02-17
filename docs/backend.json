@@ -574,6 +574,8 @@
         "csNumber": { "type": "string", "description": "Unique identifier for the CS." },
         "csDate": { "type": "string", "format": "date", "description": "Date the CS was created." },
         "demandNoteId": { "type": "string", "description": "The ID of the related demand note." },
+        "selectedVendorId": { "type": "string", "description": "The ID of the vendor selected for the purchase order." },
+        "vendorSelectorId": { "type": "string", "description": "The ID of the employee responsible for selecting the vendor." },
         "items": {
           "type": "array",
           "description": "The list of items being compared.",
@@ -636,7 +638,7 @@
                 }
             }
         },
-        "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
+        "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending Vendor Selection, 3+: Pending Approval Steps" },
         "currentApproverId": { "type": "string" },
         "approvalHistory": {
             "type": "array",
@@ -759,6 +761,7 @@
     
 
     
+
 
 
 
