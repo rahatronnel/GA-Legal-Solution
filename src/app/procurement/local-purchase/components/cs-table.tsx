@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,9 +30,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 export function ComparativeStatementTable() {
-    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings } = useProcurement();
+    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -40,6 +42,8 @@ export function ComparativeStatementTable() {
     const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [gpConcernFilter, setGpConcernFilter] = useState('all');
+    const [vendorFilter, setVendorFilter] = useState('all');
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
 
@@ -88,6 +92,16 @@ export function ComparativeStatementTable() {
         return { isSuperAdmin: superAdminCheck, isGPOfficer, isManager, isGPConcern, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
+    const gpConcernOfficers = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !employees) {
+            return [];
+        }
+        return (settings.gpConcernOfficerIds || [])
+            .map(id => employees.find(e => e.id === id))
+            .filter(Boolean) as Employee[];
+    }, [orgSettings, employees]);
+
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
@@ -112,17 +126,19 @@ export function ComparativeStatementTable() {
             itemsToFilter = [];
         }
         
-        if (!searchTerm) {
-            return itemsToFilter;
-        }
+        return itemsToFilter.filter(cs => {
+            const searchTermMatch = !searchTerm ||
+                cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                getEmployeeName(cs.createdBy).toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const gpConcernMatch = gpConcernFilter === 'all' || cs.createdBy === gpConcernFilter;
 
-        const lowercasedTerm = searchTerm.toLowerCase();
-        return itemsToFilter.filter(cs =>
-            cs.csNumber.toLowerCase().includes(lowercasedTerm) ||
-            getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(lowercasedTerm) ||
-            getEmployeeName(cs.createdBy).toLowerCase().includes(lowercasedTerm)
-        );
-    }, [safeItems, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee, employees]);
+            const vendorMatch = vendorFilter === 'all' || cs.vendorDetails.some((vd: any) => vd.vendorId === vendorFilter);
+            
+            return searchTermMatch && gpConcernMatch && vendorMatch;
+        });
+    }, [safeItems, searchTerm, gpConcernFilter, vendorFilter, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee, employees, vendors]);
     
     const calculateVendorTotals = (cs: ComparativeStatement) => {
         if (!cs || !cs.vendorDetails || !cs.items) return [];
@@ -162,24 +178,50 @@ export function ComparativeStatementTable() {
         setIsDeleteConfirmOpen(false);
         setCurrentItem(null);
     };
-
+    
+    const clearFilters = () => {
+        setSearchTerm('');
+        setGpConcernFilter('all');
+        setVendorFilter('all');
+    };
 
     return (
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative w-full sm:max-w-xs">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 type="search"
-                                placeholder="Search by CS, DN, GP Concern..."
+                                placeholder="Search by CS, DN, Creator..."
                                 className="w-full rounded-lg bg-background pl-8"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                         <Badge variant="outline">{userRoleText}</Badge>
+                         <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
+                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All GP Concerns</SelectItem>
+                                {gpConcernOfficers.map(officer => (
+                                    <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={vendorFilter} onValueChange={setVendorFilter}>
+                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Vendors</SelectItem>
+                                {(vendors || []).map((vendor: any) => (
+                                    <SelectItem key={vendor.id} value={vendor.id}>{vendor.vendorName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button variant="ghost" onClick={clearFilters}><XCircle className="mr-2 h-4 w-4" /> Clear</Button>
+                    </div>
+                     <div className="flex justify-end items-center gap-2">
+                        <Badge variant="outline">{userRoleText}</Badge>
                     </div>
                 </div>
                 <div className="border rounded-lg">
@@ -284,3 +326,4 @@ export function ComparativeStatementTable() {
         </TooltipProvider>
     );
 }
+
