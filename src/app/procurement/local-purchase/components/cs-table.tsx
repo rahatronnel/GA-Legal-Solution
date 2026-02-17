@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon, User as UserIcon } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon, User as UserIcon, Check, X } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement } from './cs-entry-form';
 import { useToast } from '@/hooks/use-toast';
@@ -32,8 +32,9 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
-import { getCSStatusText } from '../lib/status-helper';
+import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 export function ComparativeStatementTable() {
@@ -51,6 +52,7 @@ export function ComparativeStatementTable() {
     const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     
@@ -139,10 +141,9 @@ export function ComparativeStatementTable() {
     }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
 
     const filteredItems = useMemo(() => {
-        const canViewAll = isSuperAdmin || isGPOfficer || isManager;
         let itemsToFilter: ComparativeStatement[];
 
-        if (canViewAll || isCsApprover) {
+        if (isSuperAdmin || isGPOfficer || isManager || isCsApprover) {
             itemsToFilter = [...safeItems];
         } else if (currentUserEmployee) {
             itemsToFilter = safeItems.filter(cs => 
@@ -166,6 +167,79 @@ export function ComparativeStatementTable() {
             return searchTermMatch && gpConcernMatch && vendorMatch;
         });
     }, [safeItems, searchTerm, gpConcernFilter, vendorFilter, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover, currentUserEmployee, employees, vendors]);
+    
+    const approvableCS = useMemo(() => {
+        if (!currentUserEmployee || !orgSettings?.procurementSettings) return [];
+        const { managingDirectorId, factoryDirectorId } = orgSettings.procurementSettings;
+        
+        return filteredItems.filter(cs => {
+            const isPending = cs.approvalStatus !== 0 && cs.approvalStatus !== 1;
+            if (!isPending) return false;
+
+            const isDirectApprover = cs.currentApproverId === currentUserEmployee.id;
+
+            const finalStep = cs.approvalFlow?.steps[cs.approvalFlow.steps.length - 1];
+            const isFinalStepForMD = finalStep?.approverId === managingDirectorId && cs.currentApproverId === managingDirectorId;
+            const isCurrentUserFD = currentUserEmployee.id === factoryDirectorId;
+
+            return isDirectApprover || (isFinalStepForMD && isCurrentUserFD);
+        });
+    }, [filteredItems, currentUserEmployee, orgSettings]);
+
+    const allSelectableIds = useMemo(() => approvableCS.map(cs => cs.id), [approvableCS]);
+    
+    const handleBulkApproval = (status: number) => {
+        if (!firestore || !currentUserEmployee || !csRef) return;
+        
+        selectedRows.forEach(csId => {
+            const cs = comparativeStatements.find(c => c.id === csId);
+            if (!cs || !cs.approvalFlow?.steps) return;
+
+            const csDocRef = doc(csRef, csId);
+            const approvalLevels = cs.approvalFlow.steps;
+            const currentLevel = cs.approvalHistory?.length || 0;
+
+            const newHistoryEntry = {
+                approverId: currentUserEmployee.id,
+                status: status === 1 ? 'Approved' : 'Rejected',
+                timestamp: new Date().toISOString(),
+                level: currentLevel,
+                remarks: `Bulk action from list view`,
+            };
+            
+            let newApprovalStatus: number;
+            let nextApproverId: string | undefined;
+
+            if (status === 1) { // Approved
+                const nextLevel = currentLevel + 1;
+                if (nextLevel < approvalLevels.length) {
+                    newApprovalStatus = getNextApprovalStatusCode(currentLevel);
+                    nextApproverId = approvalLevels[nextLevel].approverId;
+                } else {
+                    newApprovalStatus = 1; // Completed
+                    nextApproverId = '';
+                }
+            } else { // Rejected
+                newApprovalStatus = 0;
+                nextApproverId = '';
+            }
+
+            setDocumentNonBlocking(csDocRef, {
+                approvalStatus: newApprovalStatus,
+                currentApproverId: nextApproverId,
+                approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry],
+            }, { merge: true });
+        });
+        
+        toast({ title: 'Success', description: `${selectedRows.length} CS documents have been processed.` });
+        setSelectedRows([]);
+    };
+    
+    const toggleRowSelection = (id: string) => {
+        setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+    
+    const canPerformBulkAction = selectedRows.length > 0;
     
     const calculateVendorTotals = (cs: ComparativeStatement) => {
         if (!cs || !cs.vendorDetails || !cs.items) return [];
@@ -261,12 +335,27 @@ export function ComparativeStatementTable() {
                     </div>
                      <div className="flex justify-end items-center gap-2">
                         <Badge variant="outline">{userRoleText}</Badge>
+                        {canPerformBulkAction && (
+                            <>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject</Button>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="border rounded-lg">
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[50px]">
+                                    <Checkbox
+                                        checked={allSelectableIds.length > 0 && selectedRows.length === allSelectableIds.length}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedRows(checked ? allSelectableIds : []);
+                                        }}
+                                        aria-label="Select all approvable CS"
+                                    />
+                                </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
                                 <TableHead>Created By</TableHead>
@@ -279,6 +368,7 @@ export function ComparativeStatementTable() {
                             {isLoading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-5" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
@@ -293,9 +383,18 @@ export function ComparativeStatementTable() {
                                     const totals = calculateVendorTotals(cs);
                                     const minAmount = totals.length > 0 ? Math.min(...totals) : 0;
                                     const maxAmount = totals.length > 0 ? Math.max(...totals) : 0;
+                                    const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
 
                                     return (
-                                        <TableRow key={cs.id}>
+                                        <TableRow key={cs.id} data-state={selectedRows.includes(cs.id) ? "selected" : ""}>
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={selectedRows.includes(cs.id)}
+                                                    onCheckedChange={() => toggleRowSelection(cs.id)}
+                                                    disabled={!canSelect}
+                                                    aria-label={`Select CS ${cs.csNumber}`}
+                                                />
+                                            </TableCell>
                                             <TableCell>{cs.csNumber}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
@@ -364,7 +463,7 @@ export function ComparativeStatementTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">No comparative statements found.</TableCell>
+                                    <TableCell colSpan={7} className="h-24 text-center">No comparative statements found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
