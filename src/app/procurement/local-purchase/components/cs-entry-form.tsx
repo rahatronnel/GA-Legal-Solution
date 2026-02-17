@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useUser } from '@/firebase';
 
 export type ComparativeStatementItem = {
     demandNoteItemId: string;
@@ -63,7 +64,8 @@ interface CsFormProps {
 
 export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote }: CsFormProps) {
     const { toast } = useToast();
-    const { vendors, user } = useProcurement();
+    const { vendors, employees } = useProcurement();
+    const { user } = useUser();
     
     const [step, setStep] = useState(0); // 0 for initial info, 1+ for vendors
     const [csData, setCsData] = useState<Partial<Omit<ComparativeStatement, 'id'>>>({});
@@ -79,6 +81,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
 
     useEffect(() => {
         if (isOpen && demandNote) {
+            const loggedInEmployee = user && employees ? employees.find(e => e.email === user.email) : null;
             setStep(0);
             const initialItems: ComparativeStatementItem[] = demandNote.items.map(item => ({
                 demandNoteItemId: item.id,
@@ -103,18 +106,18 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
             setCsData({
                 demandNoteId: demandNote.id,
                 csNumber: `CS-${demandNote.demandNoteNumber}`,
-                csDate: format(new Date(), 'yyyy-MM-dd'),
+                csDate: new Date().toISOString(),
                 items: initialItems,
                 vendorDetails: initialVendorDetails,
-                createdBy: user?.uid || '',
+                createdBy: loggedInEmployee?.id || '',
             });
             setCsDate(new Date());
         }
-    }, [isOpen, demandNote, assignedVendors, user]);
+    }, [isOpen, demandNote, assignedVendors, user, employees]);
     
     const handleDateChange = (date: Date | undefined) => {
         setCsDate(date);
-        setCsData(prev => ({ ...prev, csDate: date ? format(date, 'yyyy-MM-dd') : '' }));
+        setCsData(prev => ({ ...prev, csDate: date ? date.toISOString() : '' }));
     };
 
     const handleItemPriceChange = (itemIndex: number, vendorId: string, unitPrice: number) => {

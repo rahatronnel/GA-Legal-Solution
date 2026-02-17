@@ -83,7 +83,7 @@ function ComparativeStatementView() {
                         <div>
                             <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
                             <CardDescription>
-                                For Demand Note: <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link> | Dated: {cs.csDate}
+                                For Demand Note: <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link> | Dated: {new Date(cs.csDate).toLocaleString()}
                             </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">

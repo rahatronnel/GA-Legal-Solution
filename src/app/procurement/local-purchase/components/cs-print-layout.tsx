@@ -27,7 +27,7 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings, cs, demandNote }
              <h2 className="text-xl font-bold text-gray-800">Comparative Statement</h2>
              <p>CS No: {cs.csNumber}</p>
              <p>DN No: {demandNote?.demandNoteNumber || 'N/A'}</p>
-             <p>Date: {cs.csDate}</p>
+             <p>Date: {new Date(cs.csDate).toLocaleDateString()}</p>
         </div>
         {orgSettings.logo && (
              <div className="w-24 h-24 relative">
