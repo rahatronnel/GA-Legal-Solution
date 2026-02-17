@@ -78,6 +78,7 @@ export type DemandNote = {
     gpConcernOfficerId?: string;
     gpAssignedBy?: string;
     gpAssignedDate?: string;
+    vendorAssignmentDate?: string;
     gpStatus?: 'Pending' | 'Assigned';
     quotations?: Quotation[];
 };
@@ -396,3 +397,5 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         </Dialog>
     );
 }
+
+    

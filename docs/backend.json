@@ -511,6 +511,7 @@
         "gpConcernOfficerId": { "type": "string", "description": "Employee ID of the assigned GP Concern Officer." },
         "gpAssignedBy": { "type": "string", "description": "Employee ID of the GP Officer who assigned the note." },
         "gpAssignedDate": { "type": "string", "format": "date-time" },
+        "vendorAssignmentDate": { "type": "string", "format": "date-time", "description": "The date and time when vendors were first assigned for quotation." },
         "gpStatus": { "type": "string", "enum": ["Pending", "Assigned"], "description": "The status of the General Purchase assignment." },
         "quotations": {
           "type": "array",
@@ -639,4 +640,6 @@
 
 
   
+    
+
     

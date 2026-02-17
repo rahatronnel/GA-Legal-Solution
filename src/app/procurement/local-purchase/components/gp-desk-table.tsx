@@ -115,8 +115,8 @@ export default function GPDeskTable() {
             return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false };
         }
         
-        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee?.id;
-        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
+        const GPO = currentUserEmployee && settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPC = currentUserEmployee && !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
         
         return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
     }, [orgSettings, currentUserEmployee, user]);
@@ -211,7 +211,11 @@ export default function GPDeskTable() {
             return existing || { vendorId, fileName: '', fileDataUrl: '' };
         });
 
-        setDocumentNonBlocking(noteRef, { quotations: newQuotations }, { merge: true });
+        setDocumentNonBlocking(noteRef, { 
+            quotations: newQuotations,
+            vendorAssignmentDate: new Date().toISOString()
+        }, { merge: true });
+
         toast({ title: 'Success', description: 'Vendor assignments have been updated.' });
         setIsAssignVendorOpen(false);
     };
@@ -257,7 +261,6 @@ export default function GPDeskTable() {
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Department</TableHead>
                                 <TableHead>Assigned To</TableHead>
-                                <TableHead>Assigned Date &amp; Time</TableHead>
                                 <TableHead>Vendor Assignment</TableHead>
                                 <TableHead>CS Prepared</TableHead>
                                 <TableHead className="w-[160px] text-right">Actions</TableHead>
@@ -267,7 +270,7 @@ export default function GPDeskTable() {
                         {isLoading ? (
                              Array.from({length: 3}).map((_, i) => (
                                 <TableRow key={i}>
-                                  <TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell>
+                                  <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
                                 </TableRow>
                               ))
                         ) : filteredItems.length > 0 ? (
@@ -278,26 +281,35 @@ export default function GPDeskTable() {
                                 <TableRow key={item.id}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
-                                    <TableCell>{getEmployeeName(item.gpConcernOfficerId || '')}</TableCell>
                                     <TableCell>
-                                        {item.gpAssignedDate ? (
-                                            <div className="flex flex-col">
+                                        {getEmployeeName(item.gpConcernOfficerId || '')}
+                                        {item.gpAssignedDate && (
+                                            <div className="flex flex-col text-xs text-muted-foreground">
                                                 <span>{new Date(item.gpAssignedDate).toLocaleDateString()}</span>
-                                                <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
+                                                <span>{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
                                             </div>
-                                        ) : 'N/A'}
+                                        )}
                                     </TableCell>
                                     <TableCell>
-                                        {item.quotations && item.quotations.length > 0
-                                            ? <Badge variant="default">Assigned</Badge>
-                                            : <Badge variant="secondary">Not Assigned</Badge>
+                                        {item.quotations && item.quotations.length > 0 ? (
+                                            <div>
+                                                <Badge variant="default">Assigned</Badge>
+                                                {item.vendorAssignmentDate && (
+                                                    <div className="flex flex-col text-xs text-muted-foreground">
+                                                        <span>{new Date(item.vendorAssignmentDate).toLocaleDateString()}</span>
+                                                        <span>{new Date(item.vendorAssignmentDate).toLocaleTimeString()}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : <Badge variant="secondary">Not Assigned</Badge>
                                         }
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell>
                                         {cs ? (
-                                            <div className="flex flex-col items-center">
+                                            <div className="flex flex-col">
                                                 <Badge variant="default">Yes</Badge>
-                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleString()}</span>
+                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleDateString()}</span>
+                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleTimeString()}</span>
                                             </div>
                                         ) : (
                                             <Badge variant="secondary">No</Badge>
@@ -320,7 +332,7 @@ export default function GPDeskTable() {
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     No assigned demand notes found.
                                 </TableCell>
                             </TableRow>
@@ -366,3 +378,5 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
+
+    
