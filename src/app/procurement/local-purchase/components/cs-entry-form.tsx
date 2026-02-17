@@ -52,6 +52,7 @@ export type ComparativeStatement = {
     demandNoteId: string;
     selectedVendorId?: string;
     vendorSelectorId?: string;
+    vendorSelectionDate?: string;
     items: ComparativeStatementItem[];
     vendorDetails: VendorDetail[];
     createdBy: string;

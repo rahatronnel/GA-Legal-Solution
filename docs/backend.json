@@ -576,6 +576,7 @@
         "demandNoteId": { "type": "string", "description": "The ID of the related demand note." },
         "selectedVendorId": { "type": "string", "description": "The ID of the vendor selected for the purchase order." },
         "vendorSelectorId": { "type": "string", "description": "The ID of the employee responsible for selecting the vendor." },
+        "vendorSelectionDate": { "type": "string", "format": "date-time", "description": "The date and time when the final vendor was selected." },
         "items": {
           "type": "array",
           "description": "The list of items being compared.",
@@ -761,6 +762,7 @@
     
 
     
+
 
 
 

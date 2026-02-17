@@ -559,6 +559,7 @@ export function ComparativeStatementTable() {
         setDocumentNonBlocking(csDocRef, {
             selectedVendorId: vendorId,
             vendorSelectorId: currentUserEmployee?.id || '',
+            vendorSelectionDate: new Date().toISOString(),
             approvalStatus: 3, // Move to "Pending Review"
             currentApproverId: firstApproverId,
         }, { merge: true });
@@ -651,6 +652,7 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -662,21 +664,18 @@ export function ComparativeStatementTable() {
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-5" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-20 float-right" /></TableCell>
-                                        <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
+                                        <TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const {date, time} = formatDateTime(cs.csDate);
+                                    const {date: selectionDate, time: selectionTime} = formatDateTime(cs.vendorSelectionDate);
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
                                     const canSelectVendor = (isSuperAdmin || (currentUserEmployee && cs.vendorSelectorId === currentUserEmployee.id)) && cs.approvalStatus === 2;
+                                    const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
 
                                     return (
                                         <TableRow key={cs.id} data-state={selectedRows.includes(cs.id) ? "selected" : ""}>
@@ -713,7 +712,15 @@ export function ComparativeStatementTable() {
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{getVendorName(cs.selectedVendorId) || 'Not Selected'}</TableCell>
+                                            <TableCell>{getEmployeeName(demandNote?.gpConcernOfficerId)}</TableCell>
+                                            <TableCell>
+                                                {cs.selectedVendorId ? (
+                                                    <div className="flex flex-col">
+                                                        <span>{getVendorName(cs.selectedVendorId)}</span>
+                                                        {cs.vendorSelectionDate && <span className="text-xs text-muted-foreground">{selectionDate} {selectionTime}</span>}
+                                                    </div>
+                                                ) : 'Not Selected'}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge>
                                             </TableCell>
@@ -750,7 +757,7 @@ export function ComparativeStatementTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">No comparative statements found.</TableCell>
+                                    <TableCell colSpan={8} className="h-24 text-center">No comparative statements found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
