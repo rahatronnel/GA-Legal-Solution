@@ -96,6 +96,19 @@ export function DemandNoteTable() {
     }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
+    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
+
+    const formatDateTime = (isoString?: string) => {
+        if (!isoString) return { date: '', time: '' };
+        try {
+            const d = new Date(isoString);
+            const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric'});
+            const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return { date, time };
+        } catch {
+            return { date: 'N/A', time: 'N/A' };
+        }
+    }
 
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
     
@@ -147,7 +160,7 @@ export function DemandNoteTable() {
             return searchTermMatch && statusMatch;
         });
     
-        return finalList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return finalList.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
     
     }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isGPOfficer, isManager, isSuperAdmin]);
 
@@ -351,6 +364,7 @@ export function DemandNoteTable() {
                                 <TableHead>Demand Note #</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Department</TableHead>
+                                <TableHead>Created By</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>GP Status</TableHead>
                                 <TableHead className="w-[160px] text-right">Actions</TableHead>
@@ -364,6 +378,7 @@ export function DemandNoteTable() {
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-8 w-32 float-right" /></TableCell>
@@ -374,6 +389,7 @@ export function DemandNoteTable() {
                                 const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
                                 const isPendingForGP = isGPOfficer && isGpoSeesApprovedInList && item.approvalStatus === 1 && item.gpStatus !== 'Assigned';
                                 const canSelect = isPendingForCurrentUser || isPendingForGP;
+                                const {date: entryDate, time: entryTime} = formatDateTime(item.entryDate);
                                 
                                 return (
                                 <TableRow key={item.id} data-state={selectedRows.includes(item.id) ? "selected" : ""}>
@@ -388,6 +404,13 @@ export function DemandNoteTable() {
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{item.date}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span>{getEmployeeName(item.createdBy)}</span>
+                                            {entryDate && <span className="text-xs text-muted-foreground">{entryDate}</span>}
+                                            {entryTime && <span className="text-xs text-muted-foreground">{entryTime}</span>}
+                                        </div>
+                                    </TableCell>
                                     <TableCell><Badge variant={getStatusVariant(item.approvalStatus)}>{getDemandNoteStatusText(item)}</Badge></TableCell>
                                     <TableCell>
                                         {item.approvalStatus === 1 ? (
@@ -408,7 +431,7 @@ export function DemandNoteTable() {
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     No demand notes found.
                                 </TableCell>
                             </TableRow>
@@ -468,5 +491,6 @@ export function DemandNoteTable() {
         </TooltipProvider>
     );
 }
+
 
 

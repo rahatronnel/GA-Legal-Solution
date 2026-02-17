@@ -53,6 +53,7 @@ export type DemandNote = {
     id: string;
     demandNoteNumber: string;
     date: string;
+    entryDate: string;
     departmentId: string;
     sectionId: string;
     processCodeId: string;
@@ -85,6 +86,7 @@ export type DemandNote = {
 
 const initialDemandNoteData: Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'> = {
     date: '',
+    entryDate: '',
     departmentId: '',
     sectionId: '',
     processCodeId: '',
@@ -151,6 +153,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             setNoteData({
                 ...initialDemandNoteData,
                 date: format(today, 'yyyy-MM-dd'),
+                entryDate: today.toISOString(),
                 createdBy: loggedInEmployee?.id || '',
                 contactPersonName: loggedInEmployee?.fullName || '',
                 contactPersonNumber: loggedInEmployee?.mobileNumber || '',
