@@ -12,13 +12,14 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
+import type { ComparativeStatement } from './cs-entry-form';
 
 export function ComparativeStatementTable() {
     const { comparativeStatements, demandNotes, isLoading, employees, orgSettings } = useProcurement();
@@ -47,16 +48,16 @@ export function ComparativeStatementTable() {
     const safeItems = useMemo(() => Array.isArray(comparativeStatements) ? comparativeStatements : [], [comparativeStatements]);
 
     const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee } = useMemo(() => {
-        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
 
         if (!settings || !employees || employees.length === 0 || !user) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-          return { isSuperAdmin, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
+          return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, currentUserEmployee: null };
         }
 
         const isGPOfficer = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -67,7 +68,7 @@ export function ComparativeStatementTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee: currentEmp };
+        return { isSuperAdmin: superAdminCheck, isGPOfficer, isManager, isGPConcern, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
@@ -105,6 +106,31 @@ export function ComparativeStatementTable() {
             getEmployeeName(cs.createdBy).toLowerCase().includes(lowercasedTerm)
         );
     }, [safeItems, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, isGPConcern, currentUserEmployee, employees]);
+    
+    const calculateVendorTotals = (cs: ComparativeStatement) => {
+        if (!cs || !cs.vendorDetails || !cs.items) return [];
+        
+        return cs.vendorDetails.map(vd => {
+            const subtotal = cs.items.reduce((acc, item) => {
+                const quote = item.vendorQuotes.find(q => q.vendorId === vd.vendorId);
+                return acc + (item.quantity * (quote?.unitPrice || 0));
+            }, 0);
+            
+            let discount = 0;
+            if (vd.discountType === 'Percentage') {
+                discount = subtotal * ((vd.discountValue || 0) / 100);
+            } else {
+                discount = vd.discountValue || 0;
+            }
+            
+            const subTotalAfterDiscount = subtotal - discount;
+            const vatAmount = subTotalAfterDiscount * ((vd.vatPercentage || 0) / 100);
+            const taxAmount = subTotalAfterDiscount * ((vd.taxPercentage || 0) / 100);
+            return subTotalAfterDiscount + vatAmount + taxAmount;
+        });
+    };
+    
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
 
     return (
@@ -132,6 +158,7 @@ export function ComparativeStatementTable() {
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note Number</TableHead>
                                 <TableHead>GP Concern</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -142,12 +169,17 @@ export function ComparativeStatementTable() {
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-20 float-right" /></TableCell>
                                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const {date, time} = formatDateTime(cs.csDate);
+                                    const totals = calculateVendorTotals(cs);
+                                    const minAmount = totals.length > 0 ? Math.min(...totals) : 0;
+                                    const maxAmount = totals.length > 0 ? Math.max(...totals) : 0;
+
                                     return (
                                         <TableRow key={cs.id}>
                                             <TableCell>{cs.csNumber}</TableCell>
@@ -161,6 +193,18 @@ export function ComparativeStatementTable() {
                                                     <span>{getEmployeeName(cs.createdBy)}</span>
                                                     {date && <span className="text-xs text-muted-foreground">{date}</span>}
                                                     {time && <span className="text-xs text-muted-foreground">{time}</span>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="flex items-center text-red-500 font-semibold">
+                                                        <ArrowUp className="h-3 w-3 mr-1" />
+                                                        {formatCurrency(maxAmount)}
+                                                    </span>
+                                                    <span className="flex items-center text-green-500 font-semibold">
+                                                        <ArrowDown className="h-3 w-3 mr-1" />
+                                                        {formatCurrency(minAmount)}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
