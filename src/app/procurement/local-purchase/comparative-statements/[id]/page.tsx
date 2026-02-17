@@ -10,6 +10,7 @@ import { ArrowLeft, Printer, Award, Copy, FileText, Check, X, CheckCircle, Hourg
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -362,3 +363,5 @@ function ComparativeStatementView() {
 export default function ComparativeStatementPage() {
     return <TooltipProvider><ComparativeStatementView /></TooltipProvider>;
 }
+
+    
