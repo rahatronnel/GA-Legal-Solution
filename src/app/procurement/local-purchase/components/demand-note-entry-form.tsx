@@ -113,7 +113,7 @@ interface DemandNoteEntryFormProps {
 export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: DemandNoteEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
-    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings, locations } = useProcurement();
+    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings, deliveryPlaces } = useProcurement();
 
     const [step, setStep] = useState(1);
     const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'>>(initialDemandNoteData);
@@ -319,7 +319,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                 <Select value={noteData.deliveryPlace} onValueChange={handleSelectChange('deliveryPlace')}>
                                     <SelectTrigger><SelectValue placeholder="Select delivery place..."/></SelectTrigger>
                                     <SelectContent>
-                                        {(locations || []).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                                        {(deliveryPlaces || []).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>

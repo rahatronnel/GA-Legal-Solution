@@ -169,7 +169,7 @@ function DemandNoteProfileContent() {
     const { handlePrint } = usePrint();
     const { id } = params;
     
-    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, locations, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, deliveryPlaces, isLoading, orgSettings } = useProcurement();
 
     const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
@@ -244,7 +244,7 @@ function DemandNoteProfileContent() {
     const section = sections?.find((s:any) => s.id === demandNote.sectionId);
     const processCode = processCodes?.find((p:any) => p.id === demandNote.processCodeId);
     const demandType = demandTypes?.find((d:any) => d.id === demandNote.demandTypeId);
-    const deliveryPlace = locations?.find((l:any) => l.id === demandNote.deliveryPlace);
+    const deliveryPlace = deliveryPlaces?.find((l:any) => l.id === demandNote.deliveryPlace);
     const createdBy = employees?.find((e:any) => e.id === demandNote.createdBy);
     
     const getStatusVariant = (status: number | undefined) => {

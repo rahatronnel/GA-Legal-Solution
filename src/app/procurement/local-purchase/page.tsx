@@ -19,7 +19,7 @@ import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-t
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
 import { LegacyBillFlowProvider } from '@/app/billflow/components/bill-flow-provider';
 import { ComparativeStatementTable } from './components/cs-table';
-import { LocationTable } from '@/app/vehicle-management/components/location-table';
+import { DeliveryPlaceTable } from './components/delivery-place-table';
 
 export default function LocalPurchasePage() {
   const { user } = useUser();
@@ -128,7 +128,7 @@ export default function LocalPurchasePage() {
           <>
             <TabsContent value="master-data">
                 <Tabs defaultValue="vendors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-8">
+                    <TabsList className="grid w-full grid-cols-7">
                         <TabsTrigger value="vendors">Vendors</TabsTrigger>
                         <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
                         <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
@@ -198,8 +198,8 @@ export default function LocalPurchasePage() {
                     </TabsContent>
                     <TabsContent value="delivery-places" className="mt-4">
                         <Card>
-                            <CardHeader><CardTitle>Delivery Places</CardTitle><CardDescription>Manage predefined locations for delivery.</CardDescription></CardHeader>
-                            <CardContent><LocationTable /></CardContent>
+                            <CardHeader><CardTitle>Delivery Places</CardTitle><CardDescription>Manage predefined office locations for delivery.</CardDescription></CardHeader>
+                            <CardContent><DeliveryPlaceTable /></CardContent>
                         </Card>
                     </TabsContent>
                 </Tabs>

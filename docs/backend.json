@@ -148,6 +148,16 @@
       "title": "Location", "type": "object", "description": "Defines a geographic location.",
       "properties": { "name": { "type": "string" }, "locationCode": { "type": "string" } }, "required": ["name", "locationCode"]
     },
+    "DeliveryPlace": {
+      "title": "Delivery Place",
+      "type": "object",
+      "description": "Defines an office or delivery location for procurement.",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the location." },
+        "code": { "type": "string", "description": "The unique code for the location." }
+      },
+      "required": ["name", "code"]
+    },
     "Route": {
       "title": "Route", "type": "object", "description": "Defines a route between two locations.",
       "properties": { "name": { "type": "string" }, "routeCode": { "type": "string" }, "startLocationId": { "type": "string" }, "endLocationId": { "type": "string" } }, "required": ["name", "routeCode", "startLocationId", "endLocationId"]
@@ -614,6 +624,7 @@
     "/vehicleTypes/{vehicleTypeId}": { "schema": { "$ref": "#/entities/VehicleType" }, "description": "Stores vehicle categories." },
     "/vehicleBrands/{vehicleBrandId}": { "schema": { "$ref": "#/entities/VehicleBrand" }, "description": "Stores vehicle brands." },
     "/locations/{locationId}": { "schema": { "$ref": "#/entities/Location" }, "description": "Stores geographic locations." },
+    "/deliveryPlaces/{deliveryPlaceId}": { "schema": { "$ref": "#/entities/DeliveryPlace" }, "description": "Stores office locations for procurement delivery." },
     "/routes/{routeId}": { "schema": { "$ref": "#/entities/Route" }, "description": "Stores routes between locations." },
     "/tripPurposes/{tripPurposeId}": { "schema": { "$ref": "#/entities/TripPurpose" }, "description": "Stores purposes for vehicle trips." },
     "/expenseTypes/{expenseTypeId}": { "schema": { "$ref": "#/entities/ExpenseType" }, "description": "Stores types of expenses." },
@@ -659,6 +670,7 @@
     
 
     
+
 
 
 

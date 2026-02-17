@@ -12,7 +12,7 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { ProcessCode } from './process-code-table';
 import type { DemandType } from './demand-type-table';
 import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-table';
-import type { Location } from '@/app/vehicle-management/components/location-table';
+import type { DeliveryPlace } from './delivery-place-table';
 
 interface PrintHeaderProps {
   orgSettings: OrganizationSettings;
@@ -108,7 +108,7 @@ interface DemandNotePrintLayoutProps {
   department?: Section;
   processCode?: ProcessCode;
   demandType?: DemandType;
-  deliveryPlace?: Location;
+  deliveryPlace?: DeliveryPlace;
   billItemMasters: BillItemMaster[];
   employees: Employee[];
   designations: Designation[];

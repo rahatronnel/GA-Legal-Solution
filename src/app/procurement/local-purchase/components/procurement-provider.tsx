@@ -17,7 +17,7 @@ import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import type { VendorCategory } from '@/app/billflow/components/vendor-category-table';
 import type { VendorNatureOfBusiness } from '@/app/billflow/components/vendor-nature-of-business-table';
 import type { ComparativeStatement } from './cs-entry-form';
-import type { Location } from '@/app/vehicle-management/components/location-table';
+import type { DeliveryPlace } from './delivery-place-table';
 
 const ProcurementContext = createContext<{
     employees: Employee[];
@@ -32,7 +32,7 @@ const ProcurementContext = createContext<{
     vendorCategories: VendorCategory[];
     vendorNatureOfBusiness: VendorNatureOfBusiness[];
     comparativeStatements: ComparativeStatement[];
-    locations: Location[];
+    deliveryPlaces: DeliveryPlace[];
     isLoading: boolean;
 } | undefined>(undefined);
 
@@ -51,7 +51,7 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
     const { data: vendorCategories, isLoading: l10 } = useCollection<VendorCategory>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorCategories') : null, [firestore]));
     const { data: vendorNatureOfBusiness, isLoading: l11 } = useCollection<VendorNatureOfBusiness>(useMemoFirebase(() => firestore ? collection(firestore, 'vendorNatureOfBusiness') : null, [firestore]));
     const { data: comparativeStatements, isLoading: l12 } = useCollection<ComparativeStatement>(useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]));
-    const { data: locations, isLoading: l13 } = useCollection<Location>(useMemoFirebase(() => firestore ? collection(firestore, 'locations') : null, [firestore]));
+    const { data: deliveryPlaces, isLoading: l13 } = useCollection<DeliveryPlace>(useMemoFirebase(() => firestore ? collection(firestore, 'deliveryPlaces') : null, [firestore]));
 
     const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13;
 
@@ -68,9 +68,9 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
         vendorCategories: vendorCategories || [],
         vendorNatureOfBusiness: vendorNatureOfBusiness || [],
         comparativeStatements: comparativeStatements || [],
-        locations: locations || [],
+        deliveryPlaces: deliveryPlaces || [],
         isLoading,
-    }), [employees, sections, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, locations, isLoading]);
+    }), [employees, sections, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, deliveryPlaces, isLoading]);
 
     return <ProcurementContext.Provider value={value}>{children}</ProcurementContext.Provider>;
 }
@@ -92,7 +92,7 @@ export function useProcurement() {
                 vendorCategories: [],
                 vendorNatureOfBusiness: [],
                 comparativeStatements: [],
-                locations: [],
+                deliveryPlaces: [],
                 isLoading: true
             }
         }

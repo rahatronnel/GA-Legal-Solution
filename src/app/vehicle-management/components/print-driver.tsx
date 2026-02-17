@@ -44,6 +44,7 @@ import type { DemandType } from '@/app/procurement/local-purchase/components/dem
 import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-table';
 import type { ComparativeStatement } from '@/app/procurement/local-purchase/components/cs-entry-form';
 import { CSPrintLayout } from '@/app/procurement/local-purchase/components/cs-print-layout';
+import type { DeliveryPlace } from '@/app/procurement/local-purchase/components/delivery-place-table';
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
@@ -85,6 +86,7 @@ export const PrintDriver = () => {
   const { data: billItemMasters } = useCollection<BillItemMaster>(useMemoFirebase(() => firestore ? collection(firestore, 'billItemMasters') : null, [firestore]));
   const { data: demandNotes } = useCollection<DemandNote>(useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]));
   const { data: comparativeStatements } = useCollection<ComparativeStatement>(useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]));
+  const { data: deliveryPlaces } = useCollection<DeliveryPlace>(useMemoFirebase(() => firestore ? collection(firestore, 'deliveryPlaces') : null, [firestore]));
 
 
   if (!itemToPrint) {
@@ -120,7 +122,7 @@ export const PrintDriver = () => {
                 const dnDept = sections?.find(s => s.id === demandNote.departmentId);
                 const dnProcessCode = processCodes?.find(p => p.id === demandNote.processCodeId);
                 const dnDemandType = demandTypes?.find(d => d.id === demandNote.demandTypeId);
-                const dnDeliveryPlace = locations?.find(l => l.id === demandNote.deliveryPlace);
+                const dnDeliveryPlace = deliveryPlaces?.find(l => l.id === demandNote.deliveryPlace);
                 return <DemandNotePrintLayout 
                     demandNote={demandNote}
                     creator={dnCreator}
@@ -153,5 +155,3 @@ export const PrintDriver = () => {
     </div>
   );
 };
-
-    
