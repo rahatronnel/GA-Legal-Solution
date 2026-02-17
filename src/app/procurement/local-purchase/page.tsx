@@ -76,6 +76,48 @@ function CsApprovalInfo() {
     )
 }
 
+function DemandNoteApprovalInfo() {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-yellow-500">
+                    <Info className="h-5 w-5" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Demand Note Approval Workflow Explained</DialogTitle>
+                    <DialogDescription>
+                        The approval process for a Demand Note is automatically determined based on the department and item types.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="text-sm text-muted-foreground space-y-4 py-4">
+                    <p>
+                        The system checks two main conditions to build the approval chain:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li>
+                            <strong className="text-foreground">Special Items:</strong> If the demand note contains any item marked as 'Special', it requires a 4-step approval from the
+                            <strong className="text-foreground"> Department Head, Technical Advisor, Specialized Dept. Manager,</strong> and finally the <strong className="text-foreground">Managing Director</strong>.
+                        </li>
+                        <li>
+                            <strong className="text-foreground">Manufacturing Departments:</strong> If the note is from a department marked as a 'Manufacturing Department', it requires a 3-step approval from the
+                            <strong className="text-foreground"> Department Head, Technical Advisor,</strong> and the <strong className="text-foreground">Manufacturing Dept. Manager</strong>.
+                        </li>
+                         <li>
+                            <strong className="text-foreground">General Departments:</strong> For all other departments, a standard 2-step approval is required from the
+                            <strong className="text-foreground"> Department Head</strong> and the <strong className="text-foreground">Technical Advisor</strong>.
+                        </li>
+                    </ul>
+                     <p>
+                        The Demand Note will move from one approver to the next in sequence. The roles for these positions are configured in the settings tab.
+                    </p>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
@@ -145,8 +187,13 @@ export default function LocalPurchasePage() {
         <TabsContent value="demand-notes">
             <Card>
                 <CardHeader>
-                    <CardTitle>Demand Notes</CardTitle>
-                    <CardDescription>Create and manage item requisitions.</CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>Demand Notes</CardTitle>
+                            <CardDescription>Create and manage item requisitions.</CardDescription>
+                        </div>
+                        <DemandNoteApprovalInfo />
+                    </div>
                 </CardHeader>
                  <CardContent>
                     <DemandNoteTable />
