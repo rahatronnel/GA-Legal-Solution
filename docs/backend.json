@@ -654,6 +654,47 @@
         }
       },
       "required": ["csNumber", "csDate", "demandNoteId"]
+    },
+    "PurchaseOrder": {
+      "title": "Purchase Order",
+      "description": "Represents a formal purchase order issued to a vendor.",
+      "type": "object",
+      "properties": {
+        "poNumber": { "type": "string", "description": "Unique identifier for the Purchase Order." },
+        "poDate": { "type": "string", "format": "date", "description": "Date the PO was issued." },
+        "demandNoteId": { "type": "string", "description": "The ID of the originating demand note." },
+        "csId": { "type": "string", "description": "The ID of the related comparative statement." },
+        "vendorId": { "type": "string", "description": "The ID of the vendor to whom the PO is issued." },
+        "items": {
+          "type": "array",
+          "description": "The list of items being ordered.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "demandNoteItemId": { "type": "string" },
+              "particulars": { "type": "string" },
+              "unit": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unitPrice": { "type": "number" },
+              "totalPrice": { "type": "number" }
+            },
+            "required": ["demandNoteItemId", "particulars", "quantity", "unitPrice"]
+          }
+        },
+        "totalAmount": { "type": "number", "description": "The grand total amount for the order." },
+        "discountAmount": { "type": "number", "description": "Total discount amount applied." },
+        "vatAmount": { "type": "number", "description": "Total VAT amount." },
+        "taxAmount": { "type": "number", "description": "Total tax amount." },
+        "netPayableAmount": { "type": "number", "description": "The final payable amount after all adjustments." },
+        "deliveryTerms": { "type": "string" },
+        "paymentTerms": { "type": "string" },
+        "warranty": { "type": "string" },
+        "expectedDeliveryDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Pending", "Partially Delivered", "Completed", "Cancelled"] },
+        "createdBy": { "type": "string", "description": "Employee ID of the creator." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["poNumber", "poDate", "demandNoteId", "vendorId", "totalAmount"]
     }
   },
   "auth": {
@@ -693,7 +734,8 @@
     "/demandNotes/{demandNoteId}": { "schema": { "$ref": "#/entities/DemandNote" }, "description": "Stores all created demand notes." },
     "/processCodes/{processCodeId}": { "schema": { "$ref": "#/entities/ProcessCode" }, "description": "Stores master data for process codes." },
     "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." },
-    "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." }
+    "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." },
+    "/purchaseOrders/{poId}": { "schema": { "$ref": "#/entities/PurchaseOrder" }, "description": "Stores all created purchase orders." }
   }
 }
     
@@ -717,6 +759,7 @@
     
 
     
+
 
 
 

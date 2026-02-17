@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PurchaseOrderTable } from './components/po-table';
 
 function CsApprovalInfo() {
     return (
@@ -170,17 +171,16 @@ export default function LocalPurchasePage() {
   
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
   const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
+  const canViewPoTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
 
   const getGridCols = () => {
     const tabsToShow = new Set(['dashboard', 'demand-notes']);
+    if (showGPDesk) tabsToShow.add('gp-desk');
+    if (canViewCsTab) tabsToShow.add('cs');
+    if (canViewPoTab) tabsToShow.add('po');
     if (isSuperAdmin) {
-        tabsToShow.add('gp-desk');
-        tabsToShow.add('cs');
         tabsToShow.add('master-data');
         tabsToShow.add('settings');
-    } else {
-        if (showGPDesk) tabsToShow.add('gp-desk');
-        if (canViewCsTab) tabsToShow.add('cs');
     }
     return `repeat(${tabsToShow.size}, minmax(0, 1fr))`;
   }
@@ -194,6 +194,7 @@ export default function LocalPurchasePage() {
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
             {canViewCsTab && <TabsTrigger value="cs">CS</TabsTrigger>}
+            {canViewPoTab && <TabsTrigger value="po">PO</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="settings">Settings</TabsTrigger>}
         </TabsList>
@@ -211,7 +212,7 @@ export default function LocalPurchasePage() {
         <TabsContent value="demand-notes">
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-center">
                         <div>
                             <CardTitle>Demand Notes</CardTitle>
                             <CardDescription>Create and manage item requisitions.</CardDescription>
@@ -241,7 +242,7 @@ export default function LocalPurchasePage() {
             <TabsContent value="cs">
                 <Card>
                     <CardHeader>
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                             <div>
                                 <CardTitle>Comparative Statements</CardTitle>
                                 <CardDescription>Review and manage all generated comparative statements.</CardDescription>
@@ -251,6 +252,19 @@ export default function LocalPurchasePage() {
                     </CardHeader>
                     <CardContent>
                         <ComparativeStatementTable />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
+        {canViewPoTab && (
+            <TabsContent value="po">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Purchase Orders</CardTitle>
+                        <CardDescription>Create and manage purchase orders from approved comparative statements.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <PurchaseOrderTable />
                     </CardContent>
                 </Card>
             </TabsContent>

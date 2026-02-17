@@ -19,6 +19,7 @@ import type { VendorNatureOfBusiness } from '@/app/billflow/components/vendor-na
 import type { ComparativeStatement } from './cs-entry-form';
 import type { DeliveryPlace } from './delivery-place-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
+import type { PurchaseOrder } from './po-entry-form';
 
 const ProcurementContext = createContext<{
     employees: Employee[];
@@ -35,6 +36,7 @@ const ProcurementContext = createContext<{
     comparativeStatements: ComparativeStatement[];
     deliveryPlaces: DeliveryPlace[];
     designations: Designation[];
+    purchaseOrders: PurchaseOrder[];
     isLoading: boolean;
 } | undefined>(undefined);
 
@@ -55,8 +57,9 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
     const { data: comparativeStatements, isLoading: l12 } = useCollection<ComparativeStatement>(useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]));
     const { data: deliveryPlaces, isLoading: l13 } = useCollection<DeliveryPlace>(useMemoFirebase(() => firestore ? collection(firestore, 'deliveryPlaces') : null, [firestore]));
     const { data: designations, isLoading: l14 } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
+    const { data: purchaseOrders, isLoading: l15 } = useCollection<PurchaseOrder>(useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]));
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15;
 
     const value = useMemo(() => ({
         employees: employees || [],
@@ -73,8 +76,9 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
         comparativeStatements: comparativeStatements || [],
         deliveryPlaces: deliveryPlaces || [],
         designations: designations || [],
+        purchaseOrders: purchaseOrders || [],
         isLoading,
-    }), [employees, sections, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, deliveryPlaces, designations, isLoading]);
+    }), [employees, sections, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, deliveryPlaces, designations, purchaseOrders, isLoading]);
 
     return <ProcurementContext.Provider value={value}>{children}</ProcurementContext.Provider>;
 }
@@ -98,6 +102,7 @@ export function useProcurement() {
                 comparativeStatements: [],
                 deliveryPlaces: [],
                 designations: [],
+                purchaseOrders: [],
                 isLoading: true
             }
         }
@@ -109,3 +114,4 @@ export function useProcurement() {
   
 
     
+
