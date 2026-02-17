@@ -35,8 +35,8 @@ function CsApprovalInfo() {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Info className="h-5 w-5 text-yellow-500" />
+                <Button variant="ghost" size="icon" className="text-yellow-500">
+                    <Info className="h-5 w-5" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
@@ -216,10 +216,14 @@ export default function LocalPurchasePage() {
         {canViewCsTab && (
             <TabsContent value="cs">
                 <Card>
-                    <CardHeader className="items-center text-center">
-                        <CsApprovalInfo />
-                        <CardTitle>Comparative Statements</CardTitle>
-                        <CardDescription>Review and manage all generated comparative statements.</CardDescription>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle>Comparative Statements</CardTitle>
+                                <CardDescription>Review and manage all generated comparative statements.</CardDescription>
+                            </div>
+                            <CsApprovalInfo />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <ComparativeStatementTable />
@@ -316,4 +320,3 @@ export default function LocalPurchasePage() {
     </div>
   );
 }
-
