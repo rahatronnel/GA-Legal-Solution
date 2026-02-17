@@ -72,7 +72,12 @@
                 "viceFactoryManagerId": { "type": "string", "description": "Employee ID of the Vice Factory Manager." },
                 "accountsManagerId": { "type": "string", "description": "Employee ID of the Accounts Manager." },
                 "gmSalesDeptId": { "type": "string", "description": "Employee ID of the GM of Sales Department." },
-                "gmAdministrationId": { "type": "string", "description": "Employee ID of the GM of Administration." }
+                "gmAdministrationId": { "type": "string", "description": "Employee ID of the GM of Administration." },
+                "approvalAmountBasis": {
+                  "type": "string",
+                  "enum": ["Minimum", "Average", "Maximum"],
+                  "description": "The basis for determining the amount used for the CS approval workflow."
+                }
               }
             }
           }
@@ -654,6 +659,7 @@
     
 
     
+
 
 
 

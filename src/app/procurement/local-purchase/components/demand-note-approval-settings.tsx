@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type DeptHead = {
     sectionId: string;
@@ -147,6 +148,8 @@ export function DemandNoteApprovalSettings() {
     const [accountsManagerId, setAccountsManagerId] = useState('');
     const [gmSalesDeptId, setGmSalesDeptId] = useState('');
     const [gmAdministrationId, setGmAdministrationId] = useState('');
+    const [approvalAmountBasis, setApprovalAmountBasis] = useState<'Minimum' | 'Average' | 'Maximum'>('Minimum');
+
 
     useEffect(() => {
         if (orgSettings?.procurementSettings) {
@@ -166,7 +169,8 @@ export function DemandNoteApprovalSettings() {
                     viceFactoryManagerId = '',
                     accountsManagerId = '',
                     gmSalesDeptId = '',
-                    gmAdministrationId = ''
+                    gmAdministrationId = '',
+                    approvalAmountBasis = 'Minimum'
                 } = settings.csApprovalRoles;
                 setPurchaseManagerId(purchaseManagerId);
                 setPurchaseDeptTaId(purchaseDeptTaId);
@@ -174,6 +178,7 @@ export function DemandNoteApprovalSettings() {
                 setAccountsManagerId(accountsManagerId);
                 setGmSalesDeptId(gmSalesDeptId);
                 setGmAdministrationId(gmAdministrationId);
+                setApprovalAmountBasis(approvalAmountBasis as any);
             }
         }
     }, [orgSettings]);
@@ -219,6 +224,7 @@ export function DemandNoteApprovalSettings() {
                 accountsManagerId,
                 gmSalesDeptId,
                 gmAdministrationId,
+                approvalAmountBasis,
             }
         };
 
@@ -319,7 +325,7 @@ export function DemandNoteApprovalSettings() {
                     <CardDescription>Assign employees to key roles for the Comparative Statement approval workflow.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <Label className="font-semibold">Purchase Manager</Label>
                             <Combobox items={employees || []} value={purchaseManagerId} onSelect={setPurchaseManagerId} placeholder="Select Purchase Manager..."/>
@@ -343,6 +349,17 @@ export function DemandNoteApprovalSettings() {
                         <div className="space-y-2">
                             <Label className="font-semibold">GM-Administration</Label>
                             <Combobox items={employees || []} value={gmAdministrationId} onSelect={setGmAdministrationId} placeholder="Select GM Administration..."/>
+                        </div>
+                         <div className="space-y-2">
+                            <Label className="font-semibold">Approval Amount Basis</Label>
+                            <Select value={approvalAmountBasis} onValueChange={(v) => setApprovalAmountBasis(v as any)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Minimum">Minimum Amount</SelectItem>
+                                    <SelectItem value="Average">Average Amount</SelectItem>
+                                    <SelectItem value="Maximum">Maximum Amount</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardContent>
