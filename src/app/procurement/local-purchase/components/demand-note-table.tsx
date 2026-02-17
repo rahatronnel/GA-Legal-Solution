@@ -67,12 +67,12 @@ export function DemandNoteTable() {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, gpConcernOfficers: [] };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, gpConcernOfficers: [] };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -84,7 +84,7 @@ export function DemandNoteTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdminCheck, isManager: manager, currentUserEmployee: currentEmp };
+        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdminCheck, isManager: manager };
     }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
@@ -353,7 +353,7 @@ export function DemandNoteTable() {
                                 <TableHead>Department</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>GP Status</TableHead>
-                                <TableHead className="w-[120px] text-right">Actions</TableHead>
+                                <TableHead className="w-[160px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -366,7 +366,7 @@ export function DemandNoteTable() {
                                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                                    <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-32 float-right" /></TableCell>
                                 </TableRow>
                             ))
                         ) : filteredItems.length > 0 ? (
@@ -468,4 +468,5 @@ export function DemandNoteTable() {
         </TooltipProvider>
     );
 }
+
 
