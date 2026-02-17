@@ -363,5 +363,3 @@ function ComparativeStatementView() {
 export default function ComparativeStatementPage() {
     return <TooltipProvider><ComparativeStatementView /></TooltipProvider>;
 }
-
-    

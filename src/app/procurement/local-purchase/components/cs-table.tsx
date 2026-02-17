@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -33,6 +33,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { getCSStatusText } from '../lib/status-helper';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+
 
 export function ComparativeStatementTable() {
     const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors } = useProcurement();
@@ -47,6 +49,8 @@ export function ComparativeStatementTable() {
     const [vendorFilter, setVendorFilter] = useState('all');
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     
@@ -192,6 +196,11 @@ export function ComparativeStatementTable() {
         return 'secondary';
     }
 
+    const handleViewStatus = (cs: ComparativeStatement) => {
+        setSelectedCsForStatus(cs);
+        setIsStatusModalOpen(true);
+    };
+
 
     return (
         <TooltipProvider>
@@ -315,12 +324,12 @@ export function ComparativeStatementTable() {
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger>
-                                                        <TooltipContent>View</TooltipContent>
+                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewStatus(cs)}><Users className="h-4 w-4" /></Button></TooltipTrigger>
+                                                        <TooltipContent>View Approval Status</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button></TooltipTrigger>
-                                                        <TooltipContent>Edit</TooltipContent>
+                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger>
+                                                        <TooltipContent>View</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(cs)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
@@ -352,6 +361,47 @@ export function ComparativeStatementTable() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Approval Status for {selectedCsForStatus?.csNumber}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <ul className="space-y-4">
+                            {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
+                                const historyEntry = selectedCsForStatus.approvalHistory?.find(h => h.level === index);
+                                const approver = employees?.find(e => e.id === step.approverId);
+                                
+                                let status: 'approved' | 'pending' | 'upcoming' | 'rejected' = 'upcoming';
+                                const isPending = selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 1;
+                                
+                                if (historyEntry?.status === 'Approved') status = 'approved';
+                                else if (historyEntry?.status === 'Rejected') status = 'rejected';
+                                else if (selectedCsForStatus.currentApproverId === step.approverId && isPending) status = 'pending';
+
+                                return (
+                                    <li key={index} className="flex items-center gap-4">
+                                        <div>
+                                            {status === 'approved' && <CheckCircle className="h-5 w-5 text-green-500" />}
+                                            {status === 'pending' && <Hourglass className="h-5 w-5 text-orange-500" />}
+                                            {status === 'upcoming' && <MoreHorizontal className="h-5 w-5 text-muted-foreground" />}
+                                            {status === 'rejected' && <XIcon className="h-5 w-5 text-destructive" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold">{step.stepName}</p>
+                                            <p className="text-sm text-muted-foreground">{approver?.fullName || 'N/A'}</p>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsStatusModalOpen(false)}>Close</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
