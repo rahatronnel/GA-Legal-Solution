@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -130,6 +129,12 @@ export default function GPDeskTable() {
         return { isGPOfficer: GPO, isGPConcern: GPC, isSuperAdmin: superAdmin };
     }, [orgSettings, currentUserEmployee, user]);
     
+    useEffect(() => {
+        if (isGPConcern && !isGPOfficer && !isSuperAdmin && currentUserEmployee) {
+            setAssignedToFilter(currentUserEmployee.id);
+        }
+    }, [isGPConcern, isGPOfficer, isSuperAdmin, currentUserEmployee]);
+
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
@@ -138,8 +143,7 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        const isApprovedForGP = (note: DemandNote) => Number(note.approvalStatus) === 1;
-        const baseList: DemandNote[] = safeItems.filter(isApprovedForGP);
+        const baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
@@ -216,10 +220,10 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Concern Officers</SelectItem>
+                                {(isGPOfficer || isSuperAdmin) && <SelectItem value="all">All Concern Officers</SelectItem>}
                                 {gpConcernOfficers.map(officer => (
                                     <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
                                 ))}
@@ -271,7 +275,7 @@ export default function GPDeskTable() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isGPOfficer}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isGPOfficer && !isSuperAdmin}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0}><FilePlus className="h-4 w-4" /></Button>
@@ -323,7 +327,7 @@ export default function GPDeskTable() {
             {isCsFormOpen && (
                  <ComparativeStatementForm
                     isOpen={isCsFormOpen}
-                    setIsopen={setIsCsFormOpen}
+                    setIsOpen={setIsCsFormOpen}
                     demandNote={currentNoteForCs}
                     onSave={handleSaveCs}
                 />
@@ -332,5 +336,3 @@ export default function GPDeskTable() {
         </TooltipProvider>
     );
 }
-
-    
