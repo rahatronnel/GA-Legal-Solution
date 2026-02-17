@@ -17,7 +17,7 @@ function CsApprovalInfo() {
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon">
-                    <Info className="h-4 w-4" />
+                    <Info className="h-4 w-4 text-primary" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl">
