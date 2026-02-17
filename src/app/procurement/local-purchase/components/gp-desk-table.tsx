@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -106,29 +105,19 @@ export default function GPDeskTable() {
         if (!user || !employees) return null;
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
-
-    const { isGPOfficer, isSuperAdmin, isGPConcern } = useMemo(() => {
-        const settings = orgSettings?.procurementSettings;
-        if (!currentUserEmployee && user?.email !== 'superadmin@galsolution.com') {
-             return { isGPOfficer: false, isSuperAdmin: false, isGPConcern: false };
-        }
-        
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
-        if (superAdmin) {
-            return { isGPOfficer: false, isSuperAdmin: true, isGPConcern: false };
-        }
-
-        const GPO = settings?.generalPurchaseOfficerId === currentUserEmployee?.id;
-        const GPC = !!settings?.gpConcernOfficerIds?.includes(currentUserEmployee?.id || '');
-        
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC };
-    }, [orgSettings, currentUserEmployee, user]);
     
     useEffect(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!currentUserEmployee || !settings) return;
+        
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+        const isGPOfficer = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const isGPConcern = settings.gpConcernOfficerIds?.includes(currentUserEmployee.id || '');
+
         if (isGPConcern && !isSuperAdmin && !isGPOfficer) {
-            setAssignedToFilter(currentUserEmployee?.id || 'all');
+            setAssignedToFilter(currentUserEmployee.id);
         }
-    }, [isGPConcern, isSuperAdmin, isGPOfficer, currentUserEmployee]);
+    }, [orgSettings, currentUserEmployee, user]);
 
     const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -148,15 +137,7 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        let baseList: DemandNote[];
-
-        if (isSuperAdmin || isGPOfficer) {
-            baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
-        } else if (isGPConcern) {
-            baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
-        } else {
-            return [];
-        }
+        const baseList: DemandNote[] = safeItems.filter(note => Number(note.approvalStatus) === 1);
         
         return baseList.filter(item => {
             const searchTermMatch = !searchTerm ||
@@ -171,7 +152,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {
@@ -233,7 +214,7 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Assigned To..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
@@ -274,6 +255,7 @@ export default function GPDeskTable() {
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const csExists = comparativeStatements.some(cs => cs.demandNoteId === item.id);
+                                const isCurrentUserAssigned = currentUserEmployee?.id === item.gpConcernOfficerId;
                                 return (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
@@ -288,10 +270,10 @@ export default function GPDeskTable() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isGPOfficer && !isSuperAdmin}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserAssigned}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0}><FilePlus className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={csExists || !item.quotations || item.quotations.length === 0 || !isCurrentUserAssigned}><FilePlus className="h-4 w-4" /></Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>{csExists ? 'CS already created' : 'Create CS'}</TooltipContent>
                                             </Tooltip>
