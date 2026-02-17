@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -157,8 +158,7 @@ export default function GPDeskTable() {
     const filteredItems = useMemo(() => {
         if (isLoading) return [];
         
-        const canViewAllGPO = isGPOfficer && orgSettings?.procurementSettings?.canGpOfficerViewAllGpDesk;
-        const canViewAll = isSuperAdmin || canViewAllGPO;
+        const canViewAll = isSuperAdmin || isGPOfficer || isManager;
 
         let baseList: DemandNote[];
 
@@ -166,10 +166,7 @@ export default function GPDeskTable() {
             baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
         } else if (isGPConcern) {
             baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
-        } else if (isGPOfficer) { // GP officer but without the 'view all' setting
-             baseList = safeItems.filter(note => note.approvalStatus === 1 && !note.gpStatus);
-        }
-        else {
+        } else {
             baseList = [];
         }
         
@@ -186,7 +183,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee, orgSettings]);
+    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee, isManager]);
 
 
     const handleOpenAssignVendors = (note: DemandNote) => {

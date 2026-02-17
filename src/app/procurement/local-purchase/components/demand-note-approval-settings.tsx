@@ -140,10 +140,6 @@ export function DemandNoteApprovalSettings() {
     const [specializedDeptManagerId, setSpecializedDeptManagerId] = useState('');
     const [generalPurchaseOfficerId, setGeneralPurchaseOfficerId] = useState('');
     const [gpConcernOfficerIds, setGpConcernOfficerIds] = useState<string[]>([]);
-    const [canSuperadminViewAllGpDesk, setCanSuperadminViewAllGpDesk] = useState(false);
-    const [canGpOfficerViewApprovedInDemandList, setCanGpOfficerViewApprovedInDemandList] = useState(false);
-    const [canGpOfficerViewAllGpDesk, setCanGpOfficerViewAllGpDesk] = useState(false);
-
 
     useEffect(() => {
         if (orgSettings?.procurementSettings) {
@@ -155,9 +151,6 @@ export function DemandNoteApprovalSettings() {
             setSpecializedDeptManagerId(settings.specializedDeptManagerId || '');
             setGeneralPurchaseOfficerId(settings.generalPurchaseOfficerId || '');
             setGpConcernOfficerIds(settings.gpConcernOfficerIds || []);
-            setCanSuperadminViewAllGpDesk(settings.canSuperadminViewAllGpDesk || false);
-            setCanGpOfficerViewApprovedInDemandList(settings.canGpOfficerViewApprovedInDemandList || false);
-            setCanGpOfficerViewAllGpDesk(settings.canGpOfficerViewAllGpDesk || false);
         }
     }, [orgSettings]);
 
@@ -195,9 +188,6 @@ export function DemandNoteApprovalSettings() {
             specializedDeptManagerId,
             generalPurchaseOfficerId,
             gpConcernOfficerIds,
-            canSuperadminViewAllGpDesk,
-            canGpOfficerViewApprovedInDemandList,
-            canGpOfficerViewAllGpDesk
         };
 
         setDocumentNonBlocking(settingsDocRef, { procurementSettings }, { merge: true });
@@ -320,47 +310,9 @@ export function DemandNoteApprovalSettings() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>GP Desk View Configuration</CardTitle>
-                    <CardDescription>Control what different roles can see in the GP Desk and Demand Note lists.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="superadmin-view" className="text-base">Superadmin Can View All GP Desk Data</Label>
-                            <p className="text-sm text-muted-foreground">
-                                If 'Yes', the superadmin will see all approved notes in the GP Desk (assigned and unassigned).
-                            </p>
-                        </div>
-                        <Switch id="superadmin-view" checked={canSuperadminViewAllGpDesk} onCheckedChange={setCanSuperadminViewAllGpDesk} />
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="gp-officer-demand-list" className="text-base">GP Officer Can View Approved Notes in Main List</Label>
-                            <p className="text-sm text-muted-foreground">
-                                If 'Yes', the GP Officer will see a queue of approved notes in the main "Demand Notes" tab.
-                            </p>
-                        </div>
-                        <Switch id="gp-officer-demand-list" checked={canGpOfficerViewApprovedInDemandList} onCheckedChange={setCanGpOfficerViewApprovedInDemandList} />
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="gp-officer-gp-desk" className="text-base">GP Officer Can View All GP Desk Data</Label>
-                            <p className="text-sm text-muted-foreground">
-                                If 'Yes', the GP Officer will see all approved notes in the GP Desk, otherwise only unassigned ones.
-                            </p>
-                        </div>
-                        <Switch id="gp-officer-gp-desk" checked={canGpOfficerViewAllGpDesk} onCheckedChange={setCanGpOfficerViewAllGpDesk} />
-                    </div>
-                </CardContent>
-            </Card>
-
             <div className="flex justify-end gap-4">
                 <Button onClick={handleSave}>Save All Settings</Button>
             </div>
         </div>
     );
 }
-
-    

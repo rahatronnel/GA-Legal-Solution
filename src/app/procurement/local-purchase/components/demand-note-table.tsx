@@ -34,8 +34,6 @@ import { Badge } from '@/components/ui/badge';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 
@@ -54,8 +52,6 @@ export function DemandNoteTable() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
-    const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-    const [selectedConcernOfficerId, setSelectedConcernOfficerId] = useState('');
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -77,7 +73,7 @@ export function DemandNoteTable() {
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
-        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as Employee[] || [];
+        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as any[] || [];
         const manager = 
             settings.managingDirectorId === currentEmp.id ||
             settings.factoryDirectorId === currentEmp.id ||
@@ -116,12 +112,9 @@ export function DemandNoteTable() {
         if (isLoading) return [];
     
         let baseList: DemandNote[];
-        const isGpoSeesApprovedInList = orgSettings?.procurementSettings?.canGpOfficerViewApprovedInDemandList;
     
         if (isSuperAdmin) {
             baseList = safeItems;
-        } else if (isGPOfficer && isGpoSeesApprovedInList) {
-            baseList = safeItems.filter(note => note.approvalStatus === 1 && note.gpStatus !== 'Assigned');
         } else if (currentUserEmployee) {
             if (isManager) {
                 baseList = safeItems;
@@ -146,23 +139,19 @@ export function DemandNoteTable() {
                 item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
             
-            let statusMatch = statusFilter === 'all' 
+            const statusMatch = statusFilter === 'all' 
                 ? true
                 : (statusFilter === 'pending'
                     ? (item.approvalStatus !== 1 && item.approvalStatus !== 0)
                     : item.approvalStatus === parseInt(statusFilter, 10)
                   );
             
-            if (isGPOfficer && isGpoSeesApprovedInList) {
-                statusMatch = true;
-            }
-            
             return searchTermMatch && statusMatch;
         });
     
         return finalList.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
     
-    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isGPOfficer, isManager, isSuperAdmin]);
+    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isManager, isSuperAdmin]);
 
 
     const approvableNotes = useMemo(() => {
@@ -174,9 +163,8 @@ export function DemandNoteTable() {
     }, [filteredItems, currentUserEmployee]);
     
     const allSelectableIds = useMemo(() => {
-        const isGpoSeesApprovedInList = orgSettings?.procurementSettings?.canGpOfficerViewApprovedInDemandList;
-        return isGPOfficer && isGpoSeesApprovedInList ? filteredItems.filter(i => i.gpStatus !== 'Assigned' && i.approvalStatus === 1).map(i => i.id) : approvableNotes.map(n => n.id);
-    }, [isGPOfficer, orgSettings, filteredItems, approvableNotes]);
+        return approvableNotes.map(n => n.id);
+    }, [approvableNotes]);
 
     const handleAdd = () => {
         setCurrentItem(null);
@@ -269,39 +257,8 @@ export function DemandNoteTable() {
         toast({ title: 'Success', description: `${selectedRows.length} notes have been processed.` });
         setSelectedRows([]);
     };
-    
-    const handleOpenAssignDialog = () => {
-        if (selectedRows.length === 0) {
-            toast({ variant: 'destructive', title: 'No notes selected' });
-            return;
-        }
-        setIsAssignDialogOpen(true);
-    };
-
-    const handleConfirmAssignment = () => {
-        if (!selectedConcernOfficerId) {
-            toast({ variant: 'destructive', title: 'Please select a concern officer.' });
-            return;
-        }
-        if (!dataRef || !currentUserEmployee) return;
-
-        selectedRows.forEach(noteId => {
-            const noteRef = doc(dataRef, noteId);
-            setDocumentNonBlocking(noteRef, {
-                gpConcernOfficerId: selectedConcernOfficerId,
-                gpAssignedBy: currentUserEmployee.id,
-                gpAssignedDate: new Date().toISOString(),
-                gpStatus: 'Assigned',
-            }, { merge: true });
-        });
-
-        toast({ title: 'Success', description: `${selectedRows.length} notes assigned.` });
-        setSelectedRows([]);
-        setIsAssignDialogOpen(false);
-    };
 
     const canPerformBulkAction = selectedRows.length > 0;
-    const isGpoSeesApprovedInList = orgSettings?.procurementSettings?.canGpOfficerViewApprovedInDemandList;
 
     return (
         <TooltipProvider>
@@ -317,31 +274,25 @@ export function DemandNoteTable() {
                                 className="pl-8"
                             />
                         </div>
-                        {!(isGPOfficer && isGpoSeesApprovedInList) && (
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Filter by Status..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="1">Approved</SelectItem>
-                                    <SelectItem value="0">Rejected</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )}
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter by Status..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="1">Approved</SelectItem>
+                                <SelectItem value="0">Rejected</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div className="flex items-center gap-2">
                         <Badge variant="outline">{userRoleText}</Badge>
-                        {isGPOfficer && isGpoSeesApprovedInList ? (
-                            canPerformBulkAction && <Button size="sm" onClick={handleOpenAssignDialog}><Hand className="mr-2 h-4 w-4"/>Assign Selected</Button>
-                        ) : (
-                            canPerformBulkAction && (
-                                <>
-                                    <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
-                                    <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
-                                </>
-                            )
+                        {canPerformBulkAction && (
+                            <>
+                                <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
+                            </>
                         )}
                         <Button onClick={handleAdd}>
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Demand Note
@@ -387,8 +338,7 @@ export function DemandNoteTable() {
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
-                                const isPendingForGP = isGPOfficer && isGpoSeesApprovedInList && item.approvalStatus === 1 && item.gpStatus !== 'Assigned';
-                                const canSelect = isPendingForCurrentUser || isPendingForGP;
+                                const canSelect = isPendingForCurrentUser;
                                 const {date: entryDate, time: entryTime} = formatDateTime(item.entryDate);
                                 
                                 return (
@@ -463,34 +413,6 @@ export function DemandNoteTable() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Assign Demand Notes</DialogTitle>
-                        <DialogDescription>
-                            You are assigning {selectedRows.length} note(s). Select a GP Concern Officer.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Label>GP Concern Officer</Label>
-                        <Select value={selectedConcernOfficerId} onValueChange={setSelectedConcernOfficerId}>
-                            <SelectTrigger><SelectValue placeholder="Select an officer..." /></SelectTrigger>
-                            <SelectContent>
-                                {gpConcernOfficers.map(officer => (
-                                    <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleConfirmAssignment}>Confirm Assignment</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </TooltipProvider>
     );
 }
-
-
-
