@@ -122,15 +122,15 @@ export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager } = React.useMemo(() => {
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = React.useMemo(() => {
     const settings = orgSettings?.procurementSettings;
     const superAdmin = user?.email === 'superadmin@galsolution.com';
     if (!settings || !employees || employees.length === 0 || !user) {
-      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
     const currentUserEmployee = employees.find(e => e.email === user.email);
     if (!currentUserEmployee) {
-      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
@@ -140,12 +140,36 @@ export default function LocalPurchasePage() {
         settings.factoryDirectorId === currentUserEmployee.id ||
         settings.manufacturingDeptManagerId === currentUserEmployee.id ||
         settings.specializedDeptManagerId === currentUserEmployee.id;
+
+    let csApproverCheck = false;
+    const csRoles = settings.csApprovalRoles;
+    if (csRoles) {
+        const roleIds = [
+            csRoles.purchaseManagerId,
+            csRoles.purchaseDeptTaId,
+            csRoles.viceFactoryManagerId,
+            csRoles.accountsManagerId,
+            csRoles.gmSalesDeptId,
+            csRoles.gmAdministrationId,
+        ];
+        if (roleIds.includes(currentUserEmployee.id)) {
+            csApproverCheck = true;
+        }
+    }
     
-    return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isGPConcern: GPC, isManager: manager };
+    if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentUserEmployee.id)) {
+        csApproverCheck = true;
+    }
+    
+    if (!csApproverCheck && settings.specializedDeptTaId === currentUserEmployee.id) {
+        csApproverCheck = true;
+    }
+
+    return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isGPConcern: GPC, isManager: manager, isCsApprover: csApproverCheck };
   }, [orgSettings, employees, user, isLoading]);
   
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-  const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
+  const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
 
   const getGridCols = () => {
     const tabsToShow = new Set(['dashboard', 'demand-notes']);
