@@ -52,7 +52,6 @@ export default function LocalPurchasePage() {
   const getGridCols = () => {
     const tabsToShow = new Set(['dashboard', 'demand-notes']);
     if (isSuperAdmin) {
-        tabsToShow.add('vendors');
         tabsToShow.add('gp-desk');
         tabsToShow.add('cs');
         tabsToShow.add('master-data');
@@ -71,7 +70,6 @@ export default function LocalPurchasePage() {
         <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
-            {isSuperAdmin && <TabsTrigger value="vendors">Vendors</TabsTrigger>}
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
             {canViewCsTab && <TabsTrigger value="cs">CS</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="master-data">Master Data</TabsTrigger>}
@@ -99,21 +97,6 @@ export default function LocalPurchasePage() {
                 </CardContent>
             </Card>
         </TabsContent>
-        {isSuperAdmin && (
-          <TabsContent value="vendors">
-              <LegacyBillFlowProvider>
-                  <Card>
-                    <CardHeader>
-                        <CardTitle>Vendors</CardTitle>
-                        <CardDescription>Manage your organization's vendors and their information.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VendorTable />
-                    </CardContent>
-                  </Card>
-              </LegacyBillFlowProvider>
-          </TabsContent>
-        )}
          {showGPDesk && (
             <TabsContent value="gp-desk">
                 <Card>
@@ -143,8 +126,9 @@ export default function LocalPurchasePage() {
         {isSuperAdmin && (
           <>
             <TabsContent value="master-data">
-                <Tabs defaultValue="process-codes" className="w-full">
-                    <TabsList className="grid w-full grid-cols-6">
+                <Tabs defaultValue="vendors" className="w-full">
+                    <TabsList className="grid w-full grid-cols-7">
+                        <TabsTrigger value="vendors">Vendors</TabsTrigger>
                         <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
                         <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
                         <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
@@ -152,6 +136,14 @@ export default function LocalPurchasePage() {
                         <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
                         <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
                     </TabsList>
+                    <TabsContent value="vendors" className="mt-4">
+                        <LegacyBillFlowProvider>
+                            <Card>
+                                <CardHeader><CardTitle>Vendors</CardTitle><CardDescription>Manage your organization's vendors and their information.</CardDescription></CardHeader>
+                                <CardContent><VendorTable /></CardContent>
+                            </Card>
+                        </LegacyBillFlowProvider>
+                    </TabsContent>
                     <TabsContent value="process-codes" className="mt-4">
                         <Card>
                             <CardHeader>
