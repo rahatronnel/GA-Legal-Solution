@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -257,9 +257,28 @@ export function ComparativeStatementTable() {
                                         <TableRow key={cs.id}>
                                             <TableCell>{cs.csNumber}</TableCell>
                                             <TableCell>
-                                                <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">
-                                                    {getDemandNoteNumber(cs.demandNoteId)}
-                                                </Link>
+                                                <div className="flex items-center gap-1">
+                                                    <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">
+                                                        {getDemandNoteNumber(cs.demandNoteId)}
+                                                    </Link>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                              variant="ghost"
+                                                              size="icon"
+                                                              className="h-6 w-6"
+                                                              onClick={() => {
+                                                                const dnNumber = getDemandNoteNumber(cs.demandNoteId);
+                                                                navigator.clipboard.writeText(dnNumber);
+                                                                toast({ title: 'Copied!', description: 'Demand Note number copied to clipboard.' });
+                                                              }}
+                                                            >
+                                                              <Copy className="h-3 w-3" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Copy DN Number</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
@@ -326,4 +345,3 @@ export function ComparativeStatementTable() {
         </TooltipProvider>
     );
 }
-

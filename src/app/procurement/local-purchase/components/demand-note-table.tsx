@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Hand, Printer } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Hand, Printer, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -351,7 +351,27 @@ export function DemandNoteTable() {
                                             aria-label={`Select note ${item.demandNoteNumber}`}
                                         />
                                     </TableCell>
-                                    <TableCell>{item.demandNoteNumber}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                          <span>{item.demandNoteNumber}</span>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => {
+                                                  navigator.clipboard.writeText(item.demandNoteNumber);
+                                                  toast({ title: 'Copied!', description: 'Demand Note number copied to clipboard.' });
+                                                }}
+                                              >
+                                                <Copy className="h-3 w-3" />
+                                              </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy DN Number</TooltipContent>
+                                          </Tooltip>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{item.date}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>

@@ -6,16 +6,19 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Award } from 'lucide-react';
+import { ArrowLeft, Printer, Award, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from '@/hooks/use-toast';
 
 function ComparativeStatementView() {
     const params = useParams();
     const router = useRouter();
+    const { toast } = useToast();
     const { handlePrint } = usePrint();
     const { comparativeStatements, demandNotes, vendors, isLoading } = useProcurement();
 
@@ -82,8 +85,28 @@ function ComparativeStatementView() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
-                            <CardDescription>
-                                For Demand Note: <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link> | Dated: {new Date(cs.csDate).toLocaleString()}
+                            <CardDescription className="flex items-center gap-2">
+                                <span>For Demand Note:</span>
+                                <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link>
+                                {demandNote?.demandNoteNumber && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(demandNote.demandNoteNumber!);
+                                            toast({ title: 'Copied!', description: 'Demand Note number copied to clipboard.' });
+                                          }}
+                                        >
+                                          <Copy className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Copy DN Number</TooltipContent>
+                                    </Tooltip>
+                                )}
+                                <span>| Dated: {new Date(cs.csDate).toLocaleString()}</span>
                             </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
@@ -179,5 +202,5 @@ function ComparativeStatementView() {
 }
 
 export default function ComparativeStatementPage() {
-    return <ComparativeStatementView />;
+    return <TooltipProvider><ComparativeStatementView /></TooltipProvider>;
 }

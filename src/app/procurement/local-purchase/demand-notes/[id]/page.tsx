@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -26,6 +26,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import type { DemandNote, Quotation } from '../../components/demand-note-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
@@ -159,6 +165,7 @@ function DemandNoteProfileContent() {
     const params = useParams();
     const firestore = useFirestore();
     const { user } = useUser();
+    const { toast } = useToast();
     const { handlePrint } = usePrint();
     const { id } = params;
     
@@ -255,12 +262,31 @@ function DemandNoteProfileContent() {
     const canApprove = user?.email === 'superadmin@galsolution.com' || (currentUserEmployee && demandNote.currentApproverId === currentUserEmployee.id);
 
     return (
+      <TooltipProvider>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle className="text-2xl">{demandNote.demandNoteNumber}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-2xl">{demandNote.demandNoteNumber}</CardTitle>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                        navigator.clipboard.writeText(demandNote.demandNoteNumber);
+                                        toast({ title: 'Copied!', description: 'Demand Note number copied to clipboard.' });
+                                        }}
+                                    >
+                                        <Copy className="h-4 w-4" />
+                                    </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Copy DN Number</TooltipContent>
+                                </Tooltip>
+                            </div>
                             <CardDescription>Date: {demandNote.date} - Status: <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge></CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
@@ -411,6 +437,7 @@ function DemandNoteProfileContent() {
                 </CardContent>
             </Card>
         </div>
+      </TooltipProvider>
     );
 }
 
