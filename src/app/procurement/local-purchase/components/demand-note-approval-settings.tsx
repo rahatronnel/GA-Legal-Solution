@@ -139,6 +139,7 @@ export function DemandNoteApprovalSettings() {
     const [factoryDirectorId, setFactoryDirectorId] = useState('');
     const [manufacturingDeptManagerId, setManufacturingDeptManagerId] = useState('');
     const [specializedDeptManagerId, setSpecializedDeptManagerId] = useState('');
+    const [specializedDeptTaId, setSpecializedDeptTaId] = useState('');
     const [generalPurchaseOfficerId, setGeneralPurchaseOfficerId] = useState('');
     const [gpConcernOfficerIds, setGpConcernOfficerIds] = useState<string[]>([]);
     
@@ -159,6 +160,7 @@ export function DemandNoteApprovalSettings() {
             setFactoryDirectorId(settings.factoryDirectorId || '');
             setManufacturingDeptManagerId(settings.manufacturingDeptManagerId || '');
             setSpecializedDeptManagerId(settings.specializedDeptManagerId || '');
+            setSpecializedDeptTaId(settings.specializedDeptTaId || '');
             setGeneralPurchaseOfficerId(settings.generalPurchaseOfficerId || '');
             setGpConcernOfficerIds(settings.gpConcernOfficerIds || []);
             
@@ -215,6 +217,7 @@ export function DemandNoteApprovalSettings() {
             factoryDirectorId,
             manufacturingDeptManagerId,
             specializedDeptManagerId,
+            specializedDeptTaId,
             generalPurchaseOfficerId,
             gpConcernOfficerIds,
             csApprovalRoles: {
@@ -277,7 +280,7 @@ export function DemandNoteApprovalSettings() {
 
                     <div>
                         <h3 className="text-lg font-medium mb-4">Key Roles</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <Label className="font-semibold">Managing Director</Label>
                                 <Combobox
@@ -312,6 +315,15 @@ export function DemandNoteApprovalSettings() {
                                     value={specializedDeptManagerId}
                                     onSelect={setSpecializedDeptManagerId}
                                     placeholder="Select Specialized Dept. Manager..."
+                                />
+                            </div>
+                             <div className="space-y-2">
+                                <Label className="font-semibold">Specialized Dept. TA</Label>
+                                <Combobox
+                                    items={employees || []}
+                                    value={specializedDeptTaId}
+                                    onSelect={setSpecializedDeptTaId}
+                                    placeholder="Select Specialized Dept. TA..."
                                 />
                             </div>
                         </div>

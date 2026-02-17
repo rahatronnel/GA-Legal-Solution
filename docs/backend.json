@@ -57,6 +57,7 @@
             "factoryDirectorId": { "type": "string", "description": "Employee ID of the Factory Director." },
             "manufacturingDeptManagerId": { "type": "string", "description": "Employee ID of the Manufacturing Dept Manager." },
             "specializedDeptManagerId": { "type": "string", "description": "Employee ID of the Specialized Dept. Manager." },
+            "specializedDeptTaId": { "type": "string", "description": "Employee ID of the Specialized Dept. Technical Advisor." },
             "generalPurchaseOfficerId": { "type": "string", "description": "Employee ID of the General Purchase Officer." },
             "gpConcernOfficerIds": {
               "type": "array",
@@ -670,6 +671,7 @@
     
 
     
+
 
 
 
