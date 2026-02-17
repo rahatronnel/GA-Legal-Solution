@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import Image from 'next/image';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription } from '@/components/ui/alert-dialog';
 import { getCSStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -179,10 +179,12 @@ function ComparativeStatementView() {
                             {canApprove && (
                                 <>
                                  <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Approve CS?</AlertDialogTitle><AlertDialogDescription>This will move the CS to the next step.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject CS?</AlertDialogTitle><AlertDialogDescription>This will stop the approval process.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(0)} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject CS?</AlertDialogTitle><AlertDialogDescription>This will stop the approval process.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={()=>handleApproval(0)}>Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                 </>
                             )}
-                            <Button onClick={() => handlePrint(cs, 'comparative-statement')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
+                            {cs.approvalStatus === 1 && (
+                                <Button onClick={() => handlePrint(cs, 'comparative-statement')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
+                            )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
                     </div>

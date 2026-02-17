@@ -45,6 +45,7 @@ import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-
 import type { ComparativeStatement } from '@/app/procurement/local-purchase/components/cs-entry-form';
 import { CSPrintLayout } from '@/app/procurement/local-purchase/components/cs-print-layout';
 import type { DeliveryPlace } from '@/app/procurement/local-purchase/components/delivery-place-table';
+import type { Department } from '@/app/user-management/components/department-table';
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
@@ -69,6 +70,7 @@ export const PrintDriver = () => {
   // User Management Data
   const { data: employees } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
   const { data: sections } = useCollection<Section>(useMemoFirebase(() => firestore ? collection(firestore, 'sections') : null, [firestore]));
+  const { data: departments } = useCollection<Department>(useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]));
   const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
   
   // Settings Data
@@ -102,7 +104,7 @@ export const PrintDriver = () => {
           case 'vehicle':
               return <VehiclePrintLayout vehicle={itemToPrint as Vehicle} drivers={drivers || []} vehicleTypes={vehicleTypes || []} vehicleBrands={vehicleBrands || []} orgSettings={orgSettings} />;
           case 'employee':
-              return <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections || []} designations={designations || []} orgSettings={orgSettings} />;
+              return <EmployeePrintLayout employee={itemToPrint as Employee} sections={sections || []} designations={designations || []} departments={departments || []} orgSettings={orgSettings} />;
           case 'trip':
               return <TripPrintLayout trip={itemToPrint as Trip} vehicles={vehicles || []} drivers={drivers || []} purposes={purposes || []} locations={locations || []} expenseTypes={expenseTypes || []} orgSettings={orgSettings} />;
           case 'accident':
@@ -142,6 +144,8 @@ export const PrintDriver = () => {
                   cs={cs} 
                   demandNote={relatedDN} 
                   vendors={vendors || []} 
+                  employees={employees || []}
+                  designations={designations || []}
                   orgSettings={orgSettings} 
               />
           default:

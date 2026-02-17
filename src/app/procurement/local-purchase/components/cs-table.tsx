@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon, User as UserIcon, Check, X } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, X as XIcon, User as UserIcon, Check, X, Printer } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -35,6 +35,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 
 export function ComparativeStatementTable() {
@@ -42,6 +43,7 @@ export function ComparativeStatementTable() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { handlePrint } = usePrint();
 
     const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
 
@@ -444,18 +446,17 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewStatus(cs)}><Users className="h-4 w-4" /></Button></TooltipTrigger>
-                                                        <TooltipContent>View Approval Status</TooltipContent>
-                                                    </Tooltip>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger>
-                                                        <TooltipContent>View</TooltipContent>
-                                                    </Tooltip>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(cs)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger>
-                                                        <TooltipContent>Delete</TooltipContent>
-                                                    </Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewStatus(cs)}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>View Approval Status</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                                    {cs.approvalStatus === 1 && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(cs, 'comparative-statement')}><Printer className="h-4 w-4" /></Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Print CS</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(cs)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
