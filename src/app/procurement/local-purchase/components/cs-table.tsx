@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { getCSStatusText } from '../lib/status-helper';
 
 export function ComparativeStatementTable() {
     const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors } = useProcurement();
@@ -184,6 +185,13 @@ export function ComparativeStatementTable() {
         setGpConcernFilter('all');
         setVendorFilter('all');
     };
+    
+    const getStatusVariant = (status: number | undefined) => {
+        if (status === 1) return 'default';
+        if (status === 0) return 'destructive';
+        return 'secondary';
+    }
+
 
     return (
         <TooltipProvider>
@@ -229,8 +237,9 @@ export function ComparativeStatementTable() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>CS Number</TableHead>
-                                <TableHead>Demand Note Number</TableHead>
-                                <TableHead>GP Concern</TableHead>
+                                <TableHead>Demand Note</TableHead>
+                                <TableHead>Created By</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="w-[120px] text-right">Actions</TableHead>
                             </TableRow>
@@ -242,6 +251,7 @@ export function ComparativeStatementTable() {
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
                                         <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                                         <TableCell><Skeleton className="h-8 w-20 float-right" /></TableCell>
                                         <TableCell><Skeleton className="h-8 w-24 float-right" /></TableCell>
                                     </TableRow>
@@ -287,6 +297,9 @@ export function ComparativeStatementTable() {
                                                     {time && <span className="text-xs text-muted-foreground">{time}</span>}
                                                 </div>
                                             </TableCell>
+                                            <TableCell>
+                                                <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex flex-col items-end">
                                                     <span className="flex items-center text-red-500 font-semibold">
@@ -320,7 +333,7 @@ export function ComparativeStatementTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">No comparative statements found.</TableCell>
+                                    <TableCell colSpan={6} className="h-24 text-center">No comparative statements found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

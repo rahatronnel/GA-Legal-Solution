@@ -606,7 +606,41 @@
             "required": ["vendorId"]
           }
         },
-        "createdBy": { "type": "string", "description": "Employee ID of the creator." }
+        "createdBy": { "type": "string", "description": "Employee ID of the creator." },
+        "approvalAmount": { "type": "number", "description": "The calculated amount used as the basis for the approval workflow." },
+        "approvalAmountBasis": { "type": "string", "enum": ["Minimum", "Average", "Maximum"], "description": "The basis used to calculate the approval amount." },
+        "approvalFlow": {
+            "type": "object",
+            "description": "The determined approval workflow for this specific CS.",
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "stepName": { "type": "string" },
+                            "approverId": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
+        "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
+        "currentApproverId": { "type": "string" },
+        "approvalHistory": {
+            "type": "array",
+            "description": "An audit trail of the approval process.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "level": { "type": "number" },
+                    "approverId": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Approved", "Rejected"] },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "remarks": { "type": "string" }
+                }
+            }
+        }
       },
       "required": ["csNumber", "csDate", "demandNoteId"]
     }
@@ -671,6 +705,7 @@
     
 
     
+
 
 
 

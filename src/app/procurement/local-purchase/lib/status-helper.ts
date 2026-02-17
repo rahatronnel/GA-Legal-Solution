@@ -1,7 +1,8 @@
 
 import type { DemandNote } from '../components/demand-note-entry-form';
+import type { ComparativeStatement } from '../components/cs-entry-form';
 
-// Status code mapping for Demand Notes
+// Status code mapping for Demand Notes and Comparative Statements
 const statusMap: { [key: number]: string } = {
     0: 'Rejected',
     1: 'Completed',
@@ -22,6 +23,13 @@ export function getDemandNoteStatusText(note: DemandNote): string {
     if(statusCode === undefined) return 'Unknown';
     return statusMap[statusCode] || 'Unknown';
 }
+
+export function getCSStatusText(cs: ComparativeStatement): string {
+    const statusCode = cs.approvalStatus;
+    if(statusCode === undefined) return 'Unknown';
+    return statusMap[statusCode] || 'Unknown';
+}
+
 
 export function getNextApprovalStatusCode(historyLength: number): number {
     return historyLength + 3;

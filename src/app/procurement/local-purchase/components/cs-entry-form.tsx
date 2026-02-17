@@ -53,6 +53,14 @@ export type ComparativeStatement = {
     items: ComparativeStatementItem[];
     vendorDetails: VendorDetail[];
     createdBy: string;
+    approvalAmount?: number;
+    approvalAmountBasis?: 'Minimum' | 'Average' | 'Maximum';
+    approvalFlow?: {
+        steps: { stepName: string; approverId: string; }[];
+    };
+    approvalStatus?: number;
+    currentApproverId?: string;
+    approvalHistory?: any[];
 };
 
 interface CsFormProps {
@@ -64,7 +72,7 @@ interface CsFormProps {
 
 export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote }: CsFormProps) {
     const { toast } = useToast();
-    const { vendors, employees } = useProcurement();
+    const { vendors, employees, orgSettings } = useProcurement();
     const { user } = useUser();
     
     const [step, setStep] = useState(0); // 0 for initial info, 1+ for vendors
@@ -171,7 +179,79 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
     const handleSave = () => {
-        onSave(csData);
+        if (!demandNote) return;
+    
+        const dataToSave: Partial<ComparativeStatement> = { ...csData };
+    
+        // Only run approval flow logic for new CS
+        if (!orgSettings || !demandNote) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load required settings or demand note.' });
+            return;
+        }
+    
+        const { procurementSettings } = orgSettings;
+        const { csApprovalRoles, departmentHeads, specializedDeptManagerId, specializedDeptTaId, managingDirectorId, factoryDirectorId } = procurementSettings || {};
+        
+        if (!csApprovalRoles) {
+            toast({ variant: 'destructive', title: 'Error', description: 'CS Approval Roles are not configured in settings.' });
+            return;
+        }
+    
+        // 1. Calculate the approval amount
+        const vendorTotals = (csData.vendorDetails || []).map(vd => calculateTotals(vd.vendorId).grandTotal);
+    
+        let approvalAmount = 0;
+        const basis = csApprovalRoles.approvalAmountBasis || 'Minimum';
+    
+        if (vendorTotals.length > 0) {
+            if (basis === 'Minimum') {
+                approvalAmount = Math.min(...vendorTotals);
+            } else if (basis === 'Maximum') {
+                approvalAmount = Math.max(...vendorTotals);
+            } else { // Average
+                approvalAmount = vendorTotals.reduce((sum, total) => sum + total, 0) / vendorTotals.length;
+            }
+        }
+        
+        dataToSave.approvalAmount = approvalAmount;
+        dataToSave.approvalAmountBasis = basis;
+    
+        // 2. Determine approval steps
+        const approvalSteps: {stepName: string, approverId: string}[] = [];
+        const { purchaseManagerId, purchaseDeptTaId, viceFactoryManagerId, accountsManagerId, gmSalesDeptId, gmAdministrationId } = csApprovalRoles;
+        const requesterDeptTA = (departmentHeads || []).find(dh => dh.sectionId === demandNote.sectionId)?.technicalAdvisorId;
+    
+        if (approvalAmount <= 9999) {
+            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
+        } else if (approvalAmount <= 99999) {
+            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
+            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+        } else if (approvalAmount <= 999999) {
+            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
+            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+            if (requesterDeptTA) approvalSteps.push({ stepName: "Requester Dept. TA", approverId: requesterDeptTA });
+            if (specializedDeptManagerId) approvalSteps.push({ stepName: "Specialized Dept. Manager", approverId: specializedDeptManagerId });
+        } else {
+            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
+            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+            if (requesterDeptTA) approvalSteps.push({ stepName: "Requester Dept. TA", approverId: requesterDeptTA });
+            if (specializedDeptManagerId) approvalSteps.push({ stepName: "Specialized Dept. Manager", approverId: specializedDeptManagerId });
+            if (viceFactoryManagerId) approvalSteps.push({ stepName: "Vice Factory Manager", approverId: viceFactoryManagerId });
+            if (accountsManagerId) approvalSteps.push({ stepName: "Accounts Manager", approverId: accountsManagerId });
+            if (gmSalesDeptId) approvalSteps.push({ stepName: "GM Sales Department", approverId: gmSalesDeptId });
+            if (gmAdministrationId) approvalSteps.push({ stepName: "GM-Administration", approverId: gmAdministrationId });
+            if (managingDirectorId || factoryDirectorId) {
+                approvalSteps.push({ stepName: "Final Approval (MD/FD)", approverId: managingDirectorId || factoryDirectorId! });
+            }
+        }
+        
+        // 3. Set initial approval state
+        dataToSave.approvalFlow = { steps: approvalSteps };
+        dataToSave.approvalStatus = approvalSteps.length > 0 ? 2 : 1;
+        dataToSave.currentApproverId = approvalSteps[0]?.approverId || '';
+        dataToSave.approvalHistory = [];
+        
+        onSave(dataToSave);
         setIsOpen(false);
     };
 
