@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -37,6 +38,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
