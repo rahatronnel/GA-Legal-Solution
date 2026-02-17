@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -41,6 +40,9 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { PurchaseOrderForm } from './po-entry-form';
+import type { PurchaseOrder } from './po-entry-form';
+
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -182,7 +184,7 @@ const VendorSelectionDialog: React.FC<{
 }
 
 export function ComparativeStatementTable() {
-    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors, designations } = useProcurement();
+    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors, designations, purchaseOrders } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -191,6 +193,8 @@ export function ComparativeStatementTable() {
     const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
     const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
+    const [isPoFormOpen, setIsPoFormOpen] = useState(false);
+    const [selectedCsForPo, setSelectedCsForPo] = useState<ComparativeStatement | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [gpConcernFilter, setGpConcernFilter] = useState('all');
@@ -425,25 +429,6 @@ export function ComparativeStatementTable() {
                 if (nextLevel >= approvalLevels.length) {
                     newApprovalStatus = 1; // Completed
                     updatePayload.currentApproverId = '';
-    
-                    // CREATE PO for bulk action
-                    if (poCollectionRef && cs.selectedVendorId) {
-                        const poData = getPODataFromCS(cs);
-                        if (poData) {
-                            const newPO = {
-                                 poNumber: `PO-${cs.csNumber}`,
-                                 poDate: format(new Date(), 'yyyy-MM-dd'),
-                                 demandNoteId: cs.demandNoteId,
-                                 csId: cs.id,
-                                 vendorId: cs.selectedVendorId,
-                                 ...poData,
-                                 status: 'Pending',
-                                 createdBy: currentUserEmployee.id,
-                                 createdAt: new Date().toISOString(),
-                            };
-                            addDocumentNonBlocking(poCollectionRef, newPO);
-                        }
-                    }
                 } else {
                     newApprovalStatus = getNextApprovalStatusCode(currentLevel);
                     updatePayload.currentApproverId = approvalLevels[nextLevel].approverId;
@@ -497,41 +482,6 @@ export function ComparativeStatementTable() {
         return totals;
     };
     
-    const getPODataFromCS = (cs: ComparativeStatement) => {
-        if (!cs || !cs.selectedVendorId) return null;
-    
-        const selectedVendorDetails = cs.vendorDetails.find(vd => vd.vendorId === cs.selectedVendorId);
-        if (!selectedVendorDetails) return null;
-    
-        const totals = calculateVendorTotals(cs)[cs.selectedVendorId];
-        if (!totals) return null;
-
-        const poItems = cs.items.map(item => {
-            const quote = item.vendorQuotes.find(q => q.vendorId === cs.selectedVendorId);
-            const unitPrice = quote?.unitPrice || 0;
-            return {
-                demandNoteItemId: item.demandNoteItemId,
-                particulars: item.particulars,
-                unit: item.unit,
-                quantity: item.quantity,
-                unitPrice: unitPrice,
-                totalPrice: item.quantity * unitPrice,
-            };
-        });
-    
-        return {
-            items: poItems,
-            totalAmount: totals.subtotal,
-            discountAmount: totals.discount,
-            vatAmount: totals.vatAmount,
-            taxAmount: totals.taxAmount,
-            netPayableAmount: totals.grandTotal,
-            deliveryTerms: selectedVendorDetails.deliveryTerms || '',
-            paymentTerms: selectedVendorDetails.paymentTerms || '',
-            warranty: selectedVendorDetails.warranty || '',
-        };
-    };
-    
     const handleDelete = (cs: ComparativeStatement) => {
         setCurrentItem(cs);
         setIsDeleteConfirmOpen(true);
@@ -573,6 +523,20 @@ export function ComparativeStatementTable() {
         setIsVendorSelectionOpen(true);
     };
     
+    const handleCreatePO = (cs: ComparativeStatement) => {
+        setSelectedCsForPo(cs);
+        setIsPoFormOpen(true);
+    };
+
+    const handleSavePO = (poData: Partial<PurchaseOrder>) => {
+        if (!poCollectionRef) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not connect to database.' });
+            return;
+        }
+        addDocumentNonBlocking(poCollectionRef, poData);
+        toast({ title: 'Success!', description: `Purchase Order ${poData.poNumber} has been created.` });
+    };
+
     const clearFilters = () => {
         setSearchTerm('');
         setGpConcernFilter('all');
@@ -652,7 +616,6 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
-                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -664,18 +627,17 @@ export function ComparativeStatementTable() {
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
                                         <TableCell><Skeleton className="h-5 w-5" /></TableCell>
-                                        <TableCell colSpan={7}><Skeleton className="h-5 w-full" /></TableCell>
+                                        <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
-                                    const {date, time} = formatDateTime(cs.csDate);
                                     const {date: selectionDate, time: selectionTime} = formatDateTime(cs.vendorSelectionDate);
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const canSelect = approvableCS.some(approvable => approvable.id === cs.id);
                                     const canSelectVendor = (isSuperAdmin || (currentUserEmployee && cs.vendorSelectorId === currentUserEmployee.id)) && cs.approvalStatus === 2;
-                                    const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
+                                    const poExists = (purchaseOrders || []).some(po => po.csId === cs.id);
 
                                     return (
                                         <TableRow key={cs.id} data-state={selectedRows.includes(cs.id) ? "selected" : ""}>
@@ -712,7 +674,6 @@ export function ComparativeStatementTable() {
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{getEmployeeName(demandNote?.gpConcernOfficerId)}</TableCell>
                                             <TableCell>
                                                 {cs.selectedVendorId ? (
                                                     <div className="flex flex-col">
@@ -729,6 +690,16 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                     {(isGPOfficer || isGPConcern || isSuperAdmin) && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)} disabled={cs.approvalStatus !== 1 || poExists}>
+                                                                    <span>📄</span>
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>{poExists ? 'PO already created' : 'Create Purchase Order'}</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
                                                     {canSelectVendor && (
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
@@ -839,6 +810,13 @@ export function ComparativeStatementTable() {
                 onOpenChange={setIsVendorSelectionOpen}
                 onVendorSelected={handleVendorSelected}
                 vendors={vendors || []}
+            />
+            
+            <PurchaseOrderForm 
+                isOpen={isPoFormOpen}
+                setIsOpen={setIsPoFormOpen}
+                onSave={handleSavePO}
+                cs={selectedCsForPo}
             />
 
             <AlertDialog open={isBulkConfirmOpen} onOpenChange={setIsBulkConfirmOpen}>
