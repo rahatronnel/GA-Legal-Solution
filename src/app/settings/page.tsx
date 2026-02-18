@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
 
 type ApprovalStep = {
     stepName: string;
@@ -314,7 +315,7 @@ export default function SettingsPage() {
         <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="general">General Settings</TabsTrigger>
-                <TabsTrigger value="maintenance" className="opacity-10 hover:opacity-100 transition-opacity">Maintenance</TabsTrigger>
+                <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general">
