@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { getCSStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
@@ -82,48 +82,6 @@ function ComparativeStatementView() {
                 // This is the final approval
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
-
-                // CREATE PURCHASE ORDER
-                if (poCollectionRef && cs.selectedVendorId) {
-                    const selectedVendorDetails = cs.vendorDetails.find(vd => vd.vendorId === cs.selectedVendorId);
-                    const totals = vendorTotals[cs.selectedVendorId];
-
-                    const poItems = cs.items.map(item => {
-                        const quote = item.vendorQuotes.find(q => q.vendorId === cs.selectedVendorId);
-                        const unitPrice = quote?.unitPrice || 0;
-                        return {
-                            demandNoteItemId: item.demandNoteItemId,
-                            particulars: item.particulars,
-                            unit: item.unit,
-                            quantity: item.quantity,
-                            unitPrice: unitPrice,
-                            totalPrice: item.quantity * unitPrice,
-                        };
-                    });
-
-                    const newPO = {
-                        poNumber: `PO-${cs.csNumber}`,
-                        poDate: format(new Date(), 'yyyy-MM-dd'),
-                        demandNoteId: cs.demandNoteId,
-                        csId: cs.id,
-                        vendorId: cs.selectedVendorId,
-                        items: poItems,
-                        totalAmount: totals?.subtotal,
-                        discountAmount: totals?.discount,
-                        vatAmount: totals?.vatAmount,
-                        taxAmount: totals?.taxAmount,
-                        netPayableAmount: totals?.grandTotal,
-                        deliveryTerms: selectedVendorDetails?.deliveryTerms || '',
-                        paymentTerms: selectedVendorDetails?.paymentTerms || '',
-                        warranty: selectedVendorDetails?.warranty || '',
-                        status: 'Pending',
-                        createdBy: currentUserEmployee.id,
-                        createdAt: new Date().toISOString(),
-                    };
-
-                    addDocumentNonBlocking(poCollectionRef, newPO);
-                    toast({ title: 'Purchase Order Created', description: `PO for ${cs.csNumber} has been automatically generated.` });
-                }
             }
         } else { // Rejected
             newApprovalStatus = 0;
@@ -139,7 +97,7 @@ function ComparativeStatementView() {
 
     const { canApprove, isPendingApproval } = useMemo(() => {
         if (!cs || !currentUserEmployee || !orgSettings?.procurementSettings) return { canApprove: false, isPendingApproval: false };
-        const pending = cs.approvalStatus !== 0 && cs.approvalStatus !== 1;
+        const pending = cs.approvalStatus !== 0 && cs.approvalStatus !== 1 && cs.approvalStatus !== 2;
         
         const { managingDirectorId, factoryDirectorId } = orgSettings.procurementSettings;
         const finalStep = cs.approvalFlow?.steps[cs.approvalFlow.steps.length - 1];
@@ -226,8 +184,38 @@ function ComparativeStatementView() {
                         <div className="flex items-center gap-2">
                             {canApprove && (
                                 <>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Approve CS?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to approve the selection of vendor <strong className="text-foreground">{selectedVendor?.vendorName || 'N/A'}</strong> for a total of <strong className="text-foreground">{formatCurrency(selectedVendorTotal || 0)}</strong>? This will move the CS to the next step.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject CS?</AlertDialogTitle><AlertDialogDescription>This will stop the approval process.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={()=>handleApproval(0)}>Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                                 <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Approve CS?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Are you sure you want to approve the selection of vendor <strong className="text-foreground">{selectedVendor?.vendorName || 'N/A'}</strong> for a total of <strong className="text-foreground">{formatCurrency(selectedVendorTotal || 0)}</strong>? This will move the CS to the next step.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                 </AlertDialog>
+                                 <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Reject CS?</AlertDialogTitle>
+                                            <AlertDialogDescription>This will stop the approval process.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={()=>handleApproval(0)}>Confirm Reject</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                 </AlertDialog>
                                 </>
                             )}
                             {cs.approvalStatus === 1 && (

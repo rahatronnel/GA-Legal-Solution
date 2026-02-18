@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -26,6 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
+        {/* Firebase initialized on the client */}
         <FirebaseClientProvider>
           <PrintProvider>
             <div className="app-container">

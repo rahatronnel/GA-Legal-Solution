@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Eye, Edit, Trash2, ArrowUp, ArrowDown, XCircle, Copy, Users, CheckCircle, MoreHorizontal, Hourglass, User as UserIcon, Check, Printer, X } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
 import { PurchaseOrderForm } from './po-entry-form';
 import type { PurchaseOrder } from './po-entry-form';
 
@@ -410,7 +409,7 @@ export function ComparativeStatementTable() {
             const cs = comparativeStatements.find(c => c.id === csId);
             if (!cs || !cs.approvalFlow?.steps || !currentUserEmployee) return;
     
-            const noteRef = doc(csRef, csId);
+            const noteRef = doc(csRef!, csId);
             const approvalLevels = cs.approvalFlow.steps;
             const currentLevel = cs.approvalHistory?.length || 0;
     
@@ -507,7 +506,7 @@ export function ComparativeStatementTable() {
             return;
         }
 
-        const csDocRef = doc(csRef, csId);
+        const csDocRef = doc(csRef!, csId);
         const firstApproverId = cs.approvalFlow.steps[0]?.approverId || '';
         
         setDocumentNonBlocking(csDocRef, {
