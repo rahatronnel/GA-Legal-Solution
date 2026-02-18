@@ -124,11 +124,16 @@ export function DemandNoteTable() {
                     ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
                     .map(dh => dh.sectionId) || [];
     
-                if (managedSectionIds.length > 0) {
-                    baseList = safeItems.filter(note => managedSectionIds.includes(note.sectionId));
-                } else {
-                    baseList = safeItems.filter(note => note.createdBy === currentUserEmployee.id);
-                }
+                // Additive Visibility Filter:
+                // User sees notes they created OR notes for sections they manage OR notes they are assigned to approve
+                baseList = safeItems.filter(note => {
+                    const isCreator = note.createdBy === currentUserEmployee.id;
+                    const isSectionManager = managedSectionIds.includes(note.sectionId);
+                    const isCurrentApprover = note.currentApproverId === currentUserEmployee.id;
+                    const isAssignedGP = note.gpConcernOfficerId === currentUserEmployee.id;
+                    
+                    return isCreator || isSectionManager || isCurrentApprover || isAssignedGP;
+                });
             }
         } else {
             baseList = [];
