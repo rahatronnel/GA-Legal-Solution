@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Check, Copy, Users, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -46,23 +46,48 @@ export function PurchaseOrderTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern } = useMemo(() => {
+    const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
-        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false };
+        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
 
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
+        
+        let csApproverCheck = false;
+        const csRoles = settings.csApprovalRoles;
+        if (csRoles) {
+            const roleIds = [
+                csRoles.purchaseManagerId,
+                csRoles.purchaseDeptTaId,
+                csRoles.viceFactoryManagerId,
+                csRoles.accountsManagerId,
+                csRoles.gmSalesDeptId,
+                csRoles.gmAdministrationId,
+            ];
+            if (roleIds.includes(currentUserEmployee.id)) {
+                csApproverCheck = true;
+            }
+        }
+        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentUserEmployee.id)) {
+            csApproverCheck = true;
+        }
+        if (!csApproverCheck && settings.specializedDeptTaId === currentUserEmployee.id) {
+            csApproverCheck = true;
+        }
 
-        return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isGPConcern: GPC };
+        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
     }, [orgSettings, currentUserEmployee, user]);
+
+    const { isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover } = roleData;
 
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
         if (isGPConcern) return "Role: GP Concern Officer";
-        return "Role: Viewer";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern]);
+        if (isCsApprover) return "Role: CS Approver";
+        return "Role: Employee";
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover]);
     
     const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -153,8 +178,6 @@ export function PurchaseOrderTable() {
         return 'secondary';
     }
 
-    if (isLoading) return <div className="p-8 text-center"><p>Loading Purchase Orders...</p></div>;
-
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -208,8 +231,10 @@ export function PurchaseOrderTable() {
                             {filteredPOs && filteredPOs.length > 0 ? (
                                 filteredPOs.map((po: PurchaseOrder) => {
                                     const {date, time} = formatDateTime(po.createdAt);
+                                    const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
+                                    
                                     return (
-                                    <TableRow key={po.id}>
+                                    <TableRow key={po.id} className={isWaitingForMe ? 'bg-orange-500/5' : ''}>
                                         <TableCell className="font-medium">{po.poNumber}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col text-sm">
@@ -223,7 +248,14 @@ export function PurchaseOrderTable() {
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
                                         <TableCell>{getGPConcernName(po.demandNoteId)}</TableCell>
                                         <TableCell className="text-right font-semibold">{formatCurrency(po.netPayableAmount)}</TableCell>
-                                        <TableCell><Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge></TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge>
+                                                {isWaitingForMe && (
+                                                    <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Users className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Status</TooltipContent></Tooltip>

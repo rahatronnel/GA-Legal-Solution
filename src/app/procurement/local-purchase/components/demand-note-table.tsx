@@ -58,38 +58,39 @@ export function DemandNoteTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
     
-    const { isGPOfficer, isGPConcern, gpConcernOfficers, isSuperAdmin, isManager } = useMemo(() => {
+    const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, gpConcernOfficers: [] };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false, gpConcernOfficers: [] };
+            return { isGPOfficer: false, isSuperAdmin: superAdminCheck, isGPConcern: false, isManager: false };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
-        const officers = (settings.gpConcernOfficerIds || []).map(id => employees.find(e => e.id === id)).filter(Boolean) as any[] || [];
         const manager = 
             settings.managingDirectorId === currentEmp.id ||
             settings.factoryDirectorId === currentEmp.id ||
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isGPConcern: GPC, gpConcernOfficers: officers, isSuperAdmin: superAdminCheck, isManager: manager };
+        return { isGPOfficer: GPO, isGPConcern: GPC, isSuperAdmin: superAdminCheck, isManager: manager };
     }, [orgSettings, employees, user]);
+
+    const { isGPOfficer, isSuperAdmin, isManager } = roleData;
 
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
         if (isManager) return "Role: Manager";
-        if (isGPConcern) return "Role: GP Concern Officer";
+        if (roleData.isGPConcern) return "Role: GP Concern Officer";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
+    }, [isSuperAdmin, isGPOfficer, isManager, roleData.isGPConcern]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
@@ -98,7 +99,7 @@ export function DemandNoteTable() {
         if (!isoString) return { date: '', time: '' };
         try {
             const d = new Date(isoString);
-            const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric'});
+            const date = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
             const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return { date, time };
         } catch {
@@ -113,7 +114,6 @@ export function DemandNoteTable() {
     
         let baseList: DemandNote[];
     
-        // GP Officers, Superadmins, and Managers see all notes for oversight and processing.
         if (isSuperAdmin || isGPOfficer || isManager) {
             baseList = safeItems;
         } else if (currentUserEmployee) {
@@ -122,8 +122,6 @@ export function DemandNoteTable() {
                 ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
                 .map(dh => dh.sectionId) || [];
 
-            // Additive Visibility Filter:
-            // User sees notes they created OR notes for sections they manage OR notes they are assigned to approve
             baseList = safeItems.filter(note => {
                 const isCreator = note.createdBy === currentUserEmployee.id;
                 const isSectionManager = managedSectionIds.includes(note.sectionId);
@@ -342,9 +340,10 @@ export function DemandNoteTable() {
                                 const isPendingForCurrentUser = approvableNotes.some(note => note.id === item.id);
                                 const canSelect = isPendingForCurrentUser;
                                 const {date: entryDate, time: entryTime} = formatDateTime(item.entryDate);
+                                const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
                                 
                                 return (
-                                <TableRow key={item.id} data-state={selectedRows.includes(item.id) ? "selected" : ""}>
+                                <TableRow key={item.id} data-state={selectedRows.includes(item.id) ? "selected" : ""} className={isWaitingForMe ? 'bg-orange-500/5' : ''}>
                                     <TableCell>
                                         <Checkbox
                                             checked={selectedRows.includes(item.id)}
@@ -383,7 +382,14 @@ export function DemandNoteTable() {
                                             {entryTime && <span className="text-xs text-muted-foreground">{entryTime}</span>}
                                         </div>
                                     </TableCell>
-                                    <TableCell><Badge variant={getStatusVariant(item.approvalStatus)}>{getDemandNoteStatusText(item)}</Badge></TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={getStatusVariant(item.approvalStatus)}>{getDemandNoteStatusText(item)}</Badge>
+                                            {isWaitingForMe && (
+                                                <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         {item.approvalStatus === 1 ? (
                                             <Badge variant={item.gpStatus === 'Assigned' ? 'default' : 'secondary'}>{item.gpStatus || 'Pending'}</Badge>
@@ -425,7 +431,7 @@ export function DemandNoteTable() {
                     <DialogHeader>
                         <DialogTitle>Are you sure?</DialogTitle>
                         <DialogDescription>
-                            This will permanently delete "{currentItem?.demandNoteNumber}".
+                            This action cannot be undone. This will permanently delete "{currentItem?.demandNoteNumber}".
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

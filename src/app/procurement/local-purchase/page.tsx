@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-categ
 import { useUser } from '@/firebase';
 import { useProcurement } from './components/procurement-provider';
 import GPDeskTable from './components/gp-desk-table';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { VendorTable } from '@/app/billflow/components/vendor-table';
 import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-table';
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
@@ -124,20 +123,22 @@ export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = React.useMemo(() => {
+  const roleData = React.useMemo(() => {
     const settings = orgSettings?.procurementSettings;
-    const superAdmin = user?.email === 'superadmin@galsolution.com';
+    const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+    
     if (!settings || !employees || employees.length === 0 || !user) {
-      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
+    
     const currentUserEmployee = employees.find(e => e.email === user.email);
     if (!currentUserEmployee) {
-      return { isSuperAdmin: superAdmin, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
     const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
-    const manager = 
+    const managerCheck = 
         settings.managingDirectorId === currentUserEmployee.id ||
         settings.factoryDirectorId === currentUserEmployee.id ||
         settings.manufacturingDeptManagerId === currentUserEmployee.id ||
@@ -167,27 +168,33 @@ export default function LocalPurchasePage() {
         csApproverCheck = true;
     }
 
-    return { isSuperAdmin: superAdmin, isGPOfficer: GPO, isGPConcern: GPC, isManager: manager, isCsApprover: csApproverCheck };
-  }, [orgSettings, employees, user, isLoading]);
+    return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isManager: managerCheck, isCsApprover: csApproverCheck };
+  }, [orgSettings, employees, user]);
   
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = roleData;
+
   const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
   const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
-  const canViewPoTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
+  const canViewPoTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
 
-  const getGridCols = () => {
+  const gridCols = useMemo(() => {
     let count = 2; // Dashboard & Demand Notes
     if (showGPDesk) count++;
     if (canViewCsTab) count++;
     if (canViewPoTab) count++;
     if (isSuperAdmin) count += 2; // Master Data & Settings
-    return `repeat(${count}, minmax(0, 1fr))`;
-  };
+    return count;
+  }, [showGPDesk, canViewCsTab, canViewPoTab, isSuperAdmin]);
+
+  if (isLoading) {
+      return <div className="p-8 text-center"><p>Loading Local Purchase module...</p></div>;
+  }
 
   return (
     <div className="space-y-6">
       <ModuleHeader />
       <Tabs defaultValue="demand-notes" className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: getGridCols() }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
@@ -227,7 +234,7 @@ export default function LocalPurchasePage() {
             <TabsContent value="gp-desk">
                 <Card>
                     <CardHeader>
-                        <CardTitle>General Purchase Desk</CardTitle>
+                        <CardTitle>General Purchase (GP) Desk</CardTitle>
                         <CardDescription>Manage demand notes assigned for purchasing.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -328,16 +335,14 @@ export default function LocalPurchasePage() {
                             <Card>
                                 <CardHeader><CardTitle>Vendor Categories</CardTitle><CardDescription>Manage the categories for your vendors.</CardDescription></CardHeader>
                                 <CardContent><VendorCategoryTable /></CardContent>
-                            </Card>
-                        </LegacyBillFlowProvider>
+                            </LegacyBillFlowProvider>
                     </TabsContent>
                     <TabsContent value="vendor-nature" className="mt-4">
                          <LegacyBillFlowProvider>
                             <Card>
                                 <CardHeader><CardTitle>Vendor Nature of Business</CardTitle><CardDescription>Manage the nature of business for your vendors.</CardDescription></CardHeader>
                                 <CardContent><VendorNatureOfBusinessTable /></CardContent>
-                            </Card>
-                        </LegacyBillFlowProvider>
+                            </LegacyBillFlowProvider>
                     </TabsContent>
                     <TabsContent value="delivery-places" className="mt-4">
                         <Card>

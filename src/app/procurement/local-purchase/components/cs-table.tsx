@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Copy, Users, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, XCircle, FileText, Hand } from 'lucide-react';
+import { Search, Eye, Trash2, Check, Printer, X, Copy, Users, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -35,9 +35,7 @@ import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogDescription } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { PurchaseOrderForm, type PurchaseOrder } from './po-entry-form';
 
 const VendorSelectionDialog: React.FC<{
@@ -51,7 +49,6 @@ const VendorSelectionDialog: React.FC<{
     const [selectedVendorId, setSelectedVendorId] = useState('');
 
     const selectedVendor = vendors.find(v => v.id === selectedVendorId);
-    const selectedVendorDetails = cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId);
     
     useEffect(() => {
         if (isOpen) {
@@ -138,13 +135,13 @@ const VendorSelectionDialog: React.FC<{
                             </Table>
                         </div>
                     )}
-                    {step === 3 && selectedVendorDetails && (
+                    {step === 3 && selectedVendorId && (
                         <div>
                             <h4 className="font-semibold text-lg mb-2">Review Commercial Terms</h4>
                              <div className="space-y-2 text-sm p-4 border rounded-md">
-                                <p><strong>Delivery Terms:</strong> {selectedVendorDetails.deliveryTerms || 'N/A'}</p>
-                                <p><strong>Payment Terms:</strong> {selectedVendorDetails.paymentTerms || 'N/A'}</p>
-                                <p><strong>Warranty:</strong> {selectedVendorDetails.warranty || 'N/A'}</p>
+                                <p><strong>Delivery Terms:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.deliveryTerms || 'N/A'}</p>
+                                <p><strong>Payment Terms:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.paymentTerms || 'N/A'}</p>
+                                <p><strong>Warranty:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.warranty || 'N/A'}</p>
                             </div>
                         </div>
                     )}
@@ -177,7 +174,6 @@ export function ComparativeStatementTable() {
     const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [gpConcernFilter, setGpConcernFilter] = useState('all');
     const [vendorFilter, setVendorFilter] = useState('all');
     
     const [isPoFormOpen, setIsPoFormOpen] = useState(false);
@@ -188,6 +184,7 @@ export function ComparativeStatementTable() {
     const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
     const [isVendorSelectionOpen, setIsVendorSelectionOpen] = useState(false);
     const [selectedCsForVendor, setSelectedCsForVendor] = useState<ComparativeStatement | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -196,54 +193,72 @@ export function ComparativeStatementTable() {
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
-    const getEmployeeName = (id?: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    const formatDateTime = (isoString?: string) => {
-        if (!isoString) return { date: '', time: '' };
-        try {
-            const d = new Date(isoString);
-            return {
-                date: d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric'}),
-                time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-        } catch { return { date: 'N/A', time: 'N/A' }; }
-    }
 
-    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover } = useMemo(() => {
+    const roleData = useMemo(() => {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
         const currentEmp = employees?.find(e => e.email === user?.email);
 
-        if (!settings || !currentEmp) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, isCsApprover: false };
+        if (!settings || !currentEmp) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
-        const manager = settings.managingDirectorId === currentEmp.id || settings.factoryDirectorId === currentEmp.id;
-        let csApproverCheck = settings.csApprovalRoles && Object.values(settings.csApprovalRoles).includes(currentEmp.id);
         
-        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, isCsApprover: !!csApproverCheck };
+        let csApproverCheck = false;
+        const csRoles = settings.csApprovalRoles;
+        if (csRoles) {
+            const roleIds = [
+                csRoles.purchaseManagerId,
+                csRoles.purchaseDeptTaId,
+                csRoles.viceFactoryManagerId,
+                csRoles.accountsManagerId,
+                csRoles.gmSalesDeptId,
+                csRoles.gmAdministrationId,
+            ];
+            if (roleIds.includes(currentEmp.id)) {
+                csApproverCheck = true;
+            }
+        }
+        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) {
+            csApproverCheck = true;
+        }
+        if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) {
+            csApproverCheck = true;
+        }
+        
+        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
     }, [orgSettings, employees, user]);
+
+    const { isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover } = roleData;
 
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
-        if (isManager) return "Role: Manager";
         if (isGPConcern) return "Role: GP Concern Officer";
         if (isCsApprover) return "Role: CS Approver";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover]);
+    }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover]);
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
-            const demandNote = demandNotes?.find(dn => dn.id === cs.demandNoteId);
             const searchTermMatch = !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(searchTerm.toLowerCase());
-            const gpConcernMatch = gpConcernFilter === 'all' || demandNote?.gpConcernOfficerId === gpConcernFilter;
             const vendorMatch = vendorFilter === 'all' || cs.vendorDetails.some((vd: any) => vd.vendorId === vendorFilter);
-            return searchTermMatch && gpConcernMatch && vendorMatch;
+            return searchTermMatch && vendorMatch;
         }).sort((a, b) => new Date(b.csDate).getTime() - new Date(a.csDate).getTime());
-    }, [comparativeStatements, searchTerm, gpConcernFilter, vendorFilter, demandNotes]);
+    }, [comparativeStatements, searchTerm, vendorFilter, demandNotes]);
+
+    const approvableItems = useMemo(() => {
+        return filteredItems.filter(item => 
+            item.approvalStatus !== 1 && 
+            item.approvalStatus !== 0 && 
+            item.approvalStatus !== 2 &&
+            currentUserEmployee && 
+            item.currentApproverId === currentUserEmployee.id
+        );
+    }, [filteredItems, currentUserEmployee]);
 
     const handleSavePO = (poData: Partial<PurchaseOrder>) => {
         if (!poCollectionRef) return;
@@ -261,7 +276,7 @@ export function ComparativeStatementTable() {
         setDocumentNonBlocking(doc(csRef, csId), {
             selectedVendorId: vendorId,
             vendorSelectionDate: new Date().toISOString(),
-            approvalStatus: 3, // Move to the first approval step (e.g. Pending Review)
+            approvalStatus: 3, 
             currentApproverId: firstApproverId,
         }, { merge: true });
 
@@ -269,28 +284,50 @@ export function ComparativeStatementTable() {
         setIsVendorSelectionOpen(false);
     };
 
-    const handleDelete = (cs: ComparativeStatement) => {
-        setCurrentItem(cs);
-        setIsDeleteConfirmOpen(true);
-    };
+    const handleBulkApproval = (status: number) => {
+        if (!firestore || !currentUserEmployee || !csRef) return;
 
-    const confirmDelete = () => {
-        if (currentItem && csRef && firestore) {
-            deleteDocumentNonBlocking(doc(csRef, currentItem.id));
-            const associatedPo = purchaseOrders?.find(po => po.csId === currentItem.id);
-            if (associatedPo) {
-                const poRef = doc(firestore, 'purchaseOrders', associatedPo.id);
-                deleteDocumentNonBlocking(poRef);
+        selectedRows.forEach(id => {
+            const cs = comparativeStatements.find(c => c.id === id);
+            if (!cs || !cs.approvalFlow?.steps) return;
+
+            const currentLevel = cs.approvalHistory?.length || 0;
+            const approvalLevels = cs.approvalFlow.steps;
+
+            const newHistoryEntry = {
+                approverId: currentUserEmployee.id,
+                status: status === 1 ? 'Approved' : 'Rejected',
+                timestamp: new Date().toISOString(),
+                level: currentLevel,
+                remarks: `Bulk action from list view`,
+            };
+
+            let nextStatus: number;
+            let nextApprover: string;
+
+            if (status === 1) {
+                const nextLevel = currentLevel + 1;
+                if (nextLevel < approvalLevels.length) {
+                    nextStatus = getNextApprovalStatusCode(currentLevel);
+                    nextApprover = approvalLevels[nextLevel].approverId;
+                } else {
+                    nextStatus = 1;
+                    nextApprover = '';
+                }
+            } else {
+                nextStatus = 0;
+                nextApprover = '';
             }
-            toast({ title: "Success", description: "Comparative Statement and its associated Purchase Order (if any) have been deleted." });
-        }
-        setIsDeleteConfirmOpen(false);
-        setCurrentItem(null);
-    };
 
-    const handleCreatePO = (cs: ComparativeStatement) => {
-        setSelectedCsForPo(cs);
-        setIsPoFormOpen(true);
+            setDocumentNonBlocking(doc(csRef, id), {
+                approvalStatus: nextStatus,
+                currentApproverId: nextApprover,
+                approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry],
+            }, { merge: true });
+        });
+
+        toast({ title: 'Success', description: `${selectedRows.length} CS processed.` });
+        setSelectedRows([]);
     };
 
     const calculateVendorTotals = (cs: ComparativeStatement) => {
@@ -309,6 +346,20 @@ export function ComparativeStatementTable() {
         return totals;
     };
 
+    const confirmDelete = () => {
+        if (currentItem && csRef && firestore) {
+            deleteDocumentNonBlocking(doc(csRef, currentItem.id));
+            const associatedPo = purchaseOrders?.find(po => po.csId === currentItem.id);
+            if (associatedPo) {
+                const poRef = doc(firestore, 'purchaseOrders', associatedPo.id);
+                deleteDocumentNonBlocking(poRef);
+            }
+            toast({ title: "Success", description: "Comparative Statement and its associated Purchase Order (if any) have been deleted." });
+        }
+        setIsDeleteConfirmOpen(false);
+        setCurrentItem(null);
+    };
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -322,7 +373,12 @@ export function ComparativeStatementTable() {
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Vendor" /></SelectTrigger>
                             <SelectContent><SelectItem value="all">All Vendors</SelectItem>{vendors?.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
                         </Select>
-                        <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }}><XCircle className="mr-2 h-4 w-4" /> Clear</Button>
+                        {selectedRows.length > 0 && (
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve ({selectedRows.length})</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject ({selectedRows.length})</Button>
+                            </div>
+                        )}
                     </div>
                     <Badge variant="outline">{userRoleText}</Badge>
                 </div>
@@ -330,9 +386,14 @@ export function ComparativeStatementTable() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[50px]">
+                                    <Checkbox 
+                                        checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length}
+                                        onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])}
+                                    />
+                                </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
-                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -346,38 +407,43 @@ export function ComparativeStatementTable() {
                                 filteredItems.map((cs) => {
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
-                                    const { date, time } = formatDateTime(cs.vendorSelectionDate);
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
-                                    const isConcern = currentUserEmployee?.id === demandNotes?.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId;
-                                    const canCreatePO = (isSuperAdmin || isGPOfficer || isConcern) && cs.approvalStatus === 1 && !poExists;
+                                    const isWaitingForMe = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
+                                    const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
-                                        <TableRow key={cs.id}>
+                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/5' : ''}>
+                                            <TableCell>
+                                                <Checkbox 
+                                                    checked={selectedRows.includes(cs.id)}
+                                                    onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(id => id !== cs.id) : [...prev, cs.id])}
+                                                    disabled={!approvableItems.some(i => i.id === cs.id)}
+                                                />
+                                            </TableCell>
                                             <TableCell>{cs.csNumber}</TableCell>
                                             <TableCell>{getDemandNoteNumber(cs.demandNoteId)}</TableCell>
-                                            <TableCell>{getEmployeeName(demandNotes?.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId)}</TableCell>
+                                            <TableCell>{cs.selectedVendorId ? getVendorName(cs.selectedVendorId) : 'N/A'}</TableCell>
                                             <TableCell>
-                                                {cs.selectedVendorId ? (
-                                                    <div className="flex flex-col">
-                                                        <span>{getVendorName(cs.selectedVendorId)}</span>
-                                                        <span className="text-[10px] text-muted-foreground">{date} {time}</span>
-                                                    </div>
-                                                ) : 'N/A'}
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
+                                                    {isWaitingForMe && (
+                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
-                                            <TableCell><Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge></TableCell>
                                             <TableCell className="text-right font-semibold">{cs.selectedVendorId ? formatCurrency(amount) : 'N/A'}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     {canSelectVendor && (
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Select Vendor</TooltipContent></Tooltip>
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Award Contract</TooltipContent></Tooltip>
                                                     )}
                                                     {canCreatePO && (
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)}><span>📄</span></Button></TooltipTrigger><TooltipContent>Create PO</TooltipContent></Tooltip>
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Create PO</TooltipContent></Tooltip>
                                                     )}
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Users className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Status</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(cs)}><Trash2 className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => {setCurrentItem(cs); setIsDeleteConfirmOpen(true);}}><Trash2 className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -396,7 +462,7 @@ export function ComparativeStatementTable() {
                     <DialogHeader>
                         <DialogTitle>Are you sure?</DialogTitle>
                         <DialogDescription>
-                            This will permanently delete this Comparative Statement. 
+                            This action cannot be undone. This will permanently delete this Comparative Statement. 
                             {purchaseOrders?.some(po => po.csId === currentItem?.id) && (
                                 <span className="block mt-2 font-bold text-destructive">WARNING: A Purchase Order exists for this CS and will also be automatically deleted.</span>
                             )}
@@ -421,7 +487,17 @@ export function ComparativeStatementTable() {
                                 return (
                                     <li key={index} className="flex items-start gap-4">
                                         {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'N/A'}</p></div>
+                                        <div className="flex-1 flex gap-3 items-center">
+                                            <Avatar className="h-10 w-10 border">
+                                                <AvatarImage src={approver?.profilePicture} />
+                                                <AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold">{step.stepName}</p>
+                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
+                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved on {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                            </div>
+                                        </div>
                                     </li>
                                 );
                             })}
