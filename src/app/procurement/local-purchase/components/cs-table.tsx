@@ -252,9 +252,18 @@ export function ComparativeStatementTable() {
     };
 
     const confirmDelete = () => {
-        if (currentItem && csRef) {
+        if (currentItem && csRef && firestore) {
+            // 1. Delete the Comparative Statement
             deleteDocumentNonBlocking(doc(csRef, currentItem.id));
-            toast({ title: "Success", description: "Comparative Statement deleted." });
+
+            // 2. Cascade delete associated Purchase Order if it exists
+            const associatedPo = purchaseOrders?.find(po => po.csId === currentItem.id);
+            if (associatedPo) {
+                const poRef = doc(firestore, 'purchaseOrders', associatedPo.id);
+                deleteDocumentNonBlocking(poRef);
+            }
+
+            toast({ title: "Success", description: "Comparative Statement and its associated Purchase Order (if any) have been deleted." });
         }
         setIsDeleteConfirmOpen(false);
         setCurrentItem(null);
@@ -360,7 +369,21 @@ export function ComparativeStatementTable() {
             </div>
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent><DialogHeader><DialogTitle>Are you sure?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button variant="destructive" onClick={confirmDelete}>Delete</Button></DialogFooter></DialogContent>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure?</DialogTitle>
+                        <DialogDescription>
+                            This will permanently delete this Comparative Statement. 
+                            {purchaseOrders?.some(po => po.csId === currentItem?.id) && (
+                                <span className="block mt-2 font-bold text-destructive">WARNING: A Purchase Order exists for this CS and will also be automatically deleted.</span>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
             </Dialog>
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
