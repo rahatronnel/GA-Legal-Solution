@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Check, Copy } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Check, Copy, Users, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -20,6 +20,7 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { useToast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { getPOStatusText } from '../lib/status-helper';
 
 export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings } = useProcurement();
@@ -36,6 +37,8 @@ export function PurchaseOrderTable() {
     const [isPrepareDialogOpen, setIsPrepareDialogOpen] = useState(false);
     const [isPoFormOpen, setIsPoFormOpen] = useState(false);
     const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -143,6 +146,12 @@ export function PurchaseOrderTable() {
         setConcernFilter('all');
     }
 
+    const getStatusVariant = (status: number) => {
+        if (status === 1) return 'default';
+        if (status === 0) return 'destructive';
+        return 'secondary';
+    }
+
     if (isLoading) return <div className="p-8 text-center"><p>Loading Purchase Orders...</p></div>;
 
     return (
@@ -190,7 +199,7 @@ export function PurchaseOrderTable() {
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>GP Concern</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Appr. Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -213,10 +222,11 @@ export function PurchaseOrderTable() {
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
                                         <TableCell>{getGPConcernName(po.demandNoteId)}</TableCell>
                                         <TableCell className="text-right font-semibold">{formatCurrency(po.netPayableAmount)}</TableCell>
-                                        <TableCell><Badge variant="outline">{po.status}</Badge></TableCell>
+                                        <TableCell><Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge></TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>View PO</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Users className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Status</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button></TooltipTrigger><TooltipContent>View Details</TooltipContent></Tooltip>
                                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(po, 'purchase-order')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Print PO</TooltipContent></Tooltip>
                                             </div>
                                         </TableCell>
@@ -238,7 +248,7 @@ export function PurchaseOrderTable() {
                         </DialogHeader>
                         <ScrollArea className="max-h-[60vh] mt-4 border rounded-md">
                             <Table>
-                                <TableHeader><TableRow><TableHead>CS Number</TableHead><TableHead>Demand Note</TableHead><TableHead>Vendor</TableHead><TableHead className="text-right">Select</TableHead></TableRow></TableHeader>
+                                <TableHeader><TableRow><TableHead>CS Number</TableHead>Value<TableHead>Demand Note</TableHead><TableHead>Vendor</TableHead><TableHead className="text-right">Select</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {approvedCsWaitingPo.length > 0 ? approvedCsWaitingPo.map(cs => (
                                         <TableRow key={cs.id}>
@@ -261,6 +271,28 @@ export function PurchaseOrderTable() {
                     onSave={handleSavePO}
                     cs={selectedCsForPo}
                 />
+
+                <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader><DialogTitle>PO Approval Status for {selectedPoForStatus?.poNumber}</DialogTitle></DialogHeader>
+                        <div className="py-4">
+                            <ul className="space-y-4">
+                                {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
+                                    const historyEntry = selectedPoForStatus.approvalHistory?.find((h:any) => h.level === index);
+                                    const approver = employees?.find(e => e.id === step.approverId);
+                                    const isPending = selectedPoForStatus.approvalStatus !== 1 && selectedPoForStatus.approvalStatus !== 0 && selectedPoForStatus.currentApproverId === step.approverId;
+                                    let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
+                                    return (
+                                        <li key={index} className="flex items-start gap-4">
+                                            {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                            <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'N/A'}</p></div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </TooltipProvider>
     );

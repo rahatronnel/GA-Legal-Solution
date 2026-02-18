@@ -56,6 +56,7 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase': dynamic(() => import('./procurement/local-purchase/page'), { ssr: false }),
     '/procurement/local-purchase/demand-notes/[id]': dynamic(() => import('./procurement/local-purchase/demand-notes/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/comparative-statements/[id]': dynamic(() => import('./procurement/local-purchase/comparative-statements/[id]/page'), { ssr: false }),
+    '/procurement/local-purchase/purchase-orders/[id]': dynamic(() => import('./procurement/local-purchase/purchase-orders/[id]/page'), { ssr: false }),
 };
 
 const ModuleDashboard = () => {    

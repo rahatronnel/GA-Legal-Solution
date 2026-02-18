@@ -51,6 +51,20 @@ export type PurchaseOrder = {
   confirmedBySupplier?: boolean;
   mandatoryTerms?: string;
   otherTerms?: string;
+
+  // Approval Tracking (New)
+  approvalFlow?: {
+      steps: { stepName: string; approverId: string; }[];
+  };
+  approvalStatus: number; // 0: Rejected, 1: Approved (Completed), 2+: Step-wise pending
+  currentApproverId: string;
+  approvalHistory: {
+      level: number;
+      approverId: string;
+      status: 'Approved' | 'Rejected';
+      timestamp: string;
+      remarks: string;
+  }[];
 };
 
 interface POFormProps {
@@ -115,6 +129,16 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
       const taxAmount = subtotalAfterDiscount * ((selectedVendorDetails?.taxPercentage || 0) / 100);
       const netPayableAmount = subtotalAfterDiscount + vatAmount + taxAmount;
 
+      // Approval Flow Initialization
+      const { csApprovalRoles } = orgSettings.procurementSettings || {};
+      const approvalSteps = [];
+      if (csApprovalRoles?.purchaseDeptTaId) {
+          approvalSteps.push({ stepName: 'Purchase Department TA', approverId: csApprovalRoles.purchaseDeptTaId });
+      }
+      if (csApprovalRoles?.purchaseManagerId) {
+          approvalSteps.push({ stepName: 'Purchase Manager', approverId: csApprovalRoles.purchaseManagerId });
+      }
+
       setPoData({
         poNumber: `PO-${cs.csNumber}`,
         poDate: format(new Date(), 'yyyy-MM-dd'),
@@ -135,6 +159,12 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         createdAt: new Date().toISOString(),
         mandatoryTerms: orgSettings.procurementSettings?.poSettings?.mandatoryTerms,
         otherTerms: orgSettings.procurementSettings?.poSettings?.otherTerms,
+        
+        // Initial Approval State
+        approvalFlow: { steps: approvalSteps },
+        approvalStatus: 2, // Initial Pending
+        currentApproverId: approvalSteps[0]?.approverId || '',
+        approvalHistory: [],
       });
       setExpectedDeliveryDate(undefined);
     }
