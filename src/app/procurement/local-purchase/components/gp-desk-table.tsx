@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2 } from 'lucide-react';
+import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, UserPlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -95,6 +95,9 @@ export default function GPDeskTable() {
     const [assignedToFilter, setAssignedToFilter] = useState('all');
     const [vendorAssignmentFilter, setVendorAssignmentFilter] = useState('all');
 
+    const [isAssignConcernOpen, setIsAssignConcernOpen] = useState(false);
+    const [selectedConcernId, setSelectedConcernId] = useState('');
+
     const [isAssignVendorOpen, setIsAssignVendorOpen] = useState(false);
     const [currentNote, setCurrentNote] = useState<DemandNote | null>(null);
     const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
@@ -102,17 +105,22 @@ export default function GPDeskTable() {
     const [isCsFormOpen, setIsCsFormOpen] = useState(false);
     const [currentNoteForCs, setCurrentNoteForCs] = useState<DemandNote | null>(null);
 
-    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager, currentUserEmployee } = useMemo(() => {
+    const currentUserEmployee = useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.email === user.email);
+    }, [user, employees]);
+
+    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager } = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
         if (!settings || !employees || !user) {
-            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
         }
         
         const currentEmp = employees.find(e => e.email === user?.email);
         if (!currentEmp) {
-            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false, currentUserEmployee: null };
+            return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
         }
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -123,7 +131,7 @@ export default function GPDeskTable() {
             settings.manufacturingDeptManagerId === currentEmp.id ||
             settings.specializedDeptManagerId === currentEmp.id;
         
-        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager: manager, currentUserEmployee: currentEmp };
+        return { isGPOfficer: GPO, isSuperAdmin: superAdmin, isGPConcern: GPC, isManager: manager };
     }, [orgSettings, employees, user]);
     
     useEffect(() => {
@@ -186,6 +194,27 @@ export default function GPDeskTable() {
     }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee, isManager]);
 
 
+    const handleOpenAssignConcern = (note: DemandNote) => {
+        setCurrentNote(note);
+        setSelectedConcernId(note.gpConcernOfficerId || '');
+        setIsAssignConcernOpen(true);
+    };
+
+    const handleConfirmConcernAssignment = () => {
+        if (!currentNote || !firestore || !currentUserEmployee) return;
+        
+        const noteRef = doc(firestore, 'demandNotes', currentNote.id);
+        setDocumentNonBlocking(noteRef, { 
+            gpConcernOfficerId: selectedConcernId,
+            gpAssignedBy: currentUserEmployee.id,
+            gpAssignedDate: new Date().toISOString(),
+            gpStatus: 'Pending' 
+        }, { merge: true });
+
+        toast({ title: 'Success', description: 'GP Concern Officer has been assigned.' });
+        setIsAssignConcernOpen(false);
+    };
+
     const handleOpenAssignVendors = (note: DemandNote) => {
         setCurrentNote(note);
         setSelectedVendorIds(note.quotations?.map(q => q.vendorId) || []);
@@ -227,7 +256,8 @@ export default function GPDeskTable() {
 
         setDocumentNonBlocking(noteRef, { 
             quotations: newQuotations,
-            vendorAssignmentDate: new Date().toISOString()
+            vendorAssignmentDate: new Date().toISOString(),
+            gpStatus: newQuotations.length > 0 ? 'Assigned' : 'Pending'
         }, { merge: true });
 
         toast({ title: 'Success', description: 'Vendor assignments have been updated.' });
@@ -291,19 +321,22 @@ export default function GPDeskTable() {
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const cs = comparativeStatements.find(cs => cs.demandNoteId === item.id);
-                                const isCurrentUserAssigned = currentUserEmployee?.id === item.gpConcernOfficerId;
+                                const isCurrentUserConcern = currentUserEmployee?.id === item.gpConcernOfficerId;
+                                const isGPManager = isGPOfficer || isSuperAdmin;
+                                
                                 return (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span>{getEmployeeName(item.gpConcernOfficerId || '')}</span>
+                                            <span className={item.gpConcernOfficerId ? '' : 'text-muted-foreground italic'}>
+                                                {item.gpConcernOfficerId ? getEmployeeName(item.gpConcernOfficerId) : 'Unassigned'}
+                                            </span>
                                             {item.gpAssignedDate && (
-                                                <>
-                                                    <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleDateString()}</span>
-                                                    <span className="text-xs text-muted-foreground">{new Date(item.gpAssignedDate).toLocaleTimeString()}</span>
-                                                </>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {new Date(item.gpAssignedDate).toLocaleString()}
+                                                </span>
                                             )}
                                         </div>
                                     </TableCell>
@@ -312,10 +345,9 @@ export default function GPDeskTable() {
                                             <div>
                                                 <Badge variant="default">Assigned</Badge>
                                                 {item.vendorAssignmentDate && (
-                                                    <div className="flex flex-col text-xs text-muted-foreground">
-                                                        <span>{new Date(item.vendorAssignmentDate).toLocaleDateString()}</span>
-                                                        <span>{new Date(item.vendorAssignmentDate).toLocaleTimeString()}</span>
-                                                    </div>
+                                                    <span className="block text-[10px] text-muted-foreground">
+                                                        {new Date(item.vendorAssignmentDate).toLocaleString()}
+                                                    </span>
                                                 )}
                                             </div>
                                         ) : <Badge variant="secondary">Not Assigned</Badge>
@@ -325,8 +357,7 @@ export default function GPDeskTable() {
                                         {cs ? (
                                             <div className="flex flex-col">
                                                 <Badge variant="default">Yes</Badge>
-                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleDateString()}</span>
-                                                <span className="text-xs text-muted-foreground">{new Date(cs.csDate).toLocaleTimeString()}</span>
+                                                <span className="text-[10px] text-muted-foreground">{new Date(cs.csDate).toLocaleString()}</span>
                                             </div>
                                         ) : (
                                             <Badge variant="secondary">No</Badge>
@@ -334,10 +365,13 @@ export default function GPDeskTable() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserAssigned}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            {isGPManager && (
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleOpenAssignConcern(item)}><UserPlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Concern Officer</TooltipContent></Tooltip>
+                                            )}
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserConcern}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={!!cs || !item.quotations || item.quotations.length === 0 || !isCurrentUserAssigned}><FilePlus className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={!!cs || !item.quotations || item.quotations.length === 0 || !isCurrentUserConcern}><FilePlus className="h-4 w-4" /></Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>{cs ? 'CS already created' : 'Create CS'}</TooltipContent>
                                             </Tooltip>
@@ -350,7 +384,7 @@ export default function GPDeskTable() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
-                                    No assigned demand notes found.
+                                    No approved demand notes found.
                                 </TableCell>
                             </TableRow>
                         )}
@@ -359,6 +393,34 @@ export default function GPDeskTable() {
                 </div>
             </div>
 
+            {/* Assign Concern Officer Dialog */}
+            <Dialog open={isAssignConcernOpen} onOpenChange={setIsAssignConcernOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Assign GP Concern Officer</DialogTitle>
+                        <DialogDescription>Select the officer responsible for processing the quotations for DN: {currentNote?.demandNoteNumber}.</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label>Select Officer</Label>
+                            <Select value={selectedConcernId} onValueChange={setSelectedConcernId}>
+                                <SelectTrigger><SelectValue placeholder="Choose an officer..." /></SelectTrigger>
+                                <SelectContent>
+                                    {gpConcernOfficers.map(officer => (
+                                        <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAssignConcernOpen(false)}>Cancel</Button>
+                        <Button onClick={handleConfirmConcernAssignment} disabled={!selectedConcernId}>Confirm Assignment</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Assign Vendors Dialog */}
             <Dialog open={isAssignVendorOpen} onOpenChange={setIsAssignVendorOpen}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>

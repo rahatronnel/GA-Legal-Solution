@@ -113,28 +113,25 @@ export function DemandNoteTable() {
     
         let baseList: DemandNote[];
     
-        if (isSuperAdmin) {
+        // GP Officers, Superadmins, and Managers see all notes for oversight and processing.
+        if (isSuperAdmin || isGPOfficer || isManager) {
             baseList = safeItems;
         } else if (currentUserEmployee) {
-            if (isManager) {
-                baseList = safeItems;
-            } else {
-                const procurementSettings = orgSettings?.procurementSettings;
-                const managedSectionIds = procurementSettings?.departmentHeads
-                    ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
-                    .map(dh => dh.sectionId) || [];
-    
-                // Additive Visibility Filter:
-                // User sees notes they created OR notes for sections they manage OR notes they are assigned to approve
-                baseList = safeItems.filter(note => {
-                    const isCreator = note.createdBy === currentUserEmployee.id;
-                    const isSectionManager = managedSectionIds.includes(note.sectionId);
-                    const isCurrentApprover = note.currentApproverId === currentUserEmployee.id;
-                    const isAssignedGP = note.gpConcernOfficerId === currentUserEmployee.id;
-                    
-                    return isCreator || isSectionManager || isCurrentApprover || isAssignedGP;
-                });
-            }
+            const procurementSettings = orgSettings?.procurementSettings;
+            const managedSectionIds = procurementSettings?.departmentHeads
+                ?.filter(dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+                .map(dh => dh.sectionId) || [];
+
+            // Additive Visibility Filter:
+            // User sees notes they created OR notes for sections they manage OR notes they are assigned to approve
+            baseList = safeItems.filter(note => {
+                const isCreator = note.createdBy === currentUserEmployee.id;
+                const isSectionManager = managedSectionIds.includes(note.sectionId);
+                const isCurrentApprover = note.currentApproverId === currentUserEmployee.id;
+                const isAssignedGP = note.gpConcernOfficerId === currentUserEmployee.id;
+                
+                return isCreator || isSectionManager || isCurrentApprover || isAssignedGP;
+            });
         } else {
             baseList = [];
         }
@@ -156,7 +153,7 @@ export function DemandNoteTable() {
     
         return finalList.sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
     
-    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isManager, isSuperAdmin]);
+    }, [safeItems, searchTerm, statusFilter, sections, currentUserEmployee, isLoading, orgSettings, isManager, isSuperAdmin, isGPOfficer]);
 
 
     const approvableNotes = useMemo(() => {
