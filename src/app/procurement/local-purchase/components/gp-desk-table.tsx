@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -156,7 +155,7 @@ export default function GPDeskTable() {
         if (isManager) return "Role: Manager";
         if (isGPConcern) return "Role: GP Concern Officer";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
+    }, [isSuperAdmin, isGPOfficer, isManager, isGPConcern]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
@@ -365,7 +364,7 @@ export default function GPDeskTable() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            {isGPManager && (
+                                            {isGPManager && !item.gpConcernOfficerId && (
                                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleOpenAssignConcern(item)}><UserPlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Concern Officer</TooltipContent></Tooltip>
                                             )}
                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserConcern}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
