@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { useProcurement } from './procurement-provider';
 import type { PurchaseOrder } from './po-entry-form';
