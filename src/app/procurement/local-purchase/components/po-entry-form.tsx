@@ -52,7 +52,7 @@ export type PurchaseOrder = {
   mandatoryTerms?: string;
   otherTerms?: string;
 
-  // Approval Tracking (New)
+  // Approval Tracking
   approvalFlow?: {
       steps: { stepName: string; approverId: string; }[];
   };
@@ -129,12 +129,16 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
       const taxAmount = subtotalAfterDiscount * ((selectedVendorDetails?.taxPercentage || 0) / 100);
       const netPayableAmount = subtotalAfterDiscount + vatAmount + taxAmount;
 
-      // Approval Flow Initialization
+      // Approval Flow Initialization from Settings
       const { csApprovalRoles } = orgSettings.procurementSettings || {};
       const approvalSteps = [];
+      
+      // Step 1: Purchase Department TA
       if (csApprovalRoles?.purchaseDeptTaId) {
           approvalSteps.push({ stepName: 'Purchase Department TA', approverId: csApprovalRoles.purchaseDeptTaId });
       }
+      
+      // Step 2: Purchase Manager
       if (csApprovalRoles?.purchaseManagerId) {
           approvalSteps.push({ stepName: 'Purchase Manager', approverId: csApprovalRoles.purchaseManagerId });
       }
@@ -162,7 +166,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         
         // Initial Approval State
         approvalFlow: { steps: approvalSteps },
-        approvalStatus: 2, // Initial Pending
+        approvalStatus: 2, // Map to status Map (Pending TA Review)
         currentApproverId: approvalSteps[0]?.approverId || '',
         approvalHistory: [],
       });
@@ -202,7 +206,6 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
           <DialogDescription>Review the details and finalize the PO for CS: {cs?.csNumber}</DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
-          {/* Header Info */}
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="space-y-1"><Label>PO Number</Label><Input value={poData.poNumber} disabled /></div>
             <div className="space-y-1"><Label>PO Date</Label><Input value={poData.poDate} disabled /></div>
@@ -227,7 +230,6 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
               </Card>
           </div>
           
-          {/* Items Table */}
           <Table>
             <TableHeader><TableRow><TableHead>SL</TableHead><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead>Unit</TableHead><TableHead>Unit Price</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader>
             <TableBody>
@@ -244,7 +246,6 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
             </TableBody>
           </Table>
 
-          {/* Totals Section */}
           <div className="flex justify-end">
              <div className="w-full max-w-sm space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(poData.totalAmount)}</span></div>
@@ -258,7 +259,6 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
           
           <Separator/>
           
-          {/* Manual Inputs & Terms */}
            <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <div className="space-y-2">

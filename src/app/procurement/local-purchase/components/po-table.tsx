@@ -21,9 +21,10 @@ import { useToast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { getPOStatusText } from '../lib/status-helper';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export function PurchaseOrderTable() {
-    const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings } = useProcurement();
+    const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings, designations } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const { handlePrint } = usePrint();
@@ -239,7 +240,6 @@ export function PurchaseOrderTable() {
                     </Table>
                 </div>
 
-                {/* Dialog to select approved CS */}
                 <Dialog open={isPrepareDialogOpen} onOpenChange={setIsPrepareDialogOpen}>
                     <DialogContent className="sm:max-w-3xl">
                         <DialogHeader>
@@ -248,7 +248,7 @@ export function PurchaseOrderTable() {
                         </DialogHeader>
                         <ScrollArea className="max-h-[60vh] mt-4 border rounded-md">
                             <Table>
-                                <TableHeader><TableRow><TableHead>CS Number</TableHead>Value<TableHead>Demand Note</TableHead><TableHead>Vendor</TableHead><TableHead className="text-right">Select</TableHead></TableRow></TableHeader>
+                                <TableHeader><TableRow><TableHead>CS Number</TableHead><TableHead>Demand Note</TableHead><TableHead>Vendor</TableHead><TableHead className="text-right">Select</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {approvedCsWaitingPo.length > 0 ? approvedCsWaitingPo.map(cs => (
                                         <TableRow key={cs.id}>
@@ -280,12 +280,24 @@ export function PurchaseOrderTable() {
                                 {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
                                     const historyEntry = selectedPoForStatus.approvalHistory?.find((h:any) => h.level === index);
                                     const approver = employees?.find(e => e.id === step.approverId);
+                                    const designation = designations?.find(d => d.id === approver?.designationId);
                                     const isPending = selectedPoForStatus.approvalStatus !== 1 && selectedPoForStatus.approvalStatus !== 0 && selectedPoForStatus.currentApproverId === step.approverId;
                                     let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
+                                    
                                     return (
                                         <li key={index} className="flex items-start gap-4">
                                             {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                            <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'N/A'}</p></div>
+                                            <div className="flex-1 flex gap-3 items-center">
+                                                <Avatar className="h-10 w-10 border">
+                                                    <AvatarImage src={approver?.profilePicture} />
+                                                    <AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-semibold">{step.stepName}</p>
+                                                    <p className="text-sm">{approver?.fullName || 'Not Assigned'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
+                                                    {historyEntry && <p className="text-[10px] text-muted-foreground">Approved on {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                                </div>
+                                            </div>
                                         </li>
                                     );
                                 })}

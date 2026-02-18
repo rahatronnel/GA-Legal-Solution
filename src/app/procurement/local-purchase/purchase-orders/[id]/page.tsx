@@ -74,9 +74,12 @@ function PurchaseOrderView() {
         if (status === 1) { // Approved
             const nextLevel = currentLevel + 1;
             if (nextLevel < approvalLevels.length) {
-                newApprovalStatus = getNextApprovalStatusCode(currentLevel);
+                // Progress to the next status code based on current history length
+                // historyLength was 0, now it's 1. Status moves to 3.
+                newApprovalStatus = getNextApprovalStatusCode(currentLevel); 
                 nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
+                // This was the final approval
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
             }
