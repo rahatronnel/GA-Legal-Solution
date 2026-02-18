@@ -186,11 +186,8 @@ export function ComparativeStatementTable() {
     const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
-    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const [isVendorSelectionOpen, setIsVendorSelectionOpen] = useState(false);
     const [selectedCsForVendor, setSelectedCsForVendor] = useState<ComparativeStatement | null>(null);
-    const [isBulkConfirmOpen, setIsBulkConfirmOpen] = useState(false);
-    const [bulkActionType, setBulkActionType] = useState<'approve' | 'reject' | null>(null);
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
@@ -223,6 +220,15 @@ export function ComparativeStatementTable() {
         return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, isCsApprover: !!csApproverCheck, currentUserEmployee: currentEmp };
     }, [orgSettings, employees, user]);
 
+    const userRoleText = useMemo(() => {
+        if (isSuperAdmin) return "Role: Superadmin";
+        if (isGPOfficer) return "Role: GP Officer";
+        if (isManager) return "Role: Manager";
+        if (isGPConcern) return "Role: GP Concern Officer";
+        if (isCsApprover) return "Role: CS Approver";
+        return "Role: Employee";
+    }, [isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover]);
+
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
@@ -234,47 +240,10 @@ export function ComparativeStatementTable() {
         }).sort((a, b) => new Date(b.csDate).getTime() - new Date(a.csDate).getTime());
     }, [comparativeStatements, searchTerm, gpConcernFilter, vendorFilter, demandNotes]);
 
-    const handleApproval = (csId: string, status: number) => {
-        if (!firestore || !currentUserEmployee || !csRef) return;
-        const cs = comparativeStatements.find(c => c.id === csId);
-        if (!cs || !cs.approvalFlow?.steps) return;
-
-        const csDocRef = doc(csRef, csId);
-        const approvalLevels = cs.approvalFlow.steps;
-        const currentLevel = cs.approvalHistory?.length || 0;
-
-        const newHistoryEntry = {
-            approverId: currentUserEmployee.id,
-            status: status === 1 ? 'Approved' : 'Rejected',
-            timestamp: new Date().toISOString(),
-            level: currentLevel,
-            remarks: `Approved vendor: ${getVendorName(cs.selectedVendorId)}`,
-        };
-        
-        let newApprovalStatus: number;
-        let nextApproverId: string | undefined;
-
-        if (status === 1) {
-            const nextLevel = currentLevel + 1;
-            if (nextLevel < approvalLevels.length) {
-                newApprovalStatus = getNextApprovalStatusCode(currentLevel);
-                nextApproverId = approvalLevels[nextLevel].approverId;
-            } else {
-                newApprovalStatus = 1; // Completed
-                nextApproverId = '';
-            }
-        } else {
-            newApprovalStatus = 0;
-            nextApproverId = '';
-        }
-
-        setDocumentNonBlocking(csDocRef, {
-            approvalStatus: newApprovalStatus,
-            currentApproverId: nextApproverId,
-            approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry],
-        }, { merge: true });
-        
-        toast({ title: 'Success', description: `CS ${cs.csNumber} processed.` });
+    const handleSavePO = (poData: Partial<PurchaseOrder>) => {
+        if (!poCollectionRef) return;
+        addDocumentNonBlocking(poCollectionRef, poData);
+        toast({ title: 'Success', description: `Purchase Order ${poData.poNumber} has been created.` });
     };
 
     const handleDelete = (cs: ComparativeStatement) => {
@@ -327,7 +296,7 @@ export function ComparativeStatementTable() {
                         </Select>
                         <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }}><XCircle className="mr-2 h-4 w-4" /> Clear</Button>
                     </div>
-                    <Badge variant="outline">Role: {userRoleText.split(': ')[1]}</Badge>
+                    <Badge variant="outline">{userRoleText}</Badge>
                 </div>
                 <div className="border rounded-lg">
                     <Table>
@@ -400,7 +369,7 @@ export function ComparativeStatementTable() {
                     <div className="py-4">
                         <ul className="space-y-4">
                             {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
-                                const historyEntry = selectedCsForStatus.approvalHistory?.find(h => h.level === index);
+                                const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                                 const approver = employees?.find(e => e.id === step.approverId);
                                 let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (selectedCsForStatus.currentApproverId === step.approverId ? 'pending' : 'upcoming');
                                 return (
