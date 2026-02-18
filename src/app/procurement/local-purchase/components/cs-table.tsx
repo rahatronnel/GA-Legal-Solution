@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Copy, Users, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, XCircle, FileText } from 'lucide-react';
+import { Search, Eye, Trash2, Check, Printer, X, Copy, Users, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, XCircle, FileText, Hand } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -189,6 +189,11 @@ export function ComparativeStatementTable() {
     const [isVendorSelectionOpen, setIsVendorSelectionOpen] = useState(false);
     const [selectedCsForVendor, setSelectedCsForVendor] = useState<ComparativeStatement | null>(null);
 
+    const currentUserEmployee = useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.email === user.email);
+    }, [user, employees]);
+
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
     const getEmployeeName = (id?: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
@@ -205,19 +210,19 @@ export function ComparativeStatementTable() {
         } catch { return { date: 'N/A', time: 'N/A' }; }
     }
 
-    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover, currentUserEmployee } = useMemo(() => {
+    const { isSuperAdmin, isGPOfficer, isManager, isGPConcern, isCsApprover } = useMemo(() => {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
         const currentEmp = employees?.find(e => e.email === user?.email);
 
-        if (!settings || !currentEmp) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, isCsApprover: false, currentUserEmployee: null };
+        if (!settings || !currentEmp) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isManager: false, isGPConcern: false, isCsApprover: false };
 
         const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
         const manager = settings.managingDirectorId === currentEmp.id || settings.factoryDirectorId === currentEmp.id;
         let csApproverCheck = settings.csApprovalRoles && Object.values(settings.csApprovalRoles).includes(currentEmp.id);
         
-        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, isCsApprover: !!csApproverCheck, currentUserEmployee: currentEmp };
+        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isManager: manager, isGPConcern: GPC, isCsApprover: !!csApproverCheck };
     }, [orgSettings, employees, user]);
 
     const userRoleText = useMemo(() => {
@@ -246,6 +251,24 @@ export function ComparativeStatementTable() {
         toast({ title: 'Success', description: `Purchase Order ${poData.poNumber} has been created.` });
     };
 
+    const handleVendorSelected = (csId: string, vendorId: string) => {
+        if (!csRef || !firestore) return;
+        const cs = comparativeStatements.find(c => c.id === csId);
+        if (!cs || !cs.approvalFlow?.steps) return;
+
+        const firstApproverId = cs.approvalFlow.steps[0]?.approverId || '';
+
+        setDocumentNonBlocking(doc(csRef, csId), {
+            selectedVendorId: vendorId,
+            vendorSelectionDate: new Date().toISOString(),
+            approvalStatus: 3, // Move to the first approval step (e.g. Pending Review)
+            currentApproverId: firstApproverId,
+        }, { merge: true });
+
+        toast({ title: "Success", description: "Vendor selected. Approval process started." });
+        setIsVendorSelectionOpen(false);
+    };
+
     const handleDelete = (cs: ComparativeStatement) => {
         setCurrentItem(cs);
         setIsDeleteConfirmOpen(true);
@@ -253,16 +276,12 @@ export function ComparativeStatementTable() {
 
     const confirmDelete = () => {
         if (currentItem && csRef && firestore) {
-            // 1. Delete the Comparative Statement
             deleteDocumentNonBlocking(doc(csRef, currentItem.id));
-
-            // 2. Cascade delete associated Purchase Order if it exists
             const associatedPo = purchaseOrders?.find(po => po.csId === currentItem.id);
             if (associatedPo) {
                 const poRef = doc(firestore, 'purchaseOrders', associatedPo.id);
                 deleteDocumentNonBlocking(poRef);
             }
-
             toast({ title: "Success", description: "Comparative Statement and its associated Purchase Order (if any) have been deleted." });
         }
         setIsDeleteConfirmOpen(false);
@@ -331,6 +350,7 @@ export function ComparativeStatementTable() {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     const isConcern = currentUserEmployee?.id === demandNotes?.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId;
                                     const canCreatePO = (isSuperAdmin || isGPOfficer || isConcern) && cs.approvalStatus === 1 && !poExists;
+                                    const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
 
                                     return (
                                         <TableRow key={cs.id}>
@@ -349,6 +369,9 @@ export function ComparativeStatementTable() {
                                             <TableCell className="text-right font-semibold">{cs.selectedVendorId ? formatCurrency(amount) : 'N/A'}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    {canSelectVendor && (
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Select Vendor</TooltipContent></Tooltip>
+                                                    )}
                                                     {canCreatePO && (
                                                         <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreatePO(cs)}><span>📄</span></Button></TooltipTrigger><TooltipContent>Create PO</TooltipContent></Tooltip>
                                                     )}
@@ -406,6 +429,14 @@ export function ComparativeStatementTable() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <VendorSelectionDialog
+                cs={selectedCsForVendor}
+                isOpen={isVendorSelectionOpen}
+                onOpenChange={setIsVendorSelectionOpen}
+                onVendorSelected={handleVendorSelected}
+                vendors={vendors || []}
+            />
 
             <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={handleSavePO} cs={selectedCsForPo} />
         </TooltipProvider>
