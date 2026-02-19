@@ -121,7 +121,7 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
-            // 1. Role-Based Visibility Logic
+            // Role-Based Visibility
             let isVisible = false;
             if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
                 isVisible = true; 
@@ -223,13 +223,6 @@ export function DemandNoteTable() {
         setSelectedRows([]);
     };
 
-    const clearFilters = () => {
-        setSearchTerm('');
-        setStatusFilter('all');
-        setStageFilter('all');
-        setDateRange(undefined);
-    };
-
     const handleSave = (data: Partial<DemandNote>) => {
         if (!dataRef) return;
         if (data.id) {
@@ -245,13 +238,6 @@ export function DemandNoteTable() {
         if (currentItem?.id && dataRef) deleteDocumentNonBlocking(doc(dataRef, currentItem.id));
         setIsDeleteConfirmOpen(false);
     };
-
-    const formatDateTime = (dateStr?: string | null) => {
-        if (!dateStr) return 'N/A';
-        try {
-            return new Date(dateStr).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-        } catch { return 'N/A'; }
-    }
 
     return (
         <TooltipProvider>
@@ -302,7 +288,6 @@ export function DemandNoteTable() {
                             <SelectTrigger><SelectValue placeholder="Workflow Stage" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Stages</SelectItem>
-                                <SelectItem value="approved_only">Approved Requisitions</SelectItem>
                                 <SelectItem value="gp_assigned">GP Desk Assigned</SelectItem>
                                 <SelectItem value="cs_prepared">CS Prepared</SelectItem>
                                 <SelectItem value="po_prepared">PO Prepared</SelectItem>
@@ -311,7 +296,7 @@ export function DemandNoteTable() {
 
                         <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
                         
-                        <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
+                        <Button variant="ghost" onClick={() => { setSearchTerm(''); setStatusFilter('all'); setStageFilter('all'); setDateRange(undefined); }} className="text-muted-foreground">
                             <XCircle className="mr-2 h-4 w-4" /> Clear All
                         </Button>
                     </div>
@@ -324,9 +309,7 @@ export function DemandNoteTable() {
                                 <TableHead className="w-[50px]">
                                     <Checkbox 
                                         checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length}
-                                        onCheckedChange={(checked) => {
-                                            setSelectedRows(checked ? approvableItems.map(i => i.id) : []);
-                                        }}
+                                        onCheckedChange={(checked) => setSelectedRows(checked ? approvableItems.map(i => i.id) : [])}
                                     />
                                 </TableHead>
                                 <TableHead className="font-bold">DN Number</TableHead>
@@ -341,7 +324,7 @@ export function DemandNoteTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-10">Loading Requisitions...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-10">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
                                     const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
@@ -369,7 +352,7 @@ export function DemandNoteTable() {
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-medium">{item.creatorName}</span>
-                                                    <span className="text-[10px] text-muted-foreground">{formatDateTime(item.entryDate)}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{item.entryDate ? new Date(item.entryDate).toLocaleString() : 'N/A'}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -387,9 +370,7 @@ export function DemandNoteTable() {
                                                     <Badge variant={item.gpConcernOfficerId ? "outline" : "secondary"} className="w-fit">
                                                         {item.gpConcernOfficerId ? "Assigned" : "Pending GP"}
                                                     </Badge>
-                                                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={item.concernName}>
-                                                        {item.concernName}
-                                                    </span>
+                                                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={item.concernName}>{item.concernName}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -398,7 +379,7 @@ export function DemandNoteTable() {
                                                         {item.hasCs ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : <Clock className="h-3 w-3 text-muted-foreground" />}
                                                         <span className="text-xs">{item.hasCs ? 'Prepared' : 'Not Ready'}</span>
                                                     </div>
-                                                    {item.csPreparedDate && <span className="text-[9px] text-muted-foreground">{formatDateTime(item.csPreparedDate)}</span>}
+                                                    {item.csPreparedDate && <span className="text-[9px] text-muted-foreground">{new Date(item.csPreparedDate).toLocaleString()}</span>}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -407,7 +388,7 @@ export function DemandNoteTable() {
                                                         {item.hasPo ? <ShoppingCart className="h-3 w-3 text-green-500" /> : <FileText className="h-3 w-3 text-muted-foreground" />}
                                                         <span className="text-xs">{item.hasPo ? 'PO Issued' : 'No PO'}</span>
                                                     </div>
-                                                    {item.poPreparedDate && <span className="text-[9px] text-muted-foreground">{formatDateTime(item.poPreparedDate)}</span>}
+                                                    {item.poPreparedDate && <span className="text-[9px] text-muted-foreground">{new Date(item.poPreparedDate).toLocaleString()}</span>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -422,11 +403,7 @@ export function DemandNoteTable() {
                                     )
                                 })
                             ) : (
-                                <TableRow>
-                                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
-                                        No requisitions found matching your filters and permissions.
-                                    </TableCell>
-                                </TableRow>
+                                <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">No records found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -437,7 +414,7 @@ export function DemandNoteTable() {
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><DialogDescription>This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>. This action cannot be undone.</DialogDescription></DialogHeader>
+                    <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><DialogDescription>This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</DialogDescription></DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>

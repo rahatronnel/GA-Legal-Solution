@@ -395,6 +395,7 @@ function DemandNoteProfileContent() {
                                     <InfoItem icon={FileText} label="Budget Year & List No." value={demandNote.budgetYearAndListNo} />
                                     <InfoItem icon={FileText} label="Purpose of Requisition" value={demandNote.purpose} fullWidth />
                                 </CardContent>
+                            </Card>
 
                             <Card>
                                 <CardHeader><CardTitle>Items</CardTitle></CardHeader>

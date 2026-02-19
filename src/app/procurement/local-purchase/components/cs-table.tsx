@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -15,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus, Copy } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement } from './cs-entry-form';
@@ -48,8 +48,6 @@ const VendorSelectionDialog: React.FC<{
     const [step, setStep] = useState(1);
     const [selectedVendorId, setSelectedVendorId] = useState('');
 
-    const selectedVendor = vendors.find(v => v.id === selectedVendorId);
-    
     useEffect(() => {
         if (isOpen) {
             setStep(1);
@@ -60,103 +58,33 @@ const VendorSelectionDialog: React.FC<{
     const handleNext = () => setStep(prev => prev + 1);
     const handleBack = () => setStep(prev => prev - 1);
     const handleConfirm = () => {
-        if (cs && selectedVendorId) {
-            onVendorSelected(cs.id, selectedVendorId);
-        }
+        if (cs && selectedVendorId) onVendorSelected(cs.id, selectedVendorId);
     };
     
-    const calculateTotals = (vendorId: string) => {
-        const itemTotal = cs?.items?.reduce((sum, item) => {
-            const quote = item.vendorQuotes.find(q => q.vendorId === vendorId);
-            return sum + (item.quantity * (quote?.unitPrice || 0));
-        }, 0) || 0;
-
-        const vendorDetail = cs?.vendorDetails?.find(d => d.vendorId === vendorId);
-        let discount = 0;
-        if (vendorDetail) {
-            if (vendorDetail.discountType === 'Percentage') {
-                discount = itemTotal * ((vendorDetail.discountValue || 0) / 100);
-            } else {
-                discount = vendorDetail.discountValue || 0;
-            }
-        }
-        
-        const subTotalAfterDiscount = itemTotal - discount;
-        const vatAmount = subTotalAfterDiscount * ((vendorDetail?.vatPercentage || 0) / 100);
-        const taxAmount = subTotalAfterDiscount * ((vendorDetail?.taxPercentage || 0) / 100);
-        const grandTotal = subTotalAfterDiscount + vatAmount + taxAmount;
-
-        return { itemTotal, discount, grandTotal, vatAmount, taxAmount };
-    };
-
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    const totals = selectedVendorId ? calculateTotals(selectedVendorId) : null;
-
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-xl">
-                <DialogHeader>
-                    <DialogTitle>Choose Vendor for CS: {cs?.csNumber}</DialogTitle>
-                     <DialogDescription>Step {step} of 4: Select and review vendor selection.</DialogDescription>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>Choose Vendor: {cs?.csNumber}</DialogTitle></DialogHeader>
                  <div className="py-4 space-y-4">
                     {step === 1 && (
                         <div>
-                            <Label htmlFor="vendor-select">Select Vendor</Label>
+                            <Label>Select Vendor</Label>
                             <Select onValueChange={setSelectedVendorId}>
-                                <SelectTrigger id="vendor-select"><SelectValue placeholder="Choose a vendor..." /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
                                 <SelectContent>
                                     {(cs?.vendorDetails || []).map(detail => {
-                                        const vendor = vendors.find(v => v.id === detail.vendorId);
-                                        return <SelectItem key={detail.vendorId} value={detail.vendorId}>{vendor?.vendorName || detail.vendorId}</SelectItem>
+                                        const v = vendors.find(v => v.id === detail.vendorId);
+                                        return <SelectItem key={detail.vendorId} value={detail.vendorId}>{v?.vendorName}</SelectItem>
                                     })}
                                 </SelectContent>
                             </Select>
                         </div>
                     )}
-                    {step === 2 && selectedVendor && (
-                         <div>
-                            <h4 className="font-semibold text-lg mb-2">Review Prices for: {selectedVendor.vendorName}</h4>
-                            <Table>
-                                <TableHeader><TableRow><TableHead>Item</TableHead><TableHead className="text-right">Unit Price</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader>
-                                <TableBody>
-                                    {cs?.items.map(item => {
-                                        const quote = item.vendorQuotes.find(q => q.vendorId === selectedVendorId);
-                                        return (
-                                            <TableRow key={item.demandNoteItemId}>
-                                                <TableCell>{item.particulars}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(quote?.unitPrice || 0)}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency((quote?.unitPrice || 0) * item.quantity)}</TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                     <TableRow className="font-bold"><TableCell colSpan={2}>Grand Total</TableCell><TableCell className="text-right">{formatCurrency(totals?.grandTotal || 0)}</TableCell></TableRow>
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
-                    {step === 3 && selectedVendorId && (
-                        <div>
-                            <h4 className="font-semibold text-lg mb-2">Review Commercial Terms</h4>
-                             <div className="space-y-2 text-sm p-4 border rounded-md">
-                                <p><strong>Delivery Terms:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.deliveryTerms || 'N/A'}</p>
-                                <p><strong>Payment Terms:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.paymentTerms || 'N/A'}</p>
-                                <p><strong>Warranty:</strong> {cs?.vendorDetails.find(vd => vd.vendorId === selectedVendorId)?.warranty || 'N/A'}</p>
-                            </div>
-                        </div>
-                    )}
-                     {step === 4 && selectedVendor && (
-                        <div className="p-4 text-center border-yellow-500/50 border bg-yellow-500/10 rounded-lg">
-                            <p>You are about to select <strong>{selectedVendor.vendorName}</strong> for this purchase order.</p>
-                            <p className="text-sm text-muted-foreground">This action will start the approval process.</p>
-                        </div>
-                    )}
+                    {step === 2 && <p className="p-4 text-center border bg-yellow-500/10 rounded-lg">Confirming this vendor will start the approval workflow.</p>}
                 </div>
                 <DialogFooter className="flex justify-between w-full">
-                    <div>{step > 1 && <Button variant="outline" onClick={handleBack}>Back</Button>}</div>
-                    <div>
-                        {step < 4 ? <Button onClick={handleNext} disabled={step === 1 && !selectedVendorId}>Next</Button> : <Button onClick={handleConfirm}>Confirm & Start Approval</Button>}
-                    </div>
+                    <Button variant="outline" onClick={handleBack} disabled={step === 1}>Back</Button>
+                    {step === 1 ? <Button onClick={handleNext} disabled={!selectedVendorId}>Next</Button> : <Button onClick={handleConfirm}>Confirm</Button>}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -171,172 +99,58 @@ export function ComparativeStatementTable() {
     const { handlePrint } = usePrint();
 
     const csRef = useMemoFirebase(() => firestore ? collection(firestore, 'comparativeStatements') : null, [firestore]);
-    const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+    const poRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [vendorFilter, setVendorFilter] = useState('all');
-    
-    const [isPoFormOpen, setIsPoFormOpen] = useState(false);
-    const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
-    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const [isVendorSelectionOpen, setIsVendorSelectionOpen] = useState(false);
     const [selectedCsForVendor, setSelectedCsForVendor] = useState<ComparativeStatement | null>(null);
-    const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
+    const [isPoFormOpen, setIsPoFormOpen] = useState(false);
+    const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
 
-    const currentUserEmployee = useMemo(() => {
-        if (!user || !employees) return null;
-        return employees.find(e => e.email === user.email);
-    }, [user, employees]);
-
-    const roleData = useMemo(() => {
-        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-        const settings = orgSettings?.procurementSettings;
-        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
-
-        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
-        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
-        
-        let csApproverCheck = false;
-        const csRoles = settings.csApprovalRoles;
-        if (csRoles) {
-            const roleIds = [
-                csRoles.purchaseManagerId, csRoles.purchaseDeptTaId, csRoles.viceFactoryManagerId,
-                csRoles.accountsManagerId, csRoles.gmSalesDeptId, csRoles.gmAdministrationId,
-            ];
-            if (roleIds.includes(currentUserEmployee.id)) csApproverCheck = true;
-        }
-        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentUserEmployee.id)) csApproverCheck = true;
-        if (!csApproverCheck && settings.specializedDeptTaId === currentUserEmployee.id) csApproverCheck = true;
-        
-        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
-    }, [orgSettings, currentUserEmployee, user]);
-
-    const { isSuperAdmin, isGPOfficer } = roleData;
-
-    const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
-    const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
-    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
-            const searchTermMatch = !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(searchTerm.toLowerCase());
-            const vendorMatch = vendorFilter === 'all' || cs.vendorDetails.some((vd: any) => vd.vendorId === vendorFilter);
-            return searchTermMatch && vendorMatch;
+            const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+            return !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || dn?.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
         }).sort((a, b) => new Date(b.csDate || 0).getTime() - new Date(a.csDate || 0).getTime());
-    }, [comparativeStatements, searchTerm, vendorFilter, demandNotes]);
+    }, [comparativeStatements, searchTerm, demandNotes]);
 
-    const approvableItems = useMemo(() => {
-        return filteredItems.filter(item => 
-            item.approvalStatus !== 1 && 
-            item.approvalStatus !== 0 && 
-            item.approvalStatus !== 2 &&
-            currentUserEmployee && 
-            item.currentApproverId === currentUserEmployee.id
-        );
-    }, [filteredItems, currentUserEmployee]);
-
-    const toggleRowSelection = (id: string) => {
-        setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
-    };
+    const approvableItems = useMemo(() => filteredItems.filter(i => currentUserEmployee && i.currentApproverId === currentUserEmployee.id && i.approvalStatus !== 1 && i.approvalStatus !== 0 && i.approvalStatus !== 2), [filteredItems, currentUserEmployee]);
 
     const handleVendorSelected = (csId: string, vendorId: string) => {
         if (!csRef || !firestore) return;
         const cs = comparativeStatements.find(c => c.id === csId);
         if (!cs || !cs.approvalFlow?.steps) return;
-
-        const firstApproverId = cs.approvalFlow.steps[0]?.approverId || '';
-
         setDocumentNonBlocking(doc(csRef, csId), {
             selectedVendorId: vendorId,
             vendorSelectionDate: new Date().toISOString(),
             approvalStatus: 3, 
-            currentApproverId: firstApproverId,
+            currentApproverId: cs.approvalFlow.steps[0]?.approverId || '',
         }, { merge: true });
-
-        toast({ title: "Success", description: "Vendor selected. Approval process started." });
+        toast({ title: "Success", description: "Vendor awarded. Approval started." });
         setIsVendorSelectionOpen(false);
     };
 
     const handleBulkApproval = (status: number) => {
         if (!firestore || !currentUserEmployee || !csRef) return;
-
         selectedRows.forEach(id => {
             const cs = comparativeStatements.find(c => c.id === id);
             if (!cs || !cs.approvalFlow?.steps) return;
-
             const currentLevel = cs.approvalHistory?.length || 0;
-            const approvalLevels = cs.approvalFlow.steps;
-
-            const newHistoryEntry = {
-                approverId: currentUserEmployee.id,
-                status: status === 1 ? 'Approved' : 'Rejected',
-                timestamp: new Date().toISOString(),
-                level: currentLevel,
-                remarks: `Bulk action from list view`,
-            };
-
-            let nextStatus: number;
-            let nextApprover: string;
-
-            if (status === 1) {
-                const nextLevel = currentLevel + 1;
-                if (nextLevel < approvalLevels.length) {
-                    nextStatus = getNextApprovalStatusCode(currentLevel);
-                    nextApprover = approvalLevels[nextLevel].approverId;
-                } else {
-                    nextStatus = 1;
-                    nextApprover = '';
-                }
-            } else {
-                nextStatus = 0;
-                nextApprover = '';
-            }
-
-            setDocumentNonBlocking(doc(csRef, id), {
-                approvalStatus: nextStatus,
-                currentApproverId: nextApprover,
-                approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry],
-            }, { merge: true });
+            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
+            let nextStatus = status === 1 ? (currentLevel + 1 < cs.approvalFlow.steps.length ? currentLevel + 4 : 1) : 0;
+            let nextApprover = status === 1 && currentLevel + 1 < cs.approvalFlow.steps.length ? cs.approvalFlow.steps[currentLevel + 1].approverId : '';
+            setDocumentNonBlocking(doc(csRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
-
-        toast({ title: 'Success', description: `${selectedRows.length} statements processed.` });
         setSelectedRows([]);
-    };
-
-    const calculateVendorTotals = (cs: ComparativeStatement) => {
-        const totals: { [vendorId: string]: any } = {};
-        cs.vendorDetails.forEach((vd) => {
-            const subtotal = cs.items.reduce((acc, item) => {
-                const quote = item.vendorQuotes.find((q) => q.vendorId === vd.vendorId);
-                return acc + (item.quantity * (quote?.unitPrice || 0));
-            }, 0);
-            let discount = vd.discountType === 'Percentage' ? subtotal * ((vd.discountValue || 0) / 100) : (vd.discountValue || 0);
-            const subTotalAfterDiscount = subtotal - discount;
-            const vatAmount = subTotalAfterDiscount * ((vd.vatPercentage || 0) / 100);
-            const taxAmount = subTotalAfterDiscount * ((vd.taxPercentage || 0) / 100);
-            totals[vd.vendorId] = { grandTotal: subTotalAfterDiscount + vatAmount + taxAmount };
-        });
-        return totals;
-    };
-
-    const confirmDelete = () => {
-        if (currentItem && csRef) {
-            deleteDocumentNonBlocking(doc(csRef, currentItem.id));
-            toast({ title: "Success", description: "Statement deleted." });
-        }
-        setIsDeleteConfirmOpen(false);
-        setCurrentItem(null);
-    };
-
-    const handleSavePO = (poData: Partial<PurchaseOrder>) => {
-        if (!poCollectionRef) return;
-        addDocumentNonBlocking(poCollectionRef, poData);
-        toast({ title: 'Success', description: `Purchase Order ${poData.poNumber} created.` });
+        toast({ title: 'Processed' });
     };
 
     return (
@@ -350,12 +164,8 @@ export function ComparativeStatementTable() {
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}>
-                                    <Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})
-                                </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}>
-                                    <X className="mr-2 h-4 w-4" /> Reject Selected ({selectedRows.length})
-                                </Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                             </div>
                         )}
                     </div>
@@ -364,145 +174,77 @@ export function ComparativeStatementTable() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px]">
-                                    <Checkbox 
-                                        checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length}
-                                        onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])}
-                                    />
-                                </TableHead>
+                                <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
                                 <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="w-[140px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={8} className="text-center">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
-                                    const totals = calculateVendorTotals(cs);
-                                    const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
-                                    
+                                    const concern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
-                                    const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
-                                            <TableCell>
-                                                <Checkbox 
-                                                    checked={selectedRows.includes(cs.id)}
-                                                    onCheckedChange={() => toggleRowSelection(cs.id)}
-                                                    disabled={!isApprovable}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                    <span>{cs.csNumber}</span>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                    <span>{dn?.demandNoteNumber || 'N/A'}</span>
-                                                    {dn?.demandNoteNumber && (
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(dn.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-medium">{getEmployeeName(dn?.gpConcernOfficerId || '')}</span>
-                                                    {dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-medium">{cs.selectedVendorId ? getVendorName(cs.selectedVendorId) : 'N/A'}</span>
-                                                    {cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {isWaitingForMe && (
-                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right font-semibold">{cs.selectedVendorId ? formatCurrency(amount) : 'N/A'}</TableCell>
+                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
+                                            <TableCell><div className="flex items-center gap-1"><span>{cs.csNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
+                                            <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
+                                            <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
+                                            <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
+                                            <TableCell><div className="flex items-center gap-2"><Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>{isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}</div></TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {canSelectVendor && (
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Award Contract</TooltipContent></Tooltip>
-                                                    )}
-                                                    {canCreatePO && (
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Create PO</TooltipContent></Tooltip>
-                                                    )}
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => {setCurrentItem(cs); setIsDeleteConfirmOpen(true);}}><Trash2 className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                    {canSelectVendor && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button>}
+                                                    {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(csRef!, cs.id))}><Trash2 className="h-4 w-4"/></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     )
                                 })
-                            ) : (
-                                <TableRow><TableCell colSpan={8} className="h-24 text-center">No statements found.</TableCell></TableRow>
-                            )}
+                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center">No statements found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
             </div>
             
-            <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Are you sure?</DialogTitle></DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
-                        <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
+            <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
+            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => { addDocumentNonBlocking(poRef!, d); toast({ title: 'PO Created' }); }} cs={selectedCsForPo} />
+            
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-lg">
-                    <DialogHeader><DialogTitle>Approval Status: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
-                    <div className="py-4">
-                        <ul className="space-y-4">
-                            {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
-                                const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
-                                const approver = employees?.find(e => e.id === step.approverId);
-                                const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0;
-                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
-                                return (
-                                    <li key={index} className="flex items-start gap-4">
-                                        {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                        <div className="flex-1 flex gap-3 items-center">
-                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                            <div>
-                                                <p className="font-semibold">{step.stepName}</p>
-                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
-                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
-                                            </div>
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                    <DialogHeader><DialogTitle>Approval Flow: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
+                    <div className="py-4 space-y-4">
+                        {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
+                            const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
+                            const approver = employees?.find(e => e.id === step.approverId);
+                            const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0;
+                            return (
+                                <li key={index} className="flex items-start gap-4 list-none">
+                                    {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                    <div className="flex-1 flex gap-3 items-center">
+                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar>
+                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </div>
                 </DialogContent>
             </Dialog>
-
-            <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
-            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={handleSavePO} cs={selectedCsForPo} />
         </TooltipProvider>
     );
 }
