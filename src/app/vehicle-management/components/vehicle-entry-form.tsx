@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, PlusCircle, Trash2 } from 'lucide-react';
+import { 
+    Upload, X, PlusCircle, Trash2, Hash, Tag, Car, Key, Wrench, Settings, 
+    Fuel, Users, Building, CheckCircle2, History, FileText, Calendar as CalendarIcon, 
+    Milestone, Layers, Image as ImageIcon, ShieldCheck
+} from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
@@ -38,21 +43,21 @@ export type Vehicle = {
     registrationNumber: string;
     engineNumber: string;
     chassisNumber: string;
-    brandId: string; // Formerly make
+    brandId: string; 
     model: string;
     manufactureYear: string;
     fuelType: 'Petrol' | 'Diesel' | 'CNG' | 'LPG' | 'Electric' | '';
-    capacity: string; // Seating / Load Capacity
+    capacity: string; 
     ownership: 'Company' | 'Rental' | '';
     status: 'Active' | 'Under Maintenance' | 'Inactive' | '';
     driverAssignmentHistory: DriverAssignment[];
     documents: {
-        registration: string; // data URL
-        insurance: string; // data URL
-        fitness: string; // data URL
-        taxToken: string; // data URL
-        routePermit: string; // data URL
-        other: string; // data URL
+        registration: string; 
+        insurance: string; 
+        fitness: string; 
+        taxToken: string; 
+        routePermit: string; 
+        other: string; 
     };
 };
 
@@ -89,12 +94,12 @@ interface VehicleEntryFormProps {
 
 type DocType = keyof Vehicle['documents'];
 const documentLabels: Record<DocType, string> = {
-  registration: "Registration Certificate (RC / Blue Book)",
+  registration: "RC / Blue Book",
   insurance: "Insurance Certificate",
   fitness: "Fitness Certificate",
-  taxToken: "Tax Token / Road Tax Receipt",
+  taxToken: "Tax Token Receipt",
   routePermit: "Route Permit",
-  other: "Other Document"
+  other: "Other Evidence"
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -128,11 +133,11 @@ const QuickAddDialog: React.FC<{
                 <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                        <Label>Name</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Name</Label>
                         <Input value={name} onChange={(e) => setName(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                        <Label>Code</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Code</Label>
                         <Input value={code} onChange={(e) => setCode(e.target.value)} />
                     </div>
                 </div>
@@ -172,8 +177,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     if (isOpen) {
         setStep(1);
         if (isEditing && vehicle) {
-            const dataToEdit = { ...initialVehicleData, ...vehicle };
-            setVehicleData(dataToEdit);
+            setVehicleData({ ...initialVehicleData, ...vehicle });
             setDocPreviews(vehicle.documents || initialDocuments);
             setDriverAssignments(vehicle.driverAssignmentHistory || []);
         } else {
@@ -200,7 +204,6 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         const dataUrl = await imageToDataUrl(file);
         setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
       } catch (error) {
-        console.error("Error processing document:", error);
         toast({ variant: 'destructive', title: 'File Error', description: 'Could not process the uploaded file.' });
       }
     }
@@ -228,8 +231,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     ];
     for (const field of requiredFields) {
       if (!vehicleData[field]?.trim()) {
-        const fieldName = field.replace(/([A-Z])/g, ' $1').replace('Id', '').trim();
-        toast({ variant: 'destructive', title: 'Error', description: `Please fill out the ${fieldName} field.` });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields.' });
         return false;
       }
     }
@@ -237,59 +239,30 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
   };
   
   const nextStep = () => {
-    if (step === 1 && !validateStep1()) {
-        return;
-    }
+    if (step === 1 && !validateStep1()) return;
     setStep(s => s + 1);
   };
 
   const prevStep = () => setStep(s => s - 1);
 
   const handleSave = async () => {
-    if (!validateStep1()) {
-        toast({variant: 'destructive', title: 'Error', description: 'Please go back and fill out all required fields.'});
-        return;
-    }
-    
     const dataToSave: Omit<Vehicle, 'id'> = {
         ...vehicleData,
         driverAssignmentHistory: driverAssignments,
         documents: docPreviews,
     };
-
     onSave(dataToSave, vehicle?.id);
     setIsOpen(false);
   };
-
-  const handleQuickAddType = (newType: VehicleType) => {
-    setVehicleTypes(prev => [...(prev || []), newType]);
-    setVehicleData(prev => ({ ...prev, vehicleTypeId: newType.id }));
-    toast({ title: 'Success', description: `Category "${newType.name}" added and selected.` });
-  };
-  
-   const handleQuickAddBrand = (newBrand: VehicleBrand) => {
-    setVehicleBrands(prev => [...(prev || []), newBrand]);
-    setVehicleData(prev => ({ ...prev, brandId: newBrand.id }));
-    toast({ title: 'Success', description: `Brand "${newBrand.name}" added and selected.` });
-  };
-  
-  const getDocumentName = (docType: DocType) => {
-      if (docPreviews[docType]) {
-          const prefix = `data:application/pdf;base64,`;
-          if (docPreviews[docType].startsWith(prefix)) return `${documentLabels[docType]}.pdf`;
-          return `${documentLabels[docType]}.jpg`;
-      }
-      return null;
-  }
 
   return (
     <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Fleet Asset' : 'Register New Fleet Asset'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update the details of this vehicle.' : 'Follow the steps to add a new vehicle.'}
+            {isEditing ? 'Modify technical specifications or ownership details.' : 'Input core vehicle data to register it in the organization fleet.'}
           </DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
@@ -297,105 +270,90 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
                 <div className="space-y-6">
-                 <h3 className="font-semibold text-lg">Step 1: Vehicle Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Column 1 */}
+                 <h3 className="font-semibold text-lg flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Step 1: Technical Specifications</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleIdCode">Vehicle ID / Code<MandatoryIndicator/></Label>
+                            <Label htmlFor="vehicleIdCode" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Vehicle ID / Internal Code<MandatoryIndicator/></Label>
                             <Input id="vehicleIdCode" value={vehicleData.vehicleIdCode} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="registrationNumber">Registration Number<MandatoryIndicator/></Label>
+                            <Label htmlFor="registrationNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><FileText className="h-3 w-3" /> BRTA Registration No.<MandatoryIndicator/></Label>
                             <Input id="registrationNumber" value={vehicleData.registrationNumber} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="engineNumber">Engine Number</Label>
+                            <Label htmlFor="engineNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Engine Number</Label>
                             <Input id="engineNumber" value={vehicleData.engineNumber} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="chassisNumber">Chassis Number</Label>
+                            <Label htmlFor="chassisNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Chassis Number</Label>
                             <Input id="chassisNumber" value={vehicleData.chassisNumber} onChange={handleVehicleDataChange} />
                         </div>
                     </div>
 
-                    {/* Column 2 */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label htmlFor="vehicleTypeId">Vehicle Category<MandatoryIndicator/></Label>
+                           <Label htmlFor="vehicleTypeId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Vehicle Category<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
-                                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                                    <SelectContent>
-                                        {(vehicleTypes || []).map(type => (
-                                            <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
+                                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                                    <SelectContent>{(vehicleTypes || []).map(type => <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Button type="button" variant="outline" size="icon" onClick={() => setIsAddTypeOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
                             </div>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="brandId">Brand<MandatoryIndicator/></Label>
+                            <Label htmlFor="brandId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Brand / Make<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.brandId} onValueChange={handleSelectChange('brandId')}>
                                     <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
-                                    <SelectContent>
-                                        {(vehicleBrands || []).map(brand => (
-                                            <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
+                                    <SelectContent>{(vehicleBrands || []).map(brand => <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Button type="button" variant="outline" size="icon" onClick={() => setIsAddBrandOpen(true)}><PlusCircle className="h-4 w-4" /></Button>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="model">Model<MandatoryIndicator/></Label>
+                            <Label htmlFor="model" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Model Name<MandatoryIndicator/></Label>
                             <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="manufactureYear">Manufacture Year</Label>
+                            <Label htmlFor="manufactureYear" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Year of Manufacture</Label>
                             <Input id="manufactureYear" value={vehicleData.manufactureYear} onChange={handleVehicleDataChange} type="number" />
                         </div>
                     </div>
 
-                    {/* Column 3 */}
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="fuelType">Fuel Type</Label>
+                            <Label htmlFor="fuelType" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Fuel className="h-3 w-3" /> Primary Fuel Source</Label>
                             <Select value={vehicleData.fuelType} onValueChange={handleSelectChange('fuelType')}>
-                                <SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger>
+                                <SelectTrigger><SelectValue placeholder="Select fuel" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Petrol">Petrol</SelectItem>
                                     <SelectItem value="Diesel">Diesel</SelectItem>
                                     <SelectItem value="CNG">CNG</SelectItem>
-                                    <SelectItem value="LPG">LPG</SelectItem>
                                     <SelectItem value="Electric">Electric</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="capacity">Seating / Load Capacity</Label>
+                            <Label htmlFor="capacity" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Users className="h-3 w-3" /> Load / Seating Capacity</Label>
                             <Input id="capacity" value={vehicleData.capacity} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="ownership">Ownership<MandatoryIndicator/></Label>
+                            <Label htmlFor="ownership" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Ownership Status<MandatoryIndicator/></Label>
                             <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
                                 <SelectTrigger><SelectValue placeholder="Select ownership" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Company">Company</SelectItem>
-                                    <SelectItem value="Rental">Rental</SelectItem>
-                                </SelectContent>
+                                <SelectContent><SelectItem value="Company">Company Asset</SelectItem><SelectItem value="Rental">Third-Party Rental</SelectItem></SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="status">Vehicle Status<MandatoryIndicator/></Label>
+                            <Label htmlFor="status" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Operation Status<MandatoryIndicator/></Label>
                             <Select value={vehicleData.status} onValueChange={handleSelectChange('status')}>
                                 <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Active">Active</SelectItem>
-                                    <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
-                                    <SelectItem value="Inactive">Inactive</SelectItem>
+                                    <SelectItem value="Active">Ready for Duty</SelectItem>
+                                    <SelectItem value="Under Maintenance">Workshop / Service</SelectItem>
+                                    <SelectItem value="Inactive">Out of Order</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -407,80 +365,74 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
             {step === 2 && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-lg">Step 2: Driver Assignment History</h3>
-                    <Button variant="outline" size="sm" onClick={addDriverAssignment}><PlusCircle className="mr-2 h-4 w-4" /> Add Assignment</Button>
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><History className="h-5 w-5 text-primary" /> Step 2: Personnel Assignment</h3>
+                    <Button variant="outline" size="sm" onClick={addDriverAssignment} className="flex items-center gap-2"><PlusCircle className="h-4 w-4" /> Add Driver</Button>
                 </div>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {driverAssignments.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime()).map((assignment) => (
-                        <div key={assignment.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center p-2 rounded-md border">
+                <div className="space-y-3">
+                    {driverAssignments.map((assignment) => (
+                        <div key={assignment.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-center p-3 rounded-md border bg-primary/5">
                             <div className="space-y-1">
-                                <Label className="text-xs">Driver<MandatoryIndicator/></Label>
-                                <Select value={assignment.driverId} onValueChange={(value) => updateDriverAssignment(assignment.id, 'driverId', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Select driver"/></SelectTrigger>
-                                    <SelectContent>
-                                        {(drivers || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
-                                    </SelectContent>
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Users className="h-3 w-3" /> Select Driver</Label>
+                                <Select value={assignment.driverId} onValueChange={(v) => updateDriverAssignment(assignment.id, 'driverId', v)}>
+                                    <SelectTrigger className="bg-background"><SelectValue placeholder="Choose driver..."/></SelectTrigger>
+                                    <SelectContent>{(drivers || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs">Effective Date<MandatoryIndicator/></Label>
-                                <Input type="date" value={assignment.effectiveDate} onChange={(e) => updateDriverAssignment(assignment.id, 'effectiveDate', e.target.value)} />
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CalendarIcon className="h-3 w-3" /> Effective Date</Label>
+                                <Input type="date" value={assignment.effectiveDate} onChange={(e) => updateDriverAssignment(assignment.id, 'effectiveDate', e.target.value)} className="bg-background" />
                             </div>
-                            <Button variant="ghost" size="icon" className="self-end" onClick={() => removeDriverAssignment(assignment.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                            <Button variant="ghost" size="icon" className="mt-5 text-destructive hover:bg-destructive/10" onClick={() => removeDriverAssignment(assignment.id)}><Trash2 className="h-4 w-4"/></Button>
                         </div>
                     ))}
-                    {driverAssignments.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No drivers assigned. Click "Add Assignment" to begin.</p>}
+                    {driverAssignments.length === 0 && <p className="text-sm text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">No drivers have been assigned to this vehicle yet.</p>}
                 </div>
               </div>
             )}
 
             {step === 3 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 3: Upload Documents</h3>
-                    
-                    {(Object.keys(documentLabels) as DocType[]).map(docType => {
-                        const currentDocName = getDocumentName(docType);
-                        
-                        return (
-                            <div className="space-y-2" key={docType}>
-                                <Label>{documentLabels[docType]}</Label>
-                                {currentDocName ? (
-                                    <div className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
-                                        <span>{currentDocName}</span>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <Label htmlFor={`file-upload-${docType}`} className="flex items-center justify-center w-full h-20 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
-                                        <span className="flex items-center space-x-2">
-                                            <Upload className="h-5 w-5 text-muted-foreground" />
-                                            <span className="font-medium text-muted-foreground">
-                                                Click to upload
-                                            </span>
-                                        </span>
-                                        <Input id={`file-upload-${docType}`} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange(docType)} />
-                                    </Label>
-                                )}
-                            </div>
-                        );
-                    })}
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Layers className="h-5 w-5 text-primary" /> Step 3: Compliance Documents</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        {(Object.keys(documentLabels) as DocType[]).map(docType => {
+                            const preview = docPreviews[docType];
+                            return (
+                                <div className="space-y-2 p-3 border rounded-lg bg-muted/5 group" key={docType}>
+                                    <Label className="font-semibold text-xs flex items-center gap-2 uppercase tracking-tight text-muted-foreground"><ShieldCheck className="h-3 w-3" /> {documentLabels[docType]}</Label>
+                                    {preview ? (
+                                        <div className="flex items-center justify-between text-sm p-2 bg-primary/5 rounded-md border border-primary/20">
+                                            <span className="truncate font-medium flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Copy Uploaded</span>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeDocument(docType)}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                    ) : (
+                                        <Label htmlFor={`v-file-${docType}`} className="flex items-center justify-center w-full h-12 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
+                                            <div className="flex items-center gap-2">
+                                                <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                                <span className="text-xs font-medium text-muted-foreground">Upload Scan</span>
+                                            </div>
+                                            <Input id={`v-file-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
+                                        </Label>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                  </div>
             )}
         </div>
 
          <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <div>
-              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
-            </div>
-            <div>
-              {step < 3 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Vehicle' : 'Save Vehicle'}</Button>)}
-            </div>
+            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            {step < 3 ? (
+                <Button onClick={nextStep}>Continue</Button>
+            ) : (
+                <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Changes' : 'Complete Registration'}</Button>
+            )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    <QuickAddDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} title="Add New Vehicle Category" />
-    <QuickAddDialog open={isAddBrandOpen} onOpenChange={setIsAddBrandOpen} onSave={handleQuickAddBrand} title="Add New Vehicle Brand" />
+    <QuickAddDialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen} onSave={handleQuickAddType} title="New Vehicle Category" />
+    <QuickAddDialog open={isAddBrandOpen} onOpenChange={setIsAddBrandOpen} onSave={handleQuickAddBrand} title="New Vehicle Brand" />
     </>
   );
 }

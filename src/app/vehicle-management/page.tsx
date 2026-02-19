@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleHeader } from '@/app/components/module-header';
@@ -44,97 +45,155 @@ export default function VehicleManagementPage() {
         <ModuleHeader />
         <Tabs defaultValue="dashboard" className="w-full">
             <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-muted/50 rounded-xl">
-                <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
-                <TabsTrigger value="trips" className="flex items-center gap-2 py-3"><Route className="h-4 w-4" /> Trips</TabsTrigger>
-                <TabsTrigger value="vehicles" className="flex items-center gap-2 py-3"><Car className="h-4 w-4" /> Vehicles</TabsTrigger>
-                <TabsTrigger value="drivers" className="flex items-center gap-2 py-3"><Users className="h-4 w-4" /> Drivers</TabsTrigger>
-                <TabsTrigger value="maintenance" className="flex items-center gap-2 py-3"><Wrench className="h-4 w-4" /> Maintenance</TabsTrigger>
-                <TabsTrigger value="accidents" className="flex items-center gap-2 py-3"><AlertTriangle className="h-4 w-4" /> Accidents</TabsTrigger>
-                <TabsTrigger value="reports" className="flex items-center gap-2 py-3"><FileBarChart className="h-4 w-4" /> Reports</TabsTrigger>
-                <TabsTrigger value="master-data" className="flex items-center gap-2 py-3"><Database className="h-4 w-4" /> Master Data</TabsTrigger>
+                <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3"><LayoutDashboard className="h-4 w-4" /> <span className="hidden md:inline">Dashboard</span></TabsTrigger>
+                <TabsTrigger value="trips" className="flex items-center gap-2 py-3"><Route className="h-4 w-4" /> <span className="hidden md:inline">Trips</span></TabsTrigger>
+                <TabsTrigger value="vehicles" className="flex items-center gap-2 py-3"><Car className="h-4 w-4" /> <span className="hidden md:inline">Vehicles</span></TabsTrigger>
+                <TabsTrigger value="drivers" className="flex items-center gap-2 py-3"><Users className="h-4 w-4" /> <span className="hidden md:inline">Drivers</span></TabsTrigger>
+                <TabsTrigger value="maintenance" className="flex items-center gap-2 py-3"><Wrench className="h-4 w-4" /> <span className="hidden md:inline">Maintenance</span></TabsTrigger>
+                <TabsTrigger value="accidents" className="flex items-center gap-2 py-3"><AlertTriangle className="h-4 w-4" /> <span className="hidden md:inline">Accidents</span></TabsTrigger>
+                <TabsTrigger value="reports" className="flex items-center gap-2 py-3"><FileBarChart className="h-4 w-4" /> <span className="hidden md:inline">Reports</span></TabsTrigger>
+                <TabsTrigger value="master-data" className="flex items-center gap-2 py-3"><Database className="h-4 w-4" /> <span className="hidden md:inline">Master Data</span></TabsTrigger>
             </TabsList>
+            
             <TabsContent value="dashboard">
                 <DashboardDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5" /> Dashboard</CardTitle><CardDescription>An overview of your vehicle fleet and operations.</CardDescription></CardHeader>
-                        <CardContent><Dashboard /></CardContent>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5" /> Dashboard Overview</CardTitle>
+                            <CardDescription>Real-time analytics for your vehicle fleet operations.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Dashboard />
+                        </CardContent>
                     </Card>
                 </DashboardDataProvider>
             </TabsContent>
+            
             <TabsContent value="trips">
                 <TripDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Route className="h-5 w-5" /> Trips</CardTitle><CardDescription>Manage all vehicle trips.</CardDescription></CardHeader>
-                        <CardContent><TripTable /></CardContent>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Route className="h-5 w-5" /> Trip Logs</CardTitle>
+                            <CardDescription>Comprehensive record of all vehicle journeys and itineraries.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <TripTable />
+                        </CardContent>
                     </Card>
                 </TripDataProvider>
             </TabsContent>
+            
             <TabsContent value="vehicles">
                 <VehicleDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Car className="h-5 w-5" /> Vehicles</CardTitle><CardDescription>Manage all vehicles in your organization.</CardDescription></CardHeader>
-                        <CardContent><VehicleTable /></CardContent>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5" /> Vehicle Fleet</CardTitle>
+                            <CardDescription>Inventory and current status of all organization vehicles.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <VehicleTable />
+                        </CardContent>
                     </Card>
                 </VehicleDataProvider>
             </TabsContent>
+            
             <TabsContent value="drivers">
                 <DriverDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Drivers</CardTitle><CardDescription>Manage your organization's drivers and their documents.</CardDescription></CardHeader>
-                        <CardContent><DriverTable /></CardContent>
-                    </DriverDataProvider>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Driver Directory</CardTitle>
+                            <CardDescription>Manage driver profiles, licenses, and assignments.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <DriverTable />
+                        </CardContent>
+                    </Card>
+                </DriverDataProvider>
             </TabsContent>
+            
             <TabsContent value="maintenance">
                 <MaintenanceDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5" /> Maintenance Records</CardTitle><CardDescription>Log and track all vehicle maintenance activities.</CardDescription></CardHeader>
-                        <CardContent><MaintenanceRecordTable /></CardContent>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5" /> Maintenance History</CardTitle>
+                            <CardDescription>Tracking services, part replacements, and repairs.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <MaintenanceRecordTable />
+                        </CardContent>
                     </Card>
                 </MaintenanceDataProvider>
             </TabsContent>
+            
             <TabsContent value="accidents">
                 <AccidentDataProvider>
                     <Card>
-                        <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" /> Accident Records</CardTitle><CardDescription>Manage and track all vehicle accident reports and history.</CardDescription></CardHeader>
-                        <CardContent><AccidentTable /></CardContent>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" /> Accident Registry</CardTitle>
+                            <CardDescription>Official incident reports and damage assessments.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <AccidentTable />
+                        </CardContent>
                     </Card>
                 </AccidentDataProvider>
             </TabsContent>
+            
             <TabsContent value="reports">
                 <ReportsDataProvider>
                     <ReportsPage />
                 </ReportsDataProvider>
             </TabsContent>
+            
             <TabsContent value="master-data" className="pt-4">
                 <MasterDataProvider>
                     <Tabs defaultValue="vehicle-master" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="vehicle-master">Vehicle Master</TabsTrigger>
-                            <TabsTrigger value="trip-master">Trip Master</TabsTrigger>
-                            <TabsTrigger value="maintenance-master">Maintenance Master</TabsTrigger>
-                            <TabsTrigger value="accident-master">Accident Master</TabsTrigger>
+                            <TabsTrigger value="vehicle-master">Vehicle Details</TabsTrigger>
+                            <TabsTrigger value="trip-master">Trip Settings</TabsTrigger>
+                            <TabsTrigger value="maintenance-master">Maintenance</TabsTrigger>
+                            <TabsTrigger value="accident-master">Accident</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="vehicle-master" className="mt-4">
-                            <Card><CardHeader><CardTitle>Vehicle Brands & Categories</CardTitle></CardHeader>
-                                <CardContent className="space-y-6"><VehicleBrandTable /><VehicleTypeTable /></CardContent>
+                        <TabsContent value="vehicle-master" className="mt-4 space-y-6">
+                            <Card>
+                                <CardHeader><CardTitle>Vehicle Categories & Brands</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <VehicleBrandTable />
+                                    <VehicleTypeTable />
+                                </CardContent>
                             </Card>
                         </TabsContent>
                         <TabsContent value="trip-master" className="mt-4 space-y-6">
-                            <Card><CardHeader><CardTitle>Routes</CardTitle><CardDescription>Define routes by selecting a start and end location.</CardDescription></CardHeader><CardContent><RouteTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Trip Purposes</CardTitle><CardDescription>Manage predefined purposes for vehicle trips.</CardDescription></CardHeader><CardContent><TripPurposeTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Locations</CardTitle><CardDescription>Manage predefined locations and their unique codes.</CardDescription></CardHeader><CardContent><LocationTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Trip Expense Types</CardTitle><CardDescription>Manage predefined types for trip expenses.</CardDescription></CardHeader><CardContent><ExpenseTypeTable /></CardContent></Card>
+                            <Card>
+                                <CardHeader><CardTitle>Geographic & Logic Config</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <RouteTable />
+                                    <TripPurposeTable />
+                                    <LocationTable />
+                                    <ExpenseTypeTable />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
                         <TabsContent value="maintenance-master" className="mt-4 space-y-6">
-                            <Card><CardHeader><CardTitle>Parts</CardTitle><CardDescription>Manage reusable vehicle parts and their details.</CardDescription></CardHeader><CardContent><PartTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Service Centers / Garages</CardTitle><CardDescription>Manage your approved service centers and garages.</CardDescription></CardHeader><CardContent><ServiceCenterTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Maintenance Types</CardTitle><CardDescription>Manage the different types of vehicle maintenance services (e.g., Oil Change, Brake Service).</CardDescription></CardHeader><CardContent><MaintenanceTypeTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Maintenance Expense Types</CardTitle><CardDescription>Manage cost categories for maintenance jobs (e.g., Labor Cost, Spare Parts, Engine Oil).</CardDescription></CardHeader><CardContent><MaintenanceExpenseTypeTable /></CardContent></Card>
+                            <Card>
+                                <CardHeader><CardTitle>Service & Parts Master</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <PartTable />
+                                    <ServiceCenterTable />
+                                    <MaintenanceTypeTable />
+                                    <MaintenanceExpenseTypeTable />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
                         <TabsContent value="accident-master" className="mt-4 space-y-6">
-                            <Card><CardHeader><CardTitle>Accident Types</CardTitle><CardDescription>Manage the predefined types of accidents (e.g., Collision, Rollover).</CardDescription></CardHeader><CardContent><AccidentTypeTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Severity Levels</CardTitle><CardDescription>Manage the severity levels of an accident (e.g., Minor, Moderate, Major).</CardDescription></CardHeader><CardContent><SeverityLevelTable /></CardContent></Card>
-                            <Card><CardHeader><CardTitle>Fault Status</CardTitle><CardDescription>Manage the fault status of an accident (e.g., Driver at Fault, Third-Party at Fault).</CardDescription></CardHeader><CardContent><FaultStatusTable /></CardContent></Card>
+                            <Card>
+                                <CardHeader><CardTitle>Incident Classifications</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    <AccidentTypeTable />
+                                    <SeverityLevelTable />
+                                    <FaultStatusTable />
+                                </CardContent>
+                            </Card>
                         </TabsContent>
                     </Tabs>
                 </MasterDataProvider>

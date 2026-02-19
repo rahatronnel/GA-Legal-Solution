@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -16,48 +17,49 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, File as FileIcon, PlusCircle } from 'lucide-react';
+import { 
+    Upload, X, Calendar as CalendarIcon, File as FileIcon, PlusCircle, AlertTriangle, 
+    Car, User, Clock, MapPin, Hash, Tag, Shield, Milestone, Route, Info, 
+    HeartPulse, ShieldQuestion, DollarSign, Building, CheckCircle2, ClipboardList, 
+    ShieldCheck, Image as ImageIcon
+} from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, imageToDataUrl } from '@/lib/utils';
-import { format, parseISO, parse } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
 
 import type { Vehicle } from './vehicle-table';
 import type { Driver } from './driver-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
-import type { Route } from './route-table';
-import type { Trip } from './trip-entry-form';
 import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ChevronsUpDown, Check } from 'lucide-react';
 import { TimeInput } from './time-input';
 
 type UploadedFile = {
   id: string;
   name: string;
-  file: string; // data URL
+  file: string; 
 }
 
 type AccidentDocumentType = 'accidentPhotos' | 'policeReport' | 'insuranceClaimForm' | 'workshopQuotation' | 'repairInvoice' | 'medicalReport';
 
 const documentCategories: Record<AccidentDocumentType, string> = {
-    accidentPhotos: 'Accident Photos',
-    policeReport: 'Police Report',
-    insuranceClaimForm: 'Insurance Claim Form',
-    workshopQuotation: 'Workshop Quotation',
-    repairInvoice: 'Repair Invoice',
-    medicalReport: 'Medical Report (if any)',
+    accidentPhotos: 'Accident Scene Photos',
+    policeReport: 'Police GD / FIR Copy',
+    insuranceClaimForm: 'Insurance Claim Copy',
+    workshopQuotation: 'Repair Estimate',
+    repairInvoice: 'Final Repair Bill',
+    medicalReport: 'Injury Report',
 };
 
 export type Accident = {
   id: string;
-  accidentId: string; // Auto-generated
+  accidentId: string;
   vehicleId: string;
   driverId: string;
   employeeId: string;
@@ -70,29 +72,21 @@ export type Accident = {
   routeId: string;
   tripId: string;
   description: string;
-  
-  // Damage Details
   vehicleDamageDescription: string;
   thirdPartyDamage: 'Yes' | 'No' | '';
   humanInjury: 'None' | 'Minor' | 'Serious' | 'Fatal' | '';
   vehicleStatusAfterAccident: 'Running' | 'Repair Required' | 'Total Loss' | '';
-
-  // Financial
   estimatedRepairCost: number;
   actualRepairCost: number;
   thirdPartyDamageCost: number;
   repairedById: string;
   repairPaymentStatus: 'Paid' | 'Unpaid' | 'Pending' | '';
-
-  // Legal
   policeReportFiled: boolean;
   policeReportNumber: string;
   policeStation: string;
   insuranceClaimFiled: boolean;
   insuranceClaimNumber: string;
   insuranceCompany: string;
-
-  // Documents
   documents: Record<AccidentDocumentType, UploadedFile[]>;
 };
 
@@ -118,18 +112,15 @@ const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
   routeId: '',
   tripId: '',
   description: '',
-
   vehicleDamageDescription: '',
   thirdPartyDamage: '',
   humanInjury: '',
   vehicleStatusAfterAccident: '',
-
   estimatedRepairCost: 0,
   actualRepairCost: 0,
   thirdPartyDamageCost: 0,
   repairedById: '',
   repairPaymentStatus: '',
-
   policeReportFiled: false,
   policeReportNumber: '',
   policeStation: '',
@@ -139,63 +130,6 @@ const initialAccidentData: Omit<Accident, 'id' | 'accidentId' | 'documents'> = {
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
-
-// Combobox Component
-interface ComboboxProps<T> {
-  items: T[];
-  value: string;
-  onSelect: (value: string) => void;
-  displayValue: (item: T) => string;
-  searchValue: (item: T) => string;
-  placeholder: string;
-  emptyMessage: string;
-}
-
-function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage }: ComboboxProps<T>) {
-  const [open, setOpen] = useState(false);
-  const currentItem = items.find((item) => item.id === value);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-        >
-          {currentItem
-            ? displayValue(currentItem)
-            : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
-          <CommandInput placeholder={placeholder} />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandList>
-            <CommandGroup>
-              {items.map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={searchValue(item)}
-                  onSelect={() => {
-                    onSelect(item.id === value ? '' : item.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check className={cn("mr-2 h-4 w-4", value === item.id ? "opacity-100" : "opacity-0")} />
-                  {displayValue(item)}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 interface AccidentEntryFormProps {
   isOpen: boolean;
@@ -207,332 +141,173 @@ interface AccidentEntryFormProps {
 export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: AccidentEntryFormProps) {
   const { toast } = useToast();
   const { data } = useVehicleManagement();
-  const { 
-    vehicles,
-    drivers,
-    employees,
-    routes,
-    trips,
-    accidentTypes,
-    severityLevels,
-    faultStatuses,
-    serviceCenters
-  } = data;
+  const { vehicles = [], drivers = [], employees = [], accidentTypes = [], severityLevels = [], faultStatuses = [], serviceCenters = [] } = data;
   
   const [step, setStep] = useState(1);
-  const [accidentData, setAccidentData] = useState(initialAccidentData);
+  const [aData, setAData] = useState(initialAccidentData);
   const [documents, setDocuments] = useState<Record<AccidentDocumentType, UploadedFile[]>>(initialDocuments);
-  
-  const [accidentDate, setAccidentDate] = useState<Date | undefined>();
+  const [accDate, setAccDate] = useState<Date | undefined>();
 
   const isEditing = accident && accident.id;
   const progress = Math.round((step / 5) * 100);
-
-  const selectedVehicle = React.useMemo(() => vehicles.find(v => v.id === accidentData.vehicleId), [accidentData.vehicleId, vehicles]);
-  const selectedDriver = React.useMemo(() => drivers.find(d => d.id === accidentData.driverId), [accidentData.driverId, drivers]);
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       if (isEditing && accident) {
-        setAccidentData({ ...initialAccidentData, ...accident });
+        setAData({ ...initialAccidentData, ...accident });
         setDocuments(accident.documents || initialDocuments);
-        const accDate = accident.accidentDate ? parse(accident.accidentDate, 'yyyy-MM-dd', new Date()) : undefined;
-        setAccidentDate(accDate);
-
-        if (!accident.driverId && accDate && accident.vehicleId) {
-            const vehicle = vehicles.find(v => v.id === accident.vehicleId);
-            if (vehicle) {
-                const driverId = getDriverForDate(vehicle, accDate);
-                if (driverId) {
-                    setAccidentData(prev => ({ ...prev, driverId }));
-                }
-            }
-        }
+        setAccDate(accident.accidentDate ? parseISO(accident.accidentDate) : undefined);
       } else {
-        setAccidentData(initialAccidentData);
+        setAData(initialAccidentData);
         setDocuments(initialDocuments);
-        setAccidentDate(undefined);
+        setAccDate(undefined);
       }
     }
-  }, [isOpen, accident, isEditing, vehicles]);
-
-  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
-    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
-      return '';
-    }
-
-    const sortedHistory = [...vehicle.driverAssignmentHistory]
-        .filter(h => new Date(h.effectiveDate) <= date)
-        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
-
-    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
-  };
-
-  const handleVehicleChange = (vehicleId: string) => {
-    setAccidentData(prev => ({...prev, vehicleId, driverId: ''}));
-    const vehicle = vehicles.find(v => v.id === vehicleId);
-    if(vehicle && accidentDate) {
-        const driverId = getDriverForDate(vehicle, accidentDate);
-        if(driverId) {
-            setAccidentData(prev => ({...prev, driverId}));
-        }
-    }
-  }
-
-  const handleAccidentDateChange = (date: Date | undefined) => {
-    setAccidentDate(date);
-    const dateString = date ? format(date, 'yyyy-MM-dd') : '';
-    setAccidentData(prev => ({...prev, accidentDate: dateString, driverId: ''}));
-
-    if(accidentData.vehicleId && date) {
-        const vehicle = vehicles.find(v => v.id === accidentData.vehicleId);
-        if(vehicle) {
-            const driverId = getDriverForDate(vehicle, date);
-            if(driverId) {
-                setAccidentData(prev => ({...prev, driverId}));
-            }
-        }
-    }
-  }
+  }, [isOpen, accident, isEditing]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type } = e.target;
-    const isNumber = type === 'number';
-    setAccidentData(prev => ({ ...prev, [id]: isNumber ? parseFloat(value) || 0 : value }));
+    setAData(prev => ({ ...prev, [id]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
 
-  const handleTimeChange = (value: string) => {
-    setAccidentData(prev => ({ ...prev, accidentTime: value }));
-  };
-
-  const handleSelectChange = (id: keyof typeof accidentData) => (value: string) => {
-    if (id === 'vehicleId') {
-        handleVehicleChange(value);
-    } else {
-        setAccidentData(prev => ({ ...prev, [id]: value }));
-    }
-  };
-  
-  const handleComboboxChange = (id: keyof typeof accidentData) => (value: string) => {
-      setAccidentData(prev => ({...prev, [id]: value}));
-  }
-
-  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof typeof accidentData) => (date: Date | undefined) => {
-      if (field === 'accidentDate') {
-          handleAccidentDateChange(date);
-      } else {
-        setter(date);
-        setAccidentData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
-      }
-  }
-  
-  const handleCheckboxChange = (id: keyof typeof accidentData) => (checked: boolean) => {
-      setAccidentData(prev => ({ ...prev, [id]: checked }));
-  };
-  
-  // Document handlers
   const handleFileChange = (docType: AccidentDocumentType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const newFiles: UploadedFile[] = [];
-
       for (const file of files) {
         try {
           const dataUrl = await imageToDataUrl(file);
-          newFiles.push({
-            id: Date.now().toString() + Math.random(),
-            name: file.name,
-            file: dataUrl,
-          });
-        } catch (error) {
-          console.error("Error processing document:", error);
-          toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
-        }
+          newFiles.push({ id: Date.now().toString() + Math.random(), name: file.name, file: dataUrl });
+        } catch (error) { toast({ variant: 'destructive', title: 'File Error' }); }
       }
-
-      setDocuments(prev => ({
-        ...prev,
-        [docType]: [...prev[docType], ...newFiles]
-      }));
+      setDocuments(prev => ({ ...prev, [docType]: [...prev[docType], ...newFiles] }));
     }
-    e.target.value = ''; // Reset file input
-  };
-
-  const removeDocument = (docType: AccidentDocumentType, fileId: string) => {
-    setDocuments(prev => ({
-        ...prev,
-        [docType]: prev[docType].filter(doc => doc.id !== fileId)
-    }));
-  };
-  
-  const validateStep = (currentStep: number) => {
-    if (currentStep === 1) {
-        return accidentData.vehicleId && accidentData.accidentDate && accidentData.accidentTime && accidentData.location;
-    }
-    return true;
-  }
-  
-  const nextStep = () => {
-    if (!validateStep(step)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields in this step.' });
-        return;
-    }
-    setStep(s => s + 1);
-  };
-  const prevStep = () => setStep(s => s - 1);
-
-  const handleSave = () => {
-     if (!validateStep(1)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields in Step 1.' });
-        return;
-    }
-    const dataToSave: Partial<Accident> = {
-        ...accidentData,
-        documents,
-    };
-    if (isEditing) {
-        dataToSave.id = accident.id;
-    }
-    onSave(dataToSave);
-    setIsOpen(false);
+    e.target.value = '';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{isEditing ? `Edit Accident: ${accident?.accidentId}` : 'Add Accident Record'}</DialogTitle>
-          <DialogDescription>Follow the steps to log a vehicle accident.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-6 w-6 text-destructive" /> {isEditing ? 'Modify Accident Record' : 'Record New Accident'}</DialogTitle>
+          <DialogDescription>Input official incident metrics, damage assessment, and legal filings.</DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
         <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Step 1: Accident Basic Information</h3>
+                <h3 className="font-semibold text-lg flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Step 1: Incident Specifics</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Vehicle<MandatoryIndicator/></Label>
-                    <Combobox items={vehicles} value={accidentData.vehicleId} onSelect={handleSelectChange('vehicleId')} displayValue={(v) => v.vehicleIdCode} searchValue={(v) => `${v.vehicleIdCode} ${v.registrationNumber}`} placeholder="Select Vehicle..." emptyMessage="No vehicle found." />
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
+                    <Select value={aData.vehicleId} onValueChange={(v) => setAData({...aData, vehicleId: v})}>
+                        <SelectTrigger><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
+                        <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Vehicle Registration</Label>
-                    <Input value={selectedVehicle?.registrationNumber || ''} disabled />
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Driver During Incident<MandatoryIndicator/></Label>
+                    <Select value={aData.driverId} onValueChange={(v) => setAData({...aData, driverId: v})}>
+                        <SelectTrigger><SelectValue placeholder="Select Driver" /></SelectTrigger>
+                        <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
                    <div className="space-y-2">
-                    <Label>Employee</Label>
-                    <Combobox items={employees} value={accidentData.employeeId} onSelect={handleSelectChange('employeeId')} displayValue={(e) => e.fullName} searchValue={(e) => `${e.fullName} ${e.userIdCode}`} placeholder="Select Employee..." emptyMessage="No employee found." />
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Reported By Official</Label>
+                    <Select value={aData.employeeId} onValueChange={(v) => setAData({...aData, employeeId: v})}>
+                        <SelectTrigger><SelectValue placeholder="Select Official" /></SelectTrigger>
+                        <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label>Accident Date<MandatoryIndicator/></Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Incident<MandatoryIndicator/></Label>
                         <Popover>
-                            <PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!accidentDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{accidentDate?format(accidentDate,"PPP"):"Pick a date"}</Button></PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accidentDate} onSelect={handleDateChange(setAccidentDate, 'accidentDate')} initialFocus/></PopoverContent>
+                            <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{accDate?format(accDate,"PPP"):"Select Date"}</Button></PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accDate} onSelect={(d) => { setAccDate(d); setAData({...aData, accidentDate: d?format(d, 'yyyy-MM-dd'):''})}} /></PopoverContent>
                         </Popover>
                     </div>
                     <div className="space-y-2">
-                      <Label>Accident Time<MandatoryIndicator/></Label>
-                      <TimeInput value={accidentData.accidentTime} onChange={handleTimeChange} />
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Time of Incident<MandatoryIndicator/></Label>
+                      <TimeInput value={aData.accidentTime} onChange={(v) => setAData({...aData, accidentTime: v})} />
                     </div>
-                    <div className="space-y-2"><Label>Accident Location<MandatoryIndicator/></Label><Input id="location" value={accidentData.location} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Precise Location<MandatoryIndicator/></Label><Input id="location" value={aData.location} onChange={handleInputChange} /></div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label>Driver (Auto-fetched)</Label>
-                         <Select value={accidentData.driverId} onValueChange={handleSelectChange('driverId')}><SelectTrigger><SelectValue placeholder="Select vehicle and date"/></SelectTrigger><SelectContent>{drivers.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Driver Name</Label>
-                        <Input value={selectedDriver?.name || ''} disabled />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Driver License Number</Label>
-                        <Input value={selectedDriver?.drivingLicenseNumber || ''} disabled />
-                    </div>
-                </div>
-
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2"><Label>Accident Type</Label><Select value={accidentData.accidentTypeId} onValueChange={handleSelectChange('accidentTypeId')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent>{accidentTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Severity Level</Label><Select value={accidentData.severityLevelId} onValueChange={handleSelectChange('severityLevelId')}><SelectTrigger><SelectValue placeholder="Select Level"/></SelectTrigger><SelectContent>{severityLevels.map(sl=><SelectItem key={sl.id} value={sl.id}>{sl.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="space-y-2"><Label>Fault Status</Label><Select value={accidentData.faultStatusId} onValueChange={handleSelectChange('faultStatusId')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent>{faultStatuses.map(fs=><SelectItem key={fs.id} value={fs.id}>{fs.name}</SelectItem>)}</SelectContent></Select></div>
-                </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="space-y-2">
-                        <Label>Route (Optional)</Label>
-                        <Combobox items={routes} value={accidentData.routeId} onSelect={handleComboboxChange('routeId')} displayValue={(r) => r.name} searchValue={(r) => `${r.name} ${r.routeCode}`} placeholder="Select Route..." emptyMessage="No route found." />
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Collision Type</Label>
+                        <Select value={aData.accidentTypeId} onValueChange={(v) => setAData({...aData, accidentTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{accidentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Trip ID (Optional)</Label>
-                        <Combobox items={trips} value={accidentData.tripId} onSelect={handleComboboxChange('tripId')} displayValue={(t) => t.tripId} searchValue={(t) => `${t.tripId}`} placeholder="Select Trip..." emptyMessage="No trip found." />
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Shield className="h-3 w-3" /> Severity Level</Label>
+                        <Select value={aData.severityLevelId} onValueChange={(v) => setAData({...aData, severityLevelId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{severityLevels.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
                     </div>
-                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description of Incident</Label>
-                  <Textarea id="description" value={accidentData.description} onChange={handleInputChange} />
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><ShieldQuestion className="h-3 w-3" /> Fault Determination</Label>
+                        <Select value={aData.faultStatusId} onValueChange={(v) => setAData({...aData, faultStatusId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{faultStatuses.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
+                    </div>
                 </div>
               </div>
             )}
             {step === 2 && (
               <div className="space-y-6">
-                 <h3 className="font-semibold text-lg">Step 2: Damage Detail</h3>
+                 <h3 className="font-semibold text-lg flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Step 2: Damage Evaluation</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 col-span-2">
-                        <Label htmlFor="vehicleDamageDescription">Vehicle Damage Description</Label>
-                        <Textarea id="vehicleDamageDescription" value={accidentData.vehicleDamageDescription} onChange={handleInputChange} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Third-Party Damage</Label>
-                        <Select value={accidentData.thirdPartyDamage} onValueChange={handleSelectChange('thirdPartyDamage')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent></Select>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Vehicle Damage Summary</Label>
+                        <Textarea id="vehicleDamageDescription" value={aData.vehicleDamageDescription} onChange={handleInputChange} rows={3} />
                     </div>
                     <div className="space-y-2">
-                        <Label>Human Injury</Label>
-                        <Select value={accidentData.humanInjury} onValueChange={handleSelectChange('humanInjury')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent><SelectItem value="None">None</SelectItem><SelectItem value="Minor">Minor</SelectItem><SelectItem value="Serious">Serious</SelectItem><SelectItem value="Fatal">Fatal</SelectItem></SelectContent></Select>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><HeartPulse className="h-3 w-3" /> Human Injury Level</Label>
+                        <Select value={aData.humanInjury} onValueChange={(v) => setAData({...aData, humanInjury: v as any})}><SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="None">None</SelectItem><SelectItem value="Minor">Minor</SelectItem><SelectItem value="Serious">Serious</SelectItem><SelectItem value="Fatal">Fatal</SelectItem></SelectContent></Select>
                     </div>
-                    <div className="space-y-2 col-span-2">
-                        <Label>Vehicle Status After Accident</Label>
-                        <Select value={accidentData.vehicleStatusAfterAccident} onValueChange={handleSelectChange('vehicleStatusAfterAccident')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Running">Running</SelectItem><SelectItem value="Repair Required">Repair Required</SelectItem><SelectItem value="Total Loss">Total Loss</SelectItem></SelectContent></Select>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Asset Condition Post-Crash</Label>
+                        <Select value={aData.vehicleStatusAfterAccident} onValueChange={(v) => setAData({...aData, vehicleStatusAfterAccident: v as any})}><SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="Running">Running</SelectItem><SelectItem value="Repair Required">Requires Repair</SelectItem><SelectItem value="Total Loss">Total Loss / Scrap</SelectItem></SelectContent></Select>
                     </div>
                  </div>
               </div>
             )}
             {step === 3 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Step 3: Financial Information</h3>
+                <h3 className="font-semibold text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Step 3: Financial Liability</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={accidentData.estimatedRepairCost} onChange={handleInputChange}/></div>
-                  <div className="space-y-2"><Label>Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={accidentData.actualRepairCost} onChange={handleInputChange}/></div>
-                  <div className="space-y-2"><Label>Third-Party Damage Cost</Label><Input id="thirdPartyDamageCost" type="number" value={accidentData.thirdPartyDamageCost} onChange={handleInputChange}/></div>
-                  <div className="space-y-2"><Label>Repaired By (Garage)</Label><Select value={accidentData.repairedById} onValueChange={handleSelectChange('repairedById')}><SelectTrigger><SelectValue placeholder="Select Garage"/></SelectTrigger><SelectContent>{serviceCenters.map(sc=><SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2 col-span-2"><Label>Repair Payment Status</Label><Select value={accidentData.repairPaymentStatus} onValueChange={handleSelectChange('repairPaymentStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Paid">Paid</SelectItem><SelectItem value="Unpaid">Unpaid</SelectItem><SelectItem value="Pending">Pending</SelectItem></SelectContent></Select></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={aData.estimatedRepairCost} onChange={handleInputChange}/></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={aData.actualRepairCost} onChange={handleInputChange}/></div>
+                  <div className="space-y-2 col-span-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Chosen Repair Workshop</Label><Select value={aData.repairedById} onValueChange={(v) => setAData({...aData, repairedById: v})}><SelectTrigger><SelectValue placeholder="Select Workshop"/></SelectTrigger>
+                  <SelectContent>{serviceCenters.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
               </div>
             )}
              {step === 4 && (
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Step 4: Legal & Insurance</h3>
+                <h3 className="font-semibold text-lg flex items-center gap-2"><ClipboardList className="h-5 w-5 text-primary" /> Step 4: Legal & Insurance Recovery</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4 p-4 border rounded-md">
-                        <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={accidentData.policeReportFiled} onCheckedChange={(checked) => handleCheckboxChange('policeReportFiled')(checked as boolean)} /><Label htmlFor="policeReportFiled">Police Report Filed?</Label></div>
-                        {accidentData.policeReportFiled && (
-                            <div className="space-y-4 pl-6 pt-2">
-                                <div className="space-y-2"><Label>Police Report Number</Label><Input id="policeReportNumber" value={accidentData.policeReportNumber} onChange={handleInputChange}/></div>
-                                <div className="space-y-2"><Label>Police Station</Label><Input id="policeStation" value={accidentData.policeStation} onChange={handleInputChange}/></div>
+                    <div className="space-y-4 p-4 border rounded-md bg-muted/10">
+                        <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={aData.policeReportFiled} onCheckedChange={(c) => setAData({...aData, policeReportFiled: !!c})} /><Label htmlFor="policeReportFiled">Police Case / GD Filed?</Label></div>
+                        {aData.policeReportFiled && (
+                            <div className="space-y-4 pl-6 pt-2 animate-in fade-in slide-in-from-top-2">
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Case / GD Number</Label><Input id="policeReportNumber" value={aData.policeReportNumber} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Police Station (Thana)</Label><Input id="policeStation" value={aData.policeStation} onChange={handleInputChange}/></div>
                             </div>
                         )}
                     </div>
-                     <div className="space-y-4 p-4 border rounded-md">
-                        <div className="flex items-center space-x-2"><Checkbox id="insuranceClaimFiled" checked={accidentData.insuranceClaimFiled} onCheckedChange={(checked) => handleCheckboxChange('insuranceClaimFiled')(checked as boolean)} /><Label htmlFor="insuranceClaimFiled">Insurance Claim Filed?</Label></div>
-                         {accidentData.insuranceClaimFiled && (
-                            <div className="space-y-4 pl-6 pt-2">
-                                <div className="space-y-2"><Label>Insurance Claim Number</Label><Input id="insuranceClaimNumber" value={accidentData.insuranceClaimNumber} onChange={handleInputChange}/></div>
-                                <div className="space-y-2"><Label>Insurance Company</Label><Input id="insuranceCompany" value={accidentData.insuranceCompany} onChange={handleInputChange}/></div>
+                     <div className="space-y-4 p-4 border rounded-md bg-muted/10">
+                        <div className="flex items-center space-x-2"><Checkbox id="insuranceClaimFiled" checked={aData.insuranceClaimFiled} onCheckedChange={(c) => setAData({...aData, insuranceClaimFiled: !!c})} /><Label htmlFor="insuranceClaimFiled">Insurance Claim Initiated?</Label></div>
+                         {aData.insuranceClaimFiled && (
+                            <div className="space-y-4 pl-6 pt-2 animate-in fade-in slide-in-from-top-2">
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Claim Reference Number</Label><Input id="insuranceClaimNumber" value={aData.insuranceClaimNumber} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Insurer Name</Label><Input id="insuranceCompany" value={aData.insuranceCompany} onChange={handleInputChange}/></div>
                             </div>
                         )}
                     </div>
@@ -541,33 +316,20 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
             )}
             {step === 5 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 5: Upload Documents</h3>
-                    <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Step 5: Verification Vault</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {(Object.keys(documentCategories) as AccidentDocumentType[]).map(docType => (
-                            <div key={docType} className="space-y-2 p-3 border rounded-lg">
+                            <div key={docType} className="space-y-2 p-3 border rounded-lg bg-muted/5 group">
                                 <div className="flex justify-between items-center">
-                                    <Label className="font-medium">{documentCategories[docType]}</Label>
-                                    <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
-                                        Add File(s)
-                                    </Label>
-                                    <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
+                                    <Label className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> {documentCategories[docType]}</Label>
+                                    <Label htmlFor={`a-file-${docType}`} className="cursor-pointer text-[10px] text-primary hover:underline flex items-center gap-1 font-bold"><Upload className="h-3 w-3"/>Add Files</Label>
+                                    <Input id={`a-file-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
                                 </div>
                                 <div className="space-y-1">
-                                    {documents[docType]?.length > 0 ? (
-                                        documents[docType].map(file => (
-                                            <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
-                                                <div className="flex items-center gap-2 truncate">
-                                                    <FileIcon className="h-4 w-4 flex-shrink-0" />
-                                                    <span className="truncate">{file.name}</span>
-                                                </div>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}>
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>
-                                    )}
+                                    {documents[docType]?.map(file => (
+                                        <div key={file.id} className="flex items-center justify-between text-[11px] p-1.5 bg-primary/5 rounded border border-primary/10"><span className="truncate font-medium">{file.name}</span><Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => setDocuments(prev => ({...prev, [docType]: prev[docType].filter(f => f.id !== file.id)}))}><X className="h-3 w-3"/></Button></div>
+                                    ))}
+                                    {documents[docType]?.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-2 italic">No uploads</p>}
                                 </div>
                             </div>
                         ))}
@@ -577,12 +339,12 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <div>
-              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
-            </div>
-            <div>
-              {step < 5 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Record' : 'Save Record'}</Button>)}
-            </div>
+            <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>Previous</Button>
+            {step < 5 ? (
+                <Button onClick={() => setStep(s => s + 1)}>Continue</Button>
+            ) : (
+                <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Incident Record' : 'Commit Accident Data'}</Button>
+            )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

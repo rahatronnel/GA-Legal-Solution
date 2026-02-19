@@ -16,7 +16,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, File as FileIcon } from 'lucide-react';
+import { 
+    Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, File as FileIcon, 
+    User, Mail, Phone, MapPin, Building, Briefcase, Hash, DollarSign, Tag, 
+    ShieldCheck, Globe, CheckCircle2, Milestone, ListOrdered, Contact
+} from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,7 +49,7 @@ type SuppliedItem = {
 type UploadedFile = {
   id: string;
   name: string;
-  file: string; // data URL
+  file: string; 
 }
 
 type DocType = 'tradeLicense' | 'bankChequeCopy' | 'contractAgreement' | 'vatCertificate' | 'complianceCertificates' | 'other';
@@ -55,7 +59,7 @@ const documentLabels: Record<DocType, string> = {
     contractAgreement: 'Contract Agreement',
     vatCertificate: 'VAT Certificate',
     complianceCertificates: 'Compliance Certificates',
-    other: 'Any Other Supporting Document'
+    other: 'Other Support Doc'
 };
 
 
@@ -69,7 +73,6 @@ export type Vendor = {
   vendorSubCategory: string;
   natureOfBusinessId: string;
   yearsOfExperience: number;
-  
   contactPersonName: string;
   contactPersonDesignation: string;
   mobileNumber: string;
@@ -81,14 +84,12 @@ export type Vendor = {
   factoryAddress: string;
   country: string;
   city: string;
-
   tradeLicenseNumber: string;
   tradeLicenseExpiryDate: string;
   tinNumber: string;
   vatBinNumber: string;
   nidOrCompanyRegNumber: string;
   incorporationDate: string;
-
   bankName: string;
   branchName: string;
   accountName: string;
@@ -96,7 +97,6 @@ export type Vendor = {
   routingNumber: string;
   paymentMethod: 'Bank' | 'Cheque' | 'Mobile Banking' | '';
   mobileBankingProvider: string;
-  
   contractStartDate: string;
   contractEndDate: string;
   paymentTerms: string;
@@ -104,16 +104,13 @@ export type Vendor = {
   currency: string;
   taxDeductionApplicable: boolean;
   vatApplicable: boolean;
-
   suppliedItems: SuppliedItem[];
   documents: Record<DocType, UploadedFile[]>;
-
   loginId: string;
   password?: string;
   createdBy: string;
   createdDate: string;
   lastUpdatedBy: string;
-
   vendorStatus: 'Pending' | 'Active' | 'Suspended' | 'Blacklisted' | '';
   approvedBy: string;
   approvalDate: string;
@@ -154,150 +151,52 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
     const { data: employees } = useCollection<Employee>(useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]));
 
     const [step, setStep] = useState(1);
-    const [vendorData, setVendorData] = useState(initialVendorData);
+    const [vData, setVData] = useState(initialVendorData);
     const [suppliedItems, setSuppliedItems] = useState<SuppliedItem[]>([]);
     const [documents, setDocuments] = useState(initialDocuments);
     
-    const [tradeLicenseExpiryDate, setTradeLicenseExpiryDate] = useState<Date|undefined>();
-    const [incorporationDate, setIncoporationDate] = useState<Date|undefined>();
-    const [contractStartDate, setContractStartDate] = useState<Date|undefined>();
-    const [contractEndDate, setContractEndDate] = useState<Date|undefined>();
-    const [approvalDate, setApprovalDate] = useState<Date|undefined>();
+    const [expiryDt, setExpiryDt] = useState<Date | undefined>();
+    const [incorpDt, setIncorpDt] = useState<Date | undefined>();
+    const [startDt, setStartDt] = useState<Date | undefined>();
+    const [endDt, setEndDt] = useState<Date | undefined>();
+    const [apprDt, setApprDt] = useState<Date | undefined>();
 
     const isEditing = vendor && vendor.id;
     const totalSteps = 8;
     const progress = Math.round((step / totalSteps) * 100);
 
-    const setDateIfValid = (dateStr: string | undefined, setter: (d: Date | undefined) => void) => {
-        if(dateStr) {
-           const parsed = parseISO(dateStr);
-           if (!isNaN(parsed.valueOf())) {
-             setter(parsed);
-           }
-        } else {
-            setter(undefined);
-        }
-    }
-
     useEffect(() => {
         if (isOpen) {
           setStep(1);
           if (isEditing && vendor) {
-            const initialData = { ...initialVendorData, ...vendor };
-            setVendorData(initialData);
+            setVData({ ...initialVendorData, ...vendor });
             setSuppliedItems(vendor.suppliedItems || []);
             setDocuments(vendor.documents || initialDocuments);
-            setDateIfValid(vendor.tradeLicenseExpiryDate, setTradeLicenseExpiryDate);
-            setDateIfValid(vendor.incorporationDate, setIncoporationDate);
-            setDateIfValid(vendor.contractStartDate, setContractStartDate);
-            setDateIfValid(vendor.contractEndDate, setContractEndDate);
-            setDateIfValid(vendor.approvalDate, setApprovalDate);
+            setExpiryDt(vendor.tradeLicenseExpiryDate ? parseISO(vendor.tradeLicenseExpiryDate) : undefined);
+            setIncorpDt(vendor.incorporationDate ? parseISO(vendor.incorporationDate) : undefined);
+            setStartDt(vendor.contractStartDate ? parseISO(vendor.contractStartDate) : undefined);
+            setEndDt(vendor.contractEndDate ? parseISO(vendor.contractEndDate) : undefined);
+            setApprDt(vendor.approvalDate ? parseISO(vendor.approvalDate) : undefined);
           } else {
-            setVendorData({...initialVendorData, loginId: '', password: ''});
+            setVData({...initialVendorData, loginId: '', password: ''});
             setSuppliedItems([]);
             setDocuments(initialDocuments);
-            setTradeLicenseExpiryDate(undefined);
-            setIncoporationDate(undefined);
-            setContractStartDate(undefined);
-            setContractEndDate(undefined);
-            setApprovalDate(undefined);
+            setExpiryDt(undefined); setIncorpDt(undefined); setStartDt(undefined); setEndDt(undefined); setApprDt(undefined);
           }
         }
       }, [isOpen, vendor, isEditing]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { id, value, type } = e.target;
-        const newVendorData = { ...vendorData, [id]: type === 'number' ? parseFloat(value) || 0 : value };
-        if (id === 'email') {
-            newVendorData.loginId = value;
-        }
-        setVendorData(newVendorData);
+    const handleSelectChange = (id: keyof typeof vData) => (value: string) => {
+        setVData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleSelectChange = (id: keyof Omit<Vendor, 'id'|'documents'|'suppliedItems'>) => (value: string) => {
-        setVendorData(prev => ({ ...prev, [id]: value }));
-    };
-
-    const handleCheckboxChange = (id: 'taxDeductionApplicable' | 'vatApplicable') => (checked: boolean) => {
-        setVendorData(prev => ({ ...prev, [id]: checked }));
-    };
-
-    const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Omit<Vendor, 'id'|'documents'|'suppliedItems'>) => (date: Date | undefined) => {
+    const handleDateChange = (setter: (d: Date|undefined) => void, field: keyof typeof vData) => (date: Date|undefined) => {
         setter(date);
-        setVendorData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
+        setVData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
     }
-
-    const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            try {
-              const dataUrl = await imageToDataUrl(file);
-              setDocuments(prev => ({...prev, [docType]: [...(prev[docType] || []), { id: Date.now().toString(), name: file.name, file: dataUrl }] }));
-            } catch (error) {
-               console.error("Error processing document:", error);
-               toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
-            }
-        }
-    };
-    
-    const removeDocument = (docType: DocType, fileId: string) => {
-        setDocuments(prev => ({ ...prev, [docType]: prev[docType].filter(doc => doc.id !== fileId)}));
-    };
-
-    const addSuppliedItem = () => setSuppliedItems(prev => [...prev, { id: Date.now().toString(), name: '', unitOfMeasure: '', rate: 0, minOrderQuantity: 0, length: 0, leadTimeDays: 0, deliveryLocation: '', deliveryFrequency: '' }]);
-    const removeSuppliedItem = (id: string) => setSuppliedItems(prev => prev.filter(item => item.id !== id));
-    const updateSuppliedItem = (id: string, field: keyof SuppliedItem, value: string | number) => {
-        setSuppliedItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-    };
-
-
-    const validateStep = (currentStep: number): string[] => {
-        const missingFields: string[] = [];
-        if (currentStep === 1) {
-            if (!vendorData.vendorName?.trim()) missingFields.push('Vendor Name');
-            if (!vendorData.vendorType) missingFields.push('Vendor Type');
-            if (!vendorData.vendorCategoryId) missingFields.push('Vendor Category');
-            if (!vendorData.email?.trim()) missingFields.push('Email Address');
-        }
-        return missingFields;
-    }
-
-    const nextStep = () => {
-        const missing = validateStep(step);
-        if (missing.length > 0) {
-            toast({
-                variant: 'destructive',
-                title: 'Missing Required Fields',
-                description: `Please fill in: ${missing.join(', ')}.`
-            });
-            return;
-        }
-        setStep(s => s + 1);
-    };
-    const prevStep = () => setStep(s => s - 1);
 
     const handleSave = () => {
-        const missing = validateStep(1);
-        if (missing.length > 0) {
-            toast({
-                variant: 'destructive',
-                title: 'Missing Required Fields',
-                description: `Please go back and fill in: ${missing.join(', ')}.`
-            });
-            return;
-        }
-        const dataToSave: Partial<Vendor> = {
-            ...vendorData,
-            suppliedItems,
-            documents,
-        };
-        
-        if (isEditing && vendor.id) {
-            dataToSave.id = vendor.id;
-        } else {
-            dataToSave.vendorId = `V-${Date.now()}`;
-        }
-        onSave(dataToSave);
+        onSave({ ...vData, suppliedItems, documents });
         setIsOpen(false);
     };
     
@@ -305,135 +204,123 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
                  <DialogHeader>
-                    <DialogTitle>{isEditing ? `Edit Vendor: ${vendor?.vendorName || ''}` : 'Add New Vendor'}</DialogTitle>
-                    <DialogDescription>Follow the steps to add or update vendor information.</DialogDescription>
+                    <DialogTitle>{isEditing ? 'Edit Vendor Identity' : 'Onboard New Vendor'}</DialogTitle>
+                    <DialogDescription>Input official supplier credentials, legal filings, and financial details.</DialogDescription>
                     <Progress value={progress} className="w-full mt-2" />
                 </DialogHeader>
 
                 <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
                     {step === 1 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 1: Basic Vendor Information</h3>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><Building className="h-5 w-5 text-primary" /> Step 1: Corporate Identity</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Vendor Name <MandatoryIndicator/></Label><Input id="vendorName" value={vendorData.vendorName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Vendor Short Name</Label><Input id="vendorShortName" value={vendorData.vendorShortName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Vendor Type <MandatoryIndicator/></Label><Select value={vendorData.vendorType || ''} onValueChange={handleSelectChange('vendorType')}><SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger><SelectContent><SelectItem value="Individual">Individual</SelectItem><SelectItem value="Company">Company</SelectItem></SelectContent></Select></div>
-                                <div className="space-y-2"><Label>Vendor Category <MandatoryIndicator/></Label><Select value={vendorData.vendorCategoryId || ''} onValueChange={handleSelectChange('vendorCategoryId')}><SelectTrigger><SelectValue placeholder="Select Category"/></SelectTrigger><SelectContent>{(categories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
-                                <div className="space-y-2"><Label>Vendor Sub-Category</Label><Input id="vendorSubCategory" value={vendorData.vendorSubCategory || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Nature of Business</Label><Select value={vendorData.natureOfBusinessId || ''} onValueChange={handleSelectChange('natureOfBusinessId')}><SelectTrigger><SelectValue placeholder="Select Nature of Business"/></SelectTrigger><SelectContent>{(naturesOfBusiness || []).map(n => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}</SelectContent></Select></div>
-                                <div className="space-y-2"><Label>Years of Experience</Label><Input id="yearsOfExperience" type="number" value={vendorData.yearsOfExperience ?? 0} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Email Address <MandatoryIndicator/></Label><Input id="email" type="email" value={vendorData.email || ''} onChange={handleInputChange} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Full Legal Name <MandatoryIndicator/></Label><Input id="vendorName" value={vData.vendorName} onChange={(e)=>setVData({...vData, vendorName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Corporate Alias</Label><Input id="vendorShortName" value={vData.vendorShortName} onChange={(e)=>setVData({...vData, vendorShortName: e.target.value})} /></div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Type <MandatoryIndicator/></Label>
+                                    <Select value={vData.vendorType} onValueChange={handleSelectChange('vendorType')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent><SelectItem value="Individual">Sole Proprietor</SelectItem><SelectItem value="Company">Private Limited Company</SelectItem></SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> Category <MandatoryIndicator/></Label>
+                                    <Select value={vData.vendorCategoryId} onValueChange={handleSelectChange('vendorCategoryId')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>{(categories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Globe className="h-3 w-3" /> Business Nature</Label>
+                                    <Select value={vData.natureOfBusinessId} onValueChange={handleSelectChange('natureOfBusinessId')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>{(naturesOfBusiness || []).map(n => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Mail className="h-3 w-3" /> Business Email <MandatoryIndicator/></Label><Input id="email" type="email" value={vData.email} onChange={(e)=>setVData({...vData, email: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
 
                     {step === 2 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 2: Contact & Communication Details</h3>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><Contact className="h-5 w-5 text-primary" /> Step 2: Communication Ports</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Contact Person Name</Label><Input id="contactPersonName" value={vendorData.contactPersonName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Contact Person Designation</Label><Input id="contactPersonDesignation" value={vendorData.contactPersonDesignation || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Mobile Number</Label><Input id="mobileNumber" value={vendorData.mobileNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Alternate Mobile Number</Label><Input id="alternateMobileNumber" value={vendorData.alternateMobileNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Office Phone</Label><Input id="officePhone" value={vendorData.officePhone || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>WhatsApp Number</Label><Input id="whatsAppNumber" value={vendorData.whatsAppNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Country</Label><Input id="country" value={vendorData.country || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>City</Label><Input id="city" value={vendorData.city || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2 md:col-span-2"><Label>Office Address</Label><Textarea id="officeAddress" value={vendorData.officeAddress || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2 md:col-span-2"><Label>Factory / Warehouse Address</Label><Textarea id="factoryAddress" value={vendorData.factoryAddress || ''} onChange={handleInputChange} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> POC Name</Label><Input value={vData.contactPersonName} onChange={(e)=>setVData({...vData, contactPersonName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> POC Designation</Label><Input value={vData.contactPersonDesignation} onChange={(e)=>setVData({...vData, contactPersonDesignation: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Phone className="h-3 w-3" /> Mobile</Label><Input value={vData.mobileNumber} onChange={(e)=>setVData({...vData, mobileNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Office Address</Label><Textarea value={vData.officeAddress} onChange={(e)=>setVData({...vData, officeAddress: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
                     
                     {step === 3 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 3: Legal & Registration Information</h3>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Step 3: Legal Verification</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Trade License Number</Label><Input id="tradeLicenseNumber" value={vendorData.tradeLicenseNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Trade License Expiry</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{tradeLicenseExpiryDate ? format(tradeLicenseExpiryDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={tradeLicenseExpiryDate} onSelect={handleDateChange(setTradeLicenseExpiryDate, 'tradeLicenseExpiryDate')} /></PopoverContent></Popover></div>
-                                <div className="space-y-2"><Label>TIN Number</Label><Input id="tinNumber" value={vendorData.tinNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>VAT / BIN Number</Label><Input id="vatBinNumber" value={vendorData.vatBinNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>National ID / Company Reg. No</Label><Input id="nidOrCompanyRegNumber" value={vendorData.nidOrCompanyRegNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Incorporation Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{incorporationDate ? format(incorporationDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={incorporationDate} onSelect={handleDateChange(setIncoporationDate, 'incorporationDate')} /></PopoverContent></Popover></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Trade License Number</Label><Input value={vData.tradeLicenseNumber} onChange={(e)=>setVData({...vData, tradeLicenseNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> TIN Number</Label><Input value={vData.tinNumber} onChange={(e)=>setVData({...vData, tinNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> VAT / BIN</Label><Input value={vData.vatBinNumber} onChange={(e)=>setVData({...vData, vatBinNumber: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
 
                     {step === 4 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 4: Banking & Payment Information</h3>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Step 4: Financial Remittance</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Bank Name</Label><Input id="bankName" value={vendorData.bankName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Branch Name</Label><Input id="branchName" value={vendorData.branchName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Account Name</Label><Input id="accountName" value={vendorData.accountName || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Account Number</Label><Input id="accountNumber" value={vendorData.accountNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Routing Number</Label><Input id="routingNumber" value={vendorData.routingNumber || ''} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Payment Method</Label><Select value={vendorData.paymentMethod || ''} onValueChange={handleSelectChange('paymentMethod')}><SelectTrigger><SelectValue placeholder="Select Method"/></SelectTrigger><SelectContent><SelectItem value="Bank">Bank</SelectItem><SelectItem value="Cheque">Cheque</SelectItem><SelectItem value="Mobile Banking">Mobile Banking</SelectItem></SelectContent></Select></div>
-                                {vendorData.paymentMethod === 'Mobile Banking' && <div className="space-y-2"><Label>Mobile Banking Provider</Label><Input id="mobileBankingProvider" value={vendorData.mobileBankingProvider || ''} onChange={handleInputChange} /></div>}
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Bank Name</Label><Input value={vData.bankName} onChange={(e)=>setVData({...vData, bankName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Account Number</Label><Input value={vData.accountNumber} onChange={(e)=>setVData({...vData, accountNumber: e.target.value})} /></div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Settlement Method</Label>
+                                    <Select value={vData.paymentMethod} onValueChange={handleSelectChange('paymentMethod')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent><SelectItem value="Bank">EFT / Bank Transfer</SelectItem><SelectItem value="Cheque">Bank Cheque</SelectItem><SelectItem value="Mobile Banking">Digital Wallet</SelectItem></SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {step === 5 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 5: Contract & Commercial Information</h3>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone className="h-5 w-5 text-primary" /> Step 5: Commercial Terms</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Contract Start Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{contractStartDate ? format(contractStartDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={contractStartDate} onSelect={handleDateChange(setContractStartDate, 'contractStartDate')} /></PopoverContent></Popover></div>
-                                <div className="space-y-2"><Label>Contract End Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{contractEndDate ? format(contractEndDate, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={contractEndDate} onSelect={handleDateChange(setContractEndDate, 'contractEndDate')} /></PopoverContent></Popover></div>
-                                <div className="space-y-2"><Label>Payment Terms</Label><Input id="paymentTerms" value={vendorData.paymentTerms || ''} onChange={handleInputChange} placeholder="e.g., Net 30" /></div>
-                                <div className="space-y-2"><Label>Credit Limit</Label><Input id="creditLimit" type="number" value={vendorData.creditLimit ?? 0} onChange={handleInputChange} /></div>
-                                <div className="space-y-2"><Label>Currency</Label><Input id="currency" value={vendorData.currency || 'USD'} onChange={handleInputChange} /></div>
-                                <div className="flex items-center space-x-2 pt-4"><Checkbox id="taxDeductionApplicable" checked={!!vendorData.taxDeductionApplicable} onCheckedChange={handleCheckboxChange('taxDeductionApplicable')}/><Label htmlFor="taxDeductionApplicable">Tax Deduction Applicable?</Label></div>
-                                <div className="flex items-center space-x-2 pt-4"><Checkbox id="vatApplicable" checked={!!vendorData.vatApplicable} onCheckedChange={handleCheckboxChange('vatApplicable')}/><Label htmlFor="vatApplicable">VAT Applicable?</Label></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Payment Cycle (Terms)</Label><Input value={vData.paymentTerms} onChange={(e)=>setVData({...vData, paymentTerms: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Credit Limit</Label><Input type="number" value={vData.creditLimit} onChange={(e)=>setVData({...vData, creditLimit: parseFloat(e.target.value) || 0})} /></div>
                             </div>
                         </div>
                     )}
                     
                     {step === 6 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 6: Pricing & Supply Details</h3>
-                            <div className="flex justify-between items-center"><h4 className="font-medium">Supplied Items / Services</h4><Button variant="outline" size="sm" onClick={addSuppliedItem}><PlusCircle className="mr-2 h-4 w-4"/>Add Item</Button></div>
-                            <div className="space-y-3 max-h-96 overflow-y-auto">
-                                {suppliedItems.map((item, index) => (
-                                    <div key={item.id} className="p-3 border rounded-lg space-y-2">
-                                         <div className="flex justify-between items-center"><Label className="text-base">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeSuppliedItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
-                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                            <div className="space-y-1"><Label>Item/Service Name</Label><Input value={item.name || ''} onChange={(e) => updateSuppliedItem(item.id, 'name', e.target.value)} /></div>
-                                            <div className="space-y-1"><Label>Unit</Label><Input value={item.unitOfMeasure || ''} onChange={(e) => updateSuppliedItem(item.id, 'unitOfMeasure', e.target.value)} /></div>
-                                            <div className="space-y-1"><Label>Rate</Label><Input type="number" value={item.rate ?? 0} onChange={(e) => updateSuppliedItem(item.id, 'rate', parseFloat(e.target.value) || 0)} /></div>
-                                            <div className="space-y-1"><Label>Min. Order Qty</Label><Input type="number" value={item.minOrderQuantity ?? 0} onChange={(e) => updateSuppliedItem(item.id, 'minOrderQuantity', parseInt(e.target.value) || 0)} /></div>
-                                            <div className="space-y-1"><Label>Lead Time (Days)</Label><Input type="number" value={item.leadTimeDays ?? 0} onChange={(e) => updateSuppliedItem(item.id, 'leadTimeDays', parseInt(e.target.value) || 0)} /></div>
-                                            <div className="space-y-1"><Label>Delivery Location</Label><Input value={item.deliveryLocation || ''} onChange={(e) => updateSuppliedItem(item.id, 'deliveryLocation', e.target.value)} /></div>
-                                            <div className="space-y-1 md:col-span-2"><Label>Delivery Frequency</Label><Input value={item.deliveryFrequency || ''} onChange={(e) => updateSuppliedItem(item.id, 'deliveryFrequency', e.target.value)} /></div>
-                                         </div>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><ListOrdered className="h-5 w-5 text-primary" /> Step 6: Core Supplies</h3>
+                            <div className="space-y-3">
+                                {suppliedItems.map((item, idx) => (
+                                    <div key={item.id} className="p-3 border rounded-lg grid grid-cols-2 gap-2 bg-muted/10">
+                                        <Input value={item.name} onChange={(e) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, name: e.target.value} : si))} placeholder="Item Name" className="h-8" />
+                                        <Input type="number" value={item.rate} onChange={(e) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, rate: parseFloat(e.target.value) || 0} : si))} placeholder="Rate" className="h-8" />
                                     </div>
                                 ))}
-                                {suppliedItems.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No items added yet.</p>}
+                                <Button variant="outline" size="sm" onClick={() => setSuppliedItems([...suppliedItems, {id: Date.now().toString(), name: '', unitOfMeasure: '', rate: 0, minOrderQuantity: 0, leadTimeDays: 0, deliveryLocation: '', deliveryFrequency: ''}])}><PlusCircle className="h-4 w-4 mr-2"/>Add Supply</Button>
                             </div>
                         </div>
                     )}
 
                     {step === 7 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 7: Document Upload Section</h3>
-                            <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                                {(Object.keys(documentLabels) as DocType[]).map(docType => (
-                                    <div key={docType} className="space-y-2 p-3 border rounded-lg">
-                                        <div className="flex justify-between items-center">
-                                            <Label className="font-medium">{documentLabels[docType]}</Label>
-                                            <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">Add File(s)</Label>
-                                            <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            {documents[docType]?.length > 0 ? (
-                                                documents[docType].map(file => (
-                                                    <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
-                                                        <div className="flex items-center gap-2 truncate"><FileIcon className="h-4 w-4 flex-shrink-0" /><span className="truncate">{file.name || ''}</span></div>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}><X className="h-4 w-4" /></Button>
-                                                    </div>
-                                                ))
-                                            ) : ( <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p> )}
-                                        </div>
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Step 7: Document Archive</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {(Object.keys(documentLabels) as DocType[]).map(key => (
+                                    <div key={key} className="p-3 border rounded-lg bg-muted/5 flex justify-between items-center">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> {documentLabels[key]}</Label>
+                                        <Label htmlFor={`up-v-${key}`} className="text-xs text-primary font-bold hover:underline cursor-pointer"><Upload className="h-3 w-3 inline mr-1"/>Upload</Label>
+                                        <Input id={`up-v-${key}`} type="file" className="hidden" onChange={async (e) => {
+                                            if (e.target.files?.[0]) {
+                                                const url = await imageToDataUrl(e.target.files[0]);
+                                                setDocuments({...documents, [key]: [{id: Date.now().toString(), name: e.target.files[0].name, file: url}]});
+                                            }
+                                        }} />
                                     </div>
                                 ))}
                             </div>
@@ -442,42 +329,21 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                     
                     {step === 8 && (
                         <div className="space-y-6">
-                             <h3 className="font-semibold text-lg">Step 8: Approval & Internal Control</h3>
+                             <h3 className="font-semibold text-lg flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-primary" /> Step 8: System Controls</h3>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Vendor Status</Label>
-                                    <Select value={vendorData.vendorStatus || ''} onValueChange={handleSelectChange('vendorStatus')}><SelectTrigger><SelectValue placeholder="Select status"/></SelectTrigger><SelectContent>
-                                        <SelectItem value="Pending">Pending</SelectItem>
-                                        <SelectItem value="Active">Active</SelectItem>
-                                        <SelectItem value="Suspended">Suspended</SelectItem>
-                                        <SelectItem value="Blacklisted">Blacklisted</SelectItem>
-                                    </SelectContent></Select>
-                                </div>
-                                 <div className="space-y-2">
-                                    <Label>Risk Level</Label>
-                                    <Select value={vendorData.riskLevel || ''} onValueChange={handleSelectChange('riskLevel')}><SelectTrigger><SelectValue placeholder="Select risk level"/></SelectTrigger><SelectContent>
-                                        <SelectItem value="Low">Low</SelectItem>
-                                        <SelectItem value="Medium">Medium</SelectItem>
-                                        <SelectItem value="High">High</SelectItem>
-                                    </SelectContent></Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Approved By</Label>
-                                    <Select value={vendorData.approvedBy || ''} onValueChange={handleSelectChange('approvedBy')}>
-                                        <SelectTrigger><SelectValue placeholder="Select Employee"/></SelectTrigger>
-                                        <SelectContent>{(employees || []).map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><ShieldCheck className="h-3 w-3" /> Current Lifecycle Status</Label>
+                                    <Select value={vData.vendorStatus} onValueChange={handleSelectChange('vendorStatus')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent><SelectItem value="Pending">Pending Audit</SelectItem><SelectItem value="Active">Authorized</SelectItem><SelectItem value="Suspended">Suspended</SelectItem></SelectContent>
                                     </Select>
                                 </div>
-                                 <div className="space-y-2">
-                                    <Label>Approval Date</Label>
-                                    <Popover>
-                                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{approvalDate ? format(approvalDate, "PPP") : "Pick a date"}</Button></PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={approvalDate} onSelect={handleDateChange(setApprovalDate, 'approvalDate')} /></PopoverContent>
-                                    </Popover>
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label>Review Frequency</Label>
-                                    <Input id="reviewFrequency" value={vendorData.reviewFrequency || ''} onChange={handleInputChange} placeholder="e.g., Annually, Bi-annually" />
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><AlertTriangle className="h-3 w-3" /> Risk Assessment</Label>
+                                    <Select value={vData.riskLevel} onValueChange={handleSelectChange('riskLevel')}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent><SelectItem value="Low">Low Risk</SelectItem><SelectItem value="Medium">Medium Risk</SelectItem><SelectItem value="High">High Risk</SelectItem></SelectContent>
+                                    </Select>
                                 </div>
                              </div>
                         </div>
@@ -485,8 +351,12 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                 </div>
 
                 <DialogFooter className="flex justify-between w-full pt-4 border-t">
-                    <div>{step > 1 && <Button variant="outline" onClick={prevStep}>Previous</Button>}</div>
-                    <div>{step < totalSteps ? <Button onClick={nextStep}>Next</Button> : <Button onClick={handleSave}>{isEditing ? 'Update Vendor' : 'Save Vendor'}</Button>}</div>
+                    <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>Previous</Button>
+                    {step < totalSteps ? (
+                        <Button onClick={() => setStep(s => s + 1)}>Continue</Button>
+                    ) : (
+                        <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Vendor File' : 'Onboard Vendor'}</Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

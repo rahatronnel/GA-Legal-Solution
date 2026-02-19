@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, File as FileIcon, GripVertical, User } from 'lucide-react';
+import { 
+    Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, 
+    Check, File as FileIcon, GripVertical, User, Car, Flag, Clock, Hash, 
+    Milestone, DollarSign, Tag, ListOrdered, MapPin, Route as RouteIcon, 
+    Info, Image as ImageIcon, Briefcase
+} from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,22 +43,22 @@ import type { Route } from './route-table';
 type UploadedFile = {
   id: string;
   name: string;
-  file: string; // data URL
+  file: string; 
 }
 
 type DocType = 'approvalDoc' | 'fuelReceipt' | 'parkingBill' | 'tollBill' | 'miscExpense' | 'lunchBill' | 'otherDoc' | 'damagePhoto' | 'routePermit' | 'specialApprove';
 
 const documentLabels: Record<DocType, string> = {
-    approvalDoc: 'Approval Document',
-    fuelReceipt: 'Fuel Receipt/Memo',
+    approvalDoc: 'Trip Approval',
+    fuelReceipt: 'Fuel Receipt',
     parkingBill: 'Parking Bill',
     tollBill: 'Toll Bill',
-    miscExpense: 'Miscellaneous Expenses Bill',
-    lunchBill: 'Lunch Bill',
-    otherDoc: 'Other Document',
-    damagePhoto: 'Damage Photo',
-    routePermit: 'Route Permit Photo',
-    specialApprove: 'Special Approval Document',
+    miscExpense: 'Misc Expenses',
+    lunchBill: 'Meal Bill',
+    otherDoc: 'Support Document',
+    damagePhoto: 'Damage Evidence',
+    routePermit: 'Route Permit',
+    specialApprove: 'Special Permit',
 }
 
 type Stop = {
@@ -112,70 +118,6 @@ interface TripEntryFormProps {
   trip: Partial<Trip> | null;
 }
 
-// Combobox Component
-interface ComboboxProps<T> {
-  items: T[];
-  value: string;
-  onSelect: (value: string) => void;
-  displayValue: (item: T) => string;
-  searchValue: (item: T) => string;
-  placeholder: string;
-  emptyMessage: string;
-  disabled?: boolean;
-}
-
-function Combobox<T extends {id: string}>({ items, value, onSelect, displayValue, searchValue, placeholder, emptyMessage, disabled = false }: ComboboxProps<T>) {
-  const [open, setOpen] = useState(false);
-  const currentItem = (items || []).find((item) => item.id === value);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={disabled}
-        >
-          {currentItem
-            ? displayValue(currentItem)
-            : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
-          <CommandInput placeholder={placeholder} />
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
-          <CommandList>
-            <CommandGroup>
-              {(items || []).map((item) => (
-                <CommandItem
-                  key={item.id}
-                  value={searchValue(item)}
-                  onSelect={() => {
-                    onSelect(item.id === value ? '' : item.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === item.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {displayValue(item)}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 
 
@@ -187,64 +129,30 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [documents, setDocuments] = useState(initialDocuments);
   
-  // Date states
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  const { data: vehicleManagementData, setData } = useVehicleManagement();
-  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [], routes = [] } = vehicleManagementData;
+  const { data: vmData } = useVehicleManagement();
+  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [], routes = [] } = vmData;
 
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
 
-  const totalDistance = useMemo(() => {
-    const start = Number(tripData.startingMeter);
-    const end = Number(tripData.endingMeter);
-    return end > start ? end - start : 0;
-  }, [tripData.startingMeter, tripData.endingMeter]);
-
   const selectedDriver = useMemo(() => (drivers || []).find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
-
-  const getDriverForDate = (vehicle: Vehicle, date: Date) => {
-    if (!vehicle.driverAssignmentHistory || vehicle.driverAssignmentHistory.length === 0) {
-      return '';
-    }
-
-    const sortedHistory = [...vehicle.driverAssignmentHistory]
-        .filter(h => h.effectiveDate && new Date(h.effectiveDate) <= date)
-        .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
-
-    return sortedHistory.length > 0 ? sortedHistory[0].driverId : '';
-  };
-  
-  const updateDriverBasedOnVehicleAndDate = (vehicleId: string, date: Date | undefined) => {
-      if(vehicleId && date) {
-        const vehicle = (vehicles || []).find(v => v.id === vehicleId);
-        if(vehicle) {
-            const driverId = getDriverForDate(vehicle, date);
-            if(driverId) {
-                setTripData(prev => ({...prev, driverId}));
-            }
-        }
-    }
-  }
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       if (isEditing && trip) {
-        const initialData = { ...initialTripData, ...trip };
-        setTripData(initialData);
+        setTripData({ ...initialTripData, ...trip });
         setStops(trip.stops || []);
         setExpenses(trip.expenses || []);
         setDocuments(trip.documents || initialDocuments);
-        const sDate = trip.startDate ? new Date(trip.startDate) : undefined;
-        setStartDate(sDate);
+        setStartDate(trip.startDate ? new Date(trip.startDate) : undefined);
         setEndDate(trip.endDate ? new Date(trip.endDate) : undefined);
-        updateDriverBasedOnVehicleAndDate(initialData.vehicleId, sDate);
       } else {
         setTripData(initialTripData);
-        setStops([{id: Date.now().toString(), locationId: ''}, {id: (Date.now()+1).toString(), locationId: ''}]);
+        setStops([{id: 'start', locationId: ''}, {id: 'end', locationId: ''}]);
         setExpenses([]);
         setDocuments(initialDocuments);
         setStartDate(undefined);
@@ -274,92 +182,47 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     setTripData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleVehicleChange = (vehicleId: string) => {
-    setTripData(prev => ({ ...prev, vehicleId, driverId: '' }));
-    updateDriverBasedOnVehicleAndDate(vehicleId, startDate);
-  };
-  
-  const handleStartDateChange = (date: Date | undefined) => {
-    setStartDate(date);
-    setEndDate(date); // Set end date to the same as start date
-    setTripData(prev => ({ 
-        ...prev, 
-        startDate: date ? format(date, 'yyyy-MM-dd') : '', 
-        endDate: date ? format(date, 'yyyy-MM-dd') : '',
-        driverId: '' 
-    }));
-    updateDriverBasedOnVehicleAndDate(tripData.vehicleId, date);
-  }
-
-  const handleSelectChange = (id: keyof Omit<Trip, 'id' | 'stops' | 'expenses' | 'documents'>) => (value: string) => {
-    if (id === 'vehicleId') {
-      handleVehicleChange(value);
-    } else {
-      setTripData(prev => ({ ...prev, [id]: value }));
-    }
+  const handleSelectChange = (id: keyof typeof tripData) => (value: string) => {
+    setTripData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof Omit<Trip, 'id' | 'stops' | 'expenses' | 'documents'>) => (date: Date | undefined) => {
-      if (field === 'startDate') {
-        handleStartDateChange(date);
-      } else {
-        setter(date);
-        setTripData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
-      }
+  const handleDateChange = (setter: (date: Date | undefined) => void, field: keyof typeof tripData) => (date: Date | undefined) => {
+      setter(date);
+      setTripData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
   }
 
   const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const newFiles: UploadedFile[] = [];
-
       for (const file of files) {
         try {
           const dataUrl = await imageToDataUrl(file);
-          newFiles.push({
-            id: Date.now().toString() + Math.random(),
-            name: file.name,
-            file: dataUrl,
-          });
-        } catch (error) {
-           console.error("Error processing document:", error);
-           toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
-        }
+          newFiles.push({ id: Date.now().toString() + Math.random(), name: file.name, file: dataUrl });
+        } catch (error) { toast({ variant: 'destructive', title: 'File Error' }); }
       }
-
-      setDocuments(prev => ({
-        ...prev,
-        [docType]: [...prev[docType], ...newFiles]
-      }));
+      setDocuments(prev => ({ ...prev, [docType]: [...prev[docType], ...newFiles] }));
     }
-    e.target.value = ''; // Reset file input
+    e.target.value = '';
   };
 
   const removeDocument = (docType: DocType, fileId: string) => {
-    setDocuments(prev => ({
-        ...prev,
-        [docType]: prev[docType].filter(doc => doc.id !== fileId)
-    }));
+    setDocuments(prev => ({ ...prev, [docType]: prev[docType].filter(doc => doc.id !== fileId) }));
   };
 
-  // Itinerary handlers
   const addStop = () => {
-    setTripData(prev => ({ ...prev, routeId: '' })); // Clear selected route
+    setTripData(prev => ({ ...prev, routeId: '' })); 
     setStops(prev => [...prev, {id: Date.now().toString(), locationId: ''}]);
   }
   const removeStop = (id: string) => {
-    if (stops.length <= 2) {
-      toast({variant: 'destructive', title: 'Error', description: 'A trip must have at least a start and end point.'});
-      return;
-    }
+    if (stops.length <= 2) return;
     setStops(prev => prev.filter(stop => stop.id !== id));
   }
   const updateStopLocation = (stopId: string, locationId: string) => {
-    setTripData(prev => ({ ...prev, routeId: '' })); // Clear selected route
+    setTripData(prev => ({ ...prev, routeId: '' }));
     setStops(prev => prev.map(stop => stop.id === stopId ? {...stop, locationId} : stop));
   }
 
-  // Expense handlers
   const addExpense = () => {
     setExpenses(prev => [...prev, { id: Date.now().toString(), expenseTypeId: '', amount: 0, date: format(new Date(), 'yyyy-MM-dd') }]);
   };
@@ -373,34 +236,19 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   };
 
   const validateStep1 = () => {
-    if (!tripData.vehicleId || !tripData.driverId || !tripData.purposeId || !tripData.startDate || !tripData.tripStatus) return false;
-    if (stops.length < 2 || stops.some(s => !s.locationId)) return false;
-    return true;
+    return tripData.vehicleId && tripData.driverId && tripData.purposeId && tripData.startDate && tripData.tripStatus && stops.length >= 2 && !stops.some(s => !s.locationId);
   }
   
   const nextStep = () => {
     if (!validateStep1()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields, including at least two stops in the itinerary.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please complete the itinerary and mandatory fields.' });
         return;
     }
     setStep(s => s + 1);
   };
-  const prevStep = () => setStep(s => s - 1);
 
   const handleSave = () => {
-    if (!validateStep1()) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please go back and fill all required fields.' });
-      return;
-    }
-
-    const completeTripData: Partial<Trip> = {
-        ...tripData,
-        stops,
-        expenses,
-        documents,
-    };
-
-    onSave(completeTripData);
+    onSave({ ...tripData, stops, expenses, documents });
     setIsOpen(false);
   };
   
@@ -408,144 +256,133 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Trip' : 'Add New Trip'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Modify Trip Entry' : 'Log New Trip'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? `Update details for trip ${trip?.tripId}` : 'Follow the steps to record a new trip.'}
+            Record vehicle deployment data, itinerary, and associated costs.
           </DialogDescription>
           <Progress value={progress} className="w-full mt-2" />
         </DialogHeader>
         
-        <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
+        <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
             {step === 1 && (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2"><Label>Vehicle<MandatoryIndicator/></Label><Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}><SelectTrigger><SelectValue placeholder="Select Vehicle"/></SelectTrigger><SelectContent>{(vehicles || []).map(v=><SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2 md:col-span-2"><Label>Driver<MandatoryIndicator/></Label>
-                    <Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}>
-                        <SelectTrigger><SelectValue placeholder="Select vehicle and date first"/></SelectTrigger>
-                        <SelectContent>{(drivers || []).map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                <h3 className="font-semibold text-lg flex items-center gap-2"><RouteIcon className="h-5 w-5 text-primary" /> Step 1: Logistics & Deployment</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
+                      <Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}>
+                          <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
+                          <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                      </Select>
                   </div>
-                  <div className="space-y-2"><Label>Purpose<MandatoryIndicator/></Label><Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}><SelectTrigger><SelectValue placeholder="Select Purpose"/></SelectTrigger><SelectContent>{(tripPurposes || []).map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Driver<MandatoryIndicator/></Label>
+                      <Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}>
+                          <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
+                          <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Flag className="h-3 w-3" /> Purpose<MandatoryIndicator/></Label>
+                      <Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}>
+                          <SelectTrigger><SelectValue placeholder="Choose purpose" /></SelectTrigger>
+                          <SelectContent>{tripPurposes.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Trip Status<MandatoryIndicator/></Label>
+                      <Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}>
+                          <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                          <SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem></SelectContent>
+                      </Select>
+                  </div>
                 </div>
-
-                {selectedDriver && (
-                    <div className="p-4 border rounded-lg space-y-3 grid grid-cols-1 md:grid-cols-2 items-start">
-                        <div className="flex items-center gap-4">
-                            <Avatar>
-                                <AvatarImage src={selectedDriver.profilePicture} alt={selectedDriver.name} />
-                                <AvatarFallback><User className="h-5 w-5"/></AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{selectedDriver.name}</p>
-                                <p className="text-xs text-muted-foreground">ID: {selectedDriver.driverIdCode}</p>
-                            </div>
-                        </div>
-                        <div className="text-xs space-y-1">
-                            <p><strong>Joining Date:</strong> {selectedDriver.joiningDate}</p>
-                            <p><strong>License No:</strong> {selectedDriver.drivingLicenseNumber}</p>
-                        </div>
-                    </div>
-                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2"><Label>Start Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{startDate?format(startDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>Start Time</Label><TimeInput value={tripData.startTime} onChange={handleTimeChange('startTime')} /></div>
-                  <div className="space-y-2"><Label>End Date</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!endDate&&"text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{endDate?format(endDate,"PPP"):"Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={handleDateChange(setEndDate,'endDate')} initialFocus/></PopoverContent></Popover></div>
-                  <div className="space-y-2"><Label>End Time</Label><TimeInput value={tripData.endTime} onChange={handleTimeChange('endTime')} /></div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Start Date<MandatoryIndicator/></Label>
+                      <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{startDate?format(startDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={handleDateChange(setStartDate,'startDate')} initialFocus/></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Start Time</Label>
+                      <TimeInput value={tripData.startTime} onChange={handleTimeChange('startTime')} />
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> End Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{endDate?format(endDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={handleDateChange(setEndDate,'endDate')} initialFocus/></PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> End Time</Label>
+                      <TimeInput value={tripData.endTime} onChange={handleTimeChange('endTime')} />
+                  </div>
                 </div>
                 
-                <div className="space-y-2">
-                    <Label>Route (Optional)</Label>
-                    <Select value={tripData.routeId} onValueChange={handleSelectChange('routeId')}>
-                        <SelectTrigger><SelectValue placeholder="Select a pre-defined route..."/></SelectTrigger>
-                        <SelectContent>{(routes || []).map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                </div>
-                
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Itinerary<MandatoryIndicator/></h3><Button variant="outline" size="sm" onClick={addStop}><PlusCircle className="mr-2 h-4 w-4"/>Add Stop</Button></div>
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/10">
+                    <div className="flex justify-between items-center"><Label className="font-bold flex items-center gap-2 text-primary"><Milestone className="h-4 w-4" /> Itinerary Details</Label><Button variant="outline" size="sm" onClick={addStop}><PlusCircle className="mr-2 h-4 w-4"/>Add Point</Button></div>
                     <div className="space-y-2">
                         {stops.map((stop, index) => (
                            <div key={stop.id} className="flex items-center gap-2">
-                                <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                <Label className="w-24">{index === 0 ? 'Origin' : (index === stops.length -1 ? 'Destination' : `Stop ${index}`)}:</Label>
-                                <Select value={stop.locationId} onValueChange={(value) => updateStopLocation(stop.id, value)} disabled={!!tripData.routeId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Location..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {(locations || []).map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
-                                    </SelectContent>
+                                <span className="w-12 text-[10px] uppercase font-black text-muted-foreground">{index === 0 ? 'START' : (index === stops.length -1 ? 'DEST' : `P-${index}`)}</span>
+                                <Select value={stop.locationId} onValueChange={(v) => updateStopLocation(stop.id, v)}>
+                                    <SelectTrigger className="flex-1"><SelectValue placeholder="Select Location" /></SelectTrigger>
+                                    <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
                                 </Select>
-                                <Button variant="ghost" size="icon" onClick={() => removeStop(stop.id)} disabled={!!tripData.routeId}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeStop(stop.id)}><X className="h-4 w-4"/></Button>
                            </div>
                         ))}
                     </div>
                 </div>
 
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                  <div className="space-y-2"><Label htmlFor="startingMeter">Starting Meter (km)</Label><Input id="startingMeter" type="number" value={tripData.startingMeter} onChange={handleInputChange} /></div>
-                  <div className="space-y-2"><Label htmlFor="endingMeter">Ending Meter (km)</Label><Input id="endingMeter" type="number" value={tripData.endingMeter} onChange={handleInputChange} /></div>
-                  <div className="space-y-2"><Label>Total Distance (km)</Label><Input value={totalDistance} readOnly disabled /></div>
-                  <div className="space-y-2"><Label>Trip Status<MandatoryIndicator/></Label><Select value={tripData.tripStatus} onValueChange={handleSelectChange('tripStatus')}><SelectTrigger><SelectValue placeholder="Select Status"/></SelectTrigger><SelectContent><SelectItem value="Planned">Planned</SelectItem><SelectItem value="Ongoing">Ongoing</SelectItem><SelectItem value="Completed">Completed</SelectItem><SelectItem value="Cancelled">Cancelled</SelectItem></SelectContent></Select></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Starting Odometer (km)</Label><Input id="startingMeter" type="number" value={tripData.startingMeter} onChange={handleInputChange} /></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Ending Odometer (km)</Label><Input id="endingMeter" type="number" value={tripData.endingMeter} onChange={handleInputChange} /></div>
                 </div>
                 
-                 <div className="space-y-4">
-                    <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Expenses</h3><Button variant="outline" size="sm" onClick={addExpense}><PlusCircle className="mr-2 h-4 w-4"/>Add Expense</Button></div>
+                 <div className="space-y-4 p-4 border rounded-lg bg-muted/10">
+                    <div className="flex justify-between items-center"><Label className="font-bold flex items-center gap-2 text-primary"><DollarSign className="h-4 w-4" /> Trip Expenses</Label><Button variant="outline" size="sm" onClick={addExpense}><PlusCircle className="mr-2 h-4 w-4"/>Add Cost</Button></div>
                     <div className="space-y-2">
                         {expenses.map((expense) => (
-                            <div key={expense.id} className="grid grid-cols-4 gap-2 items-center">
-                                <Select value={expense.expenseTypeId} onValueChange={(value) => updateExpense(expense.id, 'expenseTypeId', value)}>
-                                    <SelectTrigger><SelectValue placeholder="Select Type"/></SelectTrigger>
-                                    <SelectContent>
-                                        {(expenseTypes || []).map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}
-                                    </SelectContent>
+                            <div key={expense.id} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center p-2 rounded-md bg-background border">
+                                <Select value={expense.expenseTypeId} onValueChange={(v) => updateExpense(expense.id, 'expenseTypeId', v)}>
+                                    <SelectTrigger className="h-8"><SelectValue placeholder="Type"/></SelectTrigger>
+                                    <SelectContent>{expenseTypes.map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}</SelectContent>
                                 </Select>
-                                <Input placeholder="Amount" type="number" value={expense.amount} onChange={(e) => updateExpense(expense.id, 'amount', parseFloat(e.target.value) || 0)} />
-                                <Input type="date" value={expense.date} onChange={(e) => updateExpense(expense.id, 'date', e.target.value)} />
-                                <Button variant="ghost" size="icon" onClick={() => removeExpense(expense.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                <Input placeholder="Amount" type="number" value={expense.amount} onChange={(e) => updateExpense(expense.id, 'amount', parseFloat(e.target.value) || 0)} className="h-8" />
+                                <Input type="date" value={expense.date} onChange={(e) => updateExpense(expense.id, 'date', e.target.value)} className="h-8" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive ml-auto" onClick={() => removeExpense(expense.id)}><Trash2 className="h-4 w-4"/></Button>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="remarks">Remarks</Label>
-                  <Textarea id="remarks" value={tripData.remarks} onChange={handleInputChange} />
+                  <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Info className="h-3 w-3" /> Trip Remarks</Label>
+                  <Textarea id="remarks" value={tripData.remarks} onChange={handleInputChange} rows={3} />
                 </div>
               </div>
             )}
             {step === 2 && (
                  <div className="space-y-6">
-                    <h3 className="font-semibold text-lg">Step 2: Upload Documents & Photos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <h3 className="font-semibold text-lg flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Step 2: Digital Evidence Vault</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {(Object.keys(documentLabels) as DocType[]).map(docType => (
-                          <div key={docType} className="space-y-2 p-3 border rounded-lg">
+                          <div key={docType} className="space-y-2 p-3 border rounded-lg bg-muted/5 group">
                               <div className="flex justify-between items-center">
-                                  <Label className="font-medium">{documentLabels[docType]}</Label>
-                                  <Label htmlFor={`file-upload-${docType}`} className="cursor-pointer text-sm text-primary hover:underline">
-                                      Add File(s)
-                                  </Label>
-                                  <Input id={`file-upload-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
+                                  <Label className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ImageIcon className="h-3 w-3" /> {documentLabels[docType]}</Label>
+                                  <Label htmlFor={`t-file-${docType}`} className="cursor-pointer text-[10px] text-primary hover:underline flex items-center gap-1 font-bold"><Upload className="h-3 w-3"/>Add Files</Label>
+                                  <Input id={`t-file-${docType}`} type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange(docType)} />
                               </div>
                               <div className="space-y-1">
-                                  {documents[docType]?.length > 0 ? (
-                                      documents[docType].map(file => (
-                                          <div key={file.id} className="flex items-center justify-between text-sm p-1.5 bg-muted rounded-md">
-                                              <div className="flex items-center gap-2 truncate">
-                                                  <FileIcon className="h-4 w-4 flex-shrink-0" />
-                                                  <span className="truncate">{file.name}</span>
-                                              </div>
-                                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType, file.id)}>
-                                                  <X className="h-4 w-4" />
-                                              </Button>
-                                          </div>
-                                      ))
-                                  ) : (
-                                      <p className="text-xs text-muted-foreground text-center py-2">No files uploaded.</p>
-                                  )}
+                                  {documents[docType]?.map(file => (
+                                      <div key={file.id} className="flex items-center justify-between text-[11px] p-1.5 bg-primary/5 rounded border border-primary/10"><span className="truncate font-medium">{file.name}</span><Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => removeDocument(docType, file.id)}><X className="h-3 w-3"/></Button></div>
+                                  ))}
+                                  {documents[docType]?.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-2 italic">No uploads</p>}
                               </div>
                           </div>
                       ))}
@@ -555,17 +392,14 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <div>
-              {step > 1 && (<Button variant="outline" onClick={prevStep}>Previous</Button>)}
-            </div>
-            <div>
-              {step < 2 ? (<Button onClick={nextStep}>Next</Button>) : (<Button onClick={handleSave}>{isEditing ? 'Update Trip' : 'Save Trip'}</Button>)}
-            </div>
+            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            {step < 2 ? (
+                <Button onClick={nextStep}>Continue</Button>
+            ) : (
+                <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Trip Data' : 'Finalize Trip Entry'}</Button>
+            )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-    
-
-    
