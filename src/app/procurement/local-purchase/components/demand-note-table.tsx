@@ -124,21 +124,18 @@ export function DemandNoteTable() {
             // 1. Role-Based Visibility Logic
             let isVisible = false;
             if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
-                isVisible = true; // Admin and Procurement management see everything
+                isVisible = true; 
             } else if (isDeptHead) {
-                // Dept heads see notes from their specific sections
                 const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
                     dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
                 );
                 if (isHeadOfThisDept) isVisible = true;
             }
             
-            // Users ALWAYS see notes they created personally
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
 
             if (!isVisible) return false;
 
-            // 2. Search and Filter Controls
             const lowerSearch = searchTerm.toLowerCase();
             const searchTermMatch = !searchTerm || 
                 item.demandNoteNumber.toLowerCase().includes(lowerSearch) ||

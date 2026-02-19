@@ -4,7 +4,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -107,7 +107,6 @@ function PurchaseOrderView() {
         }, { merge: true });
     };
 
-    // Document Upload Handlers
     const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && po && firestore) {
             const files = Array.from(e.target.files);
@@ -180,7 +179,7 @@ function PurchaseOrderView() {
                             </div>
                              <div className="text-sm text-muted-foreground flex items-center gap-2">
                                 For Requisition: 
-                                <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
+                                <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}?tab=demand-notes`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
                                 {demandNote?.demandNoteNumber && <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(demandNote.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>}
                                 | Status: 
                                 <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge>

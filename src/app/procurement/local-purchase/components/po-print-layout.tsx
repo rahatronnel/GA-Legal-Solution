@@ -37,7 +37,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
     const gpConcern = employees.find(e => e.id === demandNote?.gpConcernOfficerId);
     const deliveryLocation = deliveryPlaces.find(p => p.id === demandNote?.deliveryPlace);
     
-    // Approval Signatures
     const approvers = po.approvalHistory
         ?.filter(h => h.status === 'Approved')
         .map(h => {
@@ -48,12 +47,9 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
 
     return (
         <div className="p-8 bg-white text-black font-sans min-h-[29.7cm] relative">
-            {/* Title */}
             <h1 className="text-3xl font-bold text-center mb-8 uppercase tracking-widest">Purchase Order</h1>
 
-            {/* Top Info Boxes */}
             <div className="grid grid-cols-2 gap-12 mb-8">
-                {/* Organization Box */}
                 <div className="space-y-0 border-2 border-black">
                     <div className="p-2 border-b-2 border-black font-bold text-lg">
                         {orgSettings.name}
@@ -72,7 +68,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                     </div>
                 </div>
 
-                {/* PO & Delivery Box */}
                 <div className="border-2 border-black h-fit">
                     <div className="flex border-b-2 border-black">
                         <div className="flex-1 p-2 border-r-2 border-black font-bold bg-gray-50">PO Number</div>
@@ -91,7 +86,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                 </div>
             </div>
 
-            {/* Items Table */}
             <div className="mb-8">
                 <table className="w-full border-collapse border-2 border-black">
                     <thead>
@@ -115,7 +109,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                                 <td className="border-2 border-black p-2 text-right">{formatCurrency(item.totalPrice)}</td>
                             </tr>
                         ))}
-                        {/* Summary Rows */}
                         <tr>
                             <td colSpan={4} rowSpan={5} className="border-2 border-black align-top p-4 bg-gray-50/30 italic text-xs">
                                 Note: {po.comments || 'No additional comments.'}
@@ -143,7 +136,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                 </table>
             </div>
 
-            {/* Bottom Details */}
             <div className="space-y-6 mb-12">
                 <div>
                     <h3 className="font-bold text-base underline mb-1">Estimate Expected Delivery</h3>
@@ -162,9 +154,7 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                 </div>
             </div>
 
-            {/* Signatures */}
             <div className="absolute bottom-12 left-8 right-8 flex justify-between items-start border-t pt-8">
-                {/* Prepared By */}
                 <div className="text-center w-48">
                     <div className="border-b-2 border-black pb-2 mb-2">
                         <p className="font-bold text-sm">Prepared By</p>
@@ -173,7 +163,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                     <div className="h-12 flex items-center justify-center italic text-[10px] text-muted-foreground">Digitally Generated</div>
                 </div>
 
-                {/* Dynamic Approvers */}
                 {approvers.map((sig, i) => (
                     <div key={i} className="text-center w-48">
                         <div className="border-b-2 border-black pb-2 mb-2">
@@ -189,7 +178,6 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                 ))}
             </div>
 
-            {/* Footer Page Number */}
             <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-gray-400">
                 Purchase Order Document | {po.poNumber} | Printed: {new Date().toLocaleString()}
             </div>

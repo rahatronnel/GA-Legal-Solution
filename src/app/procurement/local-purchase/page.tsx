@@ -25,10 +25,6 @@ import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
 
-/**
- * LocalPurchaseContent handles the core logic and tab rendering for the procurement module.
- * Optimized to remove global blocking loaders for a faster "Streaming" feel.
- */
 function LocalPurchaseContent() {
   const { user } = useUser();
   const { orgSettings, employees } = useProcurement();
@@ -209,9 +205,6 @@ function LocalPurchaseContent() {
   );
 }
 
-/**
- * Main Page entry point with Suspense for router integration.
- */
 export default function LocalPurchasePage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium text-muted-foreground">Initializing Module...</p></div>}>
