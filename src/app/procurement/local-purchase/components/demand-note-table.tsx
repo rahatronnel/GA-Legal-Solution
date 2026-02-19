@@ -13,10 +13,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
@@ -38,6 +38,7 @@ import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export function DemandNoteTable() {
     const { toast } = useToast();
@@ -52,6 +53,10 @@ export function DemandNoteTable() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    
+    // Status Modal State
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedNoteForStatus, setSelectedNoteForStatus] = useState<DemandNote | null>(null);
     
     // Detailed Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -407,6 +412,7 @@ export function DemandNoteTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedNoteForStatus(item); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Details</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print DN</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => { setCurrentItem(item); setIsDeleteConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Record</TooltipContent></Tooltip>
@@ -436,6 +442,35 @@ export function DemandNoteTable() {
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader><DialogTitle>Approval Flow: {selectedNoteForStatus?.demandNoteNumber}</DialogTitle></DialogHeader>
+                    <div className="py-4">
+                        <ul className="space-y-4">
+                            {selectedNoteForStatus?.approvalFlow?.steps.map((step, index) => {
+                                const historyEntry = selectedNoteForStatus.approvalHistory?.find((h:any) => h.level === index);
+                                const approver = employees?.find(e => e.id === step.approverId);
+                                const isPending = selectedNoteForStatus.currentApproverId === step.approverId && selectedNoteForStatus.approvalStatus !== 1 && selectedNoteForStatus.approvalStatus !== 0;
+                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
+                                return (
+                                    <li key={index} className="flex items-start gap-4">
+                                        {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                        <div className="flex-1 flex gap-3 items-center">
+                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
+                                            <div>
+                                                <p className="font-semibold">{step.stepName}</p>
+                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
+                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
                 </DialogContent>
             </Dialog>
         </TooltipProvider>

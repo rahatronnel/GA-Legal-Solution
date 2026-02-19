@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -276,7 +276,7 @@ export function PurchaseOrderTable() {
                                         <TableCell className="text-right">{formatCurrency(po.netPayableAmount)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Users className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Status</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
                                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(po, 'purchase-order')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
                                             </div>
@@ -312,13 +312,18 @@ export function PurchaseOrderTable() {
                         {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedPoForStatus.approvalHistory?.find(h => h.level === index);
                             const approver = employees?.find(e => e.id === step.approverId);
-                            let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (selectedPoForStatus.currentApproverId === step.approverId ? 'pending' : 'upcoming');
+                            const isPending = selectedPoForStatus.currentApproverId === step.approverId && selectedPoForStatus.approvalStatus !== 1 && selectedPoForStatus.approvalStatus !== 0;
+                            let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
                             return (
                                 <li key={index} className="flex items-center gap-4 list-none">
                                     {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
                                     <div className="flex-1 flex gap-3 items-center">
                                         <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'Not Assigned'}</p></div>
+                                        <div>
+                                            <p className="font-semibold">{step.stepName}</p>
+                                            <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
+                                            {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                        </div>
                                     </div>
                                 </li>
                             );
