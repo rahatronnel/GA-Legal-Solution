@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -243,7 +243,16 @@ export function PurchaseOrderTable() {
         }, { merge: true });
 
         setIsApprovalWizardOpen(false);
-        toast({ title: 'Success', description: 'Purchase Order approved.' });
+        toast({ title: "Success", description: "Purchase Order approved." });
+    };
+
+    const handleSendToVendor = (poId: string) => {
+        if (!firestore || !poCollectionRef) return;
+        setDocumentNonBlocking(doc(poCollectionRef, poId), {
+            isSentToVendor: true,
+            sentToVendorDate: new Date().toISOString()
+        }, { merge: true });
+        toast({ title: "PO Sent", description: "Purchase Order has been marked as sent to vendor." });
     };
 
     const handleBulkApproval = (status: number) => {
@@ -258,7 +267,7 @@ export function PurchaseOrderTable() {
             setDocumentNonBlocking(doc(poCollectionRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
         setSelectedRows([]);
-        toast({ title: 'Success' });
+        toast({ title: "Success" });
     };
 
     return (
@@ -313,10 +322,11 @@ export function PurchaseOrderTable() {
                                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
                                 const cs = comparativeStatements?.find(c => c.id === po.csId);
                                 const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
+                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
 
                                 return (
-                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForApproval && "bg-orange-500/5")}>
+                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend) && "bg-orange-500/5")}>
                                         <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
@@ -327,12 +337,16 @@ export function PurchaseOrderTable() {
                                             <div className="flex items-center gap-2">
                                                 <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
                                                 {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Purchase Order</Badge>}
+                                                {canSend && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Send to Vendor</Badge>}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 {isWaitingForApproval && (
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Informed Approval</TooltipContent></Tooltip>
+                                                )}
+                                                {canSend && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Mark as Sent to Vendor</TooltipContent></Tooltip>
                                                 )}
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>

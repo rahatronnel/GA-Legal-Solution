@@ -33,6 +33,9 @@ export function getCSStatusText(cs: ComparativeStatement): string {
 }
 
 export function getPOStatusText(po: PurchaseOrder): string {
+    if (po.isSentToVendor && po.sentToVendorDate) {
+        return `Sent to Vendor (${new Date(po.sentToVendorDate).toLocaleString()})`;
+    }
     const statusCode = po.approvalStatus;
     if(statusCode === undefined) return 'Unknown';
     if(statusCode === 2) return 'Pending TA Review';

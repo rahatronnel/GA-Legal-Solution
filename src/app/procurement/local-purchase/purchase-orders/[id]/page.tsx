@@ -6,7 +6,7 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy, ChevronRight, ChevronLeft, AlertTriangle, Send } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -113,7 +113,7 @@ const POApprovalWizard = ({
 
                     {step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-blue-400">
+                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400">
                                 <DollarSign className="h-5 w-5" />
                                 <h3 className="font-bold">Step 2: Financial Verification</h3>
                             </div>
@@ -175,7 +175,7 @@ function PurchaseOrderView() {
     const router = useRouter();
     const { toast } = useToast();
     const { handlePrint } = usePrint();
-    const { purchaseOrders, vendors, demandNotes, employees, designations, isLoading } = useProcurement();
+    const { purchaseOrders, vendors, demandNotes, employees, designations, isLoading, orgSettings } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
 
@@ -243,6 +243,16 @@ function PurchaseOrderView() {
         toast({ variant: "destructive", title: "Rejected", description: "The Purchase Order has been rejected." });
     }
 
+    const handleSendToVendor = () => {
+        if (!firestore || !po) return;
+        const poRef = doc(firestore, 'purchaseOrders', po.id);
+        setDocumentNonBlocking(poRef, {
+            isSentToVendor: true,
+            sentToVendorDate: new Date().toISOString()
+        }, { merge: true });
+        toast({ title: "PO Sent", description: "Purchase Order has been marked as sent to vendor." });
+    }
+
     const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && po && firestore) {
             const files = Array.from(e.target.files);
@@ -263,6 +273,10 @@ function PurchaseOrderView() {
     const isPendingApproval = po?.approvalStatus !== 0 && po?.approvalStatus !== 1;
     const canApprove = currentUserEmployee && po?.currentApproverId === currentUserEmployee.id;
     const isApproved = po?.approvalStatus === 1;
+    
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+    const canSend = isApproved && !po?.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
 
     if (isLoading || po === undefined) return <div className="p-8 text-center">Loading...</div>;
     if (po === null) notFound();
@@ -296,6 +310,9 @@ function PurchaseOrderView() {
                                  </AlertDialog>
                                 </>
                             )}
+                            {canSend && (
+                                <Button size="sm" variant="outline" className="text-blue-600 border-blue-600" onClick={handleSendToVendor}><Send className="mr-2 h-4 w-4"/>Send to Vendor</Button>
+                            )}
                             {isApproved && (
                                 <Tooltip><TooltipTrigger asChild><Button onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print PO</Button></TooltipTrigger><TooltipContent>Open in New Tab & Print</TooltipContent></Tooltip>
                             )}
@@ -312,7 +329,14 @@ function PurchaseOrderView() {
                     {isApproved && <TabsTrigger value="documents">Uploads</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6 mt-6">
-                    <Card><CardHeader><CardTitle className="text-lg">Vendor & Delivery</CardTitle></CardHeader><CardContent className="grid md:grid-cols-2 gap-6"><InfoItem icon={Building} label="Vendor" value={vendor?.vendorName} /><InfoItem icon={Calendar} label="Expected Delivery" value={po.expectedDeliveryDate} /></CardContent></Card>
+                    <Card><CardHeader><CardTitle className="text-lg">Vendor & Delivery</CardTitle></CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-6">
+                        <InfoItem icon={Building} label="Vendor" value={vendor?.vendorName} />
+                        <InfoItem icon={Calendar} label="Expected Delivery" value={po.expectedDeliveryDate} />
+                        {po.isSentToVendor && (
+                            <InfoItem icon={Send} label="Sent to Vendor On" value={new Date(po.sentToVendorDate!).toLocaleString()} fullWidth />
+                        )}
+                    </CardContent></Card>
                     <Card><CardHeader><CardTitle className="text-lg">Ordered Items</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader><TableBody>{po.items.map((item, idx) => (<TableRow key={idx}><TableCell>{item.particulars}</TableCell><TableCell>{item.quantity} {item.unit}</TableCell><TableCell className="text-right">{item.totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
                 </TabsContent>
                 <TabsContent value="approval" className="mt-6">
@@ -336,7 +360,7 @@ function PurchaseOrderView() {
                                                 <div key={file.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
                                                     <span className="truncate max-w-[200px]">{file.name}</span>
                                                     <div className="flex gap-1">
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild><Link href={file.file} download={file.name} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></Link></Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild><Link href={file.file} download={file.name} target="_blank" rel="noopener noreferrer"><Download className="mr-2 h-4 w-4" /></Link></Button>
                                                     </div>
                                                 </div>
                                             ))

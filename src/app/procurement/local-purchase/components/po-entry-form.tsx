@@ -58,6 +58,10 @@ export type PurchaseOrder = {
   mandatoryTerms?: string;
   otherTerms?: string;
 
+  // Sending tracking
+  isSentToVendor?: boolean;
+  sentToVendorDate?: string;
+
   documents?: {
     poAcknowledgement: UploadedFile[];
     invoice: UploadedFile[];
@@ -173,6 +177,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         mandatoryTerms: orgSettings.procurementSettings?.poSettings?.mandatoryTerms || '',
         otherTerms: orgSettings.procurementSettings?.poSettings?.otherTerms || '',
         comments: '',
+        isSentToVendor: false,
         documents: {
           poAcknowledgement: [],
           invoice: [],
