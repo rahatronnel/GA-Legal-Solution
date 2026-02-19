@@ -55,6 +55,8 @@
     "@types/recharts": "^1.8.29"
   },
   "overrides": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "react-day-picker": {
       "react": "19.0.0",
       "react-dom": "19.0.0"
