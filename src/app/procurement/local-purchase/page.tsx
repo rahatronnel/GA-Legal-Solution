@@ -24,6 +24,7 @@ import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-categ
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
+import { MRRTable } from './components/mrr-table';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -98,6 +99,7 @@ function LocalPurchaseContent() {
     if (canViewCsAndPo) {
         list.push({ id: 'cs', label: 'CS' });
         list.push({ id: 'po', label: 'PO' });
+        list.push({ id: 'mrr', label: 'MRR' });
     }
     
     list.push({ id: 'tracker', label: 'Workflow Tracker' });
@@ -165,6 +167,13 @@ function LocalPurchaseContent() {
           <Card>
             <CardHeader><CardTitle>Purchase Orders</CardTitle></CardHeader>
             <CardContent><PurchaseOrderTable /></CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="mrr">
+          <Card>
+            <CardHeader><CardTitle>Material Receiving Reports</CardTitle></CardHeader>
+            <CardContent><MRRTable /></CardContent>
           </Card>
         </TabsContent>
 

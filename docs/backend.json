@@ -1,5 +1,4 @@
 
-      
 {
   "entities": {
     "OrganizationSettings": {
@@ -710,6 +709,48 @@
         "otherTerms": { "type": "string", "description": "Other terms and conditions for this PO." }
       },
       "required": ["poNumber", "poDate", "demandNoteId", "vendorId", "totalAmount"]
+    },
+    "MRR": {
+      "title": "Material Receiving Report",
+      "description": "Records the physical receipt of materials against a Purchase Order.",
+      "type": "object",
+      "properties": {
+        "mrrNumber": { "type": "string" },
+        "receivingDate": { "type": "string", "format": "date" },
+        "departmentName": { "type": "string" },
+        "sectionName": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "supplierAddress": { "type": "string" },
+        "issueDate": { "type": "string", "format": "date" },
+        "shipmentType": { "type": "string" },
+        "containerSize": { "type": "string" },
+        "containerNo": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "demandNoteNumber": { "type": "string" },
+        "challanNumber": { "type": "string" },
+        "poId": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "particulars": { "type": "string" },
+              "description": { "type": "string" },
+              "receivedQty": { "type": "number" },
+              "unit": { "type": "string" },
+              "unitPrice": { "type": "number" },
+              "amount": { "type": "number" }
+            }
+          }
+        },
+        "totalAmount": { "type": "number" },
+        "goodsCondition": { "type": "string", "enum": ["Ok", "Not Ok"] },
+        "packageCondition": { "type": "string", "enum": ["Ok", "Not Ok"] },
+        "remarks": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["mrrNumber", "receivingDate", "poId", "supplierName"]
     }
   },
   "auth": {
@@ -750,39 +791,7 @@
     "/processCodes/{processCodeId}": { "schema": { "$ref": "#/entities/ProcessCode" }, "description": "Stores master data for process codes." },
     "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." },
     "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." },
-    "/purchaseOrders/{poId}": { "schema": { "$ref": "#/entities/PurchaseOrder" }, "description": "Stores all created purchase orders." }
+    "/purchaseOrders/{poId}": { "schema": { "$ref": "#/entities/PurchaseOrder" }, "description": "Stores all created purchase orders." },
+    "/mrrs/{mrrId}": { "schema": { "$ref": "#/entities/MRR" }, "description": "Stores all Material Receiving Reports." }
   }
 }
-    
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-

@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/table';
 import { useProcurement } from './procurement-provider';
 import type { PurchaseOrder } from './po-entry-form';
-import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send, PackageCheck } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { MRREntryForm } from './mrr-entry-form';
 
 const POApprovalWizard = ({
     po,
@@ -161,11 +162,12 @@ const POApprovalWizard = ({
 };
 
 export function PurchaseOrderTable() {
-    const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings } = useProcurement();
+    const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, mrrs, isLoading, orgSettings } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
     const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+    const mrrCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [vendorFilter, setVendorFilter] = useState('all');
@@ -178,6 +180,9 @@ export function PurchaseOrderTable() {
     const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
     const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
     const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
+    
+    const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
+    const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -196,7 +201,6 @@ export function PurchaseOrderTable() {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
-                // Access rule: Creator, Current Approver, or ANY past approver in history
                 if (po.createdBy === currentUserEmployee.id || 
                     po.currentApproverId === currentUserEmployee.id ||
                     po.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
@@ -321,12 +325,14 @@ export function PurchaseOrderTable() {
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
                                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
                                 const cs = comparativeStatements?.find(c => c.id === po.csId);
+                                const mrr = mrrs.find(m => m.poId === po.id);
                                 const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
                                 const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
+                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
 
                                 return (
-                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend) && "bg-orange-500/5")}>
+                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend || canMrr) && "bg-orange-500/5")}>
                                         <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
@@ -338,6 +344,7 @@ export function PurchaseOrderTable() {
                                                 <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
                                                 {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Purchase Order</Badge>}
                                                 {canSend && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Send to Vendor</Badge>}
+                                                {canMrr && <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap">⚠️ Prepare MRR</Badge>}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -347,6 +354,9 @@ export function PurchaseOrderTable() {
                                                 )}
                                                 {canSend && (
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Mark as Sent to Vendor</TooltipContent></Tooltip>
+                                                )}
+                                                {canMrr && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Prepare MRR</TooltipContent></Tooltip>
                                                 )}
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
@@ -377,6 +387,13 @@ export function PurchaseOrderTable() {
             </Dialog>
 
             <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => addDocumentNonBlocking(poCollectionRef!, d)} cs={selectedCsForPo} />
+
+            <MRREntryForm 
+                isOpen={isMrrFormOpen} 
+                setIsOpen={setIsMrrFormOpen} 
+                po={selectedPoForMrr} 
+                onSave={(d) => { mrrCollectionRef && addDocumentNonBlocking(mrrCollectionRef, d); toast({ title: 'MRR Prepared' }); }} 
+            />
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md">
