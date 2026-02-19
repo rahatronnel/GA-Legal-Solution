@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -48,12 +49,6 @@ export default function LoginPage() {
   );
   const { data: orgSettings, isLoading: isLoadingSettings } =
     useDoc<OrganizationSettings>(settingsRef);
-
-  const playSoftClick = () => {
-    const audio = new Audio('/sounds/soft-click.mp3');
-    audio.volume = 0.18;
-    audio.play();
-  };
 
   const handleSignIn = async () => {
     setAuthenticating(true);
@@ -206,7 +201,6 @@ export default function LoginPage() {
           <Button
             disabled={isLoading}
             onClick={() => {
-              playSoftClick();
               handleSignIn();
             }}
             className="

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -98,12 +99,14 @@ export default function LocalPurchasePage() {
     );
   }
 
+  const gridColsCount = tabsList.length;
+
   // 4. Main Component Rendering
   return (
     <div className="space-y-6">
       <ModuleHeader />
       <Tabs defaultValue="demand-notes" className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabsList.length}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
           ))}
