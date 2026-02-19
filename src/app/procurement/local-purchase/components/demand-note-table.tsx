@@ -62,6 +62,34 @@ export function DemandNoteTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
+    const roleData = useMemo(() => {
+        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isDeptHead: false };
+
+        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
+        const managerCheck =
+            settings.managingDirectorId === currentUserEmployee.id ||
+            settings.factoryDirectorId === currentUserEmployee.id ||
+            settings.manufacturingDeptManagerId === currentUserEmployee.id ||
+            settings.specializedDeptManagerId === currentUserEmployee.id;
+        
+        const deptHeadCheck = settings.departmentHeads?.some(
+            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
+        );
+
+        return {
+            isSuperAdmin: superAdminCheck,
+            isGPOfficer: GPO,
+            isGPConcern: GPC,
+            isManager: managerCheck,
+            isDeptHead: deptHeadCheck
+        };
+    }, [orgSettings, currentUserEmployee, user]);
+
+    const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead } = roleData;
+
     const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
     const enrichedItems = useMemo(() => {
@@ -86,6 +114,24 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
+            // 1. Role-Based Visibility Logic
+            let isVisible = false;
+            if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
+                isVisible = true; // Admin and Procurement management see everything
+            } else if (isDeptHead) {
+                // Dept heads see notes from their specific sections
+                const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
+                    dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
+                );
+                if (isHeadOfThisDept) isVisible = true;
+            }
+            
+            // Users ALWAYS see notes they created personally
+            if (item.createdBy === currentUserEmployee?.id) isVisible = true;
+
+            if (!isVisible) return false;
+
+            // 2. Search and Filter Controls
             const lowerSearch = searchTerm.toLowerCase();
             const searchTermMatch = !searchTerm || 
                 item.demandNoteNumber.toLowerCase().includes(lowerSearch) ||
@@ -112,7 +158,7 @@ export function DemandNoteTable() {
 
             return searchTermMatch && statusMatch && stageMatch && dateMatch;
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
-    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange]);
+    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead, orgSettings, currentUserEmployee]);
 
     const clearFilters = () => {
         setSearchTerm('');
@@ -283,7 +329,7 @@ export function DemandNoteTable() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                                        No requisitions found matching your filters.
+                                        No requisitions found matching your filters and permissions.
                                     </TableCell>
                                 </TableRow>
                             )}

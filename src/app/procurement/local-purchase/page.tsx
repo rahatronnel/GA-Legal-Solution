@@ -24,6 +24,9 @@ import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-categ
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * LocalPurchaseContent handles the core logic and tab rendering for the procurement module.
+ */
 function LocalPurchaseContent() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
@@ -116,8 +119,6 @@ function LocalPurchaseContent() {
     );
   }
 
-  const gridColsCount = tabsList.length;
-
   return (
     <div className="space-y-6">
       <ModuleHeader />
@@ -127,7 +128,7 @@ function LocalPurchaseContent() {
       </div>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabsList.length}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
           ))}
@@ -205,9 +206,12 @@ function LocalPurchaseContent() {
   );
 }
 
+/**
+ * Main Page entry point with Suspense for router integration.
+ */
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium">Loading Application Modules...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium">Initializing Module...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );
