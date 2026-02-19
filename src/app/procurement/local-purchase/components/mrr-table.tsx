@@ -54,14 +54,14 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                            The Material Receiving Report (MRR) serves as the official organizational record for the physical receipt of goods. It acts as the "Entry Audit" before items are accepted into inventory or delivered to the requesting department.
+                            The Material Receiving Report (MRR) serves as the official organizational record for the physical receipt of goods. It acts as the "Entry Audit" before items are accepted into inventory.
                         </p>
                     </section>
                     <Separator />
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Tag className="h-4 w-4"/> Information Flow</h4>
                         <p className="text-sm text-muted-foreground">
-                            MRRs are generated from <Badge variant="outline">Purchase Orders</Badge> that have been officially sent to vendors. The system automatically pulls item quantities, unit prices, and department data to prevent manual entry errors.
+                            MRRs are generated from <Badge variant="outline">Purchase Orders</Badge> that have been officially sent to vendors. The system automatically pulls item quantities, unit prices, and department data.
                         </p>
                     </section>
                     <Separator />
@@ -85,13 +85,6 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                             <li><strong>Purchase Manager:</strong> Commercial and budget sign-off.</li>
                             <li><strong>Purchase Department TA:</strong> Final technical and logistical validation.</li>
                         </ol>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><Box className="h-4 w-4"/> Quality Inspection</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Users must record both <strong>Goods Condition</strong> and <strong>Package Condition</strong>. If anything is marked "Not Ok", the MRR status highlights the discrepancy for the approvers to review.
-                        </p>
                     </section>
                 </div>
             </ScrollArea>
@@ -127,8 +120,6 @@ const FinalizeMrrDialog = ({
         if (isOpen && mrr) {
             setBillDocs([]);
             setChallanDocs([]);
-            
-            // Auto-default to Demand Note creator
             const dn = demandNotes.find(d => d.demandNoteNumber === mrr.demandNoteNumber);
             setConfirmantId(dn?.createdBy || '');
         }
@@ -149,25 +140,15 @@ const FinalizeMrrDialog = ({
         }
     };
 
-    const removeFile = (type: 'bill' | 'challan', id: string) => {
-        if (type === 'bill') setBillDocs(p => p.filter(f => f.id !== id));
-        else setChallanDocs(p => p.filter(f => f.id !== id));
-    };
-
     const handleConfirm = () => {
-        if (!confirmantId) {
-            toast({ variant: 'destructive', title: 'Missing Field', description: 'Please select a Receiver Confirmant.' });
-            return;
-        }
-        if (billDocs.length === 0 || challanDocs.length === 0) {
-            toast({ variant: 'destructive', title: 'Missing Evidence', description: 'Please upload at least one Bill and one Challan.' });
+        if (!confirmantId || billDocs.length === 0 || challanDocs.length === 0) {
+            toast({ variant: 'destructive', title: 'Missing Info', description: 'Evidence and Confirmant are required.' });
             return;
         }
         onFinalize({ bill: billDocs, challan: challanDocs, confirmantId });
     };
 
     if (!mrr) return null;
-
     const selectedEmployee = employees.find(e => e.id === confirmantId);
 
     return (
@@ -175,76 +156,34 @@ const FinalizeMrrDialog = ({
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Finalize MRR: {mrr.mrrNumber}</DialogTitle>
-                    <DialogDescription>Upload physical copies of the Bill/Invoice and Challan to initiate approval.</DialogDescription>
+                    <DialogDescription>Upload Bill/Invoice and Challan to initiate approval.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label className="flex justify-between font-bold text-xs uppercase tracking-tighter">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
                             <input id="up-bill" type="file" multiple className="hidden" onChange={handleFileChange('bill')} />
-                            <div className="space-y-1 mt-2">
-                                {billDocs.map(f => (
-                                    <div key={f.id} className="flex items-center justify-between text-xs p-1.5 bg-muted rounded"><span className="truncate">{f.name}</span><Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeFile('bill', f.id)}><X className="h-3 w-3"/></Button></div>
-                                ))}
-                                {billDocs.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-2 border-2 border-dashed rounded">Required</p>}
-                            </div>
+                            <div className="space-y-1">{billDocs.map(f => <div key={f.id} className="text-xs p-1 bg-muted rounded flex justify-between"><span>{f.name}</span><X className="h-3 w-3 cursor-pointer" onClick={()=>setBillDocs(p=>p.filter(x=>x.id!==f.id))}/></div>)}</div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex justify-between font-bold text-xs uppercase tracking-tighter">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
                             <input id="up-challan" type="file" multiple className="hidden" onChange={handleFileChange('challan')} />
-                            <div className="space-y-1 mt-2">
-                                {challanDocs.map(f => (
-                                    <div key={f.id} className="flex items-center justify-between text-xs p-1.5 bg-muted rounded"><span className="truncate">{f.name}</span><Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeFile('challan', f.id)}><X className="h-3 w-3"/></Button></div>
-                                ))}
-                                {challanDocs.length === 0 && <p className="text-[10px] text-muted-foreground text-center py-2 border-2 border-dashed rounded">Required</p>}
-                            </div>
+                            <div className="space-y-1">{challanDocs.map(f => <div key={f.id} className="text-xs p-1 bg-muted rounded flex justify-between"><span>{f.name}</span><X className="h-3 w-3 cursor-pointer" onClick={()=>setChallanDocs(p=>p.filter(x=>x.id!==f.id))}/></div>)}</div>
                         </div>
                     </div>
-                    
                     <div className="space-y-2">
-                        <Label className="font-bold text-xs uppercase tracking-tighter">Receiver Confirmant (Defaulted to DN Creator)</Label>
+                        <Label className="font-bold text-xs uppercase">Receiver Confirmant</Label>
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={openSearch}
-                                    className="w-full justify-between h-11"
-                                >
-                                    {selectedEmployee ? `${selectedEmployee.fullName} (${selectedEmployee.userIdCode})` : "Select verifyer..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
+                            <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search employee name or code..." />
-                                    <CommandList>
-                                        <CommandEmpty>No employee found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {employees.map((emp) => (
-                                                <CommandItem
-                                                    key={emp.id}
-                                                    value={`${emp.fullName} ${emp.userIdCode}`}
-                                                    onSelect={() => {
-                                                        setConfirmantId(emp.id);
-                                                        setOpenSearch(false);
-                                                    }}
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />
-                                                    {emp.fullName} ({emp.userIdCode})
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
+                                <Command><CommandInput placeholder="Search..." /><CommandList><CommandEmpty>No one found.</CommandEmpty><CommandGroup>
+                                    {employees.map((emp) => <CommandItem key={emp.id} onSelect={() => { setConfirmantId(emp.id); setOpenSearch(false); }}><Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />{emp.fullName}</CommandItem>)}
+                                </CommandGroup></CommandList></Command>
                             </PopoverContent>
                         </Popover>
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 font-bold"><Check className="mr-2 h-4 w-4"/> Finalize & Start Approval</Button>
-                </DialogFooter>
+                <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={handleConfirm}>Finalize & Submit</Button></DialogFooter>
             </DialogContent>
         </Dialog>
     );
@@ -268,36 +207,41 @@ export function MRRTable() {
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
+    const roleData = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !currentUserEmployee) return { isGPOfficer: false, isManager: false };
+        return {
+            isGPOfficer: settings.generalPurchaseOfficerId === currentUserEmployee.id,
+            isManager: settings.managingDirectorId === currentUserEmployee.id || settings.factoryDirectorId === currentUserEmployee.id
+        };
+    }, [orgSettings, currentUserEmployee]);
+
     const filteredMrrs = useMemo(() => {
         const safeItems = Array.isArray(mrrs) ? mrrs : [];
         return safeItems.filter(mrr => {
-            const lowerTerm = searchTerm.toLowerCase();
-            let isVisible = isSuperAdmin || mrr.createdBy === currentUserEmployee?.id || mrr.currentApproverId === currentUserEmployee?.id || mrr.approvalHistory?.some(h => h.approverId === currentUserEmployee?.id);
+            let isVisible = isSuperAdmin || roleData.isGPOfficer || roleData.isManager;
+            if (!isVisible && currentUserEmployee) {
+                if (mrr.createdBy === currentUserEmployee.id || mrr.currentApproverId === currentUserEmployee.id || mrr.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) {
+                    isVisible = true;
+                }
+            }
             if (!isVisible) return false;
-
-            return !searchTerm || 
-                mrr.mrrNumber.toLowerCase().includes(lowerTerm) || 
-                mrr.supplierName.toLowerCase().includes(lowerTerm) ||
-                mrr.demandNoteNumber.toLowerCase().includes(lowerTerm);
+            return !searchTerm || mrr.mrrNumber.toLowerCase().includes(searchTerm.toLowerCase()) || mrr.supplierName.toLowerCase().includes(searchTerm.toLowerCase());
         }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    }, [mrrs, searchTerm, isSuperAdmin, currentUserEmployee]);
+    }, [mrrs, searchTerm, isSuperAdmin, roleData, currentUserEmployee]);
 
-    const approvableItems = useMemo(() => filteredMrrs.filter(m => currentUserEmployee && m.currentApproverId === currentUserEmployee.id && m.approvalStatus !== 1 && m.approvalStatus !== 0 && m.approvalStatus !== 2), [filteredMrrs, currentUserEmployee]);
+    const approvableItems = useMemo(() => filteredMrrs.filter(m => currentUserEmployee && m.currentApproverId === currentUserEmployee.id && m.approvalStatus > 2), [filteredMrrs, currentUserEmployee]);
 
     const handleFinalize = (data: { bill: UploadedFile[], challan: UploadedFile[], confirmantId: string }) => {
         if (!selectedMrrForFinal || !mrrColRef || !orgSettings?.procurementSettings) return;
-
         const dn = demandNotes.find(d => d.demandNoteNumber === selectedMrrForFinal.demandNoteNumber);
         const { procurementSettings } = orgSettings;
-        const { departmentHeads, csApprovalRoles } = procurementSettings;
-
-        const requestedDeptHeadId = departmentHeads.find(dh => dh.sectionId === dn?.sectionId)?.headId;
-        
+        const requestedDeptHeadId = procurementSettings.departmentHeads.find(dh => dh.sectionId === dn?.sectionId)?.headId;
         const steps = [
             { stepName: 'GP Concern', approverId: selectedMrrForFinal.createdBy },
             { stepName: 'Requested Dept. Manager', approverId: requestedDeptHeadId || '' },
-            { stepName: 'Purchase Manager', approverId: csApprovalRoles?.purchaseManagerId || '' },
-            { stepName: 'Purchase Dept. TA', approverId: csApprovalRoles?.purchaseDeptTaId || '' }
+            { stepName: 'Purchase Manager', approverId: procurementSettings.csApprovalRoles?.purchaseManagerId || '' },
+            { stepName: 'Purchase Dept. TA', approverId: procurementSettings.csApprovalRoles?.purchaseDeptTaId || '' }
         ].filter(s => !!s.approverId);
 
         setDocumentNonBlocking(doc(mrrColRef, selectedMrrForFinal.id), {
@@ -307,9 +251,8 @@ export function MRRTable() {
             approvalStatus: 3, 
             currentApproverId: steps[0].approverId,
         }, { merge: true });
-
         setIsFinalizeOpen(false);
-        toast({ title: 'MRR Finalized', description: 'Internal approval workflow has been initiated.' });
+        toast({ title: 'Finalized' });
     };
 
     const handleBulkApproval = (status: number) => {
@@ -318,24 +261,13 @@ export function MRRTable() {
             const mrr = mrrs.find(m => m.id === id);
             if (!mrr || !mrr.approvalFlow?.steps) return;
             const currentLevel = mrr.approvalHistory?.length || 0;
-            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
+            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk' };
             let nextStatus = status === 1 ? (currentLevel + 1 < mrr.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
             let nextApprover = status === 1 && currentLevel + 1 < mrr.approvalFlow.steps.length ? mrr.approvalFlow.steps[currentLevel + 1].approverId : '';
             setDocumentNonBlocking(doc(mrrColRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(mrr.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
         setSelectedRows([]);
-        toast({ title: 'Processed' });
-    };
-
-    const handleDelete = (id: string) => {
-        if (!mrrColRef) return;
-        deleteDocumentNonBlocking(doc(mrrColRef, id));
-        toast({ title: 'Deleted', description: 'MRR has been removed.' });
-    };
-
-    const formatDateTime = (ts: string | undefined) => {
-        if (!ts) return 'N/A';
-        try { return new Date(ts).toLocaleString(); } catch { return ts; }
+        toast({ title: 'Success' });
     };
 
     return (
@@ -345,7 +277,7 @@ export function MRRTable() {
                     <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative w-full sm:max-w-md">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search MRR#, Supplier, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                            <Input placeholder="Search MRR#, Supplier..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
@@ -357,115 +289,73 @@ export function MRRTable() {
                     <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
                 </div>
 
-                <div className="border rounded-lg overflow-hidden shadow-sm">
+                <div className="border rounded-lg overflow-hidden">
                     <Table>
                         <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                                <TableHead className="font-bold"><FileText className="h-4 w-4 inline mr-2" />MRR Details</TableHead>
-                                <TableHead className="font-bold"><Hash className="h-4 w-4 inline mr-2" />CS/PO Link</TableHead>
-                                <TableHead className="font-bold"><User className="h-4 w-4 inline mr-2" />GP Concern</TableHead>
-                                <TableHead className="font-bold"><Truck className="h-4 w-4 inline mr-2" />Supplier</TableHead>
-                                <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="text-right font-bold">Actions</TableHead>
+                                <TableHead>MRR Details</TableHead>
+                                <TableHead>GP Concern</TableHead>
+                                <TableHead>Supplier</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading Material Receiving Reports...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => {
-                                    const po = purchaseOrders.find(p => p.id === mrr.poId);
-                                    const cs = comparativeStatements.find(c => c.id === po?.csId);
-                                    const dn = demandNotes.find(d => d.id === po?.demandNoteId);
-                                    const concern = employees.find(e => e.id === mrr.createdBy);
-                                    
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
                                     const isWaitingForApproval = mrr.currentApproverId === currentUserEmployee?.id && mrr.approvalStatus > 2;
                                     const isApprovable = approvableItems.some(i => i.id === mrr.id);
-
                                     return (
-                                        <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) && "bg-orange-500/5")}>
-                                            <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(mrr.id) ? prev.filter(r => r !== mrr.id) : [...prev, mrr.id])} disabled={!isApprovable} /></TableCell>
+                                        <TableRow key={mrr.id} className={cn(isWaitingForFinalize || isWaitingForApproval ? 'bg-orange-500/5' : '')}>
+                                            <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
+                                            <TableCell><div className="flex flex-col"><span className="font-bold">{mrr.mrrNumber}</span><span className="text-[10px] text-muted-foreground">PO: {mrr.poId}</span></div></TableCell>
+                                            <TableCell><span className="text-xs">{employees?.find(e => e.id === mrr.createdBy)?.fullName}</span></TableCell>
+                                            <TableCell><span className="text-xs">{mrr.supplierName}</span></TableCell>
                                             <TableCell>
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-1">
-                                                        <span className="font-bold text-primary">{mrr.mrrNumber}</span>
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 opacity-50" onClick={() => { navigator.clipboard.writeText(mrr.mrrNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy MRR#</TooltipContent></Tooltip>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><Clock className="h-3 w-3" />{formatDateTime(mrr.createdAt)}</div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col text-[10px]">
-                                                    <span className="font-semibold">CS: {cs?.csNumber || 'N/A'}</span>
-                                                    <span className="text-muted-foreground">PO: {po?.poNumber || 'N/A'}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col"><span className="text-xs font-semibold">{concern?.fullName || 'N/A'}</span><span className="text-[9px] text-muted-foreground">Officer</span></div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col"><span className="font-semibold text-xs">{mrr.supplierName}</span><span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{mrr.supplierAddress}</span></div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
-                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Finalize MRR</Badge>}
-                                                    {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>}
-                                                </div>
+                                                <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
+                                                {isWaitingForFinalize && <Badge className="ml-2 bg-orange-500 text-white animate-pulse">Finalize Required</Badge>}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {isWaitingForFinalize && <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Upload Evidence & Finalize</TooltipContent></Tooltip>}
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
+                                                    {isWaitingForFinalize && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4" /></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/mrrs/${mrr.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(mrr.id)}><Trash2 className="h-4 w-4" /></Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => mrrColRef && deleteDocumentNonBlocking(doc(mrrColRef, mrr.id))}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">No reports found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No reports found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
             </div>
 
-            <FinalizeMrrDialog 
-                mrr={selectedMrrForFinal} 
-                isOpen={isFinalizeOpen} 
-                onOpenChange={setIsFinalizeOpen} 
-                onFinalize={handleFinalize} 
-                employees={employees || []} 
-                demandNotes={demandNotes || []}
-            />
+            <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={demandNotes || []} />
             
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md">
-                    <DialogHeader><DialogTitle>MRR Approval Flow: {selectedMrrForStatus?.mrrNumber}</DialogTitle></DialogHeader>
-                    <div className="py-4">
-                        <ul className="space-y-4">
-                            {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {
-                                const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);
-                                const approver = employees?.find(e => e.id === step.approverId);
-                                const isPending = selectedMrrForStatus.currentApproverId === step.approverId && selectedMrrForStatus.approvalStatus > 2;
-                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
-                                return (
-                                    <li key={index} className="flex items-start gap-4">
-                                        {status === 'approved' ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                        <div className="flex-1 flex gap-3 items-center">
-                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                            <div>
-                                                <p className="font-semibold">{step.stepName}</p>
-                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
-                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
-                                            </div>
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                    <DialogHeader><DialogTitle>Approval Flow: {selectedMrrForStatus?.mrrNumber}</DialogTitle></DialogHeader>
+                    <div className="py-4 space-y-4">
+                        {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {
+                            const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);
+                            const approver = employees?.find(e => e.id === step.approverId);
+                            const isPending = selectedMrrForStatus.currentApproverId === step.approverId && selectedMrrForStatus.approvalStatus > 2;
+                            return (
+                                <li key={index} className="flex items-center gap-4 list-none">
+                                    {historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                    <div className="flex-1 flex gap-3 items-center">
+                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar>
+                                        <div><p className="font-semibold text-sm">{step.stepName}</p><p className="text-xs text-muted-foreground">{approver?.fullName}</p></div>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </div>
                 </DialogContent>
             </Dialog>
