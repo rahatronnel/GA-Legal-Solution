@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ModuleHeader } from '@/app/components/module-header';
 import { 
     LayoutDashboard, Route, Car, Users, Wrench, AlertTriangle, 
-    FileBarChart, Database, Settings, Box, Layers, Hash, MapPin, Tag, 
-    ClipboardCheck, Activity, Package, ListOrdered, FileText
+    FileBarChart, Database, Settings, Tag, MapPin, Hash, ListOrdered
 } from 'lucide-react';
 
 import { 
@@ -42,7 +41,6 @@ import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-ty
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
-import { LegacyBillFlowProvider, MasterDataProvider as BillFlowMasterDataProvider } from '@/app/billflow/components/bill-flow-provider';
 
 export default function VehicleManagementPage() {
   return (
@@ -154,23 +152,23 @@ export default function VehicleManagementPage() {
                 <FleetMasterDataProvider>
                     <Tabs defaultValue="vehicle-master" className="w-full">
                         <TabsList className="grid w-full grid-cols-4 h-auto bg-muted/30 p-1 rounded-lg">
-                            <TabsTrigger value="vehicle-master" className="flex items-center gap-2"><Car className="h-3 w-3" /> Vehicle Details</TabsTrigger>
-                            <TabsTrigger value="trip-master" className="flex items-center gap-2"><Route className="h-3 w-3" /> Trip Settings</TabsTrigger>
-                            <TabsTrigger value="maintenance-master" className="flex items-center gap-2"><Wrench className="h-3 w-3" /> Maintenance</TabsTrigger>
-                            <TabsTrigger value="accident-master" className="flex items-center gap-2"><AlertTriangle className="h-3 w-3" /> Accident</TabsTrigger>
+                            <TabsTrigger value="vehicle-master" className="flex items-center gap-2 text-xs"><Car className="h-3 w-3" /> Vehicle</TabsTrigger>
+                            <TabsTrigger value="trip-master" className="flex items-center gap-2 text-xs"><Route className="h-3 w-3" /> Trips</TabsTrigger>
+                            <TabsTrigger value="maintenance-master" className="flex items-center gap-2 text-xs"><Wrench className="h-3 w-3" /> Maint.</TabsTrigger>
+                            <TabsTrigger value="accident-master" className="flex items-center gap-2 text-xs"><AlertTriangle className="h-3 w-3" /> Accid.</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="vehicle-master" className="mt-4 space-y-6">
+                        <TabsContent value="vehicle-master" className="mt-4">
                             <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Tag className="h-5 w-5" /> Vehicle Categories & Brands</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Tag className="h-5 w-5" /> Categories & Brands</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
                                     <VehicleBrandTable />
                                     <VehicleTypeTable />
                                 </CardContent>
                             </Card>
                         </TabsContent>
-                        <TabsContent value="trip-master" className="mt-4 space-y-6">
+                        <TabsContent value="trip-master" className="mt-4">
                             <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><MapPin className="h-5 w-5" /> Geographic & Logic Config</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><MapPin className="h-5 w-5" /> Itinerary & Costs</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
                                     <RouteTable />
                                     <TripPurposeTable />
@@ -179,9 +177,9 @@ export default function VehicleManagementPage() {
                                 </CardContent>
                             </Card>
                         </TabsContent>
-                        <TabsContent value="maintenance-master" className="mt-4 space-y-6">
+                        <TabsContent value="maintenance-master" className="mt-4">
                             <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Settings className="h-5 w-5" /> Service & Parts Master</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Settings className="h-5 w-5" /> Service & Parts</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
                                     <PartTable />
                                     <ServiceCenterTable />
@@ -190,9 +188,9 @@ export default function VehicleManagementPage() {
                                 </CardContent>
                             </Card>
                         </TabsContent>
-                        <TabsContent value="accident-master" className="mt-4 space-y-6">
+                        <TabsContent value="accident-master" className="mt-4">
                             <Card>
-                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><AlertTriangle className="h-5 w-5" /> Incident Classifications</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><AlertTriangle className="h-5 w-5" /> Classifications</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
                                     <AccidentTypeTable />
                                     <SeverityLevelTable />

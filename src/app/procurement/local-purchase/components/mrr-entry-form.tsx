@@ -37,7 +37,8 @@ import {
     ListOrdered,
     ArrowDownCircle,
     Info,
-    Container
+    Container,
+    X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, imageToDataUrl } from '@/lib/utils';
@@ -67,7 +68,7 @@ export type MRR = {
   sectionName: string;
   supplierName: string;
   supplierAddress: string;
-  MRR_IssueDate: string; // Corrected field name based on requirement
+  MRR_IssueDate: string; 
   shipmentType: string;
   containerSize: string;
   containerNo: string;
