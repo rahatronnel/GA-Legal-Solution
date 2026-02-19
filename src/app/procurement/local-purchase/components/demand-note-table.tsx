@@ -128,8 +128,10 @@ export function DemandNoteTable() {
                 if (isHeadOfThisDept) isVisible = true;
             }
             
+            // Access rule: Creator, Current Approver, or ANY past approver in history
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
             if (currentUserEmployee && item.currentApproverId === currentUserEmployee.id) isVisible = true;
+            if (currentUserEmployee && item.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) isVisible = true;
 
             if (!isVisible) return false;
 

@@ -113,7 +113,7 @@ const POApprovalWizard = ({
 
                     {step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400">
+                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-blue-400">
                                 <DollarSign className="h-5 w-5" />
                                 <h3 className="font-bold">Step 2: Financial Verification</h3>
                             </div>
@@ -296,7 +296,9 @@ function PurchaseOrderView() {
                                  </AlertDialog>
                                 </>
                             )}
-                            {isApproved && <Button onClick={() => handlePrint(po, 'purchase-order')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print PO</Button>}
+                            {isApproved && (
+                                <Tooltip><TooltipTrigger asChild><Button onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print PO</Button></TooltipTrigger><TooltipContent>Open in New Tab & Print</TooltipContent></Tooltip>
+                            )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
                     </div>

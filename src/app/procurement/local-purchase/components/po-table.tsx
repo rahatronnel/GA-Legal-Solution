@@ -25,13 +25,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { PurchaseOrderForm } from './po-entry-form';
 import { useToast } from '@/hooks/use-toast';
 import { collection, doc } from 'firebase/firestore';
-import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 
 const POApprovalWizard = ({
     po,
@@ -164,7 +164,6 @@ export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
-    const { handlePrint } = usePrint();
     const firestore = useFirestore();
     const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
@@ -197,8 +196,10 @@ export function PurchaseOrderTable() {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
+                // Access rule: Creator, Current Approver, or ANY past approver in history
                 if (po.createdBy === currentUserEmployee.id || 
                     po.currentApproverId === currentUserEmployee.id ||
+                    po.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
                     dn?.createdBy === currentUserEmployee.id ||
                     dn?.gpConcernOfficerId === currentUserEmployee.id) {
                     isVisible = true;
@@ -335,7 +336,9 @@ export function PurchaseOrderTable() {
                                                 )}
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                {po.approvalStatus === 1 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(po, 'purchase-order')}><Printer className="h-4 w-4"/></Button>}
+                                                {po.approvalStatus === 1 && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Print in New Tab</TooltipContent></Tooltip>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

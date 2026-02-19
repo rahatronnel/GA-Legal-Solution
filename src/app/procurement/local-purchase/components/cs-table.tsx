@@ -37,6 +37,7 @@ import { Label } from '@/components/ui/label';
 import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -231,8 +232,10 @@ export function ComparativeStatementTable() {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+                // Retain access rule: Creator, Approver, ANY past approver, or related DN parties
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
+                    cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
                     cs.vendorSelectorId === currentUserEmployee.id ||
                     dn?.createdBy === currentUserEmployee.id ||
                     dn?.gpConcernOfficerId === currentUserEmployee.id) {
