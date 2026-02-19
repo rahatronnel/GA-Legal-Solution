@@ -22,6 +22,7 @@ import { DemandTypeTable } from './components/demand-type-table';
 import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-table';
 import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { DeliveryPlaceTable } from './components/delivery-place-table';
+import { Badge } from '@/components/ui/badge';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -29,7 +30,6 @@ function LocalPurchaseContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // URL-based tab state persistence
   const activeTab = searchParams.get('tab') || 'demand-notes';
 
   const handleTabChange = (value: string) => {
@@ -84,7 +84,6 @@ function LocalPurchaseContent() {
 
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes' }];
-    
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
     const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
 
@@ -100,6 +99,15 @@ function LocalPurchaseContent() {
     return list;
   }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
 
+  const userRoleText = useMemo(() => {
+    if (isSuperAdmin) return "Superadmin";
+    if (isGPOfficer) return "GP Officer";
+    if (isGPConcern) return "GP Concern Officer";
+    if (isCsApprover) return "CS Approver";
+    if (isManager) return "Manager";
+    return "Employee";
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover, isManager]);
+
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -113,6 +121,11 @@ function LocalPurchaseContent() {
   return (
     <div className="space-y-6">
       <ModuleHeader />
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Local Purchase Module</h1>
+        <Badge variant="outline" className="px-4 py-1 text-sm">Role: {userRoleText}</Badge>
+      </div>
+      
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
@@ -121,12 +134,12 @@ function LocalPurchaseContent() {
         </TabsList>
 
         <TabsContent value="demand-notes">
-          <Card className="border-primary/10 shadow-sm">
-            <CardHeader className="bg-muted/30 pb-4">
+          <Card>
+            <CardHeader>
                 <CardTitle>Requisition Overview</CardTitle>
                 <CardDescription>Track and analyze all local purchase demand notes.</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent>
                 <DemandNoteTable />
             </CardContent>
           </Card>
@@ -194,7 +207,7 @@ function LocalPurchaseContent() {
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse">Loading Application Modules...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium">Loading Application Modules...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );

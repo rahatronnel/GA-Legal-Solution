@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -11,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
-import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,7 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { getPOStatusText } from '../lib/status-helper';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings, designations } = useProcurement();
@@ -45,8 +46,8 @@ export function PurchaseOrderTable() {
     }, [user, employees]);
 
     const roleData = useMemo(() => {
-        const settings = orgSettings?.procurementSettings;
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+        const settings = orgSettings?.procurementSettings;
         if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
 
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
@@ -67,15 +68,7 @@ export function PurchaseOrderTable() {
         return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover } = roleData;
-
-    const userRoleText = useMemo(() => {
-        if (isSuperAdmin) return "Role: Superadmin";
-        if (isGPOfficer) return "Role: GP Officer";
-        if (isGPConcern) return "Role: GP Concern Officer";
-        if (isCsApprover) return "Role: CS Approver";
-        return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover]);
+    const { isSuperAdmin, isGPOfficer, isGPConcern } = roleData;
 
     const filteredPOs = useMemo(() => {
         const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
@@ -104,7 +97,6 @@ export function PurchaseOrderTable() {
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Input placeholder="Search PO..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-[250px]" />
-                        <Badge variant="outline">{userRoleText}</Badge>
                     </div>
                     {(isSuperAdmin || isGPOfficer || isGPConcern) && (
                         <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>
@@ -124,11 +116,10 @@ export function PurchaseOrderTable() {
                         </TableHeader>
                         <TableBody>
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
-                                // Identification of Action Required tasks
                                 const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
                                 
                                 return (
-                                    <TableRow key={po.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
+                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
                                         <TableCell className="font-medium">{po.poNumber}</TableCell>
                                         <TableCell>{getDemandNoteNumber(po.demandNoteId)}</TableCell>
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
@@ -183,7 +174,10 @@ export function PurchaseOrderTable() {
                             return (
                                 <li key={index} className="flex items-center gap-4 list-none">
                                     {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                    <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'Not Assigned'}</p></div>
+                                    <div className="flex-1 flex gap-3 items-center">
+                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
+                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName || 'Not Assigned'}</p></div>
+                                    </div>
                                 </li>
                             );
                         })}

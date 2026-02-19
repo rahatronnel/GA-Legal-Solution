@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -35,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Label } from '@/components/ui/label';
 import { PurchaseOrderForm, type PurchaseOrder } from './po-entry-form';
+import { cn } from '@/lib/utils';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -214,14 +216,6 @@ export function ComparativeStatementTable() {
 
     const { isSuperAdmin, isGPOfficer, isCsApprover } = roleData;
 
-    const userRoleText = useMemo(() => {
-        if (isSuperAdmin) return "Role: Superadmin";
-        if (isGPOfficer) return "Role: GP Officer";
-        if (isCsApprover) return "Role: CS Approver";
-        if (roleData.isGPConcern) return "Role: GP Concern Officer";
-        return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isCsApprover, roleData.isGPConcern]);
-
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -360,7 +354,6 @@ export function ComparativeStatementTable() {
                             </div>
                         )}
                     </div>
-                    <Badge variant="outline">{userRoleText}</Badge>
                 </div>
                 <div className="border rounded-lg">
                     <Table>
@@ -389,13 +382,12 @@ export function ComparativeStatementTable() {
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     
-                                    // Identification of Action Required tasks
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
-                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
+                                        <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}

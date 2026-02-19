@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export function DemandNoteTable() {
     const { toast } = useToast();
@@ -61,7 +62,6 @@ export function DemandNoteTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const getEmployeeName = (id?: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
     const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
     const enrichedItems = useMemo(() => {
@@ -86,14 +86,12 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
-            // Text Search (ID, Department, Creator)
             const lowerSearch = searchTerm.toLowerCase();
             const searchTermMatch = !searchTerm || 
                 item.demandNoteNumber.toLowerCase().includes(lowerSearch) ||
                 getDepartmentName(item.departmentId).toLowerCase().includes(lowerSearch) ||
                 item.creatorName.toLowerCase().includes(lowerSearch);
 
-            // Approval Status
             let statusMatch = true;
             if (statusFilter === 'pending') {
                 statusMatch = item.approvalStatus !== 1 && item.approvalStatus !== 0;
@@ -101,14 +99,12 @@ export function DemandNoteTable() {
                 statusMatch = item.approvalStatus === parseInt(statusFilter);
             }
 
-            // Stage Filter
             let stageMatch = true;
             if (stageFilter === 'gp_assigned') stageMatch = !!item.gpConcernOfficerId;
             else if (stageFilter === 'cs_prepared') stageMatch = item.hasCs;
             else if (stageFilter === 'po_prepared') stageMatch = item.hasPo;
             else if (stageFilter === 'approved_only') stageMatch = item.approvalStatus === 1;
 
-            // Date Range
             const dateMatch = !dateRange?.from || (item.entryDate && isWithinInterval(parseISO(item.entryDate), { 
                 start: dateRange.from, 
                 end: dateRange.to || dateRange.from 
@@ -151,7 +147,6 @@ export function DemandNoteTable() {
     return (
         <TooltipProvider>
             <div className="space-y-4">
-                {/* Search and Main Actions */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="relative w-full sm:max-w-md">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -167,7 +162,6 @@ export function DemandNoteTable() {
                     </Button>
                 </div>
 
-                {/* Advanced Filters */}
                 <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                         <Filter className="h-4 w-4" /> Filter Options
