@@ -316,7 +316,7 @@ export default function VehicleLifecycleReportPage() {
                     <div className="print:block hidden">
                         <div className="flex items-center justify-between border-b-2 border-gray-800 pb-4">
                             <div className="text-sm">
-                                <h1 className="text-xl font-bold text-gray-800">GA & Legal Solution</h1>
+                                <h1 className="text-xl font-bold text-gray-800">YKK ERP Solution</h1>
                                 <p className="text-xs">Head Office: 123 Business Rd, Dhaka, Bangladesh</p>
                             </div>
                         </div>

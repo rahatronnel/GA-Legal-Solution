@@ -77,12 +77,12 @@ export type OrganizationSettings = {
 };
 
 const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementSettings'> = {
-  name: 'GA & Legal Solution',
+  name: 'YKK ERP Solution',
   slogan: 'Your Trusted Partner',
   address: 'Head Office: 123 Business Rd, Dhaka, Bangladesh',
   contactNumber: '+880 1234 567890',
   telephone: '+880 2 888 7777',
-  email: 'contact@galsolution.com',
+  email: 'contact@ykksolution.com',
   fax: '+880 2 888 7778',
   registrationNumber: 'C-12345/67',
   logo: '',

@@ -146,7 +146,7 @@ const ModuleDashboard = () => {
             </header>
 
             <div className="text-center mb-12">
-                 <h1 className="text-5xl font-extrabold tracking-tight text-white">GA & Legal Solution</h1>
+                 <h1 className="text-5xl font-extrabold tracking-tight text-white">YKK ERP Solution</h1>
                  <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
             </div>
             <div className="w-full max-w-5xl space-y-8">
@@ -205,7 +205,7 @@ const ModuleDashboard = () => {
                 )}
             </div>
              <footer className="absolute bottom-4 text-xs text-muted-foreground">
-                © 2024 GA & Legal Solution
+                © 2024 YKK ERP Solution
             </footer>
         </div>
     );

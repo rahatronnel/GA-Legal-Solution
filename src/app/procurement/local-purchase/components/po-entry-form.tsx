@@ -97,7 +97,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
 
   const demandNote = useMemo(() => {
     if (!cs || !demandNotes) return null;
-    return demandNotes.find(dn => dn.id === cs.demandNoteId);
+    return demandNotes.find(dn => dn.id === po.demandNoteId);
   }, [cs, demandNotes]);
 
   const vendor = useMemo(() => {
