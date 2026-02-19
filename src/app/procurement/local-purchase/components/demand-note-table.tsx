@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -28,8 +28,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,11 +52,9 @@ export function DemandNoteTable() {
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
     
-    // Status Modal State
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedNoteForStatus, setSelectedNoteForStatus] = useState<DemandNote | null>(null);
     
-    // Detailed Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [stageFilter, setStageFilter] = useState('all');
@@ -121,7 +117,6 @@ export function DemandNoteTable() {
 
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
-            // Role-Based Visibility
             let isVisible = false;
             if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
                 isVisible = true; 
@@ -153,7 +148,6 @@ export function DemandNoteTable() {
             if (stageFilter === 'gp_assigned') stageMatch = !!item.gpConcernOfficerId;
             else if (stageFilter === 'cs_prepared') stageMatch = item.hasCs;
             else if (stageFilter === 'po_prepared') stageMatch = item.hasPo;
-            else if (stageFilter === 'approved_only') stageMatch = item.approvalStatus === 1;
 
             const dateMatch = !dateRange?.from || (item.entryDate && isWithinInterval(parseISO(item.entryDate), { 
                 start: dateRange.from, 
@@ -317,14 +311,12 @@ export function DemandNoteTable() {
                                 <TableHead className="font-bold">Created By</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
                                 <TableHead className="font-bold">GP Status</TableHead>
-                                <TableHead className="font-bold">CS Info</TableHead>
-                                <TableHead className="font-bold">PO Info</TableHead>
                                 <TableHead className="text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={9} className="text-center py-10">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
                                     const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
@@ -373,24 +365,6 @@ export function DemandNoteTable() {
                                                     <span className="text-[10px] text-muted-foreground truncate max-w-[120px]" title={item.concernName}>{item.concernName}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-1">
-                                                        {item.hasCs ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : <Clock className="h-3 w-3 text-muted-foreground" />}
-                                                        <span className="text-xs">{item.hasCs ? 'Prepared' : 'Not Ready'}</span>
-                                                    </div>
-                                                    {item.csPreparedDate && <span className="text-[9px] text-muted-foreground">{new Date(item.csPreparedDate).toLocaleString()}</span>}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-1">
-                                                        {item.hasPo ? <ShoppingCart className="h-3 w-3 text-green-500" /> : <FileText className="h-3 w-3 text-muted-foreground" />}
-                                                        <span className="text-xs">{item.hasPo ? 'PO Issued' : 'No PO'}</span>
-                                                    </div>
-                                                    {item.poPreparedDate && <span className="text-[9px] text-muted-foreground">{new Date(item.poPreparedDate).toLocaleString()}</span>}
-                                                </div>
-                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedNoteForStatus(item); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
@@ -403,7 +377,7 @@ export function DemandNoteTable() {
                                     )
                                 })
                             ) : (
-                                <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">No records found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No records found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -414,7 +388,7 @@ export function DemandNoteTable() {
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><DialogDescription>This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</DialogDescription></DialogHeader>
+                    <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><div className="text-sm text-muted-foreground">This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</div></DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>

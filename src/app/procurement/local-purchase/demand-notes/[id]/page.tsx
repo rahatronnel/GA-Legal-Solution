@@ -3,10 +3,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { useParams, useRouter, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Copy } from 'lucide-react';
+import { ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Copy, DollarSign } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -31,7 +31,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
 import type { DemandNote, Quotation } from '../../components/demand-note-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
@@ -285,7 +285,7 @@ function DemandNoteProfileContent() {
                                 </Tooltip>
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                Date: {demandNote.date} - Status: 
+                                <span>Date: {demandNote.date} - Status: </span>
                                 <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge>
                             </div>
                         </div>
@@ -324,7 +324,7 @@ function DemandNoteProfileContent() {
                         </TabsList>
                         <TabsContent value="overview" className="space-y-6">
                             <Card>
-                                <CardHeader><CardTitle>Approval Status</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="text-lg">Approval Flow Status</CardTitle></CardHeader>
                                 <CardContent>
                                     <ul className="space-y-4">
                                         {demandNote.approvalFlow?.steps.map((step, index) => {
@@ -372,7 +372,7 @@ function DemandNoteProfileContent() {
                                 </CardContent>
                             </Card>
                              <Card>
-                                <CardHeader><CardTitle>Key Information</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="text-lg">Key Information</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <InfoItem icon={Building} label="Department" value={department?.name} />
                                     <InfoItem icon={Building} label="Section" value={section?.name} />
@@ -386,7 +386,7 @@ function DemandNoteProfileContent() {
                             </Card>
 
                              <Card>
-                                <CardHeader><CardTitle>Budget & Purpose</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="text-lg">Budget & Purpose</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 gap-6">
                                      <InfoItem icon={DollarSign} label="Budget Amount" value={demandNote.budgetAmount > 0 ? demandNote.budgetAmount.toLocaleString() : 'N/A'} />
                                     <InfoItem icon={FileText} label="Budget Year & List No." value={demandNote.budgetYearAndListNo} />
@@ -395,7 +395,7 @@ function DemandNoteProfileContent() {
                             </Card>
 
                             <Card>
-                                <CardHeader><CardTitle>Items</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="text-lg">Items</CardTitle></CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader>
@@ -428,7 +428,7 @@ function DemandNoteProfileContent() {
                                {demandNote.documents?.attachments && demandNote.documents.attachments.length > 0 ? (
                                    <DocumentViewer files={demandNote.documents.attachments} categoryLabel="Attachments" />
                                ) : (
-                                   <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this demand note.</p>
+                                   <div className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this demand note.</div>
                                )}
                             </div>
                         </TabsContent>

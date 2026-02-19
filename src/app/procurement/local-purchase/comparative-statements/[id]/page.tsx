@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer, Award, Copy, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -78,7 +78,6 @@ function ComparativeStatementView() {
                 newApprovalStatus = getNextApprovalStatusCode(currentLevel);
                 nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                // This is the final approval
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
             }
@@ -104,7 +103,6 @@ function ComparativeStatementView() {
         let canApproveCheck = false;
         if (pending) {
              if (finalStep && cs.currentApproverId === finalStep.approverId && finalStep.approverId === managingDirectorId) {
-                // Special final step logic for MD or FD
                 canApproveCheck = currentUserEmployee.id === managingDirectorId || currentUserEmployee.id === factoryDirectorId;
             } else {
                 canApproveCheck = currentUserEmployee.id === cs.currentApproverId;
@@ -158,7 +156,6 @@ function ComparativeStatementView() {
     const selectedVendorTotal = cs.selectedVendorId ? vendorTotals[cs.selectedVendorId]?.grandTotal : 0;
 
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString();
     const getStatusVariant = (status: number | undefined) => {
         if (status === 1) return 'default';
         if (status === 0) return 'destructive';
@@ -177,7 +174,7 @@ function ComparativeStatementView() {
                                 <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
                             </div>
-                             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                             <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
                                 <span>For Demand Note:</span>
                                 <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link>
                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip>
@@ -369,7 +366,7 @@ function ComparativeStatementView() {
                                                     <p className="text-sm">{approver?.fullName || 'N/A'} <span className="text-xs text-muted-foreground">({designation?.name || 'N/A'})</span></p>
                                                     {historyEntry && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            {historyEntry.status} on {formatDateTime(historyEntry.timestamp)}
+                                                            {historyEntry.status} on {new Date(historyEntry.timestamp).toLocaleString()}
                                                         </p>
                                                     )}
                                                 </div>

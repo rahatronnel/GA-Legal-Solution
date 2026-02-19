@@ -4,7 +4,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -90,7 +90,7 @@ function PurchaseOrderView() {
             const currentDocs = po.documents || { poAcknowledgement: [], invoice: [], mushok: [], challan: [] };
             const updatedDocs = { ...currentDocs, [docType]: [...(currentDocs[docType] || []), ...newFiles] };
             setDocumentNonBlocking(doc(firestore, 'purchaseOrders', po.id), { documents: updatedDocs }, { merge: true });
-            toast({ title: 'Success', description: `${newFiles.length} file(s) uploaded.` });
+            toast({ title: "Upload Success", description: `${newFiles.length} files added to ${documentLabels[docType]}.` });
         }
     };
 
@@ -110,11 +110,11 @@ function PurchaseOrderView() {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
-                                <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip>
                             </div>
                              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                For DN: <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
-                                | Status: <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
+                                <span>For DN: </span><Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
+                                <span> | Status: </span><Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -138,8 +138,8 @@ function PurchaseOrderView() {
                     {isApproved && <TabsTrigger value="documents">Uploads</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6 mt-6">
-                    <Card><CardHeader><CardTitle>Vendor & Delivery</CardTitle></CardHeader><CardContent className="grid md:grid-cols-2 gap-6"><InfoItem icon={Building} label="Vendor" value={vendor?.vendorName} /><InfoItem icon={Calendar} label="Expected" value={po.expectedDeliveryDate} /></CardContent></Card>
-                    <Card><CardHeader><CardTitle>Items</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{po.items.map((item, idx) => (<TableRow key={idx}><TableCell>{item.particulars}</TableCell><TableCell>{item.quantity}</TableCell><TableCell className="text-right">{item.totalPrice.toLocaleString()}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+                    <Card><CardHeader><CardTitle className="text-lg">Vendor & Delivery</CardTitle></CardHeader><CardContent className="grid md:grid-cols-2 gap-6"><InfoItem icon={Building} label="Vendor" value={vendor?.vendorName} /><InfoItem icon={Calendar} label="Expected Delivery" value={po.expectedDeliveryDate} /></CardContent></Card>
+                    <Card><CardHeader><CardTitle className="text-lg">Ordered Items</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader><TableBody>{po.items.map((item, idx) => (<TableRow key={idx}><TableCell>{item.particulars}</TableCell><TableCell>{item.quantity} {item.unit}</TableCell><TableCell className="text-right">{item.totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
                 </TabsContent>
                 <TabsContent value="approval" className="mt-6">
                      <Card><CardContent className="py-6"><ul className="space-y-4">{po.approvalFlow?.steps.map((step, index) => { const historyEntry = po.approvalHistory?.find(h => h.level === index); const isPending = po.currentApproverId === step.approverId && isPendingApproval; return (<li key={index} className="flex items-start gap-4">{historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{employees?.find(e => e.id === step.approverId)?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{employees?.find(e => e.id === step.approverId)?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>); })}</ul></CardContent></Card>
@@ -148,7 +148,29 @@ function PurchaseOrderView() {
                     <TabsContent value="documents" className="mt-6 space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
                             {(Object.keys(documentLabels) as DocType[]).map(key => (
-                                <Card key={key}><CardHeader className="flex flex-row items-center justify-between"><div><CardTitle className="text-lg">{documentLabels[key]}</CardTitle></div><div><Label htmlFor={`file-${key}`} className="cursor-pointer text-primary hover:underline"><Upload className="h-4 w-4 inline mr-1" /> Add</Label><Input id={`file-${key}`} type="file" className="hidden" multiple onChange={handleFileChange(key)} /></div></CardHeader><CardContent className="space-y-2">{po.documents?.[key]?.map(file => (<div key={file.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm"><span className="truncate">{file.name}</span><div className="flex gap-1"><Button variant="ghost" size="icon" className="h-7 w-7" asChild><Link href={file.file} download={file.name}><Download className="h-4 w-4" /></Link></Button></div></div>)) || <div className="text-center py-4 border-2 border-dashed text-muted-foreground italic">No uploads.</div>}</CardContent></Card>
+                                <Card key={key}>
+                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-lg">{documentLabels[key]}</CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            <Label htmlFor={`file-${key}`} className="cursor-pointer text-sm font-medium text-primary hover:underline flex items-center gap-1"><Upload className="h-4 w-4" /> Add File(s)</Label>
+                                            <Input id={`file-${key}`} type="file" className="hidden" multiple onChange={handleFileChange(key)} />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {po.documents?.[key] && po.documents[key].length > 0 ? (
+                                            po.documents[key].map(file => (
+                                                <div key={file.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                                                    <span className="truncate max-w-[200px]">{file.name}</span>
+                                                    <div className="flex gap-1">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild><Link href={file.file} download={file.name} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></Link></Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm italic">No files uploaded yet.</div>
+                                        )}
+                                    </CardContent>
+                                </Card>
                             ))}
                         </div>
                     </TabsContent>

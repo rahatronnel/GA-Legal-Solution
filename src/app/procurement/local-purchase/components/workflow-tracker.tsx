@@ -50,7 +50,7 @@ export function WorkflowTracker() {
         return notes.filter(dn => 
             dn.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sections.find(s => s.id === dn.departmentId)?.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ).sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+        ).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
     }, [demandNotes, searchTerm, sections]);
 
     const timeline = useMemo(() => {
@@ -241,7 +241,7 @@ export function WorkflowTracker() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <CardTitle className="text-xl">Workflow Tracker: {selectedDn.demandNoteNumber}</CardTitle>
-                                <CardDescription>Full audit trail of the procurement lifecycle.</CardDescription>
+                                <div className="text-sm text-muted-foreground">Full audit trail of the procurement lifecycle.</div>
                             </div>
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={`/procurement/local-purchase/demand-notes/${selectedDn.id}`}>View Record</Link>

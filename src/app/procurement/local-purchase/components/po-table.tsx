@@ -54,14 +54,14 @@ export function PurchaseOrderTable() {
     const filteredPOs = useMemo(() => {
         const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
         return safePOs.filter(po => {
-            const dn = demandNotes?.find(d => d.id === po.demandNoteId);
+            const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
             const cs = comparativeStatements?.find(c => c.id === po.csId);
             const lowerTerm = searchTerm.toLowerCase();
             const termMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || cs?.csNumber.toLowerCase().includes(lowerTerm) || dn?.demandNoteNumber.toLowerCase().includes(lowerTerm);
             const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
             const gpMatch = gpConcernFilter === 'all' || dn?.gpConcernOfficerId === gpConcernFilter;
             return termMatch && vendorMatch && gpMatch;
-        }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements]);
 
     const approvableItems = useMemo(() => filteredPOs.filter(po => currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0), [filteredPOs, currentUserEmployee]);
@@ -138,9 +138,9 @@ export function PurchaseOrderTable() {
                                 return (
                                     <TableRow key={po.id} className={cn(isWaitingForMe && "bg-orange-500/5")}>
                                         <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
                                         <TableCell>{employees.find(e => e.id === dn?.gpConcernOfficerId)?.fullName}</TableCell>
                                         <TableCell><div className="flex items-center gap-2"><Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>{isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}</div></TableCell>

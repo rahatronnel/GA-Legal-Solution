@@ -27,9 +27,9 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
-    "next": "15.2.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "xlsx": "^0.18.5",
@@ -54,13 +54,5 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "@types/recharts": "^1.8.29"
-  },
-  "overrides": {
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-day-picker": {
-      "react": "19.0.0",
-      "react-dom": "19.0.0"
-    }
   }
 }
