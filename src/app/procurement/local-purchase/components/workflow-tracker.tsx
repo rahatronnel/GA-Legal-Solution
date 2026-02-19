@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer } from 'lucide-react';
+import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer, Send } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,7 +25,7 @@ type TimelineEvent = {
         designation: string;
         image?: string;
     };
-    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr';
+    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr' | 'sending';
     status: 'completed' | 'pending' | 'rejected';
 };
 
@@ -178,6 +178,19 @@ export function WorkflowTracker() {
                     status: h.status === 'Approved' ? 'completed' : 'rejected'
                 });
             });
+
+            // PO Sending Tracking
+            if (po.isSentToVendor && po.sentToVendorDate) {
+                events.push({
+                    id: 'po-sending',
+                    title: 'PO Dispatched to Supplier',
+                    description: `Purchase Order formally sent to vendor "${getVendorName(po.vendorId)}".`,
+                    timestamp: po.sentToVendorDate,
+                    user: getEmployeeInfo(dn.gpConcernOfficerId),
+                    type: 'sending',
+                    status: 'completed'
+                });
+            }
         }
 
         // 7. MRR Receipt
@@ -308,6 +321,7 @@ export function WorkflowTracker() {
                                                 {event.type === 'assignment' && <User className="h-4 w-4" />}
                                                 {event.type === 'award' && <ShoppingCart className="h-4 w-4" />}
                                                 {event.type === 'po' && <Building className="h-4 w-4" />}
+                                                {event.type === 'sending' && <Send className="h-4 w-4" />}
                                                 {event.type === 'mrr' && <Package className="h-4 w-4" />}
                                             </div>
 
