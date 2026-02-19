@@ -395,10 +395,8 @@ export function ComparativeStatementTable() {
                                     const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
-                                    const highlightRow = isWaitingForMe;
-
                                     return (
-                                        <TableRow key={cs.id} className={highlightRow ? 'bg-orange-500/10' : ''}>
+                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}
@@ -412,7 +410,7 @@ export function ComparativeStatementTable() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {highlightRow && (
+                                                    {isWaitingForMe && (
                                                         <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
                                                     )}
                                                 </div>

@@ -50,8 +50,8 @@ function CsApprovalInfo() {
                     <p>First, the system calculates an "Approval Amount" based on the settings (Minimum, Average, or Maximum of quotes).</p>
                     <ul className="list-disc pl-5 space-y-2">
                         <li><strong>Up to 9,999:</strong> Single approval from Purchase Manager.</li>
-                        <li><strong>10,000 to 99,999:</strong> 2-step: Purchase Manager -> Purchase Dept TA.</li>
-                        <li><strong>100,000 to 999,999:</strong> 4-step: Manager -> Dept TA -> Requester Dept TA -> Specialized Dept Manager.</li>
+                        <li><strong>10,000 to 99,999:</strong> 2-step: Purchase Manager -&gt; Purchase Dept TA.</li>
+                        <li><strong>100,000 to 999,999:</strong> 4-step: Manager -&gt; Dept TA -&gt; Requester Dept TA -&gt; Specialized Dept Manager.</li>
                         <li><strong>Above 1,000,000:</strong> Full 9-step approval including MD/FD sign-off.</li>
                     </ul>
                 </div>
@@ -77,9 +77,9 @@ function DemandNoteApprovalInfo() {
                 </DialogHeader>
                 <div className="text-sm text-muted-foreground space-y-4 py-4">
                     <ul className="list-disc pl-5 space-y-2">
-                        <li><strong>Special Items:</strong> 4-step: Dept Head -> TA -> Specialized Manager -> MD.</li>
-                        <li><strong>Manufacturing:</strong> 3-step: Dept Head -> TA -> Manufacturing Manager.</li>
-                        <li><strong>General:</strong> 2-step: Dept Head -> TA.</li>
+                        <li><strong>Special Items:</strong> 4-step: Dept Head -&gt; TA -&gt; Specialized Manager -&gt; MD.</li>
+                        <li><strong>Manufacturing:</strong> 3-step: Dept Head -&gt; TA -&gt; Manufacturing Manager.</li>
+                        <li><strong>General:</strong> 2-step: Dept Head -&gt; TA.</li>
                     </ul>
                 </div>
             </DialogContent>
