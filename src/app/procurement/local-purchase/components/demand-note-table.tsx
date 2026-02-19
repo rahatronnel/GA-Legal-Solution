@@ -131,7 +131,7 @@ export function DemandNoteTable() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={item.approvalStatus === 1 ? 'default' : 'secondary'}>{getDemandNoteStatusText(item)}</Badge>
-                                                    {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white">⚠️ Action Required</Badge>}
+                                                    {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
