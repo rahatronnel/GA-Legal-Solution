@@ -11,7 +11,7 @@ import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, UserPlus } f
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -47,7 +47,7 @@ const MultiSelectPopover: React.FC<{
     return (
          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-10">
+                <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between h-auto min-h-10">
                     <div className="flex flex-wrap gap-1">
                         {selectedItems.length > 0
                             ? selectedItems.map(item => <Badge key={item.id} variant="secondary">{item.vendorName}</Badge>)
@@ -323,8 +323,13 @@ export default function GPDeskTable() {
                                 const isCurrentUserConcern = currentUserEmployee?.id === item.gpConcernOfficerId;
                                 const isGPManager = isGPOfficer || isSuperAdmin;
                                 
+                                // Signaling
+                                const needsVendorAssignment = isCurrentUserConcern && (!item.quotations || item.quotations.length === 0);
+                                const needsCsCreation = isCurrentUserConcern && item.quotations && item.quotations.length > 0 && !cs;
+                                const isWaitingForMe = needsVendorAssignment || needsCsCreation || (isGPManager && !item.gpConcernOfficerId);
+
                                 return (
-                                <TableRow key={item.id}>
+                                <TableRow key={item.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
                                     <TableCell>{item.demandNoteNumber}</TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>
@@ -359,7 +364,12 @@ export default function GPDeskTable() {
                                                 <span className="text-[10px] text-muted-foreground">{new Date(cs.csDate).toLocaleString()}</span>
                                             </div>
                                         ) : (
-                                            <Badge variant="secondary">No</Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary">No</Badge>
+                                                {isWaitingForMe && (
+                                                    <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                )}
+                                            </div>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState } from 'react';
@@ -83,12 +82,11 @@ export function PurchaseOrderTable() {
         return safePOs.filter(po => {
             const lowerTerm = searchTerm.toLowerCase();
             const demandNote = demandNotes?.find(dn => dn.id === po.demandNoteId);
-            const cs = comparativeStatements?.find(cs => cs.id === po.csId);
             const searchTermMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || (demandNote?.demandNoteNumber.toLowerCase().includes(lowerTerm));
             const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
             return searchTermMatch && vendorMatch;
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [purchaseOrders, searchTerm, vendorFilter, demandNotes, comparativeStatements]);
+    }, [purchaseOrders, searchTerm, vendorFilter, demandNotes]);
 
     const getVendorName = (id: string) => vendors?.find(v => v.id === id)?.vendorName || 'N/A';
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
@@ -126,7 +124,9 @@ export function PurchaseOrderTable() {
                         </TableHeader>
                         <TableBody>
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
+                                // Identification of Action Required tasks
                                 const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
+                                
                                 return (
                                     <TableRow key={po.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
                                         <TableCell className="font-medium">{po.poNumber}</TableCell>
@@ -135,7 +135,9 @@ export function PurchaseOrderTable() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
-                                                {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white">⚠️ Action Required</Badge>}
+                                                {isWaitingForMe && (
+                                                    <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">{formatCurrency(po.netPayableAmount)}</TableCell>

@@ -47,7 +47,10 @@ export function DemandNoteTable() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
+    const currentUserEmployee = useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.email === user.email);
+    }, [user, employees]);
     
     const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -123,7 +126,9 @@ export function DemandNoteTable() {
                                 <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
+                                    // Identify if this item is waiting for the current user
                                     const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
+                                    
                                     return (
                                         <TableRow key={item.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
                                             <TableCell>{item.demandNoteNumber}</TableCell>
@@ -131,7 +136,9 @@ export function DemandNoteTable() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={item.approvalStatus === 1 ? 'default' : 'secondary'}>{getDemandNoteStatusText(item)}</Badge>
-                                                    {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}
+                                                    {isWaitingForMe && (
+                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">

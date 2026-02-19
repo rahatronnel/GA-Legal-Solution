@@ -25,7 +25,7 @@ export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
 
-  // Role detection logic
+  // 1. Role and Access Detection Logic
   const roleData = useMemo(() => {
     const superAdminCheck = user?.email === 'superadmin@galsolution.com';
     const settings = orgSettings?.procurementSettings;
@@ -47,7 +47,6 @@ export default function LocalPurchasePage() {
       settings.manufacturingDeptManagerId === currentEmp.id ||
       settings.specializedDeptManagerId === currentEmp.id;
 
-    // Check if user is a CS Approver
     let csApproverCheck = false;
     const csRoles = settings.csApprovalRoles;
     if (csRoles) {
@@ -71,23 +70,26 @@ export default function LocalPurchasePage() {
 
   const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = roleData;
 
-  // Tab visibility logic
-  const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-  const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
-  const canViewPoTab = canViewCsTab;
-
+  // 2. Tab Visibility Configuration
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes' }];
+    
+    const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
+    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
+
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk' });
-    if (canViewCsTab) list.push({ id: 'cs', label: 'CS' });
-    if (canViewPoTab) list.push({ id: 'po', label: 'PO' });
+    if (canViewCsAndPo) {
+        list.push({ id: 'cs', label: 'CS' });
+        list.push({ id: 'po', label: 'PO' });
+    }
     if (isSuperAdmin) {
       list.push({ id: 'master-data', label: 'Master Data' });
       list.push({ id: 'settings', label: 'Settings' });
     }
     return list;
-  }, [showGPDesk, canViewCsTab, canViewPoTab, isSuperAdmin]);
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
 
+  // 3. Loading State Handler
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -96,6 +98,7 @@ export default function LocalPurchasePage() {
     );
   }
 
+  // 4. Main Component Rendering
   return (
     <div className="space-y-6">
       <ModuleHeader />
@@ -113,32 +116,26 @@ export default function LocalPurchasePage() {
           </Card>
         </TabsContent>
 
-        {showGPDesk && (
-          <TabsContent value="gp-desk">
-            <Card>
-              <CardHeader><CardTitle>General Purchase Desk</CardTitle></CardHeader>
-              <CardContent><GPDeskTable /></CardContent>
-            </Card>
-          </TabsContent>
-        )}
+        <TabsContent value="gp-desk">
+          <Card>
+            <CardHeader><CardTitle>General Purchase Desk</CardTitle></CardHeader>
+            <CardContent><GPDeskTable /></CardContent>
+          </Card>
+        </TabsContent>
 
-        {canViewCsTab && (
-          <TabsContent value="cs">
-            <Card>
-              <CardHeader><CardTitle>Comparative Statements</CardTitle></CardHeader>
-              <CardContent><ComparativeStatementTable /></CardContent>
-            </Card>
-          </TabsContent>
-        )}
+        <TabsContent value="cs">
+          <Card>
+            <CardHeader><CardTitle>Comparative Statements</CardTitle></CardHeader>
+            <CardContent><ComparativeStatementTable /></CardContent>
+          </Card>
+        </TabsContent>
 
-        {canViewPoTab && (
-          <TabsContent value="po">
-            <Card>
-              <CardHeader><CardTitle>Purchase Orders</CardTitle></CardHeader>
-              <CardContent><PurchaseOrderTable /></CardContent>
-            </Card>
-          </TabsContent>
-        )}
+        <TabsContent value="po">
+          <Card>
+            <CardHeader><CardTitle>Purchase Orders</CardTitle></CardHeader>
+            <CardContent><PurchaseOrderTable /></CardContent>
+          </Card>
+        </TabsContent>
 
         {isSuperAdmin && (
           <>
@@ -148,23 +145,23 @@ export default function LocalPurchasePage() {
                   <Tabs defaultValue="vendors" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
                       <TabsTrigger value="vendors">Vendors</TabsTrigger>
-                      <TabsTrigger value="vendor-categories">V-Cat</TabsTrigger>
-                      <TabsTrigger value="vendor-nature">V-Nature</TabsTrigger>
+                      <TabsTrigger value="v-cat">V-Cat</TabsTrigger>
+                      <TabsTrigger value="v-nature">V-Nature</TabsTrigger>
                       <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
-                      <TabsTrigger value="item-categories">Item Cat</TabsTrigger>
-                      <TabsTrigger value="process-codes">Process Codes</TabsTrigger>
-                      <TabsTrigger value="demand-types">Demand Types</TabsTrigger>
-                      <TabsTrigger value="delivery-places">Places</TabsTrigger>
+                      <TabsTrigger value="i-cat">Item Cat</TabsTrigger>
+                      <TabsTrigger value="codes">Process Codes</TabsTrigger>
+                      <TabsTrigger value="types">DN Types</TabsTrigger>
+                      <TabsTrigger value="places">Offices</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="vendors" className="mt-4"><Card><CardHeader><CardTitle>Vendors</CardTitle></CardHeader><CardContent><VendorTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="vendor-categories" className="mt-4"><Card><CardHeader><CardTitle>Vendor Categories</CardTitle></CardHeader><CardContent><VendorCategoryTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="vendor-nature" className="mt-4"><Card><CardHeader><CardTitle>Nature of Business</CardTitle></CardHeader><CardContent><VendorNatureOfBusinessTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="v-cat" className="mt-4"><Card><CardHeader><CardTitle>Vendor Categories</CardTitle></CardHeader><CardContent><VendorCategoryTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="v-nature" className="mt-4"><Card><CardHeader><CardTitle>Nature of Business</CardTitle></CardHeader><CardContent><VendorNatureOfBusinessTable /></CardContent></Card></TabsContent>
                     <TabsContent value="bill-items" className="mt-4"><Card><CardHeader><CardTitle>Bill Item Master</CardTitle></CardHeader><CardContent><BillItemMasterTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="item-categories" className="mt-4"><Card><CardHeader><CardTitle>Bill Item Categories</CardTitle></CardHeader><CardContent><BillItemCategoryTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="process-codes" className="mt-4"><Card><CardHeader><CardTitle>Process Codes</CardTitle></CardHeader><CardContent><ProcessCodeTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="demand-types" className="mt-4"><Card><CardHeader><CardTitle>Demand Types</CardTitle></CardHeader><CardContent><DemandTypeTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="delivery-places" className="mt-4"><Card><CardHeader><CardTitle>Delivery Places</CardTitle></CardHeader><CardContent><DeliveryPlaceTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="i-cat" className="mt-4"><Card><CardHeader><CardTitle>Bill Item Categories</CardTitle></CardHeader><CardContent><BillItemCategoryTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="codes" className="mt-4"><Card><CardHeader><CardTitle>Process Codes</CardTitle></CardHeader><CardContent><ProcessCodeTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="types" className="mt-4"><Card><CardHeader><CardTitle>Demand Types</CardTitle></CardHeader><CardContent><DemandTypeTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="places" className="mt-4"><Card><CardHeader><CardTitle>Delivery Places</CardTitle></CardHeader><CardContent><DeliveryPlaceTable /></CardContent></Card></TabsContent>
                   </Tabs>
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
