@@ -130,20 +130,17 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         return sections.find(s => s.id === noteData.departmentId)?.name || '';
     }, [noteData.departmentId, sections]);
 
-    // This single effect now handles all initialization logic for the form.
     useEffect(() => {
         if (!isOpen) return;
     
         setStep(1);
     
         if (isEditing && demandNote) {
-            // Editing mode: populate all fields from the passed `demandNote` prop
             setNoteData({ ...initialDemandNoteData, ...demandNote });
             setItems(demandNote.items || []);
             setDocuments(demandNote.documents || { attachments: [] });
             setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
         } else {
-            // New note mode: set defaults and user-specific data in one go.
             const loggedInEmployee = user && employees.length > 0 
                 ? employees.find(e => e.email === user.email)
                 : null;
@@ -158,7 +155,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                 contactPersonName: loggedInEmployee?.fullName || '',
                 contactPersonNumber: loggedInEmployee?.mobileNumber || '',
                 departmentId: loggedInEmployee?.departmentId || '',
-                sectionId: loggedInEmployee?.departmentId || '', // Assuming section is same as department for now
+                sectionId: loggedInEmployee?.departmentId || '',
             });
             setItems([]);
             setDocuments({ attachments: [] });
@@ -180,7 +177,6 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         setNoteData(prev => ({...prev, date: newDate ? format(newDate, 'yyyy-MM-dd') : ''}))
     }
 
-    // Item handlers
     const addItem = () => setItems(prev => [...prev, { id: Date.now().toString(), billItemMasterId: '', particulars: '', requiredQty: 1, unit: '', remarks: '', brandName: '', modelNo: '', otherDetails: '' }]);
     const removeItem = (id: string) => setItems(prev => prev.filter(item => item.id !== id));
     const updateItem = (id: string, field: keyof DemandNoteItem, value: string | number) => {
@@ -302,32 +298,32 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     {step === 1 && (
                         <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? demandNote.demandNoteNumber : 'Auto-generated'} disabled /></div>
+                            <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? (demandNote?.demandNoteNumber || '') : 'Auto-generated'} disabled /></div>
                             <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
                             <div className="space-y-2">
                                 <Label>Department<MandatoryIndicator/></Label>
-                                <Input value={departmentName} disabled />
+                                <Input value={departmentName || ''} disabled />
                             </div>
                             <div className="space-y-2">
                                 <Label>Section</Label>
-                                <Input value={departmentName} disabled />
+                                <Input value={departmentName || ''} disabled />
                             </div>
-                            <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                            <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId || ''} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                            <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId || ''} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2">
                                 <Label>Delivery Place</Label>
-                                <Select value={noteData.deliveryPlace} onValueChange={handleSelectChange('deliveryPlace')}>
+                                <Select value={noteData.deliveryPlace || ''} onValueChange={handleSelectChange('deliveryPlace')}>
                                     <SelectTrigger><SelectValue placeholder="Select delivery place..."/></SelectTrigger>
                                     <SelectContent>
                                         {(deliveryPlaces || []).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName} onChange={handleInputChange} /></div>
-                            <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber} onChange={handleInputChange} /></div>
-                            <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount} onChange={handleInputChange} /></div>
-                            <div className="space-y-2 md:col-span-2"><Label>Budget Year & List No.</Label><Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo} onChange={handleInputChange} /></div>
-                            <div className="space-y-2 md:col-span-3"><Label>Purpose of Requisition</Label><Textarea id="purpose" value={noteData.purpose} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName || ''} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber || ''} onChange={handleInputChange} /></div>
+                            <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount ?? 0} onChange={handleInputChange} /></div>
+                            <div className="space-y-2 md:col-span-2"><Label>Budget Year & List No.</Label><Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo || ''} onChange={handleInputChange} /></div>
+                            <div className="space-y-2 md:col-span-3"><Label>Purpose of Requisition</Label><Textarea id="purpose" value={noteData.purpose || ''} onChange={handleInputChange} /></div>
                         </div>
                         
                         <div className="space-y-4">
@@ -339,18 +335,18 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div className="space-y-2 md:col-span-2">
                                                 <Label>Particulars</Label>
-                                                <Select value={item.billItemMasterId} onValueChange={(v) => updateItem(item.id, 'billItemMasterId', v)}>
+                                                <Select value={item.billItemMasterId || ''} onValueChange={(v) => updateItem(item.id, 'billItemMasterId', v)}>
                                                     <SelectTrigger><SelectValue placeholder="Select from master list..."/></SelectTrigger>
                                                     <SelectContent>{billItemMasters.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label>Required Qty</Label>
-                                                <Input type="number" value={item.requiredQty} onChange={(e) => updateItem(item.id, 'requiredQty', parseFloat(e.target.value) || 0)} />
+                                                <Input type="number" value={item.requiredQty ?? 0} onChange={(e) => updateItem(item.id, 'requiredQty', parseFloat(e.target.value) || 0)} />
                                             </div>
                                              <div className="space-y-2">
                                                 <Label>Unit</Label>
-                                                <Input value={item.unit} disabled />
+                                                <Input value={item.unit || ''} disabled />
                                             </div>
                                          </div>
                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -369,7 +365,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                          </div>
                                          <div className="space-y-2">
                                             <Label>Remarks</Label>
-                                            <Input value={item.remarks} onChange={(e) => updateItem(item.id, 'remarks', e.target.value)} />
+                                            <Input value={item.remarks || ''} onChange={(e) => updateItem(item.id, 'remarks', e.target.value)} />
                                         </div>
                                     </div>
                                 ))}
@@ -408,9 +404,3 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         </Dialog>
     );
 }
-
-    
-
-    
-
-    

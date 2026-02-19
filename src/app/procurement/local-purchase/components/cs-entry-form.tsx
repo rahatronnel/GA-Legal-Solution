@@ -186,7 +186,6 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     
         const dataToSave: Partial<ComparativeStatement> = { ...csData };
     
-        // Only run approval flow logic for new CS
         if (!orgSettings || !demandNote) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load required settings or demand note.' });
             return;
@@ -200,7 +199,6 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
             return;
         }
     
-        // 1. Calculate the approval amount
         const vendorTotals = (csData.vendorDetails || []).map(vd => calculateTotals(vd.vendorId).grandTotal);
     
         let approvalAmount = 0;
@@ -219,7 +217,6 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         dataToSave.approvalAmount = approvalAmount;
         dataToSave.approvalAmountBasis = basis;
     
-        // 2. Determine approval steps
         const approvalSteps: {stepName: string, approverId: string}[] = [];
         const { purchaseManagerId, purchaseDeptTaId, viceFactoryManagerId, accountsManagerId, gmSalesDeptId, gmAdministrationId } = csApprovalRoles;
         const requesterDeptTA = (departmentHeads || []).find(dh => dh.sectionId === demandNote.sectionId)?.technicalAdvisorId;
@@ -248,11 +245,10 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
             }
         }
         
-        // 3. Set initial approval state
         dataToSave.approvalFlow = { steps: approvalSteps };
         dataToSave.approvalStatus = 2; // Pending Vendor Selection
-        dataToSave.currentApproverId = ''; // No approver until vendor is selected
-        dataToSave.vendorSelectorId = dataToSave.createdBy; // The creator selects the vendor
+        dataToSave.currentApproverId = '';
+        dataToSave.vendorSelectorId = dataToSave.createdBy;
         dataToSave.approvalHistory = [];
         
         onSave(dataToSave);
@@ -277,11 +273,11 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                     {step === 0 && (
                         <div className="space-y-4">
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label>CS Number</Label><Input value={csData.csNumber} disabled /></div>
+                                <div className="space-y-2"><Label>CS Number</Label><Input value={csData.csNumber || ''} disabled /></div>
                                 <div className="space-y-2"><Label>CS Date</Label>
                                     <Popover><PopoverTrigger asChild><Button variant={"outline"} className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4"/>{csDate ? format(csDate, "PPP") : <span>Pick a date</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={csDate} onSelect={handleDateChange} initialFocus/></PopoverContent></Popover>
                                 </div>
-                                <div className="space-y-2"><Label>Demand Note Number</Label><Input value={demandNote.demandNoteNumber} disabled /></div>
+                                <div className="space-y-2"><Label>Demand Note Number</Label><Input value={demandNote.demandNoteNumber || ''} disabled /></div>
                             </div>
                             <p className="text-muted-foreground">This CS will compare quotations from {assignedVendors.length} vendors. Click Next to begin.</p>
                         </div>
@@ -303,7 +299,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                                         <TableCell>{item.particulars}</TableCell>
                                                         <TableCell>{item.unit}</TableCell>
                                                         <TableCell>{item.quantity}</TableCell>
-                                                        <TableCell><Input type="number" value={quote?.unitPrice || ''} onChange={e => handleItemPriceChange(index, currentVendor.id, parseFloat(e.target.value) || 0)} /></TableCell>
+                                                        <TableCell><Input type="number" value={quote?.unitPrice ?? ''} onChange={e => handleItemPriceChange(itemIndex, currentVendor.id, parseFloat(e.target.value) || 0)} /></TableCell>
                                                         <TableCell className="text-right">{totalPrice.toFixed(2)}</TableCell>
                                                     </TableRow>
                                                 )
@@ -321,14 +317,14 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                  <CardContent className="space-y-4">
                                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                                         <div className="space-y-2"><Label>Discount Type</Label>
-                                            <Select value={currentVendorDetails?.discountType} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v)}>
+                                            <Select value={currentVendorDetails?.discountType || 'Amount'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Amount">Amount</SelectItem><SelectItem value="Percentage">Percentage</SelectItem></SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="space-y-2"><Label>Discount Value</Label><Input type="number" value={currentVendorDetails?.discountValue || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)}/></div>
-                                        <div className="space-y-2"><Label>VAT %</Label><Input type="number" value={currentVendorDetails?.vatPercentage || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatPercentage', parseFloat(e.target.value) || 0)}/></div>
-                                        <div className="space-y-2"><Label>Tax %</Label><Input type="number" value={currentVendorDetails?.taxPercentage || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'taxPercentage', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2"><Label>Discount Value</Label><Input type="number" value={currentVendorDetails?.discountValue ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2"><Label>VAT %</Label><Input type="number" value={currentVendorDetails?.vatPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatPercentage', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2"><Label>Tax %</Label><Input type="number" value={currentVendorDetails?.taxPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'taxPercentage', parseFloat(e.target.value) || 0)}/></div>
                                      </div>
                                       <div className="p-4 border rounded-lg bg-muted/50 mt-4 space-y-2 text-sm">
                                         <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
@@ -339,11 +335,11 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                         <div className="flex justify-between font-bold text-base"><span className="text-foreground">Grand Total:</span><span>{currentVendorTotals?.grandTotal.toFixed(2)}</span></div>
                                     </div>
                                       <div className="grid grid-cols-2 gap-4 pt-4">
-                                        <div className="space-y-2"><Label>Delivery Terms</Label><Textarea value={currentVendorDetails?.deliveryTerms} onChange={e => handleVendorDetailChange(currentVendor.id, 'deliveryTerms', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>Warranty</Label><Textarea value={currentVendorDetails?.warranty} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)}/></div>
+                                        <div className="space-y-2"><Label>Delivery Terms</Label><Textarea value={currentVendorDetails?.deliveryTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'deliveryTerms', e.target.value)}/></div>
+                                        <div className="space-y-2"><Label>Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)}/></div>
+                                        <div className="space-y-2"><Label>Warranty</Label><Textarea value={currentVendorDetails?.warranty || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Quality/Sample Confirmation</Label>
-                                            <Select value={currentVendorDetails?.sampleConfirmed} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'sampleConfirmed', v)}>
+                                            <Select value={currentVendorDetails?.sampleConfirmed || 'N/A'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'sampleConfirmed', v)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem><SelectItem value="N/A">N/A</SelectItem></SelectContent>
                                             </Select>

@@ -58,7 +58,6 @@ export type PurchaseOrder = {
   mandatoryTerms?: string;
   otherTerms?: string;
 
-  // Documents (Enabled after full approval)
   documents?: {
     poAcknowledgement: UploadedFile[];
     invoice: UploadedFile[];
@@ -66,11 +65,10 @@ export type PurchaseOrder = {
     challan: UploadedFile[];
   };
 
-  // Approval Tracking
   approvalFlow?: {
       steps: { stepName: string; approverId: string; }[];
   };
-  approvalStatus: number; // 0: Rejected, 1: Approved (Completed), 2+: Step-wise pending
+  approvalStatus: number;
   currentApproverId: string;
   approvalHistory: {
       level: number;
@@ -143,16 +141,13 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
       const taxAmount = subtotalAfterDiscount * ((selectedVendorDetails?.taxPercentage || 0) / 100);
       const netPayableAmount = subtotalAfterDiscount + vatAmount + taxAmount;
 
-      // Approval Flow Initialization from Settings
       const { csApprovalRoles } = orgSettings.procurementSettings || {};
       const approvalSteps = [];
       
-      // Step 1: Purchase Department TA
       if (csApprovalRoles?.purchaseDeptTaId) {
           approvalSteps.push({ stepName: 'Purchase Department TA', approverId: csApprovalRoles.purchaseDeptTaId });
       }
       
-      // Step 2: Purchase Manager
       if (csApprovalRoles?.purchaseManagerId) {
           approvalSteps.push({ stepName: 'Purchase Manager', approverId: csApprovalRoles.purchaseManagerId });
       }
@@ -183,8 +178,6 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
           mushok: [],
           challan: []
         },
-        
-        // Initial Approval State
         approvalFlow: { steps: approvalSteps },
         approvalStatus: 2, 
         currentApproverId: approvalSteps[0]?.approverId || '',
@@ -227,25 +220,25 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         </DialogHeader>
         <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
           <div className="grid grid-cols-3 gap-4 text-sm">
-            <div className="space-y-1"><Label>PO Number</Label><Input value={poData.poNumber} disabled /></div>
-            <div className="space-y-1"><Label>PO Date</Label><Input value={poData.poDate} disabled /></div>
-            <div className="space-y-1"><Label>DN Contact Person</Label><Input value={contactPerson?.fullName} disabled /></div>
+            <div className="space-y-1"><Label>PO Number</Label><Input value={poData.poNumber || ''} disabled /></div>
+            <div className="space-y-1"><Label>PO Date</Label><Input value={poData.poDate || ''} disabled /></div>
+            <div className="space-y-1"><Label>DN Contact Person</Label><Input value={contactPerson?.fullName || ''} disabled /></div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-base">Supplier Details</CardTitle></CardHeader>
                 <CardContent className="text-sm space-y-1">
-                    <p className="font-semibold">{vendor?.vendorName}</p>
-                    <p className="text-muted-foreground">{vendor?.officeAddress}</p>
-                    <p className="text-muted-foreground">Contact: {vendor?.contactPersonName}</p>
-                    <p className="text-muted-foreground">Email: {vendor?.email} | Phone: {vendor?.mobileNumber}</p>
+                    <p className="font-semibold">{vendor?.vendorName || ''}</p>
+                    <p className="text-muted-foreground">{vendor?.officeAddress || ''}</p>
+                    <p className="text-muted-foreground">Contact: {vendor?.contactPersonName || ''}</p>
+                    <p className="text-muted-foreground">Email: {vendor?.email || ''} | Phone: {vendor?.mobileNumber || ''}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-base">Delivery Location</CardTitle></CardHeader>
                 <CardContent className="text-sm">
-                    <p className="font-semibold">{demandNote?.deliveryPlace}</p>
+                    <p className="font-semibold">{demandNote?.deliveryPlace || ''}</p>
                 </CardContent>
               </Card>
           </div>
@@ -293,22 +286,22 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
                         <Textarea id="comments" value={poData.comments || ''} onChange={handleInputChange}/>
                     </div>
                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="confirmedBySupplier" checked={poData.confirmedBySupplier} onChange={e => handleCheckboxChange(e.target.checked)} className="form-checkbox h-4 w-4 text-primary rounded" />
+                        <input type="checkbox" id="confirmedBySupplier" checked={!!poData.confirmedBySupplier} onChange={e => handleCheckboxChange(e.target.checked)} className="form-checkbox h-4 w-4 text-primary rounded" />
                         <Label htmlFor="confirmedBySupplier">Confirmed by Supplier</Label>
                     </div>
                 </div>
                  <div className="space-y-4">
                     <div className="space-y-2">
                         <Label>Delivery Terms</Label>
-                        <Textarea value={poData.deliveryTerms} readOnly/>
+                        <Textarea value={poData.deliveryTerms || ''} readOnly/>
                     </div>
                     <div className="space-y-2">
                         <Label>Payment Terms</Label>
-                        <Textarea value={poData.paymentTerms} readOnly/>
+                        <Textarea value={poData.paymentTerms || ''} readOnly/>
                     </div>
                      <div className="space-y-2">
                         <Label>Warranty</Label>
-                        <Textarea value={poData.warranty} readOnly/>
+                        <Textarea value={poData.warranty || ''} readOnly/>
                     </div>
                 </div>
            </div>
@@ -316,11 +309,11 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label className="font-bold">Mandatory Terms & Conditions</Label>
-                    <Textarea value={poData.mandatoryTerms} readOnly rows={5}/>
+                    <Textarea value={poData.mandatoryTerms || ''} readOnly rows={5}/>
                 </div>
                 <div className="space-y-2">
                     <Label className="font-bold">Other Terms & Conditions</Label>
-                    <Textarea value={poData.otherTerms} readOnly rows={5}/>
+                    <Textarea value={poData.otherTerms || ''} readOnly rows={5}/>
                 </div>
             </div>
 

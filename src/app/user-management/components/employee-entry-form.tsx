@@ -211,7 +211,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
       case 1:
         return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.username && employeeData.role && employeeData.status && employeeData.email;
       case 2:
-        if (isEditing) return true; // Password step is skipped for editing
+        if (isEditing) return true;
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
       default:
         return true;
@@ -305,25 +305,25 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                     <div className="md:col-span-1 space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="userIdCode">User ID / Code<MandatoryIndicator/></Label>
-                            <Input id="userIdCode" value={employeeData.userIdCode} onChange={handleInputChange} />
+                            <Input id="userIdCode" value={employeeData.userIdCode || ''} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="fullName">Full Name<MandatoryIndicator/></Label>
-                            <Input id="fullName" value={employeeData.fullName} onChange={handleInputChange} />
+                            <Input id="fullName" value={employeeData.fullName || ''} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="mobileNumber">Mobile Number<MandatoryIndicator/></Label>
-                            <Input id="mobileNumber" value={employeeData.mobileNumber} onChange={handleInputChange} />
+                            <Input id="mobileNumber" value={employeeData.mobileNumber || ''} onChange={handleInputChange} />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="email">Email Address<MandatoryIndicator/></Label>
-                            <Input id="email" type="email" value={employeeData.email} onChange={handleInputChange} />
+                            <Input id="email" type="email" value={employeeData.email || ''} onChange={handleInputChange} />
                         </div>
                     </div>
                     <div className="md:col-span-1 space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="role">User Role<MandatoryIndicator/></Label>
-                            <Select value={employeeData.role} onValueChange={handleSelectChange('role')}>
+                            <Select value={employeeData.role || ''} onValueChange={handleSelectChange('role')}>
                                 <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Admin">Admin</SelectItem>
@@ -335,7 +335,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="status">Status<MandatoryIndicator/></Label>
-                            <Select value={employeeData.status} onValueChange={handleSelectChange('status')}>
+                            <Select value={employeeData.status || ''} onValueChange={handleSelectChange('status')}>
                                 <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Active">Active</SelectItem>
@@ -345,7 +345,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="username">Username / Login ID<MandatoryIndicator/></Label>
-                            <Input id="username" value={employeeData.username} onChange={handleInputChange} disabled/>
+                            <Input id="username" value={employeeData.username || ''} onChange={handleInputChange} disabled/>
                             <p className="text-xs text-muted-foreground">Username is synced with email address.</p>
                         </div>
                          <div className="space-y-2">
@@ -364,7 +364,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                      <div className="md:col-span-1 space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="departmentId">Department / Section</Label>
-                            <Select value={employeeData.departmentId} onValueChange={handleSelectChange('departmentId')}>
+                            <Select value={employeeData.departmentId || ''} onValueChange={handleSelectChange('departmentId')}>
                                 <SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger>
                                 <SelectContent>
                                     {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -373,7 +373,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="designationId">Designation</Label>
-                            <Select value={employeeData.designationId} onValueChange={handleSelectChange('designationId')}>
+                            <Select value={employeeData.designationId || ''} onValueChange={handleSelectChange('designationId')}>
                                 <SelectTrigger><SelectValue placeholder="Select designation" /></SelectTrigger>
                                 <SelectContent>
                                     {designations.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
@@ -385,11 +385,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="address">Address</Label>
-                        <Textarea id="address" value={employeeData.address} onChange={handleInputChange} />
+                        <Textarea id="address" value={employeeData.address || ''} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="remarks">Remarks</Label>
-                        <Textarea id="remarks" value={employeeData.remarks} onChange={handleInputChange} />
+                        <Textarea id="remarks" value={employeeData.remarks || ''} onChange={handleInputChange} />
                     </div>
                 </div>
               </div>
@@ -403,11 +403,11 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                     </p>
                      <div className="space-y-2">
                         <Label>Login Email</Label>
-                        <Input value={employeeData.email} disabled />
+                        <Input value={employeeData.email || ''} disabled />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor='defaultPassword'>Initial Password<MandatoryIndicator/></Label>
-                        <Input id='defaultPassword' type="password" value={employeeData.defaultPassword} onChange={handleInputChange} />
+                        <Input id='defaultPassword' type="password" value={employeeData.defaultPassword || ''} onChange={handleInputChange} />
                          <p className="text-xs text-muted-foreground">Password must be at least 6 characters long.</p>
                     </div>
                  </div>
@@ -458,7 +458,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                                     ) : (
                                                         <FileSignature className="h-6 w-6 flex-shrink-0" />
                                                     )}
-                                                    <span className="truncate">{currentFileName}</span>
+                                                    <span className="truncate">{currentFileName || ''}</span>
                                                 </div>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDocument(docType)}>
                                                     <X className="h-4 w-4" />
@@ -522,5 +522,3 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     </Dialog>
   );
 }
-
-    
