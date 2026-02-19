@@ -6,7 +6,11 @@ import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, Truck, Package, Box, MapPin, DollarSign, MessageSquare, Tag, CheckCircle2, Archive } from 'lucide-react';
+import { 
+    ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, 
+    Building, CheckCircle, Hourglass, MoreHorizontal, Hash, Truck, 
+    Package, Box, MapPin, DollarSign, MessageSquare, Tag, CheckCircle2, Archive 
+} from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';

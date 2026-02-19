@@ -13,7 +13,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, UserCheck, Upload, X, Check, HelpCircle, Info, ListOrdered, ShieldCheck, Box, Tag } from 'lucide-react';
+import { 
+    Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, 
+    Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, 
+    UserCheck, Upload, X, Check, HelpCircle, Info, ListOrdered, 
+    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal
+} from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -29,6 +34,9 @@ import { Label } from '@/components/ui/label';
 import type { UploadedFile } from './po-entry-form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -98,26 +106,32 @@ const FinalizeMrrDialog = ({
     isOpen,
     onOpenChange,
     onFinalize,
-    employees
+    employees,
+    demandNotes
 }: {
     mrr: MRR | null;
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     onFinalize: (docData: { bill: UploadedFile[], challan: UploadedFile[], confirmantId: string }) => void;
     employees: any[];
+    demandNotes: any[];
 }) => {
     const { toast } = useToast();
     const [billDocs, setBillDocs] = useState<UploadedFile[]>([]);
     const [challanDocs, setChallanDocs] = useState<UploadedFile[]>([]);
     const [confirmantId, setConfirmantId] = useState('');
+    const [openSearch, setOpenSearch] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && mrr) {
             setBillDocs([]);
             setChallanDocs([]);
-            setConfirmantId('');
+            
+            // Auto-default to Demand Note creator
+            const dn = demandNotes.find(d => d.demandNoteNumber === mrr.demandNoteNumber);
+            setConfirmantId(dn?.createdBy || '');
         }
-    }, [isOpen]);
+    }, [isOpen, mrr, demandNotes]);
 
     const handleFileChange = (type: 'bill' | 'challan') => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -153,6 +167,8 @@ const FinalizeMrrDialog = ({
 
     if (!mrr) return null;
 
+    const selectedEmployee = employees.find(e => e.id === confirmantId);
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl">
@@ -183,14 +199,45 @@ const FinalizeMrrDialog = ({
                             </div>
                         </div>
                     </div>
+                    
                     <div className="space-y-2">
-                        <Label className="font-bold text-xs uppercase tracking-tighter">Select Receiver Confirmant</Label>
-                        <Select value={confirmantId} onValueChange={setConfirmantId}>
-                            <SelectTrigger className="h-11"><SelectValue placeholder="Choose user who confirms physical receipt..." /></SelectTrigger>
-                            <SelectContent>
-                                {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Label className="font-bold text-xs uppercase tracking-tighter">Receiver Confirmant (Defaulted to DN Creator)</Label>
+                        <Popover open={openSearch} onOpenChange={setOpenSearch}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openSearch}
+                                    className="w-full justify-between h-11"
+                                >
+                                    {selectedEmployee ? `${selectedEmployee.fullName} (${selectedEmployee.userIdCode})` : "Select verifyer..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search employee name or code..." />
+                                    <CommandList>
+                                        <CommandEmpty>No employee found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {employees.map((emp) => (
+                                                <CommandItem
+                                                    key={emp.id}
+                                                    value={`${emp.fullName} ${emp.userIdCode}`}
+                                                    onSelect={() => {
+                                                        setConfirmantId(emp.id);
+                                                        setOpenSearch(false);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />
+                                                    {emp.fullName} ({emp.userIdCode})
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
                 <DialogFooter>
@@ -213,6 +260,8 @@ export function MRRTable() {
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
     const [selectedMrrForFinal, setSelectedMrrForFinal] = useState<MRR | null>(null);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedMrrForStatus, setSelectedMrrForStatus] = useState<MRR | null>(null);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -339,6 +388,7 @@ export function MRRTable() {
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     {isWaitingForFinalize && <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Upload Evidence & Finalize</TooltipContent></Tooltip>}
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/mrrs/${mrr.id}`}><Eye className="h-4 w-4"/></Link></Button>
                                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(mrr.id)}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
@@ -352,7 +402,44 @@ export function MRRTable() {
                 </div>
             </div>
 
-            <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} />
+            <FinalizeMrrDialog 
+                mrr={selectedMrrForFinal} 
+                isOpen={isFinalizeOpen} 
+                onOpenChange={setIsFinalizeOpen} 
+                onFinalize={handleFinalize} 
+                employees={employees || []} 
+                demandNotes={demandNotes || []}
+            />
+            
+            <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader><DialogTitle>MRR Approval Flow: {selectedMrrForStatus?.mrrNumber}</DialogTitle></DialogHeader>
+                    <div className="py-4">
+                        <ul className="space-y-4">
+                            {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {
+                                const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);
+                                const approver = employees?.find(e => e.id === step.approverId);
+                                const isPending = selectedMrrForStatus.currentApproverId === step.approverId && selectedMrrForStatus.approvalStatus > 2;
+                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
+                                return (
+                                    <li key={index} className="flex items-start gap-4">
+                                        {status === 'approved' ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                        <div className="flex-1 flex gap-3 items-center">
+                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
+                                            <div>
+                                                <p className="font-semibold">{step.stepName}</p>
+                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
+                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
         </TooltipProvider>
     );

@@ -157,30 +157,6 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     }
   };
 
-  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        try {
-          const dataUrl = await imageToDataUrl(file);
-          setProfilePicPreview(dataUrl);
-        } catch (error) {
-          toast({ variant: 'destructive', title: 'Image Error', description: 'Could not process the uploaded image.' });
-        }
-    }
-  };
-  
-  const handleSignatureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        try {
-          const dataUrl = await imageToDataUrl(file);
-          setSignaturePreview(dataUrl);
-        } catch (error) {
-          toast({ variant: 'destructive', title: 'Image Error', description: 'Could not process the uploaded signature.' });
-        }
-    }
-  };
-
   const removeDocument = (docType: 'nid' | 'other') => {
       setDocPreviews(prev => ({...prev, [docType]: ''}));
       setEmployeeData(prev => ({...prev, documents: {...prev.documents, [docType]: ''}}));
