@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -260,9 +260,28 @@ export function PurchaseOrderTable() {
                                                 disabled={!isApprovable}
                                             />
                                         </TableCell>
-                                        <TableCell className="font-medium">{po.poNumber}</TableCell>
-                                        <TableCell>{cs?.csNumber || 'N/A'}</TableCell>
-                                        <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-1">
+                                                <span>{po.poNumber}</span>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <span>{cs?.csNumber || 'N/A'}</span>
+                                                {cs?.csNumber && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <span>{dn?.demandNoteNumber || 'N/A'}</span>
+                                                {dn?.demandNoteNumber && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(dn.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
                                         <TableCell>{getEmployeeName(dn?.gpConcernOfficerId || '')}</TableCell>
                                         <TableCell>

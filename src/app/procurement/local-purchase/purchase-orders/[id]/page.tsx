@@ -6,7 +6,7 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download } from 'lucide-react';
+import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -167,15 +168,20 @@ function PurchaseOrderView() {
     }
 
     return (
+        <TooltipProvider>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div className="space-y-1">
-                            <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip>
+                            </div>
                              <div className="text-sm text-muted-foreground flex items-center gap-2">
                                 For Requisition: 
                                 <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
+                                {demandNote?.demandNoteNumber && <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(demandNote.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>}
                                 | Status: 
                                 <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge>
                             </div>
@@ -388,6 +394,7 @@ function PurchaseOrderView() {
                 )}
             </Tabs>
         </div>
+        </TooltipProvider>
     );
 }
 

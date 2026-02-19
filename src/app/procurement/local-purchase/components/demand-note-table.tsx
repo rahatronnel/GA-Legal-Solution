@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -361,7 +361,10 @@ export function DemandNoteTable() {
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <div className="flex flex-col">
-                                                    <span>{item.demandNoteNumber}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span>{item.demandNoteNumber}</span>
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                                    </div>
                                                     <span className="text-[10px] text-muted-foreground">{item.date}</span>
                                                 </div>
                                             </TableCell>

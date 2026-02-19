@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus } from 'lucide-react';
+import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus, Copy } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
@@ -403,8 +403,20 @@ export function ComparativeStatementTable() {
                                                     disabled={!isApprovable}
                                                 />
                                             </TableCell>
-                                            <TableCell>{cs.csNumber}</TableCell>
-                                            <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <span>{cs.csNumber}</span>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <span>{dn?.demandNoteNumber || 'N/A'}</span>
+                                                    {dn?.demandNoteNumber && (
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(dn.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-medium">{getEmployeeName(dn?.gpConcernOfficerId || '')}</span>

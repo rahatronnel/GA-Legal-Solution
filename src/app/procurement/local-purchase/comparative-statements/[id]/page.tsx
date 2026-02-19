@@ -167,16 +167,20 @@ function ComparativeStatementView() {
 
 
     return (
+        <TooltipProvider>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
+                            <div className="flex items-center gap-2">
+                                <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
+                            </div>
                              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                                 <span>For Demand Note:</span>
                                 <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link>
-                                <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip></TooltipProvider>
+                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip>
                                 <span>| Dated: {new Date(cs.csDate).toLocaleString()} | Status: </span>
                                 <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge>
                             </div>
@@ -396,6 +400,7 @@ function ComparativeStatementView() {
                 </DialogContent>
             </Dialog>
         </div>
+        </TooltipProvider>
     );
 }
 
