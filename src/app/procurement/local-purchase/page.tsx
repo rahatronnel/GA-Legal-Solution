@@ -226,8 +226,8 @@ export default function LocalPurchasePage() {
                     <TabsContent value="demand-types" className="mt-4"><Card><CardContent><DemandTypeTable /></CardContent></Card></TabsContent>
                     <TabsContent value="bill-items" className="mt-4"><Card><CardContent><BillItemMasterTable /></CardContent></Card></TabsContent>
                     <TabsContent value="bill-item-categories" className="mt-4"><Card><CardContent><BillItemCategoryTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="vendor-categories" className="mt-4"><LegacyBillFlowProvider><Card><CardContent><VendorCategoryTable /></CardContent></Card></LegacyBillFlowProvider></TabsContent>
-                    <TabsContent value="vendor-nature" className="mt-4"><LegacyBillFlowProvider><Card><CardContent><VendorNatureOfBusinessTable /></CardContent></Card></LegacyBillFlowProvider></TabsContent>
+                    <TabsContent value="vendor-categories" className="mt-4"><LegacyBillFlowProvider><Card><CardContent><VendorCategoryTable /></CardContent></LegacyBillFlowProvider></TabsContent>
+                    <TabsContent value="vendor-nature" className="mt-4"><LegacyBillFlowProvider><Card><CardContent><VendorNatureOfBusinessTable /></CardContent></LegacyBillFlowProvider></TabsContent>
                 </Tabs>
             </TabsContent>
             <TabsContent value="settings"><DemandNoteApprovalSettings /></TabsContent>

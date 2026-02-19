@@ -26,6 +26,15 @@ import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/statu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 export function DemandNoteTable() {
     const { toast } = useToast();
@@ -41,7 +50,6 @@ export function DemandNoteTable() {
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     
@@ -82,7 +90,15 @@ export function DemandNoteTable() {
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex justify-between items-center gap-2">
-                    <Input placeholder="Search DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-xs" />
+                    <div className="relative w-full max-w-xs">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search DN..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
                     <Button onClick={() => { setCurrentItem(null); setIsFormOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add DN</Button>
                 </div>
                 <div className="border rounded-lg">
@@ -118,13 +134,24 @@ export function DemandNoteTable() {
                                     </TableRow>
                                 )
                             })}
+                            {filteredItems.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">No demand notes found.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
             </div>
             <DemandNoteEntryForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} onSave={handleSave} demandNote={currentItem} />
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent><DialogHeader><DialogTitle>Delete?</DialogTitle></DialogHeader><DialogFooter><Button onClick={confirmDelete}>Confirm</Button></DialogFooter></DialogContent>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Are you sure?</DialogTitle><DialogDescription>This action will permanently delete the demand note record.</DialogDescription></DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
             </Dialog>
         </TooltipProvider>
     );
