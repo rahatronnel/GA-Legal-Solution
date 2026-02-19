@@ -6,22 +6,23 @@ import Link from 'next/link';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { useProcurement } from './procurement-provider';
 import type { PurchaseOrder } from './po-entry-form';
-import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal, Check, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PurchaseOrderForm } from './po-entry-form';
 import { useToast } from '@/hooks/use-toast';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { getPOStatusText } from '../lib/status-helper';
+import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings, designations } = useProcurement();
@@ -39,6 +40,7 @@ export function PurchaseOrderTable() {
     const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -81,6 +83,65 @@ export function PurchaseOrderTable() {
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }, [purchaseOrders, searchTerm, vendorFilter, demandNotes]);
 
+    const approvableItems = useMemo(() => {
+        return filteredPOs.filter(po => 
+            po.approvalStatus !== 1 && 
+            po.approvalStatus !== 0 && 
+            currentUserEmployee && 
+            po.currentApproverId === currentUserEmployee.id
+        );
+    }, [filteredPOs, currentUserEmployee]);
+
+    const toggleRowSelection = (id: string) => {
+        setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+
+    const handleBulkApproval = (status: number) => {
+        if (!firestore || !currentUserEmployee || !poCollectionRef) return;
+
+        selectedRows.forEach(id => {
+            const po = purchaseOrders.find(p => p.id === id);
+            if (!po || !po.approvalFlow?.steps) return;
+
+            const currentLevel = po.approvalHistory?.length || 0;
+            const approvalLevels = po.approvalFlow.steps;
+
+            const newHistoryEntry = {
+                approverId: currentUserEmployee.id,
+                status: status === 1 ? 'Approved' : 'Rejected',
+                timestamp: new Date().toISOString(),
+                level: currentLevel,
+                remarks: `Bulk action from list view`,
+            };
+
+            let nextStatus: number;
+            let nextApprover: string;
+
+            if (status === 1) {
+                const nextLevel = currentLevel + 1;
+                if (nextLevel < approvalLevels.length) {
+                    nextStatus = getNextApprovalStatusCode(currentLevel);
+                    nextApprover = approvalLevels[nextLevel].approverId;
+                } else {
+                    nextStatus = 1;
+                    nextApprover = '';
+                }
+            } else {
+                nextStatus = 0;
+                nextApprover = '';
+            }
+
+            setDocumentNonBlocking(doc(poCollectionRef, id), {
+                approvalStatus: nextStatus,
+                currentApproverId: nextApprover,
+                approvalHistory: [...(po.approvalHistory || []), newHistoryEntry],
+            }, { merge: true });
+        });
+
+        toast({ title: 'Success', description: `${selectedRows.length} POs processed.` });
+        setSelectedRows([]);
+    };
+
     const getVendorName = (id: string) => vendors?.find(v => v.id === id)?.vendorName || 'N/A';
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const formatCurrency = (amount?: number) => amount ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount) : 'N/A';
@@ -97,6 +158,16 @@ export function PurchaseOrderTable() {
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Input placeholder="Search PO..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-[250px]" />
+                        {selectedRows.length > 0 && (
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}>
+                                    <Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}>
+                                    <X className="mr-2 h-4 w-4" /> Reject ({selectedRows.length})
+                                </Button>
+                            </div>
+                        )}
                     </div>
                     {(isSuperAdmin || isGPOfficer || isGPConcern) && (
                         <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>
@@ -106,6 +177,12 @@ export function PurchaseOrderTable() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[50px]">
+                                    <Checkbox 
+                                        checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length}
+                                        onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])}
+                                    />
+                                </TableHead>
                                 <TableHead>PO Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
                                 <TableHead>Vendor</TableHead>
@@ -117,9 +194,17 @@ export function PurchaseOrderTable() {
                         <TableBody>
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
                                 const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
-                                
+                                const isApprovable = approvableItems.some(i => i.id === po.id);
+
                                 return (
                                     <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
+                                        <TableCell>
+                                            <Checkbox 
+                                                checked={selectedRows.includes(po.id)}
+                                                onCheckedChange={() => toggleRowSelection(po.id)}
+                                                disabled={!isApprovable}
+                                            />
+                                        </TableCell>
                                         <TableCell className="font-medium">{po.poNumber}</TableCell>
                                         <TableCell>{getDemandNoteNumber(po.demandNoteId)}</TableCell>
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
@@ -141,7 +226,7 @@ export function PurchaseOrderTable() {
                                         </TableCell>
                                     </TableRow>
                                 )
-                            }) : <TableRow><TableCell colSpan={6} className="text-center h-24">No POs found.</TableCell></TableRow>}
+                            }) : <TableRow><TableCell colSpan={7} className="text-center h-24">No POs found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>

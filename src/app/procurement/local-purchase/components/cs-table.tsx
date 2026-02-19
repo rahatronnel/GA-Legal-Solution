@@ -349,8 +349,12 @@ export function ComparativeStatementTable() {
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve ({selectedRows.length})</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject ({selectedRows.length})</Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}>
+                                    <Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}>
+                                    <X className="mr-2 h-4 w-4" /> Reject Selected ({selectedRows.length})
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -384,6 +388,7 @@ export function ComparativeStatementTable() {
                                     
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
+                                    const isApprovable = approvableItems.some(i => i.id === cs.id);
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
@@ -392,7 +397,7 @@ export function ComparativeStatementTable() {
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}
                                                     onCheckedChange={() => toggleRowSelection(cs.id)}
-                                                    disabled={!approvableItems.some(i => i.id === cs.id)}
+                                                    disabled={!isApprovable}
                                                 />
                                             </TableCell>
                                             <TableCell>{cs.csNumber}</TableCell>

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, User, CheckCircle2, FileText, ShoppingCart, Check, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
@@ -22,7 +22,7 @@ import type { DemandNote } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { getDemandNoteStatusText } from '../lib/status-helper';
+import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function DemandNoteTable() {
     const { toast } = useToast();
@@ -50,6 +51,7 @@ export function DemandNoteTable() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     
     // Detailed Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -160,6 +162,65 @@ export function DemandNoteTable() {
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
     }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead, orgSettings, currentUserEmployee]);
 
+    const approvableItems = useMemo(() => {
+        return filteredItems.filter(item => 
+            item.approvalStatus !== 1 && 
+            item.approvalStatus !== 0 && 
+            currentUserEmployee && 
+            item.currentApproverId === currentUserEmployee.id
+        );
+    }, [filteredItems, currentUserEmployee]);
+
+    const toggleRowSelection = (id: string) => {
+        setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+
+    const handleBulkApproval = (status: number) => {
+        if (!firestore || !currentUserEmployee || !dataRef) return;
+
+        selectedRows.forEach(id => {
+            const item = demandNotes.find(dn => dn.id === id);
+            if (!item || !item.approvalFlow?.steps) return;
+
+            const currentLevel = item.approvalHistory?.length || 0;
+            const approvalLevels = item.approvalFlow.steps;
+
+            const newHistoryEntry = {
+                approverId: currentUserEmployee.id,
+                status: status === 1 ? 'Approved' : 'Rejected',
+                timestamp: new Date().toISOString(),
+                level: currentLevel,
+                remarks: `Bulk action from list view`,
+            };
+
+            let nextStatus: number;
+            let nextApprover: string;
+
+            if (status === 1) {
+                const nextLevel = currentLevel + 1;
+                if (nextLevel < approvalLevels.length) {
+                    nextStatus = getNextApprovalStatusCode(currentLevel);
+                    nextApprover = approvalLevels[nextLevel].approverId;
+                } else {
+                    nextStatus = 1;
+                    nextApprover = '';
+                }
+            } else {
+                nextStatus = 0;
+                nextApprover = '';
+            }
+
+            setDocumentNonBlocking(doc(dataRef, id), {
+                approvalStatus: nextStatus,
+                currentApproverId: nextApprover,
+                approvalHistory: [...(item.approvalHistory || []), newHistoryEntry],
+            }, { merge: true });
+        });
+
+        toast({ title: 'Success', description: `${selectedRows.length} records processed.` });
+        setSelectedRows([]);
+    };
+
     const clearFilters = () => {
         setSearchTerm('');
         setStatusFilter('all');
@@ -194,14 +255,26 @@ export function DemandNoteTable() {
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="relative w-full sm:max-w-md">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by DN#, Department, or Creator..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-8"
-                        />
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="relative w-full sm:max-w-md">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by DN#, Department, or Creator..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                        {selectedRows.length > 0 && (
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}>
+                                    <Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}>
+                                    <X className="mr-2 h-4 w-4" /> Reject Selected ({selectedRows.length})
+                                </Button>
+                            </div>
+                        )}
                     </div>
                     <Button onClick={() => { setCurrentItem(null); setIsFormOpen(true); }}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Create Demand Note
@@ -246,6 +319,14 @@ export function DemandNoteTable() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
+                                <TableHead className="w-[50px]">
+                                    <Checkbox 
+                                        checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedRows(checked ? approvableItems.map(i => i.id) : []);
+                                        }}
+                                    />
+                                </TableHead>
                                 <TableHead className="font-bold">DN Number</TableHead>
                                 <TableHead className="font-bold">Department</TableHead>
                                 <TableHead className="font-bold">Created By</TableHead>
@@ -258,13 +339,21 @@ export function DemandNoteTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={8} className="text-center py-10">Loading Requisitions...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-10">Loading Requisitions...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
                                     const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                                    
+                                    const isApprovable = approvableItems.some(ai => ai.id === item.id);
+
                                     return (
                                         <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
+                                            <TableCell>
+                                                <Checkbox 
+                                                    checked={selectedRows.includes(item.id)}
+                                                    onCheckedChange={() => toggleRowSelection(item.id)}
+                                                    disabled={!isApprovable}
+                                                />
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <div className="flex flex-col">
                                                     <span>{item.demandNoteNumber}</span>
@@ -328,7 +417,7 @@ export function DemandNoteTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                                         No requisitions found matching your filters and permissions.
                                     </TableCell>
                                 </TableRow>
