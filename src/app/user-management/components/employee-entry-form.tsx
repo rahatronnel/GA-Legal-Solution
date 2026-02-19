@@ -157,6 +157,30 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
     }
   };
 
+  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        try {
+          const dataUrl = await imageToDataUrl(file);
+          setProfilePicPreview(dataUrl);
+        } catch (error) {
+          toast({ variant: 'destructive', title: 'Image Failed' });
+        }
+    }
+  };
+
+  const handleSignatureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        try {
+          const dataUrl = await imageToDataUrl(file);
+          setSignaturePreview(dataUrl);
+        } catch (error) {
+          toast({ variant: 'destructive', title: 'Signature Failed' });
+        }
+    }
+  };
+
   const removeDocument = (docType: 'nid' | 'other') => {
       setDocPreviews(prev => ({...prev, [docType]: ''}));
       setEmployeeData(prev => ({...prev, documents: {...prev.documents, [docType]: ''}}));
@@ -209,10 +233,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
 
     try {
         if (isEditing && employee.id) {
-            onSave(dataToSave, employee.id);
+            onSave(dataToSave as any, employee.id);
         } else if (defaultPassword) {
             await initiateEmailSignUp(auth, dataToSave.email!, defaultPassword);
-            onSave(dataToSave);
+            onSave(dataToSave as any);
         }
         setIsOpen(false);
     } catch (error: any) {

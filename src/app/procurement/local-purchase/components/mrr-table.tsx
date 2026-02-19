@@ -37,6 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -257,6 +258,7 @@ export function MRRTable() {
     const mrrColRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
     const [selectedMrrForFinal, setSelectedMrrForFinal] = useState<MRR | null>(null);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -279,6 +281,8 @@ export function MRRTable() {
                 mrr.demandNoteNumber.toLowerCase().includes(lowerTerm);
         }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }, [mrrs, searchTerm, isSuperAdmin, currentUserEmployee]);
+
+    const approvableItems = useMemo(() => filteredMrrs.filter(m => currentUserEmployee && m.currentApproverId === currentUserEmployee.id && m.approvalStatus !== 1 && m.approvalStatus !== 0 && m.approvalStatus !== 2), [filteredMrrs, currentUserEmployee]);
 
     const handleFinalize = (data: { bill: UploadedFile[], challan: UploadedFile[], confirmantId: string }) => {
         if (!selectedMrrForFinal || !mrrColRef || !orgSettings?.procurementSettings) return;
@@ -308,6 +312,21 @@ export function MRRTable() {
         toast({ title: 'MRR Finalized', description: 'Internal approval workflow has been initiated.' });
     };
 
+    const handleBulkApproval = (status: number) => {
+        if (!firestore || !currentUserEmployee || !mrrColRef) return;
+        selectedRows.forEach(id => {
+            const mrr = mrrs.find(m => m.id === id);
+            if (!mrr || !mrr.approvalFlow?.steps) return;
+            const currentLevel = mrr.approvalHistory?.length || 0;
+            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
+            let nextStatus = status === 1 ? (currentLevel + 1 < mrr.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
+            let nextApprover = status === 1 && currentLevel + 1 < mrr.approvalFlow.steps.length ? mrr.approvalFlow.steps[currentLevel + 1].approverId : '';
+            setDocumentNonBlocking(doc(mrrColRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(mrr.approvalHistory || []), newHistoryEntry] }, { merge: true });
+        });
+        setSelectedRows([]);
+        toast({ title: 'Processed' });
+    };
+
     const handleDelete = (id: string) => {
         if (!mrrColRef) return;
         deleteDocumentNonBlocking(doc(mrrColRef, id));
@@ -323,9 +342,17 @@ export function MRRTable() {
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex justify-between items-center flex-wrap gap-2">
-                    <div className="relative w-full max-w-md">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search MRR#, Supplier, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="relative w-full sm:max-w-md">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search MRR#, Supplier, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                        </div>
+                        {selectedRows.length > 0 && (
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
+                            </div>
+                        )}
                     </div>
                     <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
                 </div>
@@ -334,6 +361,7 @@ export function MRRTable() {
                     <Table>
                         <TableHeader className="bg-muted/50">
                             <TableRow>
+                                <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead className="font-bold"><FileText className="h-4 w-4 inline mr-2" />MRR Details</TableHead>
                                 <TableHead className="font-bold"><Hash className="h-4 w-4 inline mr-2" />CS/PO Link</TableHead>
                                 <TableHead className="font-bold"><User className="h-4 w-4 inline mr-2" />GP Concern</TableHead>
@@ -344,7 +372,7 @@ export function MRRTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading Material Receiving Reports...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading Material Receiving Reports...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => {
                                     const po = purchaseOrders.find(p => p.id === mrr.poId);
@@ -354,9 +382,11 @@ export function MRRTable() {
                                     
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
                                     const isWaitingForApproval = mrr.currentApproverId === currentUserEmployee?.id && mrr.approvalStatus > 2;
+                                    const isApprovable = approvableItems.some(i => i.id === mrr.id);
 
                                     return (
                                         <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) && "bg-orange-500/5")}>
+                                            <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(mrr.id) ? prev.filter(r => r !== mrr.id) : [...prev, mrr.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center gap-1">
@@ -396,7 +426,7 @@ export function MRRTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">No reports found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">No reports found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
