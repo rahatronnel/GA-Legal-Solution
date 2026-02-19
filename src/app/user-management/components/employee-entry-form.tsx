@@ -31,6 +31,7 @@ import type { Designation } from './designation-table';
 import type { Section } from './section-table';
 import { initiateEmailSignUp, useAuth } from '@/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { Separator } from '@/components/ui/separator';
 
 
 export type Employee = {
