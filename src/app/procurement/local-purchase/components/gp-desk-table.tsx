@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -109,7 +110,7 @@ export default function GPDeskTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const { isGPOfficer, isSuperAdmin, isGPConcern, isManager } = useMemo(() => {
+    const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdmin = user?.email === 'superadmin@galsolution.com';
 
@@ -134,10 +135,10 @@ export default function GPDeskTable() {
     }, [orgSettings, employees, user]);
     
     useEffect(() => {
-        if (isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager) {
+        if (roleData.isGPConcern && !roleData.isSuperAdmin && !roleData.isGPOfficer && !roleData.isManager) {
             setAssignedToFilter(currentUserEmployee?.id || 'all');
         }
-    }, [isGPConcern, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
+    }, [roleData, currentUserEmployee]);
 
     const gpConcernOfficers = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -150,12 +151,12 @@ export default function GPDeskTable() {
     }, [orgSettings, employees]);
 
     const userRoleText = useMemo(() => {
-        if (isSuperAdmin) return "Role: Superadmin";
-        if (isGPOfficer) return "Role: GP Officer";
-        if (isManager) return "Role: Manager";
-        if (isGPConcern) return "Role: GP Concern Officer";
+        if (roleData.isSuperAdmin) return "Role: Superadmin";
+        if (roleData.isGPOfficer) return "Role: GP Officer";
+        if (roleData.isManager) return "Role: Manager";
+        if (roleData.isGPConcern) return "Role: GP Concern Officer";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isManager, isGPConcern]);
+    }, [roleData]);
 
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
@@ -163,15 +164,13 @@ export default function GPDeskTable() {
     const safeItems = useMemo(() => Array.isArray(demandNotes) ? demandNotes : [], [demandNotes]);
 
     const filteredItems = useMemo(() => {
-        if (isLoading) return [];
-        
-        const canViewAll = isSuperAdmin || isGPOfficer || isManager;
+        const canViewAll = roleData.isSuperAdmin || roleData.isGPOfficer || roleData.isManager;
 
         let baseList: DemandNote[];
 
         if (canViewAll) {
             baseList = safeItems.filter(note => Number(note.approvalStatus) === 1);
-        } else if (isGPConcern) {
+        } else if (roleData.isGPConcern) {
             baseList = safeItems.filter(note => note.gpConcernOfficerId === currentUserEmployee?.id && Number(note.approvalStatus) === 1);
         } else {
             baseList = [];
@@ -190,7 +189,7 @@ export default function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
-    }, [isLoading, safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, getDepartmentName, isGPOfficer, isSuperAdmin, isGPConcern, currentUserEmployee, isManager]);
+    }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, roleData, currentUserEmployee, sections]);
 
 
     const handleOpenAssignConcern = (note: DemandNote) => {
@@ -279,7 +278,7 @@ export default function GPDeskTable() {
                             />
                         </div>
                         <Badge variant="outline">{userRoleText}</Badge>
-                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={isGPConcern && !isSuperAdmin && !isGPOfficer && !isManager}>
+                        <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={roleData.isGPConcern && !roleData.isSuperAdmin && !roleData.isGPOfficer && !roleData.isManager}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Concern Officers</SelectItem>
@@ -312,18 +311,17 @@ export default function GPDeskTable() {
                         </TableHeader>
                         <TableBody>
                         {isLoading ? (
-                             Array.from({length: 3}).map((_, i) => (
+                             Array.from({length: 5}).map((_, i) => (
                                 <TableRow key={i}>
-                                  <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
+                                  <TableCell colSpan={6}><Skeleton className="h-10 w-full" /></TableCell>
                                 </TableRow>
                               ))
                         ) : filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const cs = comparativeStatements.find(cs => cs.demandNoteId === item.id);
                                 const isCurrentUserConcern = currentUserEmployee?.id === item.gpConcernOfficerId;
-                                const isGPManager = isGPOfficer || isSuperAdmin;
+                                const isGPManager = roleData.isGPOfficer || roleData.isSuperAdmin;
                                 
-                                // Signaling
                                 const needsVendorAssignment = isCurrentUserConcern && (!item.quotations || item.quotations.length === 0);
                                 const needsCsCreation = isCurrentUserConcern && item.quotations && item.quotations.length > 0 && !cs;
                                 const isWaitingForMe = needsVendorAssignment || needsCsCreation || (isGPManager && !item.gpConcernOfficerId);

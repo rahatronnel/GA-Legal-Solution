@@ -27,10 +27,11 @@ import { WorkflowTracker } from './components/workflow-tracker';
 
 /**
  * LocalPurchaseContent handles the core logic and tab rendering for the procurement module.
+ * Optimized to remove global blocking loaders for a faster "Streaming" feel.
  */
 function LocalPurchaseContent() {
   const { user } = useUser();
-  const { orgSettings, employees, isLoading } = useProcurement();
+  const { orgSettings, employees } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -97,7 +98,6 @@ function LocalPurchaseContent() {
         list.push({ id: 'po', label: 'PO' });
     }
     
-    // Workflow Tracker is visible to everyone involved in the process
     list.push({ id: 'tracker', label: 'Workflow Tracker' });
 
     if (isSuperAdmin) {
@@ -115,14 +115,6 @@ function LocalPurchaseContent() {
     if (isManager) return "Manager";
     return "Employee";
   }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover, isManager]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <p className="text-muted-foreground animate-pulse font-medium">Loading Procurement Dashboard...</p>
-      </div>
-    );
-  }
 
   const gridColsCount = tabsList.length;
 
@@ -222,7 +214,7 @@ function LocalPurchaseContent() {
  */
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium">Initializing Module...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium text-muted-foreground">Initializing Module...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );
