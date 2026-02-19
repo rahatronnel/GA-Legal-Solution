@@ -35,7 +35,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Label } from '@/components/ui/label';
-import { PurchaseOrderForm, type PurchaseOrder } from './po-entry-form';
+import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 
 const VendorSelectionDialog: React.FC<{
