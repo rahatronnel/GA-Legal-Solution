@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -128,9 +129,9 @@ const ModuleDashboard = () => {
                            </DropdownMenuTrigger>
                            <AlertDialogContent>
                                <AlertDialogHeader>
-                               <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                <AlertDialogDescription>
-                                   You will be returned to the login page.
+                                   You will be logged out of your session.
                                </AlertDialogDescription>
                                </AlertDialogHeader>
                                <AlertDialogFooter>

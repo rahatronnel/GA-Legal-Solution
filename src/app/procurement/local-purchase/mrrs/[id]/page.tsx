@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, 
@@ -73,7 +73,7 @@ export default function MRRProfilePage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { mrrs, employees, designations, isLoading } = useProcurement();
+    const { mrrs, employees, isLoading } = useProcurement();
 
     const mrr = useMemo(() => {
         if (isLoading || !mrrs) return undefined;
@@ -201,7 +201,7 @@ export default function MRRProfilePage() {
                         const historyEntry = mrr.approvalHistory?.find((h:any) => h.level === index);
                         const approver = employees?.find(e => e.id === step.approverId);
                         const isPending = mrr.currentApproverId === step.approverId && mrr.approvalStatus > 2;
-                        return (<li key={index} className="flex items-start gap-4">{historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>);
+                        return (<li key={index} className="flex items-start gap-4 list-none">{historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>);
                     })}</ul></CardContent></Card>
                 </TabsContent>
             </Tabs>

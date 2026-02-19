@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { BulkDeleteSection } from './components/bulk-delete-section';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 
 type ApprovalStep = {
     stepName: string;
@@ -155,16 +156,6 @@ export default function SettingsPage() {
     }
   };
 
-  const removeImage = (type: 'logo' | 'favicon') => {
-    if (type === 'logo') {
-      setLogoPreview(null);
-      setSettings(prev => ({ ...prev, logo: '' }));
-    } else {
-      setFaviconPreview(null);
-      setSettings(prev => ({ ...prev, favicon: '' }));
-    }
-  };
-
   const handleSave = () => {
     if (settingsDocRef) {
       setDocumentNonBlocking(settingsDocRef, settings, { merge: true });
@@ -197,7 +188,7 @@ export default function SettingsPage() {
                         <Label>Organization Logo</Label>
                         <div className="flex flex-col items-center gap-2">
                             <Label htmlFor="logo-upload" className="cursor-pointer w-full">
-                                <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
+                                <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/20 hover:border-primary transition-colors">
                                 {logoPreview ? (
                                     <Image src={logoPreview} alt="Logo" width={200} height={112} className="object-contain" />
                                 ) : (

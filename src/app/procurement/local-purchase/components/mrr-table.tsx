@@ -190,7 +190,7 @@ const FinalizeMrrDialog = ({
 };
 
 export function MRRTable() {
-    const { mrrs, purchaseOrders, comparativeStatements, demandNotes, employees, sections, orgSettings, isLoading } = useProcurement();
+    const { mrrs, employees, orgSettings, demandNotes, isLoading } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -340,7 +340,7 @@ export function MRRTable() {
             
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md">
-                    <DialogHeader><DialogTitle>Approval Flow: {selectedMrrForStatus?.mrrNumber}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>MRR Approval Flow</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);

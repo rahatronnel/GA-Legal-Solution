@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -237,16 +238,6 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         setIsOpen(false);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Operation Failed' });
-    }
-  };
-
-  const handlePasswordReset = async () => {
-    if (!isEditing || !employeeData.email) return;
-    try {
-      await sendPasswordResetEmail(auth, employeeData.email);
-      toast({ title: "Email Sent" });
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Failed" });
     }
   };
 
