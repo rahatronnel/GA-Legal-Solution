@@ -260,6 +260,10 @@ export function ComparativeStatementTable() {
         );
     }, [filteredItems, currentUserEmployee]);
 
+    const toggleRowSelection = (id: string) => {
+        setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+
     const handleSavePO = (poData: Partial<PurchaseOrder>) => {
         if (!poCollectionRef) return;
         addDocumentNonBlocking(poCollectionRef, poData);
@@ -417,7 +421,7 @@ export function ComparativeStatementTable() {
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}
-                                                    onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(id => id !== cs.id) : [...prev, cs.id])}
+                                                    onCheckedChange={() => toggleRowSelection(cs.id)}
                                                     disabled={!approvableItems.some(i => i.id === cs.id)}
                                                 />
                                             </TableCell>

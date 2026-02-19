@@ -28,7 +28,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { PurchaseOrderTable } from './components/po-table';
 
@@ -123,7 +123,7 @@ export default function LocalPurchasePage() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
 
-  const roleData = React.useMemo(() => {
+  const roleData = useMemo(() => {
     const settings = orgSettings?.procurementSettings;
     const superAdminCheck = user?.email === 'superadmin@galsolution.com';
     

@@ -113,7 +113,7 @@ export function DemandNoteTable() {
         if (isLoading) return [];
     
         let baseList: DemandNote[];
-    
+
         if (isSuperAdmin || isGPOfficer || isManager) {
             baseList = safeItems;
         } else if (currentUserEmployee) {
