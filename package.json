@@ -54,5 +54,11 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "@types/recharts": "^1.8.29"
+  },
+  "overrides": {
+    "react-day-picker": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }

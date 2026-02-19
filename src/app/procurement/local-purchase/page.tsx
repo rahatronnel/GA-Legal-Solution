@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ModuleHeader } from '@/app/components/module-header';
@@ -19,7 +19,6 @@ import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-t
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
 import { LegacyBillFlowProvider } from '@/app/billflow/components/bill-flow-provider';
 import { ComparativeStatementTable } from './components/cs-table';
-import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import {
