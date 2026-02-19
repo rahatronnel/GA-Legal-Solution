@@ -2,12 +2,13 @@
 import type { DemandNote } from '../components/demand-note-entry-form';
 import type { ComparativeStatement } from '../components/cs-entry-form';
 import type { PurchaseOrder } from '../components/po-entry-form';
+import type { MRR } from '../components/mrr-entry-form';
 
-// Status code mapping for Demand Notes, Comparative Statements, and POs
+// Status code mapping for Demand Notes, Comparative Statements, POs, and MRRs
 const statusMap: { [key: number]: string } = {
     0: 'Rejected',
     1: 'Completed',
-    2: 'Pending Action', // For CS it's selection, for PO it's first review
+    2: 'Pending Action', // For CS it's selection, for PO it's first review, for MRR it's finalization
     3: 'Pending Review',
     4: 'Reviewed',
     5: 'Checked',
@@ -39,6 +40,13 @@ export function getPOStatusText(po: PurchaseOrder): string {
     const statusCode = po.approvalStatus;
     if(statusCode === undefined) return 'Unknown';
     if(statusCode === 2) return 'Pending TA Review';
+    return statusMap[statusCode] || 'Unknown';
+}
+
+export function getMRRStatusText(mrr: MRR): string {
+    const statusCode = mrr.approvalStatus;
+    if (statusCode === undefined) return 'Unknown';
+    if (statusCode === 2) return 'Pending Finalization';
     return statusMap[statusCode] || 'Unknown';
 }
 

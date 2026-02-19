@@ -748,7 +748,24 @@
         "packageCondition": { "type": "string", "enum": ["Ok", "Not Ok"] },
         "remarks": { "type": "string" },
         "createdBy": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "receiverConfirmantId": { "type": "string" },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "bill": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "file": { "type": "string" } } } },
+            "challan": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "file": { "type": "string" } } } }
+          }
+        },
+        "approvalStatus": { "type": "number" },
+        "currentApproverId": { "type": "string" },
+        "approvalFlow": {
+            "type": "object",
+            "properties": {
+                "steps": { "type": "array", "items": { "type": "object", "properties": { "stepName": { "type": "string" }, "approverId": { "type": "string" } } } }
+            }
+        },
+        "approvalHistory": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["mrrNumber", "receivingDate", "poId", "supplierName"]
     }

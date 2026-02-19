@@ -44,7 +44,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
-import type { PurchaseOrder } from './po-entry-form';
+import type { PurchaseOrder, UploadedFile } from './po-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,6 +81,19 @@ export type MRR = {
   remarks?: string;
   createdBy: string;
   createdAt: string;
+
+  // New Workflow Fields
+  receiverConfirmantId?: string;
+  documents: {
+      bill: UploadedFile[];
+      challan: UploadedFile[];
+  };
+  approvalStatus: number; // 0: Rejected, 1: Approved, 2: Pending Finalization, 3+: Stages
+  currentApproverId: string;
+  approvalHistory: any[];
+  approvalFlow?: {
+      steps: { stepName: string; approverId: string; }[];
+  };
 };
 
 interface MRRFormProps {
@@ -139,6 +152,10 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
         remarks: '',
         createdBy: loggedInEmployee?.id || '',
         createdAt: now.toISOString(),
+        approvalStatus: 2, // Pending Finalization
+        currentApproverId: '',
+        approvalHistory: [],
+        documents: { bill: [], challan: [] }
       });
       setReceivingDate(now);
       setIssueDate(now);
@@ -242,25 +259,25 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Truck className="h-4 w-4" /> Shipment Type</Label>
-                    <Input id="shipmentType" value={mrrData.shipmentType} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" />
+                    <Input id="shipmentType" value={mrrData.shipmentType || ''} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" />
                 </div>
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Container Size</Label>
-                    <Input id="containerSize" value={mrrData.containerSize} onChange={handleInputChange} placeholder="e.g. 20ft, 40ft" />
+                    <Input id="containerSize" value={mrrData.containerSize || ''} onChange={handleInputChange} placeholder="e.g. 20ft, 40ft" />
                 </div>
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Archive className="h-4 w-4" /> Container Number</Label>
-                    <Input id="containerNo" value={mrrData.containerNo} onChange={handleInputChange} placeholder="Container ID" />
+                    <Input id="containerNo" value={mrrData.containerNo || ''} onChange={handleInputChange} placeholder="Container ID" />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Receipt className="h-4 w-4" /> Invoice Number <MandatoryIndicator /></Label>
-                    <Input id="invoiceNumber" value={mrrData.invoiceNumber} onChange={handleInputChange} placeholder="Enter vendor invoice #" />
+                    <Label className="flex items-center gap-2"><Receipt className="h-4 w-4" /> Invoice Number <span className="text-red-500">*</span></Label>
+                    <Input id="invoiceNumber" value={mrrData.invoiceNumber || ''} onChange={handleInputChange} placeholder="Enter vendor invoice #" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Challan Number <MandatoryIndicator /></Label>
-                    <Input id="challanNumber" value={mrrData.challanNumber} onChange={handleInputChange} placeholder="Enter delivery challan #" />
+                    <Label className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Challan Number <span className="text-red-500">*</span></Label>
+                    <Input id="challanNumber" value={mrrData.challanNumber || ''} onChange={handleInputChange} placeholder="Enter delivery challan #" />
                 </div>
             </div>
           </div>
@@ -281,7 +298,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {mrrData.items?.map((item, index) => (
+                    {(mrrData.items || []).map((item, index) => (
                         <TableRow key={index} className="hover:bg-muted/30">
                         <TableCell className="text-center font-bold text-muted-foreground">{index + 1}</TableCell>
                         <TableCell className="font-semibold">{item.particulars}</TableCell>
@@ -335,7 +352,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
             </Card>
             <div className="space-y-2 p-4 border rounded-lg shadow-sm">
               <Label className="flex items-center gap-2 font-bold"><MessageSquare className="h-5 w-5 text-primary" /> Additional Remarks (Optional)</Label>
-              <Textarea id="remarks" value={mrrData.remarks} onChange={handleInputChange} rows={6} placeholder="Type any additional notes, observations or discrepancies here..." className="resize-none" />
+              <Textarea id="remarks" value={mrrData.remarks || ''} onChange={handleInputChange} rows={6} placeholder="Type any additional notes, observations or discrepancies here..." className="resize-none" />
             </div>
           </div>
         </div>
