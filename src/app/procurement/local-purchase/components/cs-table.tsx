@@ -177,7 +177,7 @@ export function ComparativeStatementTable() {
     const [vendorFilter, setVendorFilter] = useState('all');
     
     const [isPoFormOpen, setIsPoFormOpen] = useState(false);
-    const [selectedCsForPo, setSelectedCsForPo] = useState<ComparativeStatement | null>(null);
+    const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<ComparativeStatement | null>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
