@@ -235,7 +235,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         if (isEditing && employee.id) {
             onSave(dataToSave, employee.id);
         } else if (defaultPassword) {
-            await initiateEmailSignUp(auth, dataToSave.email, defaultPassword);
+            await initiateEmailSignUp(auth, dataToSave.email!, defaultPassword);
             onSave(dataToSave);
         }
         setIsOpen(false);
