@@ -39,28 +39,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 
-// --- Static Data ---
-
-type ApprovalStep = {
-    stepName: string;
-    approverId: string;
-    statusName: string;
-};
-
-const hardcodedSteps: { [key: number]: Omit<ApprovalStep, 'approverId'>[] } = {
-    1: [{ stepName: 'Final Approver', statusName: 'Completed' }],
-    2: [{ stepName: 'Initiator', statusName: 'Reviewed' }, { stepName: 'Final Approver', statusName: 'Completed' }],
-    3: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Reviewer', statusName: 'Reviewed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    4: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    5: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Compliance Officer', statusName: 'Validated' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    6: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    7: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    8: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Financial Reviewer', statusName: 'Endorsed' }, { stepName: 'Final Approver', statusName: 'Approved' }],
-    9: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Checked' }, { stepName: 'Pre-Approval Officer', statusName: 'Validated' }, { stepName: 'Compliance Officer', statusName: 'Confirmed' }, { stepName: 'Department Head', statusName: 'Authorized' }, { stepName: 'Financial Reviewer', statusName: 'Endorsed' }, { stepName: 'Senior Reviewer', statusName: 'Approved' }, { stepName: 'Final Approver', statusName: 'Final Approval' }],
-    10: [{ stepName: 'Initiator', statusName: 'Pending Review' }, { stepName: 'Validator', statusName: 'Reviewed' }, { stepName: 'Reviewer', statusName: 'Reviewed' }, { stepName: 'Pre-Approval Officer', statusName: 'Checked' }, { stepName: 'Compliance Officer', statusName: 'Validated' }, { stepName: 'Department Head', statusName: 'Confirmed' }, { stepName: 'Financial Reviewer', statusName: 'Authorized' }, { stepName: 'Senior Reviewer', statusName: 'Endorsed' }, { stepName: 'Executive Approver', statusName: 'Approved' }, { stepName: 'Final Approver', statusName: 'Completed' }]
-};
-
-// --- Helper Components ---
+// --- Sub-components for information dialogs ---
 
 function CsApprovalInfo() {
     return (
@@ -118,104 +97,6 @@ function DemandNoteApprovalInfo() {
     );
 }
 
-function ApprovalSettingsTab() {
-    const { toast } = useToast();
-    const firestore = useFirestore();
-
-    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-    const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<any>(settingsDocRef);
-    
-    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
-    const { data: employees, isLoading: isLoadingEmployees } = useCollection<any>(employeesRef);
-
-    const [numberOfSteps, setNumberOfSteps] = useState(1);
-    const [steps, setSteps] = useState<ApprovalStep[]>([]);
-    const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(new Date());
-
-    useEffect(() => {
-        if (orgSettings?.approvalFlow && orgSettings.approvalFlow.steps) {
-            const flow = orgSettings.approvalFlow;
-            setNumberOfSteps(flow.steps.length);
-            setSteps(flow.steps);
-            setEffectiveDate(flow.effectiveDate ? new Date(flow.effectiveDate) : new Date());
-        } else {
-            const defaultFlow = hardcodedSteps[1] || [];
-            setNumberOfSteps(1);
-            setSteps(defaultFlow.map(s => ({...s, approverId: ''})));
-            setEffectiveDate(new Date());
-        }
-    }, [orgSettings]);
-
-    const handleNumberOfStepsChange = (value: string) => {
-        const num = parseInt(value, 10);
-        if (num > 0 && num <= 10) {
-            setNumberOfSteps(num);
-            const newFlowConfig = hardcodedSteps[num] || [];
-            const newSteps = newFlowConfig.map(s => ({
-                stepName: s.stepName,
-                statusName: s.statusName,
-                approverId: '',
-            }));
-            setSteps(newSteps);
-        }
-    };
-
-    const handleApproverChange = (index: number, employeeId: string) => {
-        const newSteps = [...steps];
-        newSteps[index].approverId = employeeId;
-        setSteps(newSteps);
-    };
-
-    const handleSave = () => {
-        if (!settingsDocRef) return;
-        if (steps.some(step => !step.approverId)) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Please select an employee for each step.' });
-            return;
-        }
-        const approvalFlow = {
-            effectiveDate: effectiveDate ? format(effectiveDate, 'yyyy-MM-dd') : '',
-            steps: steps,
-        };
-        setDocumentNonBlocking(settingsDocRef, { approvalFlow }, { merge: true });
-        toast({ title: 'Success', description: 'Approval flow saved.' });
-    };
-
-    if (isLoadingSettings || isLoadingEmployees) return <p>Loading settings...</p>;
-
-    return (
-        <Card>
-            <CardHeader><CardTitle>Bill Approval Flow</CardTitle><CardDescription>Sequence of employees for bill approval.</CardDescription></CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>Number of Steps</Label>
-                        <Select value={String(numberOfSteps)} onValueChange={handleNumberOfStepsChange}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{Array.from({ length: 10 }, (_, i) => i + 1).map(num => (<SelectItem key={num} value={String(num)}>{num} Step{num > 1 ? 's' : ''}</SelectItem>))}</SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Effective Date</Label>
-                         <Popover>
-                            <PopoverTrigger asChild><Button variant="outline" className={cn("w-full justify-start text-left font-normal",!effectiveDate && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4"/>{effectiveDate ? format(effectiveDate, "PPP") : <span>Pick a date</span>}</Button></PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={effectiveDate} onSelect={setEffectiveDate} initialFocus/></PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-                <div className="space-y-4">
-                    {steps.map((step, index) => (
-                        <div key={index} className="flex flex-col md:flex-row gap-4 p-3 border rounded-lg">
-                            <div className="flex-grow space-y-2"><Label>Step {index + 1}: Name</Label><Input value={step.stepName} disabled /></div>
-                            <div className="flex-grow space-y-2"><Label>Approver</Label><Select value={step.approverId} onValueChange={(v) => handleApproverChange(index, v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{(employees || []).map((emp:any) => (<SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>))}</SelectContent></Select></div>
-                        </div>
-                    ))}
-                </div>
-                <Button onClick={handleSave}>Save Flow</Button>
-            </CardContent>
-        </Card>
-    );
-}
-
 // --- Main Page Component ---
 
 export default function LocalPurchasePage() {
@@ -230,7 +111,7 @@ export default function LocalPurchasePage() {
       return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
     
-    const currentEmp = employees.find((e:any) => e.email === user.email);
+    const currentEmp = employees.find((e: any) => e.email === user.email);
     if (!currentEmp) {
       return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
     }
@@ -252,7 +133,7 @@ export default function LocalPurchasePage() {
         ];
         if (roleIds.includes(currentEmp.id)) csApproverCheck = true;
     }
-    if (!csApproverCheck && settings.departmentHeads?.some((dh:any) => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
+    if (!csApproverCheck && settings.departmentHeads?.some((dh: any) => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
     return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isManager: managerCheck, isCsApprover: csApproverCheck };
@@ -279,6 +160,7 @@ export default function LocalPurchasePage() {
       );
   }
 
+  // --- Main Return JSX ---
   return (
     <div className="space-y-6">
       <ModuleHeader />
