@@ -61,18 +61,14 @@ export type PurchaseOrder = {
   confirmedBySupplier?: boolean;
   mandatoryTerms?: string;
   otherTerms?: string;
-
-  // Sending tracking
   isSentToVendor?: boolean;
   sentToVendorDate?: string;
-
   documents?: {
     poAcknowledgement: UploadedFile[];
     invoice: UploadedFile[];
     mushok: UploadedFile[];
     challan: UploadedFile[];
   };
-
   approvalFlow?: {
       steps: { stepName: string; approverId: string; }[];
   };
@@ -236,15 +232,15 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-                <Label className="flex items-center gap-2 text-xs"><Hash className="h-3 w-3" /> PO Number</Label>
+                <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> PO Number</Label>
                 <Input value={poData.poNumber || ''} disabled className="bg-muted/50 font-bold" />
             </div>
             <div className="space-y-1">
-                <Label className="flex items-center gap-2 text-xs"><CalendarIcon className="h-3 w-3" /> PO Date</Label>
+                <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> PO Date</Label>
                 <Input value={poData.poDate || ''} disabled className="bg-muted/50" />
             </div>
             <div className="space-y-1">
-                <Label className="flex items-center gap-2 text-xs"><User className="h-3 w-3" /> DN Contact Person</Label>
+                <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><User className="h-3 w-3" /> DN Contact Person</Label>
                 <Input value={contactPerson?.fullName || ''} disabled className="bg-muted/50" />
             </div>
           </div>
@@ -303,14 +299,14 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
            <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> Expected Delivery Date</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-4 w-4" /> Expected Delivery Date</Label>
                         <Popover>
                             <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><CalendarIcon className="mr-2 h-4 w-4"/>{expectedDeliveryDate ? format(expectedDeliveryDate, 'PPP') : 'Pick a date'}</Button></PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={expectedDeliveryDate} onSelect={handleDateChange} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Comments / Special Instructions</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><MessageSquare className="h-4 w-4" /> Comments / Special Instructions</Label>
                         <Textarea id="comments" value={poData.comments || ''} onChange={handleInputChange} rows={4} placeholder="Type any internal notes or instructions for the supplier..."/>
                     </div>
                      <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-md border border-dashed">
@@ -320,15 +316,15 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
                 </div>
                  <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 font-semibold"><Truck className="h-4 w-4" /> Delivery Terms</Label>
+                        <Label className="flex items-center gap-2 font-bold uppercase tracking-tight text-xs"><Truck className="h-4 w-4" /> Delivery Terms</Label>
                         <Textarea value={poData.deliveryTerms || ''} readOnly className="bg-muted/30 text-xs italic" rows={2}/>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 font-semibold"><DollarSign className="h-4 w-4" /> Payment Terms</Label>
+                        <Label className="flex items-center gap-2 font-bold uppercase tracking-tight text-xs"><DollarSign className="h-4 w-4" /> Payment Terms</Label>
                         <Textarea value={poData.paymentTerms || ''} readOnly className="bg-muted/30 text-xs italic" rows={2}/>
                     </div>
                      <div className="space-y-2">
-                        <Label className="flex items-center gap-2 font-semibold"><Info className="h-4 w-4" /> Warranty Information</Label>
+                        <Label className="flex items-center gap-2 font-bold uppercase tracking-tight text-xs"><Info className="h-4 w-4" /> Warranty Information</Label>
                         <Textarea value={poData.warranty || ''} readOnly className="bg-muted/30 text-xs italic" rows={2}/>
                     </div>
                 </div>
@@ -336,7 +332,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
             <Separator/>
             <div className="space-y-6">
                 <div className="space-y-2">
-                    <Label className="font-bold text-lg flex items-center gap-2 text-primary"><ClipboardCheck className="h-5 w-5" /> Mandatory Terms & Conditions</Label>
+                    <Label className="font-bold text-lg flex items-center gap-2 text-primary"><CheckCircle2 className="h-5 w-5" /> Mandatory Terms & Conditions</Label>
                     <div className="p-4 bg-muted/20 border rounded-lg whitespace-pre-wrap text-sm opacity-80 leading-relaxed min-h-[100px]">{poData.mandatoryTerms || 'No mandatory terms defined in settings.'}</div>
                 </div>
                 <div className="space-y-2">

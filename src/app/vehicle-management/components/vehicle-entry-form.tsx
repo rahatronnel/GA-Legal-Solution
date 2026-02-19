@@ -24,6 +24,8 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
+import { useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 import type { Driver as DriverType } from './driver-entry-form';
 import type { VehicleBrand } from './vehicle-brand-table';
@@ -109,8 +111,8 @@ const QuickAddDialog: React.FC<{
     onOpenChange: (open: boolean) => void;
     onSave: (newData: any) => void;
     title: string;
-    children: React.ReactNode;
-}> = ({ open, onOpenChange, onSave, title, children }) => {
+    children?: React.ReactNode;
+}> = ({ open, onOpenChange, onSave, title }) => {
     const { toast } = useToast();
     const [name, setName] = useState('');
     const [code, setCode] = useState('');
@@ -120,7 +122,7 @@ const QuickAddDialog: React.FC<{
             toast({ variant: 'destructive', title: 'Error', description: 'Name and Code are required.' });
             return;
         }
-        const newData = { id: Date.now().toString(), name, code };
+        const newData = { name, code };
         onSave(newData);
         setName('');
         setCode('');
@@ -152,16 +154,10 @@ const QuickAddDialog: React.FC<{
 
 export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: VehicleEntryFormProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const { data, setData } = useVehicleManagement();
   const { drivers, vehicleTypes, vehicleBrands } = data;
 
-  const setVehicleTypes = (updater: React.SetStateAction<VehicleType[]>) => {
-    setData(prev => ({...prev, vehicleTypes: typeof updater === 'function' ? updater(prev.vehicleTypes || []) : updater }))
-  }
-  const setVehicleBrands = (updater: React.SetStateAction<VehicleBrand[]>) => {
-    setData(prev => ({...prev, vehicleBrands: typeof updater === 'function' ? updater(prev.vehicleBrands || []) : updater }))
-  }
-  
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const [docPreviews, setDocPreviews] = useState(initialDocuments);
@@ -204,7 +200,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
         const dataUrl = await imageToDataUrl(file);
         setDocPreviews(prev => ({...prev, [docType]: dataUrl}));
       } catch (error) {
-        toast({ variant: 'destructive', title: 'File Error', description: 'Could not process the uploaded file.' });
+        toast({ variant: 'destructive', title: 'File Error' });
       }
     }
   };
@@ -225,13 +221,27 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
     setDriverAssignments(prev => prev.filter(a => a.id !== assignmentId));
   };
 
+  const handleQuickAddType = (newData: any) => {
+    if (!firestore) return;
+    const typesRef = collection(firestore, 'vehicleTypes');
+    addDocumentNonBlocking(typesRef, newData);
+    toast({ title: 'Success', description: 'Vehicle Category added.' });
+  };
+
+  const handleQuickAddBrand = (newData: any) => {
+    if (!firestore) return;
+    const brandsRef = collection(firestore, 'vehicleBrands');
+    addDocumentNonBlocking(brandsRef, newData);
+    toast({ title: 'Success', description: 'Vehicle Brand added.' });
+  };
+
   const validateStep1 = () => {
     const requiredFields: (keyof typeof vehicleData)[] = [
       'vehicleIdCode', 'registrationNumber', 'brandId', 'model', 'vehicleTypeId', 'ownership', 'status'
     ];
     for (const field of requiredFields) {
       if (!vehicleData[field]?.trim()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all required fields.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Please fill all mandatory fields.' });
         return false;
       }
     }
@@ -274,26 +284,26 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="vehicleIdCode" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Vehicle ID / Internal Code<MandatoryIndicator/></Label>
+                            <Label htmlFor="vehicleIdCode" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Vehicle ID / Internal Code<MandatoryIndicator/></Label>
                             <Input id="vehicleIdCode" value={vehicleData.vehicleIdCode} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="registrationNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><FileText className="h-3 w-3" /> BRTA Registration No.<MandatoryIndicator/></Label>
+                            <Label htmlFor="registrationNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><FileText className="h-3 w-3" /> BRTA Registration No.<MandatoryIndicator/></Label>
                             <Input id="registrationNumber" value={vehicleData.registrationNumber} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="engineNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Engine Number</Label>
+                            <Label htmlFor="engineNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Wrench className="h-3 w-3" /> Engine Number</Label>
                             <Input id="engineNumber" value={vehicleData.engineNumber} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="chassisNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Chassis Number</Label>
+                            <Label htmlFor="chassisNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Wrench className="h-3 w-3" /> Chassis Number</Label>
                             <Input id="chassisNumber" value={vehicleData.chassisNumber} onChange={handleVehicleDataChange} />
                         </div>
                     </div>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                           <Label htmlFor="vehicleTypeId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Vehicle Category<MandatoryIndicator/></Label>
+                           <Label htmlFor="vehicleTypeId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Tag className="h-3 w-3" /> Vehicle Category<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.vehicleTypeId} onValueChange={handleSelectChange('vehicleTypeId')}>
                                     <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
@@ -303,7 +313,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </div>
                         </div>
                          <div className="space-y-2">
-                            <Label htmlFor="brandId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Brand / Make<MandatoryIndicator/></Label>
+                            <Label htmlFor="brandId" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Brand / Make<MandatoryIndicator/></Label>
                             <div className="flex gap-2">
                                 <Select value={vehicleData.brandId} onValueChange={handleSelectChange('brandId')}>
                                     <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
@@ -313,18 +323,18 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="model" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Model Name<MandatoryIndicator/></Label>
+                            <Label htmlFor="model" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Car className="h-3 w-3" /> Model Name<MandatoryIndicator/></Label>
                             <Input id="model" value={vehicleData.model} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="manufactureYear" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Year of Manufacture</Label>
+                            <Label htmlFor="manufactureYear" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> Year of Manufacture</Label>
                             <Input id="manufactureYear" value={vehicleData.manufactureYear} onChange={handleVehicleDataChange} type="number" />
                         </div>
                     </div>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="fuelType" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Fuel className="h-3 w-3" /> Primary Fuel Source</Label>
+                            <Label htmlFor="fuelType" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Fuel className="h-3 w-3" /> Primary Fuel Source</Label>
                             <Select value={vehicleData.fuelType} onValueChange={handleSelectChange('fuelType')}>
                                 <SelectTrigger><SelectValue placeholder="Select fuel" /></SelectTrigger>
                                 <SelectContent>
@@ -336,18 +346,18 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="capacity" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Users className="h-3 w-3" /> Load / Seating Capacity</Label>
+                            <Label htmlFor="capacity" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Users className="h-3 w-3" /> Capacity</Label>
                             <Input id="capacity" value={vehicleData.capacity} onChange={handleVehicleDataChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="ownership" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Ownership Status<MandatoryIndicator/></Label>
+                            <Label htmlFor="ownership" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Ownership<MandatoryIndicator/></Label>
                             <Select value={vehicleData.ownership} onValueChange={handleSelectChange('ownership')}>
                                 <SelectTrigger><SelectValue placeholder="Select ownership" /></SelectTrigger>
                                 <SelectContent><SelectItem value="Company">Company Asset</SelectItem><SelectItem value="Rental">Third-Party Rental</SelectItem></SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="status" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CheckCircle2 className="h-3 w-3" /> Operation Status<MandatoryIndicator/></Label>
+                            <Label htmlFor="status" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CheckCircle2 className="h-3 w-3" /> Operation Status<MandatoryIndicator/></Label>
                             <Select value={vehicleData.status} onValueChange={handleSelectChange('status')}>
                                 <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                 <SelectContent>
@@ -372,20 +382,20 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                     {driverAssignments.map((assignment) => (
                         <div key={assignment.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-center p-3 rounded-md border bg-primary/5">
                             <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Users className="h-3 w-3" /> Select Driver</Label>
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2"><Users className="h-3 w-3" /> Select Driver</Label>
                                 <Select value={assignment.driverId} onValueChange={(v) => updateDriverAssignment(assignment.id, 'driverId', v)}>
                                     <SelectTrigger className="bg-background"><SelectValue placeholder="Choose driver..."/></SelectTrigger>
                                     <SelectContent>{(drivers || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CalendarIcon className="h-3 w-3" /> Effective Date</Label>
+                                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-2"><CalendarIcon className="h-3 w-3" /> Effective Date</Label>
                                 <Input type="date" value={assignment.effectiveDate} onChange={(e) => updateDriverAssignment(assignment.id, 'effectiveDate', e.target.value)} className="bg-background" />
                             </div>
                             <Button variant="ghost" size="icon" className="mt-5 text-destructive hover:bg-destructive/10" onClick={() => removeDriverAssignment(assignment.id)}><Trash2 className="h-4 w-4"/></Button>
                         </div>
                     ))}
-                    {driverAssignments.length === 0 && <p className="text-sm text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">No drivers have been assigned to this vehicle yet.</p>}
+                    {driverAssignments.length === 0 && <p className="text-sm text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg">No drivers assigned.</p>}
                 </div>
               </div>
             )}
@@ -408,7 +418,7 @@ export function VehicleEntryForm({ isOpen, setIsOpen, onSave, vehicle }: Vehicle
                                         <Label htmlFor={`v-file-${docType}`} className="flex items-center justify-center w-full h-12 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
                                             <div className="flex items-center gap-2">
                                                 <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                                                <span className="text-xs font-medium text-muted-foreground">Upload Scan</span>
+                                                <span className="text-xs">Upload Scan</span>
                                             </div>
                                             <Input id={`v-file-${docType}`} type="file" className="hidden" onChange={handleFileChange(docType)} />
                                         </Label>

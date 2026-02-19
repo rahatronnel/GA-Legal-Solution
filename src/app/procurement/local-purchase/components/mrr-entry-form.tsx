@@ -40,7 +40,7 @@ import {
     Container
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
@@ -48,6 +48,7 @@ import type { PurchaseOrder, UploadedFile } from './po-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export type MRRItem = {
   particulars: string;
@@ -66,7 +67,7 @@ export type MRR = {
   sectionName: string;
   supplierName: string;
   supplierAddress: string;
-  issueDate: string;
+  MRR_IssueDate: string; // Corrected field name based on requirement
   shipmentType: string;
   containerSize: string;
   containerNo: string;
@@ -81,14 +82,12 @@ export type MRR = {
   remarks?: string;
   createdBy: string;
   createdAt: string;
-
-  // New Workflow Fields
   receiverConfirmantId?: string;
   documents: {
       bill: UploadedFile[];
       challan: UploadedFile[];
   };
-  approvalStatus: number; // 0: Rejected, 1: Approved, 2: Pending Finalization, 3+: Stages
+  approvalStatus: number;
   currentApproverId: string;
   approvalHistory: any[];
   approvalFlow?: {
@@ -133,7 +132,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
       setMrrData({
         mrrNumber: `MRR-${po.poNumber.split('-').pop()}-${Date.now().toString().slice(-4)}`,
         receivingDate: format(now, 'yyyy-MM-dd'),
-        issueDate: format(now, 'yyyy-MM-dd'),
+        MRR_IssueDate: format(now, 'yyyy-MM-dd'),
         departmentName: relatedSection?.name || 'N/A',
         sectionName: relatedSection?.name || 'N/A',
         supplierName: relatedVendor?.vendorName || 'N/A',
@@ -152,7 +151,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
         remarks: '',
         createdBy: loggedInEmployee?.id || '',
         createdAt: now.toISOString(),
-        approvalStatus: 2, // Pending Finalization
+        approvalStatus: 2, 
         currentApproverId: '',
         approvalHistory: [],
         documents: { bill: [], challan: [] }
@@ -177,7 +176,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
   const handleSave = () => {
     if (!mrrData.invoiceNumber || !mrrData.challanNumber || !mrrData.shipmentType) {
-      toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill Shipment Type, Invoice No and Challan No.' });
+      toast({ variant: 'destructive', title: 'Missing Fields', description: 'Shipment Type, Invoice No and Challan No are mandatory.' });
       return;
     }
     onSave(mrrData);
@@ -202,42 +201,40 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
         </DialogHeader>
         
         <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
-          {/* Header Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Hash className="h-4 w-4 text-muted-foreground" /> MRR Number</Label>
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> MRR Number</Label>
               <Input value={mrrData.mrrNumber || ''} disabled className="bg-muted/50 font-bold" />
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-muted-foreground" /> Receiving Date</Label>
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> Receiving Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick a date"}</Button>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick date"}</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={receivingDate} onSelect={(d) => { setReceivingDate(d); setMrrData(p => ({...p, receivingDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-muted-foreground" /> MRR Issue Date</Label>
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> MRR Issue Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick a date"}</Button>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick date"}</Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, issueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
+                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, MRR_IssueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
           </div>
 
-          {/* Auto-Populated Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-primary/5 border-primary/20 shadow-sm">
               <CardHeader className="py-2 border-b">
                 <CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4" /> Organizational Source</CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-2 pt-3">
-                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Department:</span><span className="font-semibold">{mrrData.departmentName}</span></div>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Section:</span><span className="font-semibold">{mrrData.sectionName}</span></div>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Demand Note Ref:</span><Badge variant="outline">{mrrData.demandNoteNumber}</Badge></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium flex items-center gap-2"><Building2 className="h-3 w-3"/> Department:</span><span className="font-semibold">{mrrData.departmentName}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium flex items-center gap-2"><Layers className="h-3 w-3"/> Section:</span><span className="font-semibold">{mrrData.sectionName}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium flex items-center gap-2"><Hash className="h-3 w-3"/> Demand Note Ref:</span><Badge variant="outline">{mrrData.demandNoteNumber}</Badge></div>
               </CardContent>
             </Card>
             <Card className="bg-orange-500/5 border-orange-500/20 shadow-sm">
@@ -253,36 +250,34 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
           <Separator className="opacity-50" />
 
-          {/* Logistics Section */}
           <div className="space-y-4">
             <h4 className="font-bold flex items-center gap-2 text-primary"><Truck className="h-5 w-5" /> Logistics & Shipment Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Truck className="h-4 w-4" /> Shipment Type</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Truck className="h-4 w-4" /> Shipment Type</Label>
                     <Input id="shipmentType" value={mrrData.shipmentType || ''} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Container Size</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Ruler className="h-4 w-4" /> Container Size</Label>
                     <Input id="containerSize" value={mrrData.containerSize || ''} onChange={handleInputChange} placeholder="e.g. 20ft, 40ft" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Archive className="h-4 w-4" /> Container Number</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Container className="h-4 w-4" /> Container Number</Label>
                     <Input id="containerNo" value={mrrData.containerNo || ''} onChange={handleInputChange} placeholder="Container ID" />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Receipt className="h-4 w-4" /> Invoice Number <span className="text-red-500">*</span></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Receipt className="h-4 w-4" /> Invoice Number <span className="text-red-500">*</span></Label>
                     <Input id="invoiceNumber" value={mrrData.invoiceNumber || ''} onChange={handleInputChange} placeholder="Enter vendor invoice #" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Challan Number <span className="text-red-500">*</span></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><ClipboardList className="h-4 w-4" /> Challan Number <span className="text-red-500">*</span></Label>
                     <Input id="challanNumber" value={mrrData.challanNumber || ''} onChange={handleInputChange} placeholder="Enter delivery challan #" />
                 </div>
             </div>
           </div>
 
-          {/* Item Table */}
           <div className="space-y-4">
             <h4 className="font-bold flex items-center gap-2 text-primary"><Layers className="h-5 w-5" /> Material Verification (Item Details)</h4>
             <Card className="border shadow-sm overflow-hidden">
@@ -309,7 +304,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                         </TableRow>
                     ))}
                     <TableRow className="font-bold bg-muted/20">
-                        <TableCell colSpan={5} className="text-right text-lg uppercase tracking-tight">Grand Total Amount</TableCell>
+                        <TableCell colSpan={5} className="text-right text-lg uppercase tracking-tight flex items-center justify-end gap-2"><DollarSign className="h-5 w-5"/> Grand Total Amount</TableCell>
                         <TableCell className="text-right text-lg font-black text-primary underline underline-offset-4 decoration-double">
                             {mrrData.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                         </TableCell>
@@ -319,13 +314,12 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
             </Card>
           </div>
 
-          {/* Condition & Remarks Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-4 border shadow-sm space-y-4">
               <h4 className="font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-600" /> Physical Inspection</h4>
               <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-muted-foreground" /> Goods Condition</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CheckCircle2 className="h-4 w-4" /> Goods Condition</Label>
                     <Select value={mrrData.goodsCondition} onValueChange={(v) => setMrrData(p => ({...p, goodsCondition: v as any}))}>
                     <SelectTrigger className={cn(mrrData.goodsCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
                         <SelectValue />
@@ -337,7 +331,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Box className="h-4 w-4 text-muted-foreground" /> Box / Package Condition</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Box className="h-4 w-4" /> Box / Package Condition</Label>
                     <Select value={mrrData.packageCondition} onValueChange={(v) => setMrrData(p => ({...p, packageCondition: v as any}))}>
                     <SelectTrigger className={cn(mrrData.packageCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
                         <SelectValue />
@@ -351,7 +345,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
               </div>
             </Card>
             <div className="space-y-2 p-4 border rounded-lg shadow-sm">
-              <Label className="flex items-center gap-2 font-bold"><MessageSquare className="h-5 w-5 text-primary" /> Additional Remarks (Optional)</Label>
+              <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><MessageSquare className="h-5 w-5 text-primary" /> Additional Remarks (Optional)</Label>
               <Textarea id="remarks" value={mrrData.remarks || ''} onChange={handleInputChange} rows={6} placeholder="Type any additional notes, observations or discrepancies here..." className="resize-none" />
             </div>
           </div>

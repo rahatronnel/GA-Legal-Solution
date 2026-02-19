@@ -17,7 +17,7 @@ import {
     TripDataProvider,
     MaintenanceDataProvider,
     AccidentDataProvider,
-    MasterDataProvider,
+    MasterDataProvider as FleetMasterDataProvider,
     DashboardDataProvider,
     ReportsDataProvider
 } from "./components/vehicle-management-provider";
@@ -42,6 +42,7 @@ import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-ty
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
+import { LegacyBillFlowProvider, MasterDataProvider as BillFlowMasterDataProvider } from '@/app/billflow/components/bill-flow-provider';
 
 export default function VehicleManagementPage() {
   return (
@@ -150,7 +151,7 @@ export default function VehicleManagementPage() {
             </TabsContent>
             
             <TabsContent value="master-data" className="pt-4">
-                <MasterDataProvider>
+                <FleetMasterDataProvider>
                     <Tabs defaultValue="vehicle-master" className="w-full">
                         <TabsList className="grid w-full grid-cols-4 h-auto bg-muted/30 p-1 rounded-lg">
                             <TabsTrigger value="vehicle-master" className="flex items-center gap-2"><Car className="h-3 w-3" /> Vehicle Details</TabsTrigger>
@@ -200,7 +201,7 @@ export default function VehicleManagementPage() {
                             </Card>
                         </TabsContent>
                     </Tabs>
-                </MasterDataProvider>
+                </FleetMasterDataProvider>
             </TabsContent>
         </Tabs>
     </div>
