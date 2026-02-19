@@ -1,16 +1,24 @@
+
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
 import { useProcurement } from './procurement-provider';
 import type { PurchaseOrder } from './po-entry-form';
-import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,6 +30,135 @@ import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+
+const POApprovalWizard = ({
+    po,
+    isOpen,
+    onOpenChange,
+    onApprove,
+    vendor
+}: {
+    po: PurchaseOrder | null;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onApprove: (poId: string) => void;
+    vendor: any;
+}) => {
+    const [step, setStep] = useState(1);
+
+    useEffect(() => {
+        if (isOpen) setStep(1);
+    }, [isOpen]);
+
+    if (!po) return null;
+
+    const formatCurrency = (amount: number | undefined) => 
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Approve Purchase Order: {po.poNumber}</DialogTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 1 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 2 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 3 ? "bg-primary" : "bg-muted")} />
+                    </div>
+                </DialogHeader>
+
+                <div className="py-6 min-h-[300px]">
+                    {step === 1 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-700 dark:text-blue-400">
+                                <Building className="h-5 w-5" />
+                                <h3 className="font-bold">Step 1: Vendor Audit</h3>
+                            </div>
+                            <Card className="bg-muted/30 border-primary/10">
+                                <CardContent className="pt-6 space-y-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Supplier Name</Label>
+                                        <p className="text-lg font-bold">{vendor?.vendorName || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Office Address</Label>
+                                        <p className="text-sm">{vendor?.officeAddress || 'N/A'}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Contact Person</Label>
+                                            <p className="text-sm font-semibold">{vendor?.contactPersonName || 'N/A'}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Vendor Email</Label>
+                                            <p className="text-sm">{vendor?.email || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400">
+                                <DollarSign className="h-5 w-5" />
+                                <h3 className="font-bold">Step 2: Financial Verification</h3>
+                            </div>
+                            <Card className="bg-muted/30 border-primary/10">
+                                <CardContent className="pt-6 space-y-3">
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Subtotal Amount:</span><span className="font-bold">{formatCurrency(po.totalAmount)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Discount Applied:</span><span className="text-red-500 font-bold">- {formatCurrency(po.discountAmount)}</span></div>
+                                    <Separator />
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">VAT Amount:</span><span className="font-bold">+ {formatCurrency(po.vatAmount)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Tax Amount:</span><span className="font-bold">+ {formatCurrency(po.taxAmount)}</span></div>
+                                    <Separator />
+                                    <div className="flex justify-between text-xl"><span className="font-black">Net Billed Amount:</span><span className="text-primary font-black">{formatCurrency(po.netPayableAmount)}</span></div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="flex flex-col items-center justify-center text-center space-y-6 py-8 animate-in zoom-in-95 duration-300">
+                            <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center">
+                                <AlertTriangle className="h-10 w-10 text-destructive animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl font-bold">Confirm PO Approval</h3>
+                                <p className="text-muted-foreground max-w-md">
+                                    You are about to sign off on PO <span className="font-bold text-foreground">#{po.poNumber}</span> for <span className="font-bold text-primary">{formatCurrency(po.netPayableAmount)}</span>.
+                                </p>
+                                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm font-medium text-orange-700 dark:text-orange-400 mt-4">
+                                    Your approval will be recorded in the audit history with a digital timestamp.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter className="flex justify-between w-full border-t pt-4">
+                    <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
+                        <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                    <div className="flex gap-2">
+                        {step < 3 ? (
+                            <Button onClick={() => setStep(s => s + 1)}>
+                                Next Step <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        ) : (
+                            <Button onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
+                                <Check className="mr-2 h-4 w-4" /> Finalize Approval
+                            </Button>
+                        )}
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 export function PurchaseOrderTable() {
     const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, isLoading, orgSettings } = useProcurement();
@@ -40,6 +177,8 @@ export function PurchaseOrderTable() {
     const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
+    const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
+    const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -78,6 +217,33 @@ export function PurchaseOrderTable() {
     }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
     const approvableItems = useMemo(() => filteredPOs.filter(po => currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0), [filteredPOs, currentUserEmployee]);
+
+    const handleApprovalAction = (poId: string) => {
+        if (!firestore || !currentUserEmployee || !poCollectionRef) return;
+        const po = purchaseOrders.find(p => p.id === poId);
+        if (!po || !po.approvalFlow?.steps) return;
+
+        const currentLevel = po.approvalHistory?.length || 0;
+        const newHistoryEntry = { 
+            approverId: currentUserEmployee.id, 
+            status: 'Approved', 
+            timestamp: new Date().toISOString(), 
+            level: currentLevel, 
+            remarks: 'Approved via wizard' 
+        };
+
+        let nextStatus = currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1;
+        let nextApprover = currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
+
+        setDocumentNonBlocking(doc(poCollectionRef, poId), { 
+            approvalStatus: nextStatus, 
+            currentApproverId: nextApprover, 
+            approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] 
+        }, { merge: true });
+
+        setIsApprovalWizardOpen(false);
+        toast({ title: 'Success', description: 'Purchase Order approved.' });
+    };
 
     const handleBulkApproval = (status: number) => {
         if (!firestore || !currentUserEmployee || !poCollectionRef) return;
@@ -164,6 +330,9 @@ export function PurchaseOrderTable() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                {isWaitingForApproval && (
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Informed Approval</TooltipContent></Tooltip>
+                                                )}
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
                                                 {po.approvalStatus === 1 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(po, 'purchase-order')}><Printer className="h-4 w-4"/></Button>}
@@ -213,6 +382,14 @@ export function PurchaseOrderTable() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <POApprovalWizard 
+                isOpen={isApprovalWizardOpen}
+                onOpenChange={setIsApprovalWizardOpen}
+                po={selectedPoForApproval}
+                onApprove={handleApprovalAction}
+                vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)}
+            />
         </TooltipProvider>
     );
 }

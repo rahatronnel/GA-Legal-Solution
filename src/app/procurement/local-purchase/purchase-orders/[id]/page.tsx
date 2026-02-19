@@ -6,7 +6,7 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy } from 'lucide-react';
+import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -25,6 +25,8 @@ import { imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -41,6 +43,133 @@ const documentLabels: Record<DocType, string> = {
     challan: 'Delivery Challan',
 };
 
+const POApprovalWizard = ({
+    po,
+    isOpen,
+    onOpenChange,
+    onApprove,
+    vendor
+}: {
+    po: PurchaseOrder | null;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onApprove: () => void;
+    vendor: any;
+}) => {
+    const [step, setStep] = useState(1);
+
+    useEffect(() => {
+        if (isOpen) setStep(1);
+    }, [isOpen]);
+
+    if (!po) return null;
+
+    const formatCurrency = (amount: number | undefined) => 
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Approve Purchase Order: {po.poNumber}</DialogTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 1 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 2 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 3 ? "bg-primary" : "bg-muted")} />
+                    </div>
+                </DialogHeader>
+
+                <div className="py-6 min-h-[300px]">
+                    {step === 1 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-700 dark:text-blue-400">
+                                <Building className="h-5 w-5" />
+                                <h3 className="font-bold">Step 1: Vendor Audit</h3>
+                            </div>
+                            <Card className="bg-muted/30 border-primary/10">
+                                <CardContent className="pt-6 space-y-4">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Supplier Name</Label>
+                                        <p className="text-lg font-bold">{vendor?.vendorName || 'N/A'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Office Address</Label>
+                                        <p className="text-sm">{vendor?.officeAddress || 'N/A'}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Contact Person</Label>
+                                            <p className="text-sm font-semibold">{vendor?.contactPersonName || 'N/A'}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Vendor Email</Label>
+                                            <p className="text-sm">{vendor?.email || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400">
+                                <DollarSign className="h-5 w-5" />
+                                <h3 className="font-bold">Step 2: Financial Verification</h3>
+                            </div>
+                            <Card className="bg-muted/30 border-primary/10">
+                                <CardContent className="pt-6 space-y-3">
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Subtotal Amount:</span><span className="font-bold">{formatCurrency(po.totalAmount)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Discount Applied:</span><span className="text-red-500 font-bold">- {formatCurrency(po.discountAmount)}</span></div>
+                                    <Separator />
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">VAT Amount:</span><span className="font-bold">+ {formatCurrency(po.vatAmount)}</span></div>
+                                    <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Tax Amount:</span><span className="font-bold">+ {formatCurrency(po.taxAmount)}</span></div>
+                                    <Separator />
+                                    <div className="flex justify-between text-xl"><span className="font-black">Net Billed Amount:</span><span className="text-primary font-black">{formatCurrency(po.netPayableAmount)}</span></div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="flex flex-col items-center justify-center text-center space-y-6 py-8 animate-in zoom-in-95 duration-300">
+                            <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center">
+                                <AlertTriangle className="h-10 w-10 text-destructive animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl font-bold">Confirm PO Approval</h3>
+                                <p className="text-muted-foreground max-w-md">
+                                    You are about to sign off on PO <span className="font-bold text-foreground">#{po.poNumber}</span> for <span className="font-bold text-primary">{formatCurrency(po.netPayableAmount)}</span>.
+                                </p>
+                                <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg text-sm font-medium text-orange-700 dark:text-orange-400 mt-4">
+                                    Your approval will be recorded in the audit history with a digital timestamp.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter className="flex justify-between w-full border-t pt-4">
+                    <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
+                        <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                    <div className="flex gap-2">
+                        {step < 3 ? (
+                            <Button onClick={() => setStep(s => s + 1)}>
+                                Next Step <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        ) : (
+                            <Button onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
+                                <Check className="mr-2 h-4 w-4" /> Finalize Approval
+                            </Button>
+                        )}
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 function PurchaseOrderView() {
     const params = useParams();
     const router = useRouter();
@@ -49,6 +178,8 @@ function PurchaseOrderView() {
     const { purchaseOrders, vendors, demandNotes, employees, designations, isLoading } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
+
+    const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
 
     const po = useMemo(() => {
         if (isLoading || !purchaseOrders) return undefined;
@@ -67,15 +198,50 @@ function PurchaseOrderView() {
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [employees, user]);
     
-    const handleApproval = (status: number) => {
+    const handleApproval = () => {
         if (!firestore || !po || !user || !po.approvalFlow?.steps || !employees || !currentUserEmployee) return;
         const poRef = doc(firestore, 'purchaseOrders', po.id);
         const currentLevel = po.approvalHistory?.length || 0;
-        const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: `Manual update` };
-        let nextStatus = status === 1 ? (currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
-        let nextApprover = status === 1 && currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
-        setDocumentNonBlocking(poRef, { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] }, { merge: true });
+        const newHistoryEntry = { 
+            approverId: currentUserEmployee.id, 
+            status: 'Approved', 
+            timestamp: new Date().toISOString(), 
+            level: currentLevel, 
+            remarks: `Approved via detailed profile wizard` 
+        };
+        let nextStatus = currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1;
+        let nextApprover = currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
+        
+        setDocumentNonBlocking(poRef, { 
+            approvalStatus: nextStatus, 
+            currentApproverId: nextApprover, 
+            approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] 
+        }, { merge: true });
+
+        setIsApprovalWizardOpen(false);
+        toast({ title: "Approved", description: "The Purchase Order has been signed." });
     };
+
+    const handleReject = () => {
+        if (!firestore || !po || !user || !po.approvalFlow?.steps || !employees || !currentUserEmployee) return;
+        const poRef = doc(firestore, 'purchaseOrders', po.id);
+        const currentLevel = po.approvalHistory?.length || 0;
+        const newHistoryEntry = { 
+            approverId: currentUserEmployee.id, 
+            status: 'Rejected', 
+            timestamp: new Date().toISOString(), 
+            level: currentLevel, 
+            remarks: `Rejected from detailed profile` 
+        };
+        
+        setDocumentNonBlocking(poRef, { 
+            approvalStatus: 0, 
+            currentApproverId: '', 
+            approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] 
+        }, { merge: true });
+        
+        toast({ variant: "destructive", title: "Rejected", description: "The Purchase Order has been rejected." });
+    }
 
     const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && po && firestore) {
@@ -120,8 +286,14 @@ function PurchaseOrderView() {
                         <div className="flex items-center gap-2">
                             {canApprove && isPendingApproval && (
                                 <>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Approve PO?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={()=>handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-                                 <AlertDialog><AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject PO?</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={()=>handleApproval(0)}>Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                                 <Button size="sm" variant="outline" className="text-green-500 border-green-500" onClick={() => setIsApprovalWizardOpen(true)}><Check className="mr-2 h-4 w-4"/>Approve</Button>
+                                 <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Reject PO?</AlertDialogTitle><AlertDialogDescription>This will stop the approval process permanently.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleReject}>Confirm Reject</AlertDialogAction></AlertDialogFooter>
+                                    </AlertDialogContent>
+                                 </AlertDialog>
                                 </>
                             )}
                             {isApproved && <Button onClick={() => handlePrint(po, 'purchase-order')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print PO</Button>}
@@ -176,6 +348,14 @@ function PurchaseOrderView() {
                     </TabsContent>
                 )}
             </Tabs>
+
+            <POApprovalWizard 
+                isOpen={isApprovalWizardOpen}
+                onOpenChange={setIsApprovalWizardOpen}
+                po={po}
+                onApprove={handleApproval}
+                vendor={vendor}
+            />
         </div>
         </TooltipProvider>
     );
