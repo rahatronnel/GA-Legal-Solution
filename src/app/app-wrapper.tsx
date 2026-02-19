@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
@@ -127,18 +126,18 @@ const ModuleDashboard = () => {
                                 <span>Logout</span>
                                </DropdownMenuItem>
                            </DropdownMenuTrigger>
-                           <DialogContent>
-                               <DialogHeader>
-                               <DialogTitle>Are you sure you want to logout?</DialogTitle>
-                               <DialogDescription>
+                           <AlertDialogContent>
+                               <AlertDialogHeader>
+                               <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+                               <AlertDialogDescription>
                                    You will be returned to the login page.
-                               </DialogDescription>
-                               </DialogHeader>
+                               </AlertDialogDescription>
+                               </AlertDialogHeader>
                                <AlertDialogFooter>
                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
                                </AlertDialogFooter>
-                           </DialogContent>
+                           </AlertDialogContent>
                         </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>

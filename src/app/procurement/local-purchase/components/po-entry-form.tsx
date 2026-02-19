@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -17,7 +16,6 @@ import {
 import { format } from 'date-fns';
 import { useProcurement } from './procurement-provider';
 import type { ComparativeStatement } from './cs-entry-form';
-import type { DemandNote } from './demand-note-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/firebase';
@@ -320,7 +318,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
                         <Textarea value={poData.deliveryTerms || ''} readOnly className="bg-muted/30 text-xs italic" rows={2}/>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 font-bold uppercase tracking-tight text-xs"><DollarSign className="h-4 w-4" /> Payment Terms</Label>
+                        <Label className="flex items-center gap-2 font-bold uppercase tracking-tight text-xs"><DollarSign className="h-3 w-3" /> Payment Terms</Label>
                         <Textarea value={poData.paymentTerms || ''} readOnly className="bg-muted/30 text-xs italic" rows={2}/>
                     </div>
                      <div className="space-y-2">
