@@ -20,6 +20,12 @@ import { Separator } from '@/components/ui/separator';
 import { useUser } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+export type UploadedFile = {
+  id: string;
+  name: string;
+  file: string; // data URL
+}
+
 export type PurchaseOrder = {
   id: string;
   poNumber: string;
@@ -51,6 +57,14 @@ export type PurchaseOrder = {
   confirmedBySupplier?: boolean;
   mandatoryTerms?: string;
   otherTerms?: string;
+
+  // Documents (Enabled after full approval)
+  documents?: {
+    poAcknowledgement: UploadedFile[];
+    invoice: UploadedFile[];
+    mushok: UploadedFile[];
+    challan: UploadedFile[];
+  };
 
   // Approval Tracking
   approvalFlow?: {
@@ -163,10 +177,16 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
         createdAt: new Date().toISOString(),
         mandatoryTerms: orgSettings.procurementSettings?.poSettings?.mandatoryTerms,
         otherTerms: orgSettings.procurementSettings?.poSettings?.otherTerms,
+        documents: {
+          poAcknowledgement: [],
+          invoice: [],
+          mushok: [],
+          challan: []
+        },
         
         // Initial Approval State
         approvalFlow: { steps: approvalSteps },
-        approvalStatus: 2, // Map to status Map (Pending TA Review)
+        approvalStatus: 2, 
         currentApproverId: approvalSteps[0]?.approverId || '',
         approvalHistory: [],
       });

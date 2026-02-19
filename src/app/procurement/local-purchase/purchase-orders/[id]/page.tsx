@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar } from 'lucide-react';
+import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -18,7 +18,12 @@ import { doc } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { getPOStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { PurchaseOrder } from '../../components/po-entry-form';
+import type { PurchaseOrder, UploadedFile } from '../../components/po-entry-form';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { imageToDataUrl } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -27,9 +32,18 @@ const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.
     </div>
 );
 
+type DocType = 'poAcknowledgement' | 'invoice' | 'mushok' | 'challan';
+const documentLabels: Record<DocType, string> = {
+    poAcknowledgement: 'PO Acknowledgement',
+    invoice: 'Vendor Invoice',
+    mushok: 'Mushok (VAT)',
+    challan: 'Delivery Challan',
+};
+
 function PurchaseOrderView() {
     const params = useParams();
     const router = useRouter();
+    const { toast } = useToast();
     const { handlePrint } = usePrint();
     const { purchaseOrders, vendors, demandNotes, employees, designations, isLoading } = useProcurement();
     const { user } = useUser();
@@ -92,8 +106,54 @@ function PurchaseOrderView() {
         }, { merge: true });
     };
 
+    // Document Upload Handlers
+    const handleFileChange = (docType: DocType) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0 && po && firestore) {
+            const files = Array.from(e.target.files);
+            const newFiles: UploadedFile[] = [];
+
+            for (const file of files) {
+                try {
+                    const dataUrl = await imageToDataUrl(file);
+                    newFiles.push({
+                        id: Date.now().toString() + Math.random(),
+                        name: file.name,
+                        file: dataUrl,
+                    });
+                } catch (error) {
+                    console.error("Error processing document:", error);
+                    toast({ variant: 'destructive', title: 'File Error', description: `Could not process ${file.name}.` });
+                }
+            }
+
+            const currentDocs = po.documents || { poAcknowledgement: [], invoice: [], mushok: [], challan: [] };
+            const updatedDocs = {
+                ...currentDocs,
+                [docType]: [...(currentDocs[docType] || []), ...newFiles]
+            };
+
+            const poRef = doc(firestore, 'purchaseOrders', po.id);
+            setDocumentNonBlocking(poRef, { documents: updatedDocs }, { merge: true });
+            toast({ title: 'Success', description: `${newFiles.length} file(s) uploaded to ${documentLabels[docType]}.` });
+        }
+    };
+
+    const removeDocument = (docType: DocType, fileId: string) => {
+        if (!po || !firestore) return;
+        const currentDocs = po.documents || { poAcknowledgement: [], invoice: [], mushok: [], challan: [] };
+        const updatedDocs = {
+            ...currentDocs,
+            [docType]: (currentDocs[docType] || []).filter(f => f.id !== fileId)
+        };
+
+        const poRef = doc(firestore, 'purchaseOrders', po.id);
+        setDocumentNonBlocking(poRef, { documents: updatedDocs }, { merge: true });
+        toast({ title: 'Document Removed' });
+    };
+
     const isPendingApproval = po?.approvalStatus !== 0 && po?.approvalStatus !== 1;
     const canApprove = currentUserEmployee && po?.currentApproverId === currentUserEmployee.id;
+    const isApproved = po?.approvalStatus === 1;
 
     if (isLoading) return <p>Loading Purchase Order...</p>;
     if (po === null) notFound();
@@ -111,7 +171,7 @@ function PurchaseOrderView() {
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
-                        <div>
+                        <div className="space-y-1">
                             <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
                              <div className="text-sm text-muted-foreground flex items-center gap-2">
                                 For Requisition: 
@@ -139,7 +199,7 @@ function PurchaseOrderView() {
                                  </AlertDialog>
                                 </>
                             )}
-                            {po.approvalStatus === 1 && (
+                            {isApproved && (
                                 <Button onClick={() => handlePrint(po, 'purchase-order')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print PO</Button>
                             )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
@@ -152,6 +212,7 @@ function PurchaseOrderView() {
                 <TabsList className="mb-4">
                     <TabsTrigger value="overview">PO Details</TabsTrigger>
                     <TabsTrigger value="approval">Approval Status</TabsTrigger>
+                    {isApproved && <TabsTrigger value="documents">Post-Approval Documents</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6">
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -275,6 +336,56 @@ function PurchaseOrderView() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+                {isApproved && (
+                    <TabsContent value="documents" className="mt-6 space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {(Object.keys(documentLabels) as DocType[]).map(key => (
+                                <Card key={key}>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                                        <div>
+                                            <CardTitle className="text-lg">{documentLabels[key]}</CardTitle>
+                                            <CardDescription>Upload related documents.</CardDescription>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor={`file-${key}`} className="cursor-pointer">
+                                                <div className="flex items-center gap-2 text-primary hover:underline text-sm font-medium">
+                                                    <Upload className="h-4 w-4" /> Add File
+                                                </div>
+                                            </Label>
+                                            <Input id={`file-${key}`} type="file" className="hidden" multiple onChange={handleFileChange(key)} />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {po.documents?.[key]?.length ? (
+                                            po.documents[key].map(file => (
+                                                <div key={file.id} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                                        <span className="truncate" title={file.name}>{file.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                                            <Link href={file.file} download={file.name} target="_blank">
+                                                                <Download className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeDocument(key, file.id)}>
+                                                            <X className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-4 border-2 border-dashed rounded-md text-muted-foreground text-xs italic">
+                                                No documents uploaded yet.
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );

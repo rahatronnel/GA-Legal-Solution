@@ -163,27 +163,27 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
             </div>
 
             {/* Signatures */}
-            <div className="absolute bottom-12 left-8 right-8 flex justify-between items-end border-t pt-8">
+            <div className="absolute bottom-12 left-8 right-8 flex justify-between items-start border-t pt-8">
                 {/* Prepared By */}
                 <div className="text-center w-48">
-                    <div className="h-12 flex items-center justify-center italic text-xs text-muted-foreground">System Generated</div>
-                    <div className="border-t-2 border-black pt-2">
+                    <div className="border-b-2 border-black pb-2 mb-2">
                         <p className="font-bold text-sm">Prepared By</p>
                         <p className="text-xs">GP Department</p>
                     </div>
+                    <div className="h-12 flex items-center justify-center italic text-[10px] text-muted-foreground">Digitally Generated</div>
                 </div>
 
                 {/* Dynamic Approvers */}
                 {approvers.map((sig, i) => (
                     <div key={i} className="text-center w-48">
+                        <div className="border-b-2 border-black pb-2 mb-2">
+                            <p className="font-bold text-sm truncate">{sig.employee?.fullName}</p>
+                            <p className="text-xs truncate">{sig.designation?.name}</p>
+                        </div>
                         <div className="h-12 flex items-center justify-center">
                             {sig.employee?.signature && (
                                 <Image src={sig.employee.signature} alt="Sig" width={100} height={40} className="object-contain" />
                             )}
-                        </div>
-                        <div className="border-t-2 border-black pt-2">
-                            <p className="font-bold text-sm truncate">{sig.employee?.fullName}</p>
-                            <p className="text-xs truncate">{sig.designation?.name}</p>
                         </div>
                     </div>
                 ))}
