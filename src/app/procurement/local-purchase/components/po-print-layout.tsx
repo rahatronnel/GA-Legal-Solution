@@ -132,9 +132,14 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                 </div>
                 {approvers.map((sig, i) => (
                     <div key={i} className="text-center w-48">
-                        <div className="border-b-2 border-black pb-2 mb-2"><p className="font-bold text-sm truncate">{sig.employee?.fullName}</p><p className="text-xs truncate">{sig.designation?.name}</p></div>
-                        <div className="h-12 flex items-center justify-center">{sig.employee?.signature && <Image src={sig.employee.signature} alt="Sig" width={100} height={40} className="object-contain" />}</div>
-                        <p className="text-[9px] text-muted-foreground mt-1">{sig.title}</p>
+                        <div className="border-b-2 border-black pb-2 mb-2">
+                            <p className="font-bold text-sm truncate">{sig.employee?.fullName}</p>
+                            <p className="text-xs truncate">{sig.designation?.name}</p>
+                        </div>
+                        <div className="h-12 flex items-center justify-center">
+                            {sig.employee?.signature && <Image src={sig.employee.signature} alt="Sig" width={100} height={40} className="object-contain" />}
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1 text-center">{sig.title}</p>
                     </div>
                 ))}
             </div>

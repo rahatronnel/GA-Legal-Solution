@@ -34,8 +34,8 @@ export function WorkflowTracker() {
     const [selectedDnId, setSelectedDnId] = useState<string | null>(null);
 
     const getEmployeeInfo = (id?: string) => {
-        const emp = employees.find(e => e.id === id);
-        const des = designations.find(d => d.id === emp?.designationId);
+        const emp = (employees || []).find(e => e.id === id);
+        const des = (designations || []).find(d => d.id === emp?.designationId);
         return {
             name: emp?.fullName || 'Unknown User',
             designation: des?.name || 'N/A',
@@ -192,7 +192,6 @@ export function WorkflowTracker() {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
-            {/* Sidebar: Requisition List */}
             <Card className="lg:col-span-1 flex flex-col h-full">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Select Requisition</CardTitle>
@@ -236,7 +235,6 @@ export function WorkflowTracker() {
                 </CardContent>
             </Card>
 
-            {/* Main Content: Timeline */}
             <Card className="lg:col-span-2 flex flex-col h-full bg-muted/5">
                 <CardHeader className="border-b">
                     {selectedDn ? (
@@ -259,7 +257,6 @@ export function WorkflowTracker() {
                             <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
                                 {timeline.map((event, idx) => (
                                     <div key={event.id} className="relative flex items-start group">
-                                        {/* Dot */}
                                         <div className={cn(
                                             "absolute left-0 mt-1 h-10 w-10 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
                                             event.status === 'completed' ? "bg-green-500 text-white" : (event.status === 'rejected' ? "bg-destructive text-white" : "bg-orange-500 text-white")
@@ -271,7 +268,6 @@ export function WorkflowTracker() {
                                             {event.type === 'po' && <Building className="h-4 w-4" />}
                                         </div>
 
-                                        {/* Content */}
                                         <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                                                 <h4 className="font-bold text-base flex items-center gap-2">
@@ -300,7 +296,6 @@ export function WorkflowTracker() {
                                     </div>
                                 ))}
                                 
-                                {/* Final End Point */}
                                 {selectedDn.approvalStatus === 1 && purchaseOrders.some(p => p.demandNoteId === selectedDnId && p.approvalStatus === 1) && (
                                     <div className="relative flex items-center justify-center py-4">
                                         <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full border border-green-200 text-sm font-bold flex items-center gap-2">

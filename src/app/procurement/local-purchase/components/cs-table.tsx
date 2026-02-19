@@ -209,7 +209,7 @@ export function ComparativeStatementTable() {
                                                     {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => deleteDocumentNonBlocking(doc(csRef!, cs.id))}><Trash2 className="h-4 w-4"/></Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}><Trash2 className="h-4 w-4"/></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -222,7 +222,7 @@ export function ComparativeStatementTable() {
             </div>
             
             <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
-            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => { addDocumentNonBlocking(poRef!, d); toast({ title: 'PO Created' }); }} cs={selectedCsForPo} />
+            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => { poRef && addDocumentNonBlocking(poRef, d); toast({ title: 'PO Created' }); }} cs={selectedCsForPo} />
             
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-lg">
@@ -230,7 +230,7 @@ export function ComparativeStatementTable() {
                     <div className="py-4 space-y-4">
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
-                            const approver = employees?.find(e => e.id === step.approverId);
+                            const approver = (employees || []).find(e => e.id === step.approverId);
                             const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0;
                             return (
                                 <li key={index} className="flex items-start gap-4 list-none">

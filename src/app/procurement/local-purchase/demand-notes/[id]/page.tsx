@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -121,11 +121,9 @@ const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; is
     return (
         <Card>
             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle>Vendor Quotations</CardTitle>
-                        <div className="text-sm text-muted-foreground">Upload and manage quotations from assigned vendors.</div>
-                    </div>
+                <div>
+                    <CardTitle>Vendor Quotations</CardTitle>
+                    <div className="text-sm text-muted-foreground">Upload and manage quotations from assigned vendors.</div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -171,7 +169,8 @@ function DemandNoteProfileContent() {
     
     const { demandNotes, employees, sections, processCodes, demandTypes, vendors, deliveryPlaces, isLoading, orgSettings } = useProcurement();
 
-    const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
+    const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+    const { data: designations } = useCollection<Designation>(designationsRef);
 
     const demandNote = React.useMemo(() => {
         if (isLoading || !demandNotes) return undefined;
@@ -213,19 +212,18 @@ function DemandNoteProfileContent() {
             approvalHistory: [...(demandNote.approvalHistory || []), newHistoryEntry],
         };
     
-        if (status === 1) { // If the action is "Approve"
+        if (status === 1) {
             const nextLevel = currentLevel + 1;
             if (nextLevel < approvalLevels.length) {
                 updatePayload.approvalStatus = getNextApprovalStatusCode(currentLevel);
                 updatePayload.currentApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                // This is the final approval
-                updatePayload.approvalStatus = 1; // Completed
+                updatePayload.approvalStatus = 1; 
                 updatePayload.currentApproverId = '';
                 updatePayload.gpStatus = 'Pending';
             }
-        } else { // If the action is "Reject"
-            updatePayload.approvalStatus = 0; // Rejected
+        } else {
+            updatePayload.approvalStatus = 0;
             updatePayload.currentApproverId = '';
         }
     
@@ -248,9 +246,9 @@ function DemandNoteProfileContent() {
     const createdBy = employees?.find((e:any) => e.id === demandNote.createdBy);
     
     const getStatusVariant = (status: number | undefined) => {
-        if (status === 1) return 'default'; // Completed
-        if (status === 0) return 'destructive'; // Rejected
-        return 'secondary'; // Pending states
+        if (status === 1) return 'default';
+        if (status === 0) return 'destructive';
+        return 'secondary';
     }
 
     const formatDateTime = (dateStr: string) => {
@@ -297,14 +295,14 @@ function DemandNoteProfileContent() {
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="outline" className="text-green-500 border-green-500 hover:bg-green-50 hover:text-green-600"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Approve Demand Note?</AlertDialogTitle><AlertDialogDescription>This will mark the note as approved and send it to the next approver if applicable. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogHeader><AlertDialogTitle>Approve Demand Note?</AlertDialogTitle><AlertDialogDescription>This will mark the note as approved and send it to the next approver if applicable.</AlertDialogDescription></AlertDialogHeader>
                                         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
                                    <AlertDialog>
                                     <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader><AlertDialogTitle>Reject Demand Note?</AlertDialogTitle><AlertDialogDescription>This will mark the note as rejected and stop the approval process. This action can be audited.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogHeader><AlertDialogTitle>Reject Demand Note?</AlertDialogTitle><AlertDialogDescription>This will mark the note as rejected and stop the approval process.</AlertDialogDescription></AlertDialogHeader>
                                         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(0)} className="bg-destructive hover:bg-destructive/90">Confirm Reject</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                    </AlertDialog>
@@ -331,8 +329,8 @@ function DemandNoteProfileContent() {
                                     <ul className="space-y-4">
                                         {demandNote.approvalFlow?.steps.map((step, index) => {
                                             const historyEntry = demandNote.approvalHistory?.find(h => h.level === index);
-                                            const approver = employees?.find(e => e.id === step.approverId);
-                                            const designation = designations?.find(d => d.id === approver?.designationId);
+                                            const approver = (employees || []).find(e => e.id === step.approverId);
+                                            const designation = (designations || []).find(d => d.id === approver?.designationId);
                                             
                                             let status: 'approved' | 'pending' | 'upcoming' | 'rejected' = 'upcoming';
 
@@ -343,7 +341,6 @@ function DemandNoteProfileContent() {
                                             } else if (demandNote.currentApproverId === step.approverId && isPendingApproval) {
                                                 status = 'pending';
                                             }
-
 
                                             return (
                                                 <li key={index} className="flex items-start gap-4">
@@ -424,7 +421,7 @@ function DemandNoteProfileContent() {
                             </Card>
                         </TabsContent>
                         <TabsContent value="quotations">
-                            <QuotationManager demandNote={demandNote} vendors={vendors} isReadOnly={isReadOnly} />
+                            <QuotationManager demandNote={demandNote} vendors={vendors || []} isReadOnly={isReadOnly} />
                         </TabsContent>
                         <TabsContent value="documents">
                             <div className="space-y-6">
