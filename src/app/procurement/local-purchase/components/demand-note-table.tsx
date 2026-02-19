@@ -53,10 +53,18 @@ export function DemandNoteTable() {
     const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
-        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false };
+        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false };
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
-        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO };
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
+        return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC };
     }, [orgSettings, currentUserEmployee, user]);
+
+    const userRoleText = useMemo(() => {
+        if (roleData.isSuperAdmin) return "Role: Superadmin";
+        if (roleData.isGPOfficer) return "Role: GP Officer";
+        if (roleData.isGPConcern) return "Role: GP Concern Officer";
+        return "Role: Employee";
+    }, [roleData]);
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(demandNotes) ? demandNotes : [];
@@ -82,12 +90,6 @@ export function DemandNoteTable() {
         if (currentItem?.id && dataRef) deleteDocumentNonBlocking(doc(dataRef, currentItem.id));
         setIsDeleteConfirmOpen(false);
     };
-
-    const userRoleText = useMemo(() => {
-        if (roleData.isSuperAdmin) return "Role: Superadmin";
-        if (roleData.isGPOfficer) return "Role: GP Officer";
-        return "Role: Employee";
-    }, [roleData]);
 
     return (
         <TooltipProvider>

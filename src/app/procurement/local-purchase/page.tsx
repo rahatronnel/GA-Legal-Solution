@@ -132,7 +132,7 @@ export default function LocalPurchasePage() {
   const canViewCsTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
   const canViewPoTab = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
 
-  const gridCols = useMemo(() => {
+  const gridColsCount = useMemo(() => {
     let count = 2; // Dashboard & Demand Notes
     if (showGPDesk) count++;
     if (canViewCsTab) count++;
@@ -153,7 +153,7 @@ export default function LocalPurchasePage() {
     <div className="space-y-6">
       <ModuleHeader />
       <Tabs defaultValue="demand-notes" className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="demand-notes">Demand Notes</TabsTrigger>
             {showGPDesk && <TabsTrigger value="gp-desk">GP Desk</TabsTrigger>}
