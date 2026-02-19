@@ -3,7 +3,11 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, Settings, User, PlusCircle, Trash2, CalendarIcon, LayoutDashboard, FileText, Users, FileBarChart, Database, ShieldCheck } from 'lucide-react';
+import { 
+    Home as HomeIcon, Settings, User, PlusCircle, Trash2, CalendarIcon, 
+    LayoutDashboard, FileText, Users, FileBarChart, Database, ShieldCheck,
+    Tag, Briefcase, Package, Layers, Hash, ListOrdered
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -246,13 +250,13 @@ export default function BillFlowPage() {
             </TabsContent>
             <TabsContent value="master" className="space-y-6">
                 <Tabs defaultValue="bill-items" className="w-full">
-                  <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
-                    <TabsTrigger value="bill-item-categories">Bill Item Categories</TabsTrigger>
-                    <TabsTrigger value="vendor-categories">Vendor Categories</TabsTrigger>
-                    <TabsTrigger value="vendor-nature">Vendor Nature of Business</TabsTrigger>
-                    <TabsTrigger value="bill-types">Bill Types</TabsTrigger>
-                    <TabsTrigger value="bill-categories">Bill Categories</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-6 h-auto bg-muted/30 p-1 rounded-lg">
+                    <TabsTrigger value="bill-items" className="flex items-center gap-1 text-xs"><Package className="h-3 w-3"/> Items</TabsTrigger>
+                    <TabsTrigger value="bill-item-categories" className="flex items-center gap-1 text-xs"><Layers className="h-3 w-3"/> I-Cat</TabsTrigger>
+                    <TabsTrigger value="vendor-categories" className="flex items-center gap-1 text-xs"><Tag className="h-3 w-3"/> V-Cat</TabsTrigger>
+                    <TabsTrigger value="vendor-nature" className="flex items-center gap-1 text-xs"><Briefcase className="h-3 w-3"/> V-Nature</TabsTrigger>
+                    <TabsTrigger value="bill-types" className="flex items-center gap-1 text-xs"><ListOrdered className="h-3 w-3"/> Types</TabsTrigger>
+                    <TabsTrigger value="bill-categories" className="flex items-center gap-1 text-xs"><Hash className="h-3 w-3"/> Cat</TabsTrigger>
                   </TabsList>
                   <TabsContent value="bill-items" className="mt-4">
                     <Card>

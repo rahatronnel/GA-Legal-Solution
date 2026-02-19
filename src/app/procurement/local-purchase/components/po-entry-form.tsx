@@ -10,7 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, User, Building, Info, Hash, Phone, Mail, MapPin, Truck, ListOrdered, DollarSign, Tag, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { 
+    CalendarIcon, User, Building, Info, Hash, Phone, Mail, MapPin, Truck, 
+    ListOrdered, DollarSign, Tag, MessageSquare, CheckCircle2, ClipboardCheck 
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { useProcurement } from './procurement-provider';
 import type { ComparativeStatement } from './cs-entry-form';
@@ -288,7 +291,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
 
           <div className="flex justify-end">
              <div className="w-full max-w-sm space-y-2 text-sm p-4 bg-muted/30 rounded-lg border">
-                <div className="flex justify-between font-medium"><span className="text-muted-foreground">Subtotal Amount:</span><span>{formatCurrency(poData.totalAmount)}</span></div>
+                <div className="flex justify-between font-medium"><span className="text-muted-foreground font-medium flex items-center gap-2"><DollarSign className="h-3 w-3" /> Subtotal Amount:</span><span>{formatCurrency(poData.totalAmount)}</span></div>
                 <div className="flex justify-between font-medium text-red-500"><span>Applied Discount:</span><span>- {formatCurrency(poData.discountAmount)}</span></div>
                 <div className="flex justify-between font-medium"><span className="text-muted-foreground">VAT Amount:</span><span>+ {formatCurrency(poData.vatAmount)}</span></div>
                 <div className="flex justify-between font-medium"><span className="text-muted-foreground">Tax Amount:</span><span>+ {formatCurrency(poData.taxAmount)}</span></div>

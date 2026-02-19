@@ -25,7 +25,10 @@ import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
-import { FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, Database, Settings } from 'lucide-react';
+import { 
+    FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, 
+    Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin 
+} from 'lucide-react';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -74,7 +77,6 @@ function LocalPurchaseContent() {
     if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
-    // Check if the user is currently assigned to approve ANY active record
     const isCurrentApprover = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id) ||
                               (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id) ||
                               (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id);
@@ -191,15 +193,15 @@ function LocalPurchaseContent() {
                <LegacyBillFlowProvider>
                 <MasterDataProvider>
                   <Tabs defaultValue="vendors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
-                      <TabsTrigger value="vendors">Vendors</TabsTrigger>
-                      <TabsTrigger value="v-cat">V-Cat</TabsTrigger>
-                      <TabsTrigger value="v-nature">V-Nature</TabsTrigger>
-                      <TabsTrigger value="bill-items">Bill Items</TabsTrigger>
-                      <TabsTrigger value="i-cat">Item Cat</TabsTrigger>
-                      <TabsTrigger value="codes">Process Codes</TabsTrigger>
-                      <TabsTrigger value="types">DN Types</TabsTrigger>
-                      <TabsTrigger value="places">Offices</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto bg-muted/30 p-1 rounded-lg">
+                      <TabsTrigger value="vendors" className="flex items-center gap-1 text-xs"><Users className="h-3 w-3"/> Vendors</TabsTrigger>
+                      <TabsTrigger value="v-cat" className="flex items-center gap-1 text-xs"><Tag className="h-3 w-3"/> V-Cat</TabsTrigger>
+                      <TabsTrigger value="v-nature" className="flex items-center gap-1 text-xs"><Briefcase className="h-3 w-3"/> V-Nature</TabsTrigger>
+                      <TabsTrigger value="bill-items" className="flex items-center gap-1 text-xs"><Package className="h-3 w-3"/> B-Items</TabsTrigger>
+                      <TabsTrigger value="i-cat" className="flex items-center gap-1 text-xs"><Layers className="h-3 w-3"/> I-Cat</TabsTrigger>
+                      <TabsTrigger value="codes" className="flex items-center gap-1 text-xs"><Hash className="h-3 w-3"/> Codes</TabsTrigger>
+                      <TabsTrigger value="types" className="flex items-center gap-1 text-xs"><FileText className="h-3 w-3"/> DN-Types</TabsTrigger>
+                      <TabsTrigger value="places" className="flex items-center gap-1 text-xs"><MapPin className="h-3 w-3"/> Offices</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="vendors" className="mt-4"><Card><CardHeader><CardTitle>Vendors</CardTitle></CardHeader><CardContent><VendorTable /></CardContent></Card></TabsContent>
