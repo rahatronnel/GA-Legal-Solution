@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
@@ -27,6 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
@@ -108,10 +108,10 @@ const ModuleDashboard = () => {
                             </Avatar>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>
-                            <p className="font-semibold">{currentUserEmployee?.fullName || user?.email}</p>
-                            <p className="text-xs text-muted-foreground font-normal">{currentUserEmployee?.email || ''}</p>
+                            <p className="font-semibold truncate">{currentUserEmployee?.fullName || user?.email}</p>
+                            <p className="text-xs text-muted-foreground font-normal truncate">{currentUserEmployee?.email || ''}</p>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <ChangePasswordDialog>
@@ -121,12 +121,12 @@ const ModuleDashboard = () => {
                         </ChangePasswordDialog>
                         <DropdownMenuSeparator />
                         <AlertDialog>
-                           <DropdownMenuTrigger asChild>
+                           <AlertDialogTrigger asChild>
                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>Logout</span>
                                </DropdownMenuItem>
-                           </DropdownMenuTrigger>
+                           </AlertDialogTrigger>
                            <AlertDialogContent>
                                <AlertDialogHeader>
                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
