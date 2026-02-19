@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -6,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight } from 'lucide-react';
+import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import { getRelativeTimeInfo } from '../lib/time-helper';
 
 type TimelineEvent = {
@@ -24,12 +25,12 @@ type TimelineEvent = {
         designation: string;
         image?: string;
     };
-    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po';
+    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr';
     status: 'completed' | 'pending' | 'rejected';
 };
 
 export function WorkflowTracker() {
-    const { demandNotes, comparativeStatements, purchaseOrders, employees, sections, designations, vendors, isLoading } = useProcurement();
+    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, sections, designations, vendors, isLoading } = useProcurement();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDnId, setSelectedDnId] = useState<string | null>(null);
 
@@ -60,6 +61,8 @@ export function WorkflowTracker() {
 
         const cs = comparativeStatements.find(c => c.demandNoteId === dn.id);
         const po = purchaseOrders.find(p => p.demandNoteId === dn.id);
+        const mrr = mrrs.find(m => m.poId === po?.id || m.demandNoteNumber === dn.demandNoteNumber);
+        
         const events: TimelineEvent[] = [];
 
         // 1. Requisition Entry
@@ -177,8 +180,41 @@ export function WorkflowTracker() {
             });
         }
 
+        // 7. MRR Receipt
+        if (mrr) {
+            events.push({
+                id: 'mrr-receipt',
+                title: 'Materials Received (MRR)',
+                description: `Material Receiving Report #${mrr.mrrNumber} finalized. Goods verified by store.`,
+                timestamp: mrr.createdAt,
+                user: getEmployeeInfo(mrr.createdBy),
+                type: 'mrr',
+                status: 'completed'
+            });
+        }
+
         return events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    }, [selectedDnId, demandNotes, comparativeStatements, purchaseOrders, employees, sections, vendors]);
+    }, [selectedDnId, demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, sections, vendors]);
+
+    const totalCycleTimeText = useMemo(() => {
+        if (timeline.length < 2) return null;
+        const start = new Date(timeline[0].timestamp);
+        const end = new Date(timeline[timeline.length - 1].timestamp);
+        
+        const diffMinutesTotal = Math.abs(differenceInMinutes(end, start));
+        const diffHoursTotal = Math.abs(differenceInHours(end, start));
+        const diffDays = Math.abs(differenceInDays(end, start));
+        
+        const hours = diffHoursTotal % 24;
+        const minutes = diffMinutesTotal % 60;
+        
+        let text = "";
+        if (diffDays > 0) text += `${diffDays} day${diffDays > 1 ? 's' : ''}, `;
+        if (hours > 0 || diffDays > 0) text += `${hours} hour${hours !== 1 ? 's' : ''} and `;
+        text += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        
+        return text;
+    }, [timeline]);
 
     const formatDateTime = (ts: string) => {
         try {
@@ -241,7 +277,11 @@ export function WorkflowTracker() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <CardTitle className="text-xl">Workflow Tracker: {selectedDn.demandNoteNumber}</CardTitle>
-                                <div className="text-sm text-muted-foreground">Full audit trail of the procurement lifecycle.</div>
+                                <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                    <Timer className="h-4 w-4 text-primary" />
+                                    <span className="font-bold text-foreground">Total Process Duration:</span>
+                                    <span className="text-primary font-bold">{totalCycleTimeText || 'Calculating...'}</span>
+                                </div>
                             </div>
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={`/procurement/local-purchase/demand-notes/${selectedDn.id}`}>View Record</Link>
@@ -268,6 +308,7 @@ export function WorkflowTracker() {
                                                 {event.type === 'assignment' && <User className="h-4 w-4" />}
                                                 {event.type === 'award' && <ShoppingCart className="h-4 w-4" />}
                                                 {event.type === 'po' && <Building className="h-4 w-4" />}
+                                                {event.type === 'mrr' && <Package className="h-4 w-4" />}
                                             </div>
 
                                             <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -306,7 +347,7 @@ export function WorkflowTracker() {
                                     <div className="relative flex items-center justify-center py-4">
                                         <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full border border-green-200 text-sm font-bold flex items-center gap-2">
                                             <CheckCircle2 className="h-4 w-4" />
-                                            Workflow Completed
+                                            Workflow Successfully Completed
                                         </div>
                                     </div>
                                 )}
@@ -316,7 +357,7 @@ export function WorkflowTracker() {
                         <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
                             <History className="h-24 w-24 mb-4" />
                             <h3 className="text-xl font-semibold">No Requisition Selected</h3>
-                            <p className="text-sm max-w-[300px]">Choose a Demand Note from the left panel to track its full audit trail and lifecycle status.</p>
+                            <p className="text-sm max-w-[300px]">Choose a Demand Note from the left panel to track its full audit trail and cycle time.</p>
                         </div>
                     )}
                 </CardContent>
