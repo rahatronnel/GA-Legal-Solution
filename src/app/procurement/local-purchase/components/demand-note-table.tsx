@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, ShieldCheck, UserCheck, History, Tag } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,6 +39,59 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+
+const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+                <div className="flex items-center gap-2 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                    <DialogTitle className="text-xl">Demand Note (DN) User Guide</DialogTitle>
+                </div>
+                <DialogDescription>Internal guidelines for material and service requisitions.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-grow pr-4">
+                <div className="space-y-6 py-4">
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            The Demand Note is the starting point of the procurement lifecycle. It serves as a formal internal request from any department for goods, services, or equipment.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Dynamic Approval Logic</h4>
+                        <p className="text-sm text-muted-foreground mb-2">The system automatically calculates the approval path based on the items requested:</p>
+                        <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                            <li><strong>Standard:</strong> Routed to the department's Head and Technical Advisor.</li>
+                            <li><strong>Manufacturing:</strong> Routed to Head, TA, and the Manufacturing Dept. Manager.</li>
+                            <li><strong>Special Items:</strong> Routed to Head, TA, Specialized Dept. Manager, and finally the Managing Director (MD).</li>
+                        </ul>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> GP Desk Integration</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Once a Demand Note is <Badge>Final Approved</Badge>, it is automatically visible at the <strong>General Purchase (GP) Desk</strong>. Here, a GP Officer will assign a specific "GP Concern" to begin sourcing vendor quotations.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Access & Visibility</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Requisitions are visible to the creator, all approvers in the chain, and GP personnel. Management can track the status in real-time via the <Badge variant="outline">Action Beacons</Badge> displayed in the list view.
+                        </p>
+                    </section>
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
 
 export function DemandNoteTable() {
     const { toast } = useToast();
@@ -50,6 +104,7 @@ export function DemandNoteTable() {
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
     
@@ -92,8 +147,6 @@ export function DemandNoteTable() {
         };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer } = roleData;
-
     const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
     const enrichedItems = useMemo(() => {
@@ -128,7 +181,6 @@ export function DemandNoteTable() {
                 if (isHeadOfThisDept) isVisible = true;
             }
             
-            // Access rule: Creator, Current Approver, or ANY past approver in history
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
             if (currentUserEmployee && item.currentApproverId === currentUserEmployee.id) isVisible = true;
             if (currentUserEmployee && item.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) isVisible = true;
@@ -262,9 +314,12 @@ export function DemandNoteTable() {
                             </div>
                         )}
                     </div>
-                    <Button onClick={() => { setCurrentItem(null); setIsFormOpen(true); }}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Create Demand Note
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                        <Button onClick={() => { setCurrentItem(null); setIsFormOpen(true); }}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Create Demand Note
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
@@ -324,7 +379,7 @@ export function DemandNoteTable() {
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
                                     const isWaitingForApproval = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                                    const isWaitingForGP = (isGPOfficer || isSuperAdmin) && item.approvalStatus === 1 && !item.gpConcernOfficerId;
+                                    const isWaitingForGP = (roleData.isGPOfficer || roleData.isSuperAdmin) && item.approvalStatus === 1 && !item.gpConcernOfficerId;
                                     const isApprovable = approvableItems.some(ai => ai.id === item.id);
 
                                     return (
@@ -393,6 +448,7 @@ export function DemandNoteTable() {
             </div>
 
             <DemandNoteEntryForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} onSave={handleSave} demandNote={currentItem} />
+            <DemandNoteUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
