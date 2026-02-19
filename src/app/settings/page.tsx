@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, ShieldAlert } from 'lucide-react';
+import { Upload, X, ShieldAlert, Layout, CheckCircle2 } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,8 +20,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { BulkDeleteSection } from './components/bulk-delete-section';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type ApprovalStep = {
     stepName: string;
@@ -37,8 +40,12 @@ export type OrganizationSettings = {
   email: string;
   fax: string;
   registrationNumber: string;
-  logo: string; // Stored as data URL
-  favicon: string; // Stored as data URL for favicon
+  logo: string; 
+  favicon: string; 
+  moduleVisibility?: {
+    showProcurementManagement: boolean;
+    showCoreModules: boolean;
+  };
   approvalFlow?: {
       effectiveDate: string;
       steps: ApprovalStep[];
@@ -79,12 +86,16 @@ const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementS
   registrationNumber: 'C-12345/67',
   logo: '',
   favicon: '',
+  moduleVisibility: {
+    showProcurementManagement: true,
+    showCoreModules: true
+  }
 };
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { isUserLoading, user } = useUser();
+  const { isUserLoading } = useUser();
   
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: remoteSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
@@ -98,21 +109,32 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (remoteSettings) {
-      setSettings(remoteSettings);
-      if (remoteSettings.logo) {
-        setLogoPreview(remoteSettings.logo);
-      }
-      if (remoteSettings.favicon) {
-        setFaviconPreview(remoteSettings.favicon);
-      }
-    } else {
-      setSettings(initialSettings as OrganizationSettings);
+      setSettings({
+        ...initialSettings,
+        ...remoteSettings,
+        moduleVisibility: {
+          ...initialSettings.moduleVisibility,
+          ...remoteSettings.moduleVisibility
+        }
+      });
+      if (remoteSettings.logo) setLogoPreview(remoteSettings.logo);
+      if (remoteSettings.favicon) setFaviconPreview(remoteSettings.favicon);
     }
   }, [remoteSettings]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setSettings(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleVisibilityChange = (key: keyof NonNullable<OrganizationSettings['moduleVisibility']>, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      moduleVisibility: {
+        ...prev.moduleVisibility!,
+        [key]: value
+      }
+    }));
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
@@ -128,12 +150,7 @@ export default function SettingsPage() {
           setSettings(prev => ({ ...prev, favicon: dataUrl }));
         }
       } catch (error) {
-        console.error("Error processing image:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Image Error',
-          description: 'Could not process the uploaded image. Please try another file.'
-        });
+        toast({ variant: 'destructive', title: 'Image Error' });
       }
     }
   };
@@ -151,31 +168,12 @@ export default function SettingsPage() {
   const handleSave = () => {
     if (settingsDocRef) {
       setDocumentNonBlocking(settingsDocRef, settings, { merge: true });
-      toast({
-        title: 'Settings Saved',
-        description: 'Your organization settings have been saved successfully.',
-      });
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not connect to the database to save settings.',
-        });
+      toast({ title: 'Settings Saved' });
     }
   };
   
   if (isLoading) {
-      return (
-          <Card>
-              <CardHeader>
-                  <Skeleton className="h-8 w-1/2" />
-                  <Skeleton className="h-4 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                  <Skeleton className="h-96 w-full" />
-              </CardContent>
-          </Card>
-      )
+      return <div className="p-8 text-center animate-pulse">Loading settings...</div>;
   }
 
   return (
@@ -183,45 +181,16 @@ export default function SettingsPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Organization Settings</CardTitle>
-                <CardDescription>
-                Manage your organization's general information and branding. This information will be used across the application, like in print layouts.
-                </CardDescription>
+                <CardDescription>Manage your organization's general information and branding.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                    <Label htmlFor="name">Organization Name</Label>
-                    <Input id="name" value={settings.name} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="slogan">Slogan</Label>
-                    <Input id="slogan" value={settings.slogan} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea id="address" value={settings.address} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="contactNumber">Contact Number</Label>
-                    <Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="telephone">Telephone Number</Label>
-                    <Input id="telephone" value={settings.telephone} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={settings.email} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="fax">Fax</Label>
-                    <Input id="fax" value={settings.fax} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="registrationNumber">Registration Number</Label>
-                    <Input id="registrationNumber" value={settings.registrationNumber} onChange={handleInputChange} />
-                    </div>
+                    <div className="space-y-2"><Label htmlFor="name">Organization Name</Label><Input id="name" value={settings.name} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="slogan">Slogan</Label><Input id="slogan" value={settings.slogan} onChange={handleInputChange} /></div>
+                    <div className="space-y-2 sm:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" value={settings.address} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="contactNumber">Contact Number</Label><Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={settings.email} onChange={handleInputChange} /></div>
                 </div>
                 <div className="md:col-span-1 space-y-6">
                     <div className="space-y-2">
@@ -230,75 +199,50 @@ export default function SettingsPage() {
                             <Label htmlFor="logo-upload" className="cursor-pointer w-full">
                                 <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
                                 {logoPreview ? (
-                                    <Image src={logoPreview} alt="Logo Preview" width={200} height={112} className="object-contain" />
+                                    <Image src={logoPreview} alt="Logo" width={200} height={112} className="object-contain" />
                                 ) : (
-                                    <div className="text-center text-muted-foreground p-4">
-                                        <Upload className="mx-auto h-8 w-8 mb-2"/>
-                                        <p className="text-sm">Click to upload logo</p>
-                                    </div>
+                                    <div className="text-center text-muted-foreground p-4"><Upload className="mx-auto h-8 w-8 mb-2"/><p className="text-sm">Click to upload logo</p></div>
                                 )}
                                 </div>
                             </Label>
                             <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'logo')} />
-                            {logoPreview && (
-                                <Button variant="link" size="sm" className="text-destructive" onClick={() => removeImage('logo')}>
-                                <X className="mr-2 h-4 w-4" /> Remove logo
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Favicon</Label>
-                        <div className="flex flex-col items-center gap-2">
-                            <Label htmlFor="favicon-upload" className="cursor-pointer w-full">
-                                <div className="aspect-square w-24 h-24 rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed">
-                                {faviconPreview ? (
-                                    <Image src={faviconPreview} alt="Favicon Preview" width={96} height={96} className="object-contain" />
-                                ) : (
-                                    <div className="text-center text-muted-foreground p-2">
-                                        <Upload className="mx-auto h-6 w-6 mb-1"/>
-                                        <p className="text-xs">Upload Favicon</p>
-                                    </div>
-                                )}
-                                </div>
-                            </Label>
-                            <Input id="favicon-upload" type="file" accept="image/png,image/x-icon,image/svg+xml" className="hidden" onChange={(e) => handleImageChange(e, 'favicon')} />
-                            {faviconPreview && (
-                                <Button variant="link" size="sm" className="text-destructive" onClick={() => removeImage('favicon')}>
-                                <X className="mr-2 h-4 w-4" /> Remove favicon
-                                </Button>
-                            )}
                         </div>
                     </div>
                 </div>
                 </div>
-                <div className="flex justify-end">
-                    <Button onClick={handleSave}>Save Settings</Button>
-                </div>
+                <div className="flex justify-end"><Button onClick={handleSave}>Save Settings</Button></div>
             </CardContent>
         </Card>
 
-        {/* The hidden symbol trigger for Maintenance */}
+        {/* Hidden Maintenance & Visibility Trigger */}
         <div className="flex justify-center pt-12">
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="opacity-10 hover:opacity-100 transition-opacity h-6 w-6 rounded-full group"
-                onClick={() => setIsMaintenanceOpen(true)}
-            >
-                <ShieldAlert className="h-3 w-3 text-muted-foreground group-hover:text-destructive" />
-            </Button>
+            <Button variant="ghost" size="icon" className="opacity-10 hover:opacity-100 transition-opacity h-6 w-6 rounded-full" onClick={() => setIsMaintenanceOpen(true)}><ShieldAlert className="h-3 w-3 text-muted-foreground" /></Button>
         </div>
 
         <Dialog open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
             <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Maintenance Tools</DialogTitle>
-                    <DialogDescription>
-                        Internal administrative operations. Use with caution.
-                    </DialogDescription>
-                </DialogHeader>
-                <BulkDeleteSection />
+                <DialogHeader><DialogTitle>Advanced Controls</DialogTitle><DialogDescription>Maintenance tools and module visibility settings.</DialogDescription></DialogHeader>
+                <div className="space-y-6 py-4">
+                    <div className="space-y-4">
+                        <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Home Page Visibility</h4>
+                        <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="vis-proc" checked={settings.moduleVisibility?.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
+                                <Label htmlFor="vis-proc">Show Procurement Management Section</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="vis-core" checked={settings.moduleVisibility?.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
+                                <Label htmlFor="vis-core">Show Core Modules Section</Label>
+                            </div>
+                        </div>
+                        <Button className="w-full mt-2" size="sm" onClick={handleSave}><CheckCircle2 className="mr-2 h-4 w-4"/> Update Visibility</Button>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <h4 className="font-bold text-sm uppercase tracking-wider text-destructive">Data Maintenance</h4>
+                        <BulkDeleteSection />
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     </div>

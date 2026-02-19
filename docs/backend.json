@@ -15,6 +15,14 @@
         "fax": { "type": "string", "description": "Fax number." },
         "registrationNumber": { "type": "string", "description": "Official registration number." },
         "logo": { "type": "string", "description": "Data URL of the organization's logo." },
+        "favicon": { "type": "string", "description": "Data URL of the favicon." },
+        "moduleVisibility": {
+          "type": "object",
+          "properties": {
+            "showProcurementManagement": { "type": "boolean" },
+            "showCoreModules": { "type": "boolean" }
+          }
+        },
         "approvalFlow": {
             "type": "object",
             "description": "Defines the bill approval workflow.",

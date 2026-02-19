@@ -16,7 +16,7 @@ import {
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
 import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
-import { coreModules, utilityModules, majorModules } from '@/lib/modules';
+import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
   AlertDialog,
@@ -27,7 +27,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
@@ -38,7 +37,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { OrganizationSettings } from './settings/page';
 
 
-// Lazy load all page components to prevent their data providers from running before auth is checked.
 const moduleComponents: { [key:string]: React.ComponentType } = {
     '/vehicle-management': dynamic(() => import('./vehicle-management/page'), { ssr: false }),
     '/user-management': dynamic(() => import('./user-management/page'), { ssr: false }),
@@ -65,6 +63,9 @@ const ModuleDashboard = () => {
     const { user } = useUser();
     const firestore = useFirestore();
     
+    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+
     const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
     const { data: employees } = useCollection<Employee>(employeesRef);
     
@@ -73,6 +74,8 @@ const ModuleDashboard = () => {
         return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
     }, [user, employees]);
 
+    const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
+    const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
 
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
@@ -118,24 +121,24 @@ const ModuleDashboard = () => {
                         </ChangePasswordDialog>
                         <DropdownMenuSeparator />
                         <AlertDialog>
-                           <AlertDialogTrigger asChild>
+                           <DropdownMenuTrigger asChild>
                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>Logout</span>
                                </DropdownMenuItem>
-                           </AlertDialogTrigger>
-                           <AlertDialogContent>
-                               <AlertDialogHeader>
-                               <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-                               <AlertDialogDescription>
+                           </DropdownMenuTrigger>
+                           <DialogContent>
+                               <DialogHeader>
+                               <DialogTitle>Are you sure you want to logout?</DialogTitle>
+                               <DialogDescription>
                                    You will be returned to the login page.
-                               </AlertDialogDescription>
-                               </AlertDialogHeader>
+                               </DialogDescription>
+                               </DialogHeader>
                                <AlertDialogFooter>
                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
                                </AlertDialogFooter>
-                           </AlertDialogContent>
+                           </DialogContent>
                         </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -147,8 +150,7 @@ const ModuleDashboard = () => {
                  <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
             </div>
             <div className="w-full max-w-5xl space-y-8">
-                {/* Major Modules Section */}
-                {majorModules.map((majorMod) => (
+                {showProcurement && majorModules.map((majorMod) => (
                     <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20">
                         <CardHeader>
                             <div className="flex items-center gap-4">
@@ -176,29 +178,31 @@ const ModuleDashboard = () => {
                     </Card>
                 ))}
                 
-                {/* Separator */}
-                <div className="relative py-4">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
+                {showCore && (
+                  <>
+                    <div className="relative py-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center">
+                            <span className="bg-background px-3 text-sm text-muted-foreground">
+                                Core Modules
+                            </span>
+                        </div>
                     </div>
-                    <div className="relative flex justify-center">
-                        <span className="bg-background px-3 text-sm text-muted-foreground">
-                            Core Modules
-                        </span>
-                    </div>
-                </div>
 
-                {/* Core Modules Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {coreModules.map((mod) => (
-                        <Link href={mod.href} key={mod.href}>
-                            <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
-                                <mod.icon className="h-12 w-12 text-primary mb-3" />
-                                <p className="font-semibold text-sm">{mod.name}</p>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        {coreModules.map((mod) => (
+                            <Link href={mod.href} key={mod.href}>
+                                <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
+                                    <mod.icon className="h-12 w-12 text-primary mb-3" />
+                                    <p className="font-semibold text-sm">{mod.name}</p>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                  </>
+                )}
             </div>
              <footer className="absolute bottom-4 text-xs text-muted-foreground">
                 © 2024 GA & Legal Solution
@@ -243,9 +247,7 @@ export function AppWrapper() {
   }
 
   const findMatchingKey = (path: string) => {
-    // Exact match first
     if (moduleComponents[path]) return path;
-    // Dynamic match for paths like /billflow/bills/some-id
     const dynamicKey = Object.keys(moduleComponents).find(key => {
         if (!key.includes('[')) return false;
         const regex = new RegExp(`^${key.replace(/\[\.\.\..*\]/,'.*').replace(/\[(.*?)\]/g, '([^/]+)')}$`);
@@ -269,6 +271,5 @@ export function AppWrapper() {
     );
   }
 
-  // Fallback to the dashboard if no specific module matches
   return <ModuleDashboard />;
 }
