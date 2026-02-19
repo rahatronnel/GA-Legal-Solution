@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -358,7 +359,7 @@ export function DemandNoteTable() {
                                                         <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Requisition</Badge>
                                                     )}
                                                     {isWaitingForGP && (
-                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign GP Desk</Badge>
+                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>
                                                     )}
                                                 </div>
                                             </TableCell>

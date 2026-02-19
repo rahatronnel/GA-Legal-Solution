@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus, Copy } from 'lucide-react';
+import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus, Copy, DollarSign, FileText, AlertTriangle, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
@@ -35,6 +36,7 @@ import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Label } from '@/components/ui/label';
 import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -53,36 +55,145 @@ const VendorSelectionDialog: React.FC<{
         }
     }, [isOpen]);
 
+    const selectedVendor = vendors.find(v => v.id === selectedVendorId);
+    const selectedVendorDetail = cs?.vendorDetails.find(d => d.vendorId === selectedVendorId);
+
+    const financials = useMemo(() => {
+        if (!cs || !selectedVendorId) return null;
+        
+        const subtotal = cs.items.reduce((acc, item) => {
+            const quote = item.vendorQuotes.find(q => q.vendorId === selectedVendorId);
+            return acc + (item.quantity * (quote?.unitPrice || 0));
+        }, 0);
+
+        const detail = cs.vendorDetails.find(d => d.vendorId === selectedVendorId);
+        let discount = 0;
+        if (detail) {
+            if (detail.discountType === 'Percentage') {
+                discount = subtotal * ((detail.discountValue || 0) / 100);
+            } else {
+                discount = detail.discountValue || 0;
+            }
+        }
+
+        const subtotalAfterDiscount = subtotal - discount;
+        const vat = subtotalAfterDiscount * ((detail?.vatPercentage || 0) / 100);
+        const tax = subtotalAfterDiscount * ((detail?.taxPercentage || 0) / 100);
+        const total = subtotalAfterDiscount + vat + tax;
+
+        return { subtotal, discount, vat, tax, total };
+    }, [cs, selectedVendorId]);
+
     const handleNext = () => setStep(prev => prev + 1);
     const handleBack = () => setStep(prev => prev - 1);
+    
     const handleConfirm = () => {
         if (cs && selectedVendorId) onVendorSelected(cs.id, selectedVendorId);
     };
+
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl">
-                <DialogHeader><DialogTitle>Choose Vendor: {cs?.csNumber}</DialogTitle></DialogHeader>
-                 <div className="py-4 space-y-4">
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Award Contract: {cs?.csNumber}</DialogTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 1 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 2 ? "bg-primary" : "bg-muted")} />
+                        <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 3 ? "bg-primary" : "bg-muted")} />
+                    </div>
+                </DialogHeader>
+
+                 <div className="py-6 min-h-[300px]">
                     {step === 1 && (
-                        <div>
-                            <Label>Select Vendor</Label>
-                            <Select onValueChange={setSelectedVendorId}>
-                                <SelectTrigger><SelectValue placeholder="Choose..." /></SelectTrigger>
-                                <SelectContent>
-                                    {(cs?.vendorDetails || []).map(detail => {
-                                        const v = vendors.find(v => v.id === detail.vendorId);
-                                        return <SelectItem key={detail.vendorId} value={detail.vendorId}>{v?.vendorName}</SelectItem>
-                                    })}
-                                </SelectContent>
-                            </Select>
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-2">
+                                <Label className="text-lg">Step 1: Select Vendor & Review Financials</Label>
+                                <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                                    <SelectTrigger className="h-12 text-lg"><SelectValue placeholder="Choose a vendor to award..." /></SelectTrigger>
+                                    <SelectContent>
+                                        {(cs?.vendorDetails || []).map(detail => {
+                                            const v = vendors.find(v => v.id === detail.vendorId);
+                                            return <SelectItem key={detail.vendorId} value={detail.vendorId}>{v?.vendorName}</SelectItem>
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {financials && (
+                                <Card className="bg-muted/30 border-primary/20">
+                                    <CardContent className="pt-6 space-y-3">
+                                        <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Main Price (Subtotal):</span><span className="font-bold">{formatCurrency(financials.subtotal)}</span></div>
+                                        <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Applied Discount:</span><span className="text-red-500 font-bold">- {formatCurrency(financials.discount)}</span></div>
+                                        <Separator />
+                                        <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">VAT ({selectedVendorDetail?.vatPercentage}%):</span><span className="font-bold">+ {formatCurrency(financials.vat)}</span></div>
+                                        <div className="flex justify-between text-sm"><span className="text-muted-foreground font-medium">Tax ({selectedVendorDetail?.taxPercentage}%):</span><span className="font-bold">+ {formatCurrency(financials.tax)}</span></div>
+                                        <Separator />
+                                        <div className="flex justify-between text-lg"><span className="font-extrabold">Final Billed Amount:</span><span className="text-primary font-black">{formatCurrency(financials.total)}</span></div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     )}
-                    {step === 2 && <p className="p-4 text-center border bg-yellow-500/10 rounded-lg">Confirming this vendor will start the approval workflow.</p>}
+
+                    {step === 2 && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-1">
+                                <Label className="text-lg">Step 2: Review Commercial Terms</Label>
+                                <p className="text-sm text-muted-foreground">Verify terms for <span className="font-bold text-foreground">{selectedVendor?.vendorName}</span></p>
+                            </div>
+
+                            <div className="grid gap-4">
+                                <Card className="p-4 flex items-start gap-4">
+                                    <div className="p-2 bg-blue-500/10 rounded-lg"><Hand className="h-5 w-5 text-blue-500" /></div>
+                                    <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Delivery Terms</p><p className="text-sm">{selectedVendorDetail?.deliveryTerms || 'Not Specified'}</p></div>
+                                </Card>
+                                <Card className="p-4 flex items-start gap-4">
+                                    <div className="p-2 bg-green-500/10 rounded-lg"><DollarSign className="h-5 w-5 text-green-500" /></div>
+                                    <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment Terms</p><p className="text-sm">{selectedVendorDetail?.paymentTerms || 'Not Specified'}</p></div>
+                                </Card>
+                                <Card className="p-4 flex items-start gap-4">
+                                    <div className="p-2 bg-orange-500/10 rounded-lg"><FileText className="h-5 w-5 text-orange-500" /></div>
+                                    <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Warranty / Guarantee</p><p className="text-sm">{selectedVendorDetail?.warranty || 'Not Specified'}</p></div>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="flex flex-col items-center justify-center text-center space-y-6 py-8 animate-in zoom-in-95 duration-300">
+                            <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center">
+                                <AlertTriangle className="h-10 w-10 text-destructive animate-pulse" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl font-bold">Confirm Award Selection</h3>
+                                <p className="text-muted-foreground max-w-md">
+                                    You are about to award the contract to <span className="font-bold text-foreground">{selectedVendor?.vendorName}</span> for <span className="font-bold text-primary">{formatCurrency(financials?.total || 0)}</span>.
+                                </p>
+                                <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm font-medium text-yellow-700 dark:text-yellow-400 mt-4">
+                                    This action will freeze the selection and start the multi-level internal approval workflow. This cannot be undone easily.
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <DialogFooter className="flex justify-between w-full">
-                    <Button variant="outline" onClick={handleBack} disabled={step === 1}>Back</Button>
-                    {step === 1 ? <Button onClick={handleNext} disabled={!selectedVendorId}>Next</Button> : <Button onClick={handleConfirm}>Confirm</Button>}
+
+                <DialogFooter className="flex justify-between w-full border-t pt-4">
+                    <Button variant="outline" onClick={handleBack} disabled={step === 1}>
+                        <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                    <div className="flex gap-2">
+                        {step < 3 ? (
+                            <Button onClick={handleNext} disabled={!selectedVendorId}>
+                                Next Step <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        ) : (
+                            <Button variant="destructive" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
+                                Confirm Award & Start Approval
+                            </Button>
+                        )}
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -147,7 +258,7 @@ export function ComparativeStatementTable() {
             approvalStatus: 3, 
             currentApproverId: cs.approvalFlow.steps[0]?.approverId || '',
         }, { merge: true });
-        toast({ title: "Success", description: "Vendor awarded. Approval started." });
+        toast({ title: "Vendor Awarded", description: "Internal approval workflow has been initiated." });
         setIsVendorSelectionOpen(false);
     };
 
