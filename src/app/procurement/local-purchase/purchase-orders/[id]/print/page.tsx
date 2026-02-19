@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -26,27 +25,31 @@ export default function POPrintPage() {
     }, [po, vendors]);
 
     useEffect(() => {
+        // Trigger print only when everything is loaded
         if (!isLoading && po && demandNote && vendor && orgSettings) {
-            // Short delay to ensure images/layout are rendered
             const timer = setTimeout(() => {
                 window.print();
-            }, 1000);
+            }, 800); // 800ms is usually enough for data URLs/images to render
             return () => clearTimeout(timer);
         }
     }, [isLoading, po, demandNote, vendor, orgSettings]);
 
     if (isLoading || po === undefined) {
-        return <div className="p-8 text-center animate-pulse">Loading Print Preview...</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
+                <p className="animate-pulse font-bold">Generating Professional Purchase Order...</p>
+            </div>
+        );
     }
 
     if (po === null) {
         notFound();
     }
 
-    if (!orgSettings) return <div className="p-8 text-center">Settings not found.</div>;
+    if (!orgSettings) return <div className="p-8 text-center bg-white text-black">Settings not found.</div>;
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white min-h-screen print-page-dedicated">
             <POPrintLayout 
                 po={po}
                 demandNote={demandNote}

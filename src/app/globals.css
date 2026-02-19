@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -85,6 +84,7 @@ body {
     margin: 1cm;
   }
   
+  /* Hides standard app content unless it's a dedicated print route */
   .app-container {
       display: none;
   }
@@ -96,6 +96,8 @@ body {
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background-color: white !important;
+    color: black !important;
   }
   
   .print-page {
@@ -106,5 +108,11 @@ body {
   
   .print-no-break {
     page-break-inside: avoid;
+  }
+
+  /* Ensure the dedicated print page container is always visible */
+  .print-page-dedicated {
+      display: block !important;
+      visibility: visible !important;
   }
 }

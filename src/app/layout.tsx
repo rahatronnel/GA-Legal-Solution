@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -8,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { PrintProvider } from '@/app/vehicle-management/components/print-provider';
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
 import { FirebaseClientProvider } from '@/firebase';
+import { usePathname } from 'next/navigation';
 
 
 export default function RootLayout({
@@ -15,6 +15,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  // Check if we are on a dedicated print page to avoid hiding content during print
+  const isPrintPage = pathname?.includes('/print');
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -30,9 +33,11 @@ export default function RootLayout({
         {/* Firebase initialized on the client */}
         <FirebaseClientProvider>
           <PrintProvider>
-            <div className="app-container">
+            {/* We only apply 'app-container' (which hides on print) if it's NOT a dedicated print route */}
+            <div className={cn(!isPrintPage && "app-container")}>
               {children}
             </div>
+            {/* print-container is used for the legacy dynamic overlay print system */}
             <div className="print-container">
               <PrintDriver />
             </div>
