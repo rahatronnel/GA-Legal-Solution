@@ -35,8 +35,23 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
 
     const gpConcern = employees.find(e => e.id === demandNote?.gpConcernOfficerId);
+    const gpConcernDesignation = designations.find(d => d.id === gpConcern?.designationId);
     const deliveryLocation = deliveryPlaces.find(p => p.id === demandNote?.deliveryPlace);
     
+    const formatDateTime = (ts: string | undefined) => {
+        if (!ts) return 'N/A';
+        try {
+            return new Date(ts).toLocaleString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch { return ts; }
+    };
+
     const approvers = po.approvalHistory
         ?.filter(h => h.status === 'Approved')
         .map(h => {
@@ -127,8 +142,15 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
 
             <div className="absolute bottom-12 left-8 right-8 flex justify-between items-start border-t pt-8">
                 <div className="text-center w-48">
-                    <div className="h-12 flex items-center justify-center italic text-[10px] text-muted-foreground">Digitally Generated</div>
-                    <div className="border-t-2 border-black pt-2 mt-2"><p className="font-bold text-sm">Prepared By</p><p className="text-xs">GP Department</p></div>
+                    <div className="h-12 flex items-center justify-center">
+                        {gpConcern?.signature && <Image src={gpConcern.signature} alt="Sig" width={100} height={40} className="object-contain" />}
+                    </div>
+                    <div className="border-t-2 border-black pt-2 mt-2">
+                        <p className="font-bold text-sm truncate">{gpConcern?.fullName || 'N/A'}</p>
+                        <p className="text-xs truncate">{gpConcernDesignation?.name || 'N/A'}</p>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-1 text-center font-bold">Prepared By</p>
+                    <p className="text-[8px] text-muted-foreground text-center mt-0.5">{formatDateTime(po.createdAt)}</p>
                 </div>
                 {approvers.map((sig, i) => (
                     <div key={i} className="text-center w-48">
@@ -139,7 +161,8 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                             <p className="font-bold text-sm truncate">{sig.employee?.fullName}</p>
                             <p className="text-xs truncate">{sig.designation?.name}</p>
                         </div>
-                        <p className="text-[9px] text-muted-foreground mt-1 text-center">{sig.title}</p>
+                        <p className="text-[9px] text-muted-foreground mt-1 text-center font-bold">{sig.title}</p>
+                        <p className="text-[8px] text-muted-foreground text-center mt-0.5">{formatDateTime(sig.timestamp)}</p>
                     </div>
                 ))}
             </div>
