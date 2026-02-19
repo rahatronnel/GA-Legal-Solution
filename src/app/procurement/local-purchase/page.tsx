@@ -32,7 +32,7 @@ import {
 
 function LocalPurchaseContent() {
   const { user } = useUser();
-  const { orgSettings, employees, demandNotes, comparativeStatements, purchaseOrders } = useProcurement();
+  const { orgSettings, employees, demandNotes, comparativeStatements, purchaseOrders, mrrs } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -77,9 +77,13 @@ function LocalPurchaseContent() {
     if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
-    const isCurrentApprover = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id) ||
-                              (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id) ||
-                              (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id);
+    // Enhanced Involvement Check: Includes MRRs and Historical involvement
+    const isInvolvedInDn = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id || dn.approvalHistory?.some(h => h.approverId === currentEmp.id));
+    const isInvolvedInCs = (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id || cs.approvalHistory?.some(h => h.approverId === currentEmp.id));
+    const isInvolvedInPo = (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id || po.approvalHistory?.some(h => h.approverId === currentEmp.id));
+    const isInvolvedInMrr = (mrrs || []).some(mrr => mrr.currentApproverId === currentEmp.id || mrr.approvalHistory?.some(h => h.approverId === currentEmp.id));
+
+    const isCurrentApprover = isInvolvedInDn || isInvolvedInCs || isInvolvedInPo || isInvolvedInMrr;
 
     return {
       isSuperAdmin: superAdminCheck,
@@ -89,7 +93,7 @@ function LocalPurchaseContent() {
       isCsApprover: csApproverCheck,
       isCurrentApprover: isCurrentApprover
     };
-  }, [orgSettings, employees, user, demandNotes, comparativeStatements, purchaseOrders]);
+  }, [orgSettings, employees, user, demandNotes, comparativeStatements, purchaseOrders, mrrs]);
 
   const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover } = roleData;
 
