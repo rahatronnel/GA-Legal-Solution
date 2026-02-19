@@ -25,6 +25,7 @@ import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
+import { FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, Database, Settings } from 'lucide-react';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -74,9 +75,9 @@ function LocalPurchaseContent() {
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
     // Check if the user is currently assigned to approve ANY active record
-    const isCurrentApprover = demandNotes.some(dn => dn.currentApproverId === currentEmp.id) ||
-                              comparativeStatements.some(cs => cs.currentApproverId === currentEmp.id) ||
-                              purchaseOrders.some(po => po.currentApproverId === currentEmp.id);
+    const isCurrentApprover = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id) ||
+                              (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id) ||
+                              (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id);
 
     return {
       isSuperAdmin: superAdminCheck,
@@ -91,22 +92,22 @@ function LocalPurchaseContent() {
   const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover } = roleData;
 
   const tabsList = useMemo(() => {
-    const list = [{ id: 'demand-notes', label: 'Demand Notes' }];
+    const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
     const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover || isCurrentApprover;
 
-    if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk' });
+    if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
     if (canViewCsAndPo) {
-        list.push({ id: 'cs', label: 'CS' });
-        list.push({ id: 'po', label: 'PO' });
-        list.push({ id: 'mrr', label: 'MRR' });
+        list.push({ id: 'cs', label: 'CS', icon: BarChart2 });
+        list.push({ id: 'po', label: 'PO', icon: ClipboardCheck });
+        list.push({ id: 'mrr', label: 'MRR', icon: Package });
     }
     
-    list.push({ id: 'tracker', label: 'Workflow Tracker' });
+    list.push({ id: 'tracker', label: 'Workflow Tracker', icon: Activity });
 
     if (isSuperAdmin) {
-      list.push({ id: 'master-data', label: 'Master Data' });
-      list.push({ id: 'settings', label: 'Settings' });
+      list.push({ id: 'master-data', label: 'Master Data', icon: Database });
+      list.push({ id: 'settings', label: 'Settings', icon: Settings });
     }
     return list;
   }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover]);
@@ -131,16 +132,19 @@ function LocalPurchaseContent() {
       </div>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full h-auto p-1 bg-muted/50 rounded-xl" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
+            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg">
+                <tab.icon className="h-4 w-4" />
+                <span className="hidden md:inline">{tab.label}</span>
+            </TabsTrigger>
           ))}
         </TabsList>
 
         <TabsContent value="demand-notes">
           <Card>
             <CardHeader>
-                <CardTitle>Requisition Overview</CardTitle>
+                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Requisition Overview</CardTitle>
                 <CardDescription>Track and analyze all local purchase demand notes.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -151,28 +155,28 @@ function LocalPurchaseContent() {
 
         <TabsContent value="gp-desk">
           <Card>
-            <CardHeader><CardTitle>General Purchase Desk</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" /> General Purchase Desk</CardTitle></CardHeader>
             <CardContent><GPDeskTable /></CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="cs">
           <Card>
-            <CardHeader><CardTitle>Comparative Statements</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><BarChart2 className="h-5 w-5" /> Comparative Statements</CardTitle></CardHeader>
             <CardContent><ComparativeStatementTable /></CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="po">
           <Card>
-            <CardHeader><CardTitle>Purchase Orders</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5" /> Purchase Orders</CardTitle></CardHeader>
             <CardContent><PurchaseOrderTable /></CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="mrr">
           <Card>
-            <CardHeader><CardTitle>Material Receiving Reports</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Material Receiving Reports</CardTitle></CardHeader>
             <CardContent><MRRTable /></CardContent>
           </Card>
         </TabsContent>

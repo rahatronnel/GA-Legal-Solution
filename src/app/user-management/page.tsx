@@ -10,7 +10,7 @@ import { UserManagementProvider, useUserManagement } from "./components/user-man
 import { useUser } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Home as HomeIcon } from "lucide-react";
+import { Home as HomeIcon, Users, Building, Tag, Briefcase } from "lucide-react";
 import { ModuleHeader } from '@/app/components/module-header';
 import { DepartmentTable } from "./components/department-table";
 
@@ -23,17 +23,17 @@ function UserManagementContent() {
         <ModuleHeader />
         <Tabs defaultValue="employees" className="w-full">
         <div className="flex items-center">
-            <TabsList>
-            <TabsTrigger value="employees">Employees</TabsTrigger>
-            <TabsTrigger value="departments">Departments</TabsTrigger>
-            <TabsTrigger value="sections">Sections</TabsTrigger>
-            <TabsTrigger value="designations">Designations</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50 rounded-xl">
+                <TabsTrigger value="employees" className="flex items-center gap-2 py-3"><Users className="h-4 w-4" /> Employees</TabsTrigger>
+                <TabsTrigger value="departments" className="flex items-center gap-2 py-3"><Building className="h-4 w-4" /> Departments</TabsTrigger>
+                <TabsTrigger value="sections" className="flex items-center gap-2 py-3"><Building className="h-4 w-4" /> Sections</TabsTrigger>
+                <TabsTrigger value="designations" className="flex items-center gap-2 py-3"><Tag className="h-4 w-4" /> Designations</TabsTrigger>
             </TabsList>
         </div>
         <TabsContent value="employees">
             <Card>
                 <CardHeader>
-                    <CardTitle>Employees</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Employees</CardTitle>
                     <CardDescription>Manage all employees in your organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -50,7 +50,7 @@ function UserManagementContent() {
         <TabsContent value="departments">
             <Card>
                 <CardHeader>
-                    <CardTitle>Departments</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5" /> Departments</CardTitle>
                     <CardDescription>Manage the different departments within your organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -61,7 +61,7 @@ function UserManagementContent() {
         <TabsContent value="sections">
             <Card>
                 <CardHeader>
-                    <CardTitle>Sections</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5" /> Sections</CardTitle>
                     <CardDescription>Manage the different sections within your organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -72,7 +72,7 @@ function UserManagementContent() {
         <TabsContent value="designations">
             <Card>
                 <CardHeader>
-                    <CardTitle>Designations</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Tag className="h-5 w-5" /> Designations</CardTitle>
                     <CardDescription>Manage the job titles and designations for employees.</CardDescription>
                 </CardHeader>
                 <CardContent>

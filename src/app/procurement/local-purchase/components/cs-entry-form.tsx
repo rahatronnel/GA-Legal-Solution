@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, ChevronsRight, ChevronsLeft } from 'lucide-react';
+import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -272,74 +273,107 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                     {step === 0 && (
                         <div className="space-y-4">
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label>CS Number</Label><Input value={csData.csNumber || ''} disabled /></div>
-                                <div className="space-y-2"><Label>CS Date</Label>
-                                    <Popover><PopoverTrigger asChild><Button variant={"outline"} className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4"/>{csDate ? format(csDate, "PPP") : <span>Pick a date</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={csDate} onSelect={handleDateChange} initialFocus/></PopoverContent></Popover>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2"><Hash className="h-4 w-4" /> CS Number</Label>
+                                    <Input value={csData.csNumber || ''} disabled className="bg-muted/50 font-bold" />
                                 </div>
-                                <div className="space-y-2"><Label>Demand Note Number</Label><Input value={demandNote.demandNoteNumber || ''} disabled /></div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> CS Date</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant={"outline"} className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4"/>{csDate ? format(csDate, "PPP") : <span>Pick a date</span>}</Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={csDate} onSelect={handleDateChange} initialFocus/></PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="flex items-center gap-2"><Hash className="h-4 w-4" /> Demand Note Number</Label>
+                                    <Input value={demandNote.demandNoteNumber || ''} disabled className="bg-muted/50" />
+                                </div>
                             </div>
-                            <p className="text-muted-foreground">This CS will compare quotations from {assignedVendors.length} vendors. Click Next to begin.</p>
+                            <div className="p-4 border rounded-lg bg-primary/5 flex items-center gap-3">
+                                <Info className="h-5 w-5 text-primary" />
+                                <p className="text-sm text-muted-foreground font-medium">This CS will compare quotations from <strong>{assignedVendors.length} vendors</strong>. Click Next to begin entering the data for each vendor.</p>
+                            </div>
                         </div>
                     )}
                     {step > 0 && currentVendor && (
-                         <div className="space-y-4">
-                             <h3 className="font-semibold text-xl">Vendor: {currentVendor.vendorName}</h3>
-                             <Card>
-                                 <CardHeader><CardTitle>Item Pricing</CardTitle></CardHeader>
-                                 <CardContent>
+                         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
+                                <div className="p-2 bg-primary text-primary-foreground rounded-md"><User className="h-5 w-5" /></div>
+                                <h3 className="font-bold text-xl">Vendor: {currentVendor.vendorName}</h3>
+                             </div>
+                             
+                             <Card className="shadow-sm border-primary/10">
+                                 <CardHeader className="py-3 border-b bg-muted/20"><CardTitle className="text-sm flex items-center gap-2 uppercase tracking-wider"><Tag className="h-4 w-4" /> Item Pricing</CardTitle></CardHeader>
+                                 <CardContent className="pt-4">
                                     <Table>
-                                        <TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Unit</TableHead><TableHead>Qty</TableHead><TableHead className="w-48">Unit Price</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader>
+                                        <TableHeader><TableRow className="bg-muted/50"><TableHead>Particulars</TableHead><TableHead>Unit</TableHead><TableHead>Qty</TableHead><TableHead className="w-48">Unit Price</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {csData.items?.map((item, index) => {
                                                 const quote = item.vendorQuotes.find(q => q.vendorId === currentVendor.id);
                                                 const totalPrice = item.quantity * (quote?.unitPrice || 0);
                                                 return (
-                                                    <TableRow key={item.demandNoteItemId}>
-                                                        <TableCell>{item.particulars}</TableCell>
+                                                    <TableRow key={item.demandNoteItemId} className="hover:bg-muted/30">
+                                                        <TableCell className="font-medium">{item.particulars}</TableCell>
                                                         <TableCell>{item.unit}</TableCell>
                                                         <TableCell>{item.quantity}</TableCell>
-                                                        <TableCell><Input type="number" value={quote?.unitPrice ?? ''} onChange={e => handleItemPriceChange(index, currentVendor.id, parseFloat(e.target.value) || 0)} /></TableCell>
-                                                        <TableCell className="text-right">{totalPrice.toFixed(2)}</TableCell>
+                                                        <TableCell><Input type="number" value={quote?.unitPrice ?? ''} onChange={e => handleItemPriceChange(index, currentVendor.id, parseFloat(e.target.value) || 0)} className="h-8" /></TableCell>
+                                                        <TableCell className="text-right font-bold">{totalPrice.toFixed(2)}</TableCell>
                                                     </TableRow>
                                                 )
                                             })}
-                                            <TableRow className="font-bold bg-muted/50">
-                                                <TableCell colSpan={4} className="text-right">Subtotal</TableCell>
-                                                <TableCell className="text-right">{currentVendorTotals?.itemTotal.toFixed(2)}</TableCell>
+                                            <TableRow className="font-bold bg-muted/50 border-t-2">
+                                                <TableCell colSpan={4} className="text-right uppercase">Subtotal Item Cost</TableCell>
+                                                <TableCell className="text-right text-lg">{currentVendorTotals?.itemTotal.toFixed(2)}</TableCell>
                                             </TableRow>
                                         </TableBody>
                                     </Table>
                                  </CardContent>
                              </Card>
-                             <Card>
-                                 <CardHeader><CardTitle>Commercial Terms & Calculation</CardTitle></CardHeader>
-                                 <CardContent className="space-y-4">
+
+                             <Card className="shadow-sm border-primary/10">
+                                 <CardHeader className="py-3 border-b bg-muted/20"><CardTitle className="text-sm flex items-center gap-2 uppercase tracking-wider"><DollarSign className="h-4 w-4" /> Commercial Terms & Calculations</CardTitle></CardHeader>
+                                 <CardContent className="pt-4 space-y-6">
                                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                                        <div className="space-y-2"><Label>Discount Type</Label>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2 text-xs"><Tag className="h-3 w-3" /> Discount Type</Label>
                                             <Select value={currentVendorDetails?.discountType || 'Amount'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v as any)}>
-                                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                                <SelectTrigger className="h-9"><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Amount">Amount</SelectItem><SelectItem value="Percentage">Percentage</SelectItem></SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="space-y-2"><Label>Discount Value</Label><Input type="number" value={currentVendorDetails?.discountValue ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)}/></div>
-                                        <div className="space-y-2"><Label>VAT %</Label><Input type="number" value={currentVendorDetails?.vatPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatPercentage', parseFloat(e.target.value) || 0)}/></div>
-                                        <div className="space-y-2"><Label>Tax %</Label><Input type="number" value={currentVendorDetails?.taxPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'taxPercentage', parseFloat(e.target.value) || 0)}/></div>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2 text-xs"><DollarSign className="h-3 w-3" /> Discount Value</Label>
+                                            <Input type="number" value={currentVendorDetails?.discountValue ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'discountValue', parseFloat(e.target.value) || 0)} className="h-9"/>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2 text-xs"><Tag className="h-3 w-3" /> VAT %</Label>
+                                            <Input type="number" value={currentVendorDetails?.vatPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'vatPercentage', parseFloat(e.target.value) || 0)} className="h-9"/>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2 text-xs"><Tag className="h-3 w-3" /> Tax %</Label>
+                                            <Input type="number" value={currentVendorDetails?.taxPercentage ?? ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'taxPercentage', parseFloat(e.target.value) || 0)} className="h-9"/>
+                                        </div>
                                      </div>
-                                      <div className="p-4 border rounded-lg bg-muted/50 mt-4 space-y-2 text-sm">
-                                        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
-                                        <div className="flex justify-between"><span className="text-muted-foreground">Discount:</span><span>- {currentVendorTotals?.discount.toFixed(2)}</span></div>
-                                        <div className="flex justify-between"><span className="text-muted-foreground">VAT Amount:</span><span>+ {currentVendorTotals?.vatAmount.toFixed(2)}</span></div>
-                                        <div className="flex justify-between"><span className="text-muted-foreground">Tax Amount:</span><span>+ {currentVendorTotals?.taxAmount.toFixed(2)}</span></div>
-                                        <Separator />
-                                        <div className="flex justify-between font-bold text-base"><span className="text-foreground">Grand Total:</span><span>{currentVendorTotals?.grandTotal.toFixed(2)}</span></div>
+
+                                      <div className="p-4 border rounded-lg bg-muted/50 space-y-2 text-sm">
+                                        <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><Clock className="h-4 w-4" /> Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
+                                        <div className="flex justify-between font-medium text-red-500"><span className="flex items-center gap-2"><Tag className="h-4 w-4" /> Discount:</span><span>- {currentVendorTotals?.discount.toFixed(2)}</span></div>
+                                        <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> VAT Amount:</span><span>+ {currentVendorTotals?.vatAmount.toFixed(2)}</span></div>
+                                        <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Tax Amount:</span><span>+ {currentVendorTotals?.taxAmount.toFixed(2)}</span></div>
+                                        <Separator className="my-2" />
+                                        <div className="flex justify-between font-black text-xl"><span className="text-foreground uppercase tracking-tight flex items-center gap-2"><CheckCircle2 className="h-6 w-6 text-primary" /> Grand Total:</span><span className="text-primary">{currentVendorTotals?.grandTotal.toFixed(2)}</span></div>
                                     </div>
-                                      <div className="grid grid-cols-2 gap-4 pt-4">
-                                        <div className="space-y-2"><Label>Delivery Terms</Label><Textarea value={currentVendorDetails?.deliveryTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'deliveryTerms', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>Warranty</Label><Textarea value={currentVendorDetails?.warranty || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)}/></div>
-                                        <div className="space-y-2"><Label>Quality/Sample Confirmation</Label>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                        <div className="space-y-2"><Label className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Delivery Terms</Label><Textarea value={currentVendorDetails?.deliveryTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'deliveryTerms', e.target.value)} rows={3} className="text-sm" /></div>
+                                        <div className="space-y-2"><Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)} rows={3} className="text-sm" /></div>
+                                        <div className="space-y-2"><Label className="flex items-center gap-2"><Info className="h-4 w-4" /> Warranty</Label><Textarea value={currentVendorDetails?.warranty || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)} rows={3} className="text-sm" /></div>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> Quality / Sample Confirmation</Label>
                                             <Select value={currentVendorDetails?.sampleConfirmed || 'N/A'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'sampleConfirmed', v as any)}>
-                                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                                <SelectTrigger className="h-10"><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem><SelectItem value="N/A">N/A</SelectItem></SelectContent>
                                             </Select>
                                         </div>
@@ -351,13 +385,13 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 </div>
                 <DialogFooter className="flex justify-between w-full pt-4 border-t">
                     <div>
-                        {step > 0 && (<Button variant="outline" onClick={prevStep}><ChevronsLeft className="mr-2 h-4 w-4" /> Previous</Button>)}
+                        {step > 0 && (<Button variant="outline" onClick={prevStep}><ChevronsLeft className="mr-2 h-4 w-4" /> Previous Vendor</Button>)}
                     </div>
                     <div>
                         {step < totalSteps - 1 ? (
-                            <Button onClick={nextStep}>Next <ChevronsRight className="ml-2 h-4 w-4" /></Button>
+                            <Button onClick={nextStep}>Next Vendor <ChevronsRight className="ml-2 h-4 w-4" /></Button>
                         ) : (
-                            <Button onClick={handleSave}>Save Comparative Statement</Button>
+                            <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20">Save Comparative Statement</Button>
                         )}
                     </div>
                 </DialogFooter>

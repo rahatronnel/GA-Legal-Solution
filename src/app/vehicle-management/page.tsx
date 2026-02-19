@@ -4,6 +4,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleHeader } from '@/app/components/module-header';
+import { LayoutDashboard, Route, Car, Users, Wrench, AlertTriangle, FileBarChart, Database } from 'lucide-react';
 
 import { 
     DriverDataProvider,
@@ -42,20 +43,20 @@ export default function VehicleManagementPage() {
     <div className="space-y-4">
         <ModuleHeader />
         <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8">
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="trips">Trips</TabsTrigger>
-                <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-                <TabsTrigger value="drivers">Drivers</TabsTrigger>
-                <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-                <TabsTrigger value="accidents">Accidents</TabsTrigger>
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-                <TabsTrigger value="master-data">Master Data</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-muted/50 rounded-xl">
+                <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
+                <TabsTrigger value="trips" className="flex items-center gap-2 py-3"><Route className="h-4 w-4" /> Trips</TabsTrigger>
+                <TabsTrigger value="vehicles" className="flex items-center gap-2 py-3"><Car className="h-4 w-4" /> Vehicles</TabsTrigger>
+                <TabsTrigger value="drivers" className="flex items-center gap-2 py-3"><Users className="h-4 w-4" /> Drivers</TabsTrigger>
+                <TabsTrigger value="maintenance" className="flex items-center gap-2 py-3"><Wrench className="h-4 w-4" /> Maintenance</TabsTrigger>
+                <TabsTrigger value="accidents" className="flex items-center gap-2 py-3"><AlertTriangle className="h-4 w-4" /> Accidents</TabsTrigger>
+                <TabsTrigger value="reports" className="flex items-center gap-2 py-3"><FileBarChart className="h-4 w-4" /> Reports</TabsTrigger>
+                <TabsTrigger value="master-data" className="flex items-center gap-2 py-3"><Database className="h-4 w-4" /> Master Data</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard">
                 <DashboardDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Dashboard</CardTitle><CardDescription>An overview of your vehicle fleet and operations.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5" /> Dashboard</CardTitle><CardDescription>An overview of your vehicle fleet and operations.</CardDescription></CardHeader>
                         <CardContent><Dashboard /></CardContent>
                     </Card>
                 </DashboardDataProvider>
@@ -63,7 +64,7 @@ export default function VehicleManagementPage() {
             <TabsContent value="trips">
                 <TripDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Trips</CardTitle><CardDescription>Manage all vehicle trips.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Route className="h-5 w-5" /> Trips</CardTitle><CardDescription>Manage all vehicle trips.</CardDescription></CardHeader>
                         <CardContent><TripTable /></CardContent>
                     </Card>
                 </TripDataProvider>
@@ -71,7 +72,7 @@ export default function VehicleManagementPage() {
             <TabsContent value="vehicles">
                 <VehicleDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Vehicles</CardTitle><CardDescription>Manage all vehicles in your organization.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Car className="h-5 w-5" /> Vehicles</CardTitle><CardDescription>Manage all vehicles in your organization.</CardDescription></CardHeader>
                         <CardContent><VehicleTable /></CardContent>
                     </Card>
                 </VehicleDataProvider>
@@ -79,15 +80,14 @@ export default function VehicleManagementPage() {
             <TabsContent value="drivers">
                 <DriverDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Drivers</CardTitle><CardDescription>Manage your organization's drivers and their documents.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Drivers</CardTitle><CardDescription>Manage your organization's drivers and their documents.</CardDescription></CardHeader>
                         <CardContent><DriverTable /></CardContent>
-                    </Card>
-                </DriverDataProvider>
+                    </DriverDataProvider>
             </TabsContent>
             <TabsContent value="maintenance">
                 <MaintenanceDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Maintenance Records</CardTitle><CardDescription>Log and track all vehicle maintenance activities.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5" /> Maintenance Records</CardTitle><CardDescription>Log and track all vehicle maintenance activities.</CardDescription></CardHeader>
                         <CardContent><MaintenanceRecordTable /></CardContent>
                     </Card>
                 </MaintenanceDataProvider>
@@ -95,7 +95,7 @@ export default function VehicleManagementPage() {
             <TabsContent value="accidents">
                 <AccidentDataProvider>
                     <Card>
-                        <CardHeader><CardTitle>Accident Records</CardTitle><CardDescription>Manage and track all vehicle accident reports and history.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5" /> Accident Records</CardTitle><CardDescription>Manage and track all vehicle accident reports and history.</CardDescription></CardHeader>
                         <CardContent><AccidentTable /></CardContent>
                     </Card>
                 </AccidentDataProvider>

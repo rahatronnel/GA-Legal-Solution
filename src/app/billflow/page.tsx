@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, Settings, User, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
+import { Home as HomeIcon, Settings, User, PlusCircle, Trash2, CalendarIcon, LayoutDashboard, FileText, Users, FileBarChart, Database, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VendorCategoryTable } from "./components/vendor-category-table";
 import { VendorNatureOfBusinessTable } from "./components/vendor-nature-of-business-table";
@@ -130,7 +130,7 @@ function ApprovalSettingsTab() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Bill Approval Flow</CardTitle>
+                <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Bill Approval Flow</CardTitle>
                 <CardDescription>
                     Define the sequence of employees for the bill approval process.
                 </CardDescription>
@@ -163,19 +163,19 @@ function ApprovalSettingsTab() {
 
                 <div className="space-y-4">
                     {steps.map((step, index) => (
-                        <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 border rounded-lg">
+                        <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 border rounded-lg bg-muted/20">
                             <div className="flex-grow w-full space-y-2">
                                 <Label>Step {index + 1}: Step Name</Label>
-                                <Input value={step.stepName} disabled />
+                                <Input value={step.stepName} disabled className="bg-background" />
                             </div>
                              <div className="flex-grow w-full space-y-2">
                                 <Label>Status After Approval</Label>
-                                <Input value={step.statusName} disabled />
+                                <Input value={step.statusName} disabled className="bg-background" />
                             </div>
                             <div className="flex-grow w-full space-y-2">
                                 <Label>Approver</Label>
                                 <Select value={step.approverId} onValueChange={(value) => handleApproverChange(index, value)}>
-                                    <SelectTrigger><SelectValue placeholder="Select an employee..." /></SelectTrigger>
+                                    <SelectTrigger className="bg-background"><SelectValue placeholder="Select an employee..." /></SelectTrigger>
                                     <SelectContent>
                                         {(employees || []).map(emp => (
                                             <SelectItem key={emp.id} value={emp.id}>{emp.fullName}</SelectItem>
@@ -200,18 +200,18 @@ export default function BillFlowPage() {
         <ModuleHeader />
         <MasterDataProvider>
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="bills">Bills</TabsTrigger>
-                <TabsTrigger value="vendors">Vendors</TabsTrigger>
-                <TabsTrigger value="reports">Reports</TabsTrigger>
-                <TabsTrigger value="master">Master Data</TabsTrigger>
-                <TabsTrigger value="approval-settings">Approval Settings</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-6 h-auto p-1 bg-muted/50 rounded-xl">
+                <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
+                <TabsTrigger value="bills" className="flex items-center gap-2 py-3"><FileText className="h-4 w-4" /> Bills</TabsTrigger>
+                <TabsTrigger value="vendors" className="flex items-center gap-2 py-3"><Users className="h-4 w-4" /> Vendors</TabsTrigger>
+                <TabsTrigger value="reports" className="flex items-center gap-2 py-3"><FileBarChart className="h-4 w-4" /> Reports</TabsTrigger>
+                <TabsTrigger value="master" className="flex items-center gap-2 py-3"><Database className="h-4 w-4" /> Master Data</TabsTrigger>
+                <TabsTrigger value="approval-settings" className="flex items-center gap-2 py-3"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard">
               <Card>
                   <CardHeader>
-                      <CardTitle>BillFlow Dashboard</CardTitle>
+                      <CardTitle className="flex items-center gap-2"><LayoutDashboard className="h-5 w-5" /> BillFlow Dashboard</CardTitle>
                       <CardDescription>A quick overview of your billing activities.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -222,7 +222,7 @@ export default function BillFlowPage() {
             <TabsContent value="bills">
               <Card>
                   <CardHeader>
-                      <CardTitle>Bills</CardTitle>
+                      <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Bills</CardTitle>
                       <CardDescription>Manage all submitted bills and their approval status.</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -233,7 +233,7 @@ export default function BillFlowPage() {
             <TabsContent value="vendors">
               <Card>
                   <CardHeader>
-                      <CardTitle>Vendors</CardTitle>
+                      <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Vendors</CardTitle>
                       <CardDescription>Manage your organization's vendors and their information.</CardDescription>
                   </CardHeader>
                   <CardContent>

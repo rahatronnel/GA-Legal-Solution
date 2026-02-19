@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, PlusCircle, Trash2, File as FileIcon, X } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, File as FileIcon, X, Hash, Building, Tag, MapPin, User, Phone, DollarSign, ListOrdered, Info } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -298,20 +298,43 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     {step === 1 && (
                         <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label>Demand Note Number</Label><Input value={isEditing ? (demandNote?.demandNoteNumber || '') : 'Auto-generated'} disabled /></div>
-                            <div className="space-y-2"><Label>Date<MandatoryIndicator/></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent></Popover></div>
                             <div className="space-y-2">
-                                <Label>Department<MandatoryIndicator/></Label>
-                                <Input value={departmentName || ''} disabled />
+                                <Label className="flex items-center gap-2"><Hash className="h-4 w-4" /> Demand Note Number</Label>
+                                <Input value={isEditing ? (demandNote?.demandNoteNumber || '') : 'Auto-generated'} disabled className="bg-muted/50" />
                             </div>
                             <div className="space-y-2">
-                                <Label>Section</Label>
-                                <Input value={departmentName || ''} disabled />
+                                <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> Date<MandatoryIndicator/></Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{date ? format(date, "PPP") : "Pick a date"}</Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={handleDateChange} /></PopoverContent>
+                                </Popover>
                             </div>
-                            <div className="space-y-2"><Label>Process Code</Label><Select value={noteData.processCodeId || ''} onValueChange={handleSelectChange('processCodeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                            <div className="space-y-2"><Label>Demand Type</Label><Select value={noteData.demandTypeId || ''} onValueChange={handleSelectChange('demandTypeId')}><SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger><SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>
                             <div className="space-y-2">
-                                <Label>Delivery Place</Label>
+                                <Label className="flex items-center gap-2"><Building className="h-4 w-4" /> Department<MandatoryIndicator/></Label>
+                                <Input value={departmentName || ''} disabled className="bg-muted/50" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><Building className="h-4 w-4" /> Section</Label>
+                                <Input value={departmentName || ''} disabled className="bg-muted/50" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Process Code</Label>
+                                <Select value={noteData.processCodeId || ''} onValueChange={handleSelectChange('processCodeId')}>
+                                    <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
+                                    <SelectContent>{processCodes.map(p=><SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Demand Type</Label>
+                                <Select value={noteData.demandTypeId || ''} onValueChange={handleSelectChange('demandTypeId')}>
+                                    <SelectTrigger><SelectValue placeholder="Select..."/></SelectTrigger>
+                                    <SelectContent>{demandTypes.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Delivery Place</Label>
                                 <Select value={noteData.deliveryPlace || ''} onValueChange={handleSelectChange('deliveryPlace')}>
                                     <SelectTrigger><SelectValue placeholder="Select delivery place..."/></SelectTrigger>
                                     <SelectContent>
@@ -319,19 +342,37 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2"><Label>Contact Person</Label><Input id="contactPersonName" value={noteData.contactPersonName || ''} onChange={handleInputChange} /></div>
-                            <div className="space-y-2"><Label>Contact Number</Label><Input id="contactPersonNumber" value={noteData.contactPersonNumber || ''} onChange={handleInputChange} /></div>
-                            <div className="space-y-2"><Label>Budget Amount</Label><Input id="budgetAmount" type="number" value={noteData.budgetAmount ?? 0} onChange={handleInputChange} /></div>
-                            <div className="space-y-2 md:col-span-2"><Label>Budget Year & List No.</Label><Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo || ''} onChange={handleInputChange} /></div>
-                            <div className="space-y-2 md:col-span-3"><Label>Purpose of Requisition</Label><Textarea id="purpose" value={noteData.purpose || ''} onChange={handleInputChange} /></div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><User className="h-4 w-4" /> Contact Person</Label>
+                                <Input id="contactPersonName" value={noteData.contactPersonName || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><Phone className="h-4 w-4" /> Contact Number</Label>
+                                <Input id="contactPersonNumber" value={noteData.contactPersonNumber || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Budget Amount</Label>
+                                <Input id="budgetAmount" type="number" value={noteData.budgetAmount ?? 0} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <Label className="flex items-center gap-2"><Hash className="h-4 w-4" /> Budget Year & List No.</Label>
+                                <Input id="budgetYearAndListNo" value={noteData.budgetYearAndListNo || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2 md:col-span-3">
+                                <Label className="flex items-center gap-2"><Info className="h-4 w-4" /> Purpose of Requisition</Label>
+                                <Textarea id="purpose" value={noteData.purpose || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
                         
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center"><h3 className="font-semibold text-lg">Items</h3><Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4"/>Add Item</Button></div>
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-semibold text-lg flex items-center gap-2"><ListOrdered className="h-5 w-5" /> Items</h3>
+                                <Button variant="outline" size="sm" onClick={addItem}><PlusCircle className="mr-2 h-4 w-4"/>Add Item</Button>
+                            </div>
                             <div className="space-y-3 max-h-[40vh] overflow-y-auto">
                                 {items.map((item, index) => (
-                                    <div key={item.id} className="p-3 border rounded-lg space-y-2">
-                                         <div className="flex justify-between items-center"><Label className="text-base">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
+                                    <div key={item.id} className="p-3 border rounded-lg space-y-2 bg-muted/30">
+                                         <div className="flex justify-between items-center"><Label className="text-base font-bold">Item {index + 1}</Label><Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive"/></Button></div>
                                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div className="space-y-2 md:col-span-2">
                                                 <Label>Particulars</Label>
@@ -346,7 +387,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                                             </div>
                                              <div className="space-y-2">
                                                 <Label>Unit</Label>
-                                                <Input value={item.unit || ''} disabled />
+                                                <Input value={item.unit || ''} disabled className="bg-muted/50" />
                                             </div>
                                          </div>
                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -376,8 +417,8 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     )}
                      {step === 2 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg">Step 2: Attachments (Optional)</h3>
-                            <div className="space-y-2 p-3 border rounded-lg">
+                            <h3 className="font-semibold text-lg flex items-center gap-2"><FileIcon className="h-5 w-5" /> Step 2: Attachments (Optional)</h3>
+                            <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
                                 <div className="flex justify-between items-center">
                                     <Label className="font-medium">Attachments</Label>
                                     <Label htmlFor="file-upload-attachments" className="cursor-pointer text-sm text-primary hover:underline">Add File(s)</Label>
