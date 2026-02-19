@@ -164,7 +164,7 @@ const VendorSelectionDialog: React.FC<{
 }
 
 export function ComparativeStatementTable() {
-    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors, designations, purchaseOrders } = useProcurement();
+    const { comparativeStatements, demandNotes, isLoading, employees, orgSettings, vendors, purchaseOrders } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -191,55 +191,42 @@ export function ComparativeStatementTable() {
         return employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
-    const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
-
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-
     const roleData = useMemo(() => {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
-        const currentEmp = employees?.find(e => e.email === user?.email);
+        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
 
-        if (!settings || !currentEmp) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isCsApprover: false };
-
-        const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
-        const GPC = !!settings.gpConcernOfficerIds?.includes(currentEmp.id);
+        const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
+        const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
         
         let csApproverCheck = false;
         const csRoles = settings.csApprovalRoles;
         if (csRoles) {
             const roleIds = [
-                csRoles.purchaseManagerId,
-                csRoles.purchaseDeptTaId,
-                csRoles.viceFactoryManagerId,
-                csRoles.accountsManagerId,
-                csRoles.gmSalesDeptId,
-                csRoles.gmAdministrationId,
+                csRoles.purchaseManagerId, csRoles.purchaseDeptTaId, csRoles.viceFactoryManagerId,
+                csRoles.accountsManagerId, csRoles.gmSalesDeptId, csRoles.gmAdministrationId,
             ];
-            if (roleIds.includes(currentEmp.id)) {
-                csApproverCheck = true;
-            }
+            if (roleIds.includes(currentUserEmployee.id)) csApproverCheck = true;
         }
-        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) {
-            csApproverCheck = true;
-        }
-        if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) {
-            csApproverCheck = true;
-        }
+        if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentUserEmployee.id)) csApproverCheck = true;
+        if (!csApproverCheck && settings.specializedDeptTaId === currentUserEmployee.id) csApproverCheck = true;
         
         return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
-    }, [orgSettings, employees, user]);
+    }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover } = roleData;
+    const { isSuperAdmin, isGPOfficer, isCsApprover } = roleData;
 
     const userRoleText = useMemo(() => {
         if (isSuperAdmin) return "Role: Superadmin";
         if (isGPOfficer) return "Role: GP Officer";
-        if (isGPConcern) return "Role: GP Concern Officer";
         if (isCsApprover) return "Role: CS Approver";
+        if (roleData.isGPConcern) return "Role: GP Concern Officer";
         return "Role: Employee";
-    }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover]);
+    }, [isSuperAdmin, isGPOfficer, isCsApprover, roleData.isGPConcern]);
+
+    const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
+    const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
@@ -262,12 +249,6 @@ export function ComparativeStatementTable() {
 
     const toggleRowSelection = (id: string) => {
         setSelectedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
-    };
-
-    const handleSavePO = (poData: Partial<PurchaseOrder>) => {
-        if (!poCollectionRef) return;
-        addDocumentNonBlocking(poCollectionRef, poData);
-        toast({ title: 'Success', description: `Purchase Order ${poData.poNumber} has been created.` });
     };
 
     const handleVendorSelected = (csId: string, vendorId: string) => {
@@ -330,7 +311,7 @@ export function ComparativeStatementTable() {
             }, { merge: true });
         });
 
-        toast({ title: 'Success', description: `${selectedRows.length} CS processed.` });
+        toast({ title: 'Success', description: `${selectedRows.length} statements processed.` });
         setSelectedRows([]);
     };
 
@@ -351,17 +332,18 @@ export function ComparativeStatementTable() {
     };
 
     const confirmDelete = () => {
-        if (currentItem && csRef && firestore) {
+        if (currentItem && csRef) {
             deleteDocumentNonBlocking(doc(csRef, currentItem.id));
-            const associatedPo = purchaseOrders?.find(po => po.csId === currentItem.id);
-            if (associatedPo) {
-                const poRef = doc(firestore, 'purchaseOrders', associatedPo.id);
-                deleteDocumentNonBlocking(poRef);
-            }
-            toast({ title: "Success", description: "Comparative Statement and its associated Purchase Order (if any) have been deleted." });
+            toast({ title: "Success", description: "Statement deleted." });
         }
         setIsDeleteConfirmOpen(false);
         setCurrentItem(null);
+    };
+
+    const handleSavePO = (poData: Partial<PurchaseOrder>) => {
+        if (!poCollectionRef) return;
+        addDocumentNonBlocking(poCollectionRef, poData);
+        toast({ title: 'Success', description: `Purchase Order ${poData.poNumber} created.` });
     };
 
     return (
@@ -373,10 +355,6 @@ export function ComparativeStatementTable() {
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search CS, DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
                         </div>
-                        <Select value={vendorFilter} onValueChange={setVendorFilter}>
-                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Vendor" /></SelectTrigger>
-                            <SelectContent><SelectItem value="all">All Vendors</SelectItem>{vendors?.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
-                        </Select>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
                                 <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve ({selectedRows.length})</Button>
@@ -417,7 +395,7 @@ export function ComparativeStatementTable() {
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
-                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/5' : ''}>
+                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}
@@ -454,7 +432,7 @@ export function ComparativeStatementTable() {
                                     )
                                 })
                             ) : (
-                                <TableRow><TableCell colSpan={7} className="h-24 text-center">No results found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="h-24 text-center">No statements found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -463,15 +441,7 @@ export function ComparativeStatementTable() {
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Are you sure?</DialogTitle>
-                        <DialogDescription>
-                            This action cannot be undone. This will permanently delete this Comparative Statement. 
-                            {purchaseOrders?.some(po => po.csId === currentItem?.id) && (
-                                <span className="block mt-2 font-bold text-destructive">WARNING: A Purchase Order exists for this CS and will also be automatically deleted.</span>
-                            )}
-                        </DialogDescription>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Are you sure?</DialogTitle></DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
@@ -481,7 +451,7 @@ export function ComparativeStatementTable() {
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-lg">
-                    <DialogHeader><DialogTitle>Approval Status for {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Approval Status: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
                     <div className="py-4">
                         <ul className="space-y-4">
                             {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
@@ -492,14 +462,10 @@ export function ComparativeStatementTable() {
                                     <li key={index} className="flex items-start gap-4">
                                         {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
                                         <div className="flex-1 flex gap-3 items-center">
-                                            <Avatar className="h-10 w-10 border">
-                                                <AvatarImage src={approver?.profilePicture} />
-                                                <AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback>
-                                            </Avatar>
+                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
                                             <div>
                                                 <p className="font-semibold">{step.stepName}</p>
                                                 <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
-                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved on {new Date(historyEntry.timestamp).toLocaleString()}</p>}
                                             </div>
                                         </div>
                                     </li>
@@ -510,14 +476,7 @@ export function ComparativeStatementTable() {
                 </DialogContent>
             </Dialog>
 
-            <VendorSelectionDialog
-                cs={selectedCsForVendor}
-                isOpen={isVendorSelectionOpen}
-                onOpenChange={setIsVendorSelectionOpen}
-                onVendorSelected={handleVendorSelected}
-                vendors={vendors || []}
-            />
-
+            <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
             <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={handleSavePO} cs={selectedCsForPo} />
         </TooltipProvider>
     );
