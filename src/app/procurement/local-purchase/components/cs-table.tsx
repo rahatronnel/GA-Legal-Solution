@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -15,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Search, Eye, Trash2, Check, Printer, X, Users, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement } from './cs-entry-form';
@@ -214,10 +214,11 @@ export function ComparativeStatementTable() {
         return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isCsApprover } = roleData;
+    const { isSuperAdmin, isGPOfficer } = roleData;
 
     const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
     const getVendorName = (vendorId?: string) => vendors?.find(v => v.id === vendorId)?.vendorName || 'N/A';
+    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
     const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
     const filteredItems = useMemo(() => {
@@ -371,6 +372,7 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Awarded Vendor</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
@@ -379,17 +381,18 @@ export function ComparativeStatementTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={8} className="text-center">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
+                                    const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
                                     
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
-                                    const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
+                                    const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
 
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
@@ -401,8 +404,19 @@ export function ComparativeStatementTable() {
                                                 />
                                             </TableCell>
                                             <TableCell>{cs.csNumber}</TableCell>
-                                            <TableCell>{getDemandNoteNumber(cs.demandNoteId)}</TableCell>
-                                            <TableCell>{cs.selectedVendorId ? getVendorName(cs.selectedVendorId) : 'N/A'}</TableCell>
+                                            <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-medium">{getEmployeeName(dn?.gpConcernOfficerId || '')}</span>
+                                                    {dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-medium">{cs.selectedVendorId ? getVendorName(cs.selectedVendorId) : 'N/A'}</span>
+                                                    {cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
@@ -429,7 +443,7 @@ export function ComparativeStatementTable() {
                                     )
                                 })
                             ) : (
-                                <TableRow><TableCell colSpan={7} className="h-24 text-center">No statements found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={8} className="h-24 text-center">No statements found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>

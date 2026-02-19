@@ -119,6 +119,8 @@ function LocalPurchaseContent() {
     );
   }
 
+  const gridColsCount = tabsList.length;
+
   return (
     <div className="space-y-6">
       <ModuleHeader />
@@ -128,7 +130,7 @@ function LocalPurchaseContent() {
       </div>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabsList.length}, minmax(0, 1fr))` }}>
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
           ))}

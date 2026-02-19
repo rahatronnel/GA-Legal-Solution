@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal, Check, X } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Users, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,6 +34,7 @@ export function PurchaseOrderTable() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [vendorFilter, setVendorFilter] = useState('all');
+    const [gpConcernFilter, setGpConcernFilter] = useState('all');
     
     const [isPrepareDialogOpen, setIsPrepareDialogOpen] = useState(false);
     const [isPoFormOpen, setIsPoFormOpen] = useState(false);
@@ -70,18 +71,39 @@ export function PurchaseOrderTable() {
         return { isSuperAdmin: superAdminCheck, isGPOfficer: GPO, isGPConcern: GPC, isCsApprover: csApproverCheck };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern } = roleData;
+    const { isSuperAdmin, isGPOfficer } = roleData;
+
+    const getVendorName = (id: string) => vendors?.find(v => v.id === id)?.vendorName || 'N/A';
+    const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
+    const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
+    const formatCurrency = (amount?: number) => amount ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount) : 'N/A';
+
+    const gpConcernOfficers = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !employees) return [];
+        return (settings.gpConcernOfficerIds || [])
+            .map(id => employees.find(e => e.id === id))
+            .filter(Boolean);
+    }, [orgSettings, employees]);
 
     const filteredPOs = useMemo(() => {
         const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
         return safePOs.filter(po => {
             const lowerTerm = searchTerm.toLowerCase();
             const demandNote = demandNotes?.find(dn => dn.id === po.demandNoteId);
-            const searchTermMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || (demandNote?.demandNoteNumber.toLowerCase().includes(lowerTerm));
+            const cs = comparativeStatements?.find(c => c.id === po.csId);
+            
+            const searchTermMatch = !searchTerm || 
+                po.poNumber.toLowerCase().includes(lowerTerm) || 
+                (cs?.csNumber.toLowerCase().includes(lowerTerm)) ||
+                (demandNote?.demandNoteNumber.toLowerCase().includes(lowerTerm));
+
             const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
-            return searchTermMatch && vendorMatch;
+            const gpMatch = gpConcernFilter === 'all' || demandNote?.gpConcernOfficerId === gpConcernFilter;
+
+            return searchTermMatch && vendorMatch && gpMatch;
         }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [purchaseOrders, searchTerm, vendorFilter, demandNotes]);
+    }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements]);
 
     const approvableItems = useMemo(() => {
         return filteredPOs.filter(po => 
@@ -142,10 +164,6 @@ export function PurchaseOrderTable() {
         setSelectedRows([]);
     };
 
-    const getVendorName = (id: string) => vendors?.find(v => v.id === id)?.vendorName || 'N/A';
-    const getDemandNoteNumber = (id: string) => demandNotes?.find(dn => dn.id === id)?.demandNoteNumber || 'N/A';
-    const formatCurrency = (amount?: number) => amount ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount) : 'N/A';
-
     const handleSavePO = (poData: Partial<PurchaseOrder>) => {
         if (!poCollectionRef) return;
         addDocumentNonBlocking(poCollectionRef, poData);
@@ -156,8 +174,11 @@ export function PurchaseOrderTable() {
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <Input placeholder="Search PO..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-[250px]" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="relative w-full sm:w-[350px]">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search PO#, CS#, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                        </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
                                 <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}>
@@ -169,10 +190,40 @@ export function PurchaseOrderTable() {
                             </div>
                         )}
                     </div>
-                    {(isSuperAdmin || isGPOfficer || isGPConcern) && (
+                    {(isSuperAdmin || isGPOfficer) && (
                         <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>
                     )}
                 </div>
+
+                <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                        <Filter className="h-4 w-4" /> Filter Options
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
+                            <SelectTrigger><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All GP Concerns</SelectItem>
+                                {gpConcernOfficers.map(officer => (
+                                    <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={vendorFilter} onValueChange={setVendorFilter}>
+                            <SelectTrigger><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Vendors</SelectItem>
+                                {vendors.map(v => (
+                                    <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }} className="text-muted-foreground">
+                            <XCircle className="mr-2 h-4 w-4" /> Clear All Filters
+                        </Button>
+                    </div>
+                </div>
+
                 <div className="border rounded-lg">
                     <Table>
                         <TableHeader>
@@ -184,8 +235,10 @@ export function PurchaseOrderTable() {
                                     />
                                 </TableHead>
                                 <TableHead>PO Number</TableHead>
+                                <TableHead>CS Number</TableHead>
                                 <TableHead>Demand Note</TableHead>
                                 <TableHead>Vendor</TableHead>
+                                <TableHead>GP Concern</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -195,6 +248,8 @@ export function PurchaseOrderTable() {
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
                                 const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
+                                const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
+                                const cs = comparativeStatements?.find(c => c.id === po.csId);
 
                                 return (
                                     <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
@@ -206,8 +261,10 @@ export function PurchaseOrderTable() {
                                             />
                                         </TableCell>
                                         <TableCell className="font-medium">{po.poNumber}</TableCell>
-                                        <TableCell>{getDemandNoteNumber(po.demandNoteId)}</TableCell>
+                                        <TableCell>{cs?.csNumber || 'N/A'}</TableCell>
+                                        <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
                                         <TableCell>{getVendorName(po.vendorId)}</TableCell>
+                                        <TableCell>{getEmployeeName(dn?.gpConcernOfficerId || '')}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
@@ -226,7 +283,7 @@ export function PurchaseOrderTable() {
                                         </TableCell>
                                     </TableRow>
                                 )
-                            }) : <TableRow><TableCell colSpan={7} className="text-center h-24">No POs found.</TableCell></TableRow>}
+                            }) : <TableRow><TableCell colSpan={9} className="text-center h-24">No POs found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
