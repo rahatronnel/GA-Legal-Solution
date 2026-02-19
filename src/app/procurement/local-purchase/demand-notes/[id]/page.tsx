@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -283,7 +284,7 @@ function DemandNoteProfileContent() {
                                     <TooltipContent>Copy DN Number</TooltipContent>
                                 </Tooltip>
                             </div>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                 <span>Date: {demandNote.date} - Status: </span>
                                 <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge>
                             </div>

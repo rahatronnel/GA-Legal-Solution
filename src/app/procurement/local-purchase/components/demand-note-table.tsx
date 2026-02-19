@@ -28,6 +28,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -79,7 +80,7 @@ export function DemandNoteTable() {
             settings.specializedDeptManagerId === currentUserEmployee.id;
         
         const deptHeadCheck = settings.departmentHeads?.some(
-            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
+            dh => dh.sectionId === currentUserEmployee.departmentId && (dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
         );
 
         return {
@@ -156,7 +157,7 @@ export function DemandNoteTable() {
 
             return searchTermMatch && statusMatch && stageMatch && dateMatch;
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
-    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead, orgSettings, currentUserEmployee]);
+    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead, orgSettings, currentUserEmployee, sections]);
 
     const approvableItems = useMemo(() => {
         return filteredItems.filter(item => 

@@ -174,7 +174,7 @@ function ComparativeStatementView() {
                                 <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip>
                             </div>
-                             <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+                             <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-2 mt-1">
                                 <span>For Demand Note:</span>
                                 <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link>
                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip>
@@ -250,7 +250,7 @@ function ComparativeStatementView() {
                                                     <div className="flex flex-col items-center justify-center gap-1">
                                                         <span className="font-semibold">{vendor.vendorName}</span>
                                                         <div className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</div>
-                                                        {vendor.id === bestOfferVendorId && <Badge className="mt-1 bg-green-600">Best Offer</Badge>}
+                                                        {vendor.id === bestOfferVendorId && <Badge className="mt-1 bg-green-600 text-white">Best Offer</Badge>}
                                                         {vendor.id === cs.selectedVendorId && <Badge variant="default" className="mt-1">Selected</Badge>}
                                                         {quotation?.fileDataUrl && (
                                                             <Button variant="outline" size="sm" className="h-6 px-2 mt-1" onClick={() => setViewingQuotation({vendorName: vendor.vendorName, fileDataUrl: quotation.fileDataUrl, fileName: quotation.fileName})}>
@@ -385,7 +385,7 @@ function ComparativeStatementView() {
                         <DialogTitle>Quotation: {viewingQuotation?.vendorName}</DialogTitle>
                         <div className="text-sm text-muted-foreground">{viewingQuotation?.fileName}</div>
                     </DialogHeader>
-                    <div className="flex-grow relative">
+                    <div className="flex-grow relative mt-4">
                         {viewingQuotation?.fileDataUrl.startsWith('data:image/') ? (
                             <Image src={viewingQuotation.fileDataUrl} alt={`Quotation from ${viewingQuotation.vendorName}`} layout="fill" className="object-contain" />
                         ) : (
