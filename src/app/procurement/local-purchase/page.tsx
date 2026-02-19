@@ -23,6 +23,7 @@ import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-
 import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
+import { WorkflowTracker } from './components/workflow-tracker';
 
 /**
  * LocalPurchaseContent handles the core logic and tab rendering for the procurement module.
@@ -95,6 +96,10 @@ function LocalPurchaseContent() {
         list.push({ id: 'cs', label: 'CS' });
         list.push({ id: 'po', label: 'PO' });
     }
+    
+    // Workflow Tracker is visible to everyone involved in the process
+    list.push({ id: 'tracker', label: 'Workflow Tracker' });
+
     if (isSuperAdmin) {
       list.push({ id: 'master-data', label: 'Master Data' });
       list.push({ id: 'settings', label: 'Settings' });
@@ -167,6 +172,10 @@ function LocalPurchaseContent() {
             <CardHeader><CardTitle>Purchase Orders</CardTitle></CardHeader>
             <CardContent><PurchaseOrderTable /></CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="tracker">
+            <WorkflowTracker />
         </TabsContent>
 
         {isSuperAdmin && (
