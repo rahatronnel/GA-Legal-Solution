@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ModuleHeader } from '@/app/components/module-header';
@@ -22,9 +23,24 @@ import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-
 import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 
-export default function LocalPurchasePage() {
+/**
+ * The inner content component that uses useSearchParams.
+ * This needs to be wrapped in Suspense for Next.js App Router.
+ */
+function LocalPurchaseContent() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL-based tab state
+  const activeTab = searchParams.get('tab') || 'demand-notes';
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', value);
+    router.push(`?${params.toString()}`);
+  };
 
   // 1. Role and Access Detection Logic
   const roleData = useMemo(() => {
@@ -90,7 +106,6 @@ export default function LocalPurchasePage() {
     return list;
   }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
 
-  // 3. Loading State Handler
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -101,11 +116,10 @@ export default function LocalPurchasePage() {
 
   const gridColsCount = tabsList.length;
 
-  // 4. Main Component Rendering
   return (
     <div className="space-y-6">
       <ModuleHeader />
-      <Tabs defaultValue="demand-notes" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
@@ -176,5 +190,13 @@ export default function LocalPurchasePage() {
         )}
       </Tabs>
     </div>
+  );
+}
+
+export default function LocalPurchasePage() {
+  return (
+    <Suspense fallback={<div>Loading Page...</div>}>
+      <LocalPurchaseContent />
+    </Suspense>
   );
 }

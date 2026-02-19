@@ -169,7 +169,7 @@ function DemandNoteProfileContent() {
     const { handlePrint } = usePrint();
     const { id } = params;
     
-    const { demandNotes, employees, sections, processCodes, demandTypes, billItemMasters, vendors, deliveryPlaces, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, processCodes, demandTypes, vendors, deliveryPlaces, isLoading, orgSettings } = useProcurement();
 
     const { data: designations } = useCollection<Designation>(useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]));
 
@@ -288,7 +288,7 @@ function DemandNoteProfileContent() {
                                     <TooltipContent>Copy DN Number</TooltipContent>
                                 </Tooltip>
                             </div>
-                            <CardDescription>Date: {demandNote.date} - Status: <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge></CardDescription>
+                            <div className="text-sm text-muted-foreground">Date: {demandNote.date} - Status: <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge></div>
                         </div>
                         <div className="flex items-center gap-2">
                              {isPendingApproval && canApprove && (
@@ -355,7 +355,7 @@ function DemandNoteProfileContent() {
                                                     <div className="flex-1 flex gap-4 items-center">
                                                         <Avatar className="h-10 w-10 border">
                                                             <AvatarImage src={approver?.profilePicture} alt={approver?.fullName} />
-                                                            <AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback>
+                                                            <AvatarFallback>{approver?.fullName?.charAt(0) || <UserIcon />}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
                                                             <p className="font-semibold">{step.stepName}</p>
@@ -445,5 +445,3 @@ function DemandNoteProfileContent() {
 export default function DemandNotePage() {
     return <DemandNoteProfileContent />;
 }
-
-    

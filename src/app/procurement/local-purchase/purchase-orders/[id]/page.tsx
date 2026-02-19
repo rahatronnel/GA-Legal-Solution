@@ -74,12 +74,9 @@ function PurchaseOrderView() {
         if (status === 1) { // Approved
             const nextLevel = currentLevel + 1;
             if (nextLevel < approvalLevels.length) {
-                // Progress to the next status code based on current history length
-                // historyLength was 0, now it's 1. Status moves to 3.
                 newApprovalStatus = getNextApprovalStatusCode(currentLevel); 
                 nextApproverId = approvalLevels[nextLevel].approverId;
             } else {
-                // This was the final approval
                 newApprovalStatus = 1; // Completed
                 nextApproverId = '';
             }
@@ -116,10 +113,12 @@ function PurchaseOrderView() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
-                             <CardDescription>
-                                For Requisition: <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
-                                <span> | Status: <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge></span>
-                            </CardDescription>
+                             <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span>For Requisition: </span>
+                                <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
+                                <span> | Status: </span>
+                                <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
                             {canApprove && isPendingApproval && (

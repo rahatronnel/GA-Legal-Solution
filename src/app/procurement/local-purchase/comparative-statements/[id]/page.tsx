@@ -33,7 +33,6 @@ function ComparativeStatementView() {
     const { comparativeStatements, demandNotes, vendors, employees, designations, orgSettings, isLoading } = useProcurement();
     const { user } = useUser();
     const firestore = useFirestore();
-    const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
 
     const [viewingQuotation, setViewingQuotation] = useState<{ vendorName: string; fileDataUrl: string; fileName: string; } | null>(null);
 
@@ -174,12 +173,13 @@ function ComparativeStatementView() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">Comparative Statement: {cs.csNumber}</CardTitle>
-                             <CardDescription className="flex items-center gap-2">
+                             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                                 <span>For Demand Note:</span>
                                 <Link href={`/procurement/local-purchase/demand-notes/${cs.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber}</Link>
-                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip>
-                                <span>| Dated: {new Date(cs.csDate).toLocaleString()} | Status: <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge></span>
-                            </CardDescription>
+                                <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { navigator.clipboard.writeText(demandNote!.demandNoteNumber!); toast({ title: 'Copied!'});}}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN Number</TooltipContent></Tooltip></TooltipProvider>
+                                <span>| Dated: {new Date(cs.csDate).toLocaleString()} | Status: </span>
+                                <Badge variant={getStatusVariant(cs.approvalStatus)}>{getCSStatusText(cs)}</Badge>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
                             {canApprove && (
@@ -389,7 +389,7 @@ function ComparativeStatementView() {
                             <Image src={viewingQuotation.fileDataUrl} alt={`Quotation from ${viewingQuotation.vendorName}`} layout="fill" className="object-contain" />
                         ) : (
                             <object data={viewingQuotation?.fileDataUrl} type="application/pdf" width="100%" height="100%">
-                                <p>It appears you don't have a PDF plugin for this browser. You can <a href={viewingQuotation?.fileDataUrl} download={viewingQuotation?.fileName} className="text-primary underline">download the PDF file.</a></p>
+                                <div className="p-4 text-center">It appears you don't have a PDF plugin for this browser. You can <a href={viewingQuotation?.fileDataUrl} download={viewingQuotation?.fileName} className="text-primary underline">download the PDF file.</a></div>
                             </object>
                         )}
                     </div>
@@ -400,5 +400,5 @@ function ComparativeStatementView() {
 }
 
 export default function ComparativeStatementPage() {
-    return <TooltipProvider><ComparativeStatementView /></TooltipProvider>;
+    return <ComparativeStatementView />;
 }
