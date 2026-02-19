@@ -25,6 +25,7 @@ import {
 import { BulkDeleteSection } from './components/bulk-delete-section';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 type ApprovalStep = {
     stepName: string;

@@ -16,8 +16,8 @@ import { Input } from '@/components/ui/input';
 import { 
     Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, 
     Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, 
-    UserCheck, Upload, X, Check, HelpCircle, Info, ListOrdered, 
-    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal, Printer
+    UserCheck, Upload, X, HelpCircle, Info, ListOrdered, 
+    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal, Printer, Check
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
@@ -38,6 +38,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -292,7 +293,7 @@ export function MRRTable() {
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})</Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                             </div>
                         )}
@@ -302,8 +303,8 @@ export function MRRTable() {
 
                 <div className="border rounded-lg overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead>MRR Details</TableHead>
                                 <TableHead>GP Concern</TableHead>
@@ -318,23 +319,26 @@ export function MRRTable() {
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => {
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
-                                    const isWaitingForApproval = mrr.currentApproverId === currentUserEmployee?.id && mrr.approvalStatus > 2;
+                                    const isWaitingForApproval = currentUserEmployee && mrr.currentApproverId === currentUserEmployee.id && mrr.approvalStatus > 2;
                                     const isApprovable = approvableItems.some(i => i.id === mrr.id);
                                     const isFinalApproved = mrr.approvalStatus === 1;
 
                                     return (
-                                        <TableRow key={mrr.id} className={cn(isWaitingForFinalize || isWaitingForApproval ? 'bg-orange-500/5' : '')}>
+                                        <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) ? 'bg-orange-500/5' : '')}>
                                             <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="font-bold">{mrr.mrrNumber}</span><span className="text-[10px] text-muted-foreground">PO: {mrr.poId}</span></div></TableCell>
                                             <TableCell><span className="text-xs">{employees?.find(e => e.id === mrr.createdBy)?.fullName}</span></TableCell>
                                             <TableCell><span className="text-xs">{mrr.supplierName}</span></TableCell>
                                             <TableCell>
-                                                <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
-                                                {isWaitingForFinalize && <Badge className="ml-2 bg-orange-500 text-white animate-pulse">Finalize Required</Badge>}
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
+                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse">⚠️ Finalize Required</Badge>}
+                                                    {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse">⚠️ Approve Report</Badge>}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {isWaitingForFinalize && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
+                                                    {isWaitingForFinalize && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
                                                     {isFinalApproved && (
                                                         <Tooltip>
                                                             <TooltipTrigger asChild>
@@ -342,7 +346,7 @@ export function MRRTable() {
                                                                     <Printer className="h-4 w-4" />
                                                                 </Button>
                                                             </TooltipTrigger>
-                                                            <TooltipContent>Print Official MRR</TooltipContent>
+                                                            <TooltipContent>Open in New Tab & Print</TooltipContent>
                                                         </Tooltip>
                                                     )}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>

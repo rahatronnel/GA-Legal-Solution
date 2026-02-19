@@ -341,7 +341,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                     <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={removeSignature}><X className="h-3 w-3" /></Button>
                                 </div>
                             ) : (
-                                <Label htmlFor="signature-upload" className="flex items-center justify-center w-full h-32 px-4 bg-background border-2 border-dashed rounded-md cursor-pointer hover:border-primary">
+                                <Label htmlFor="signature-upload" className="flex items-center justify-center w-full h-32 px-4 bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
                                     <FileSignature className="h-8 w-8 text-muted-foreground" /><Input id="signature-upload" type="file" accept="image/*" className="hidden" onChange={handleSignatureChange} />
                                 </Label>
                             )}
