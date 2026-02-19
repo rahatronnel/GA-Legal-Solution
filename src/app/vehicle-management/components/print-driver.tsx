@@ -46,6 +46,8 @@ import type { ComparativeStatement } from '@/app/procurement/local-purchase/comp
 import { CSPrintLayout } from '@/app/procurement/local-purchase/components/cs-print-layout';
 import type { DeliveryPlace } from '@/app/procurement/local-purchase/components/delivery-place-table';
 import type { Department } from '@/app/user-management/components/department-table';
+import type { PurchaseOrder } from '@/app/procurement/local-purchase/components/po-entry-form';
+import { POPrintLayout } from '@/app/procurement/local-purchase/components/po-print-layout';
 
 export const PrintDriver = () => {
   const { itemToPrint, printType } = usePrint();
@@ -146,6 +148,19 @@ export const PrintDriver = () => {
                   vendors={vendors || []} 
                   employees={employees || []}
                   designations={designations || []}
+                  orgSettings={orgSettings} 
+              />
+          case 'purchase-order':
+              const po = itemToPrint as PurchaseOrder;
+              const poDN = demandNotes?.find(dn => dn.id === po.demandNoteId);
+              const poVendor = vendors?.find(v => v.id === po.vendorId);
+              return <POPrintLayout 
+                  po={po} 
+                  demandNote={poDN} 
+                  vendor={poVendor} 
+                  employees={employees || []} 
+                  designations={designations || []} 
+                  deliveryPlaces={deliveryPlaces || []}
                   orgSettings={orgSettings} 
               />
           default:
