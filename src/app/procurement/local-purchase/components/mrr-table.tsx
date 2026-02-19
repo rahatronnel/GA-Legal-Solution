@@ -17,7 +17,7 @@ import {
     Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, 
     Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, 
     UserCheck, Upload, X, Check, HelpCircle, Info, ListOrdered, 
-    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal
+    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal, Printer
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
@@ -176,9 +176,20 @@ const FinalizeMrrDialog = ({
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
                             <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command><CommandInput placeholder="Search..." /><CommandList><CommandEmpty>No one found.</CommandEmpty><CommandGroup>
-                                    {employees.map((emp) => <CommandItem key={emp.id} onSelect={() => { setConfirmantId(emp.id); setOpenSearch(false); }}><Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />{emp.fullName}</CommandItem>)}
-                                </CommandGroup></CommandList></Command>
+                                <Command>
+                                    <CommandInput placeholder="Search..." />
+                                    <CommandList>
+                                        <CommandEmpty>No one found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {employees.map((emp) => (
+                                                <CommandItem key={emp.id} onSelect={() => { setConfirmantId(emp.id); setOpenSearch(false); }}>
+                                                    <Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />
+                                                    {emp.fullName}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -309,6 +320,8 @@ export function MRRTable() {
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
                                     const isWaitingForApproval = mrr.currentApproverId === currentUserEmployee?.id && mrr.approvalStatus > 2;
                                     const isApprovable = approvableItems.some(i => i.id === mrr.id);
+                                    const isFinalApproved = mrr.approvalStatus === 1;
+
                                     return (
                                         <TableRow key={mrr.id} className={cn(isWaitingForFinalize || isWaitingForApproval ? 'bg-orange-500/5' : '')}>
                                             <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
@@ -322,7 +335,17 @@ export function MRRTable() {
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     {isWaitingForFinalize && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4" /></Button>
+                                                    {isFinalApproved && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
+                                                                    <Printer className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Print Official MRR</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/mrrs/${mrr.id}`}><Eye className="h-4 w-4"/></Link></Button>
                                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => mrrColRef && deleteDocumentNonBlocking(doc(mrrColRef, mrr.id))}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>

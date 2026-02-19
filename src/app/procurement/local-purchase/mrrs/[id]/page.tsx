@@ -127,6 +127,7 @@ export default function MRRProfilePage() {
     const isPendingApproval = mrr.approvalStatus > 2;
     const canApprove = currentUserEmployee && mrr.currentApproverId === currentUserEmployee.id;
     const receiver = employees.find(e => e.id === mrr.receiverConfirmantId);
+    const isFinalApproved = mrr.approvalStatus === 1;
 
     return (
         <TooltipProvider>
@@ -159,6 +160,16 @@ export default function MRRProfilePage() {
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 </>
+                            )}
+                            {isFinalApproved && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
+                                            <Printer className="mr-2 h-4 w-4"/> Print MRR
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Open in New Tab & Print</TooltipContent>
+                                </Tooltip>
                             )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
