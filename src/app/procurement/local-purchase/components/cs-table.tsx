@@ -118,10 +118,9 @@ export function ComparativeStatementTable() {
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
-            // Visibility Check: Admin/GP/Manager see all. Others see what they created or are assigned to approve.
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
-                const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+                const dn = demandNotes?.find(d => d.id === item.demandNoteId);
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
                     cs.vendorSelectorId === currentUserEmployee.id ||
@@ -206,8 +205,11 @@ export function ComparativeStatementTable() {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
                                     const concern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
-                                    const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
-                                    const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
+                                    
+                                    const needsVendorSelection = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
+                                    const needsApproval = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
+                                    
+                                    const isWaitingForMe = needsVendorSelection || needsApproval;
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
 
                                     return (
@@ -217,10 +219,16 @@ export function ComparativeStatementTable() {
                                             <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip></div></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
-                                            <TableCell><div className="flex items-center gap-2"><Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>{isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}</div></TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
+                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Select Vendor</Badge>}
+                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {canSelectVendor && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button>}
+                                                    {needsVendorSelection && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button>}
                                                     {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>

@@ -122,17 +122,13 @@ export function DemandNoteTable() {
             if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
                 isVisible = true; 
             } else if (isAnyDeptHead) {
-                // If they are a department head, check if they are head/advisor of the requesting department
                 const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
                     dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
                 );
                 if (isHeadOfThisDept) isVisible = true;
             }
             
-            // Creators must always see their own records
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
-
-            // CRITICAL FIX: Designated current approvers MUST see the record even if they are outside the requesting department
             if (currentUserEmployee && item.currentApproverId === currentUserEmployee.id) isVisible = true;
 
             if (!isVisible) return false;
@@ -325,11 +321,12 @@ export function DemandNoteTable() {
                                 <TableRow><TableCell colSpan={7} className="text-center py-10">Loading...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map(item => {
-                                    const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
+                                    const isWaitingForApproval = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
+                                    const isWaitingForGP = (isGPOfficer || isSuperAdmin) && item.approvalStatus === 1 && !item.gpConcernOfficerId;
                                     const isApprovable = approvableItems.some(ai => ai.id === item.id);
 
                                     return (
-                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
+                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || isWaitingForGP) && "bg-orange-500/5")}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(item.id)}
@@ -358,8 +355,11 @@ export function DemandNoteTable() {
                                                     <Badge variant={item.approvalStatus === 1 ? 'default' : (item.approvalStatus === 0 ? 'destructive' : 'secondary')}>
                                                         {getDemandNoteStatusText(item)}
                                                     </Badge>
-                                                    {isWaitingForMe && (
-                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
+                                                    {isWaitingForApproval && (
+                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>
+                                                    )}
+                                                    {isWaitingForGP && (
+                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>
                                                     )}
                                                 </div>
                                             </TableCell>

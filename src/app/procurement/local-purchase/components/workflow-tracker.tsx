@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { getRelativeTimeInfo } from '../lib/time-helper';
 
 type TimelineEvent = {
     id: string;
@@ -255,46 +256,52 @@ export function WorkflowTracker() {
                     {selectedDnId ? (
                         <ScrollArea className="h-full pr-4">
                             <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                                {timeline.map((event, idx) => (
-                                    <div key={event.id} className="relative flex items-start group">
-                                        <div className={cn(
-                                            "absolute left-0 mt-1 h-10 w-10 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
-                                            event.status === 'completed' ? "bg-green-500 text-white" : (event.status === 'rejected' ? "bg-destructive text-white" : "bg-orange-500 text-white")
-                                        )}>
-                                            {event.type === 'creation' && <FileText className="h-4 w-4" />}
-                                            {event.type === 'approval' && <CheckCircle2 className="h-4 w-4" />}
-                                            {event.type === 'assignment' && <User className="h-4 w-4" />}
-                                            {event.type === 'award' && <ShoppingCart className="h-4 w-4" />}
-                                            {event.type === 'po' && <Building className="h-4 w-4" />}
-                                        </div>
+                                {timeline.map((event, idx) => {
+                                    const relativeTime = getRelativeTimeInfo(event.timestamp);
+                                    return (
+                                        <div key={event.id} className="relative flex items-start group">
+                                            <div className={cn(
+                                                "absolute left-0 mt-1 h-10 w-10 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
+                                                event.status === 'completed' ? "bg-green-500 text-white" : (event.status === 'rejected' ? "bg-destructive text-white" : "bg-orange-500 text-white")
+                                            )}>
+                                                {event.type === 'creation' && <FileText className="h-4 w-4" />}
+                                                {event.type === 'approval' && <CheckCircle2 className="h-4 w-4" />}
+                                                {event.type === 'assignment' && <User className="h-4 w-4" />}
+                                                {event.type === 'award' && <ShoppingCart className="h-4 w-4" />}
+                                                {event.type === 'po' && <Building className="h-4 w-4" />}
+                                            </div>
 
-                                        <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                                                <h4 className="font-bold text-base flex items-center gap-2">
-                                                    {event.title}
-                                                    {event.status === 'rejected' && <Badge variant="destructive" className="text-[10px] h-4">Rejected</Badge>}
-                                                </h4>
-                                                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
-                                                    <Clock className="h-3 w-3" />
-                                                    {formatDateTime(event.timestamp)}
+                                            <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                                    <h4 className="font-bold text-base flex items-center gap-2">
+                                                        {event.title}
+                                                        {event.status === 'rejected' && <Badge variant="destructive" className="text-[10px] h-4">Rejected</Badge>}
+                                                    </h4>
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                                            <Clock className="h-3 w-3" />
+                                                            {formatDateTime(event.timestamp)}
+                                                        </div>
+                                                        <span className={cn("text-[11px] font-bold mt-1", relativeTime.color)}>{relativeTime.text}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <p className="text-sm text-muted-foreground mb-4">{event.description}</p>
-                                            
-                                            <div className="flex items-center gap-3 pt-3 border-t">
-                                                <Avatar className="h-8 w-8 border">
-                                                    <AvatarImage src={event.user.image} />
-                                                    <AvatarFallback>{event.user.name.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="text-xs font-bold leading-none">{event.user.name}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{event.user.designation}</p>
+                                                
+                                                <p className="text-sm text-muted-foreground mb-4">{event.description}</p>
+                                                
+                                                <div className="flex items-center gap-3 pt-3 border-t">
+                                                    <Avatar className="h-8 w-8 border">
+                                                        <AvatarImage src={event.user.image} />
+                                                        <AvatarFallback>{event.user.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="text-xs font-bold leading-none">{event.user.name}</p>
+                                                        <p className="text-[10px] text-muted-foreground">{event.user.designation}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 
                                 {selectedDn.approvalStatus === 1 && purchaseOrders.some(p => p.demandNoteId === selectedDnId && p.approvalStatus === 1) && (
                                     <div className="relative flex items-center justify-center py-4">

@@ -56,7 +56,6 @@ export function PurchaseOrderTable() {
     const filteredPOs = useMemo(() => {
         const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
         return safePOs.filter(po => {
-            // Visibility Check
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
@@ -119,7 +118,7 @@ export function PurchaseOrderTable() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
                             <SelectTrigger><SelectValue placeholder="GP Concern..." /></SelectTrigger>
-                            <SelectContent><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o.id} value={o.id}>{o.fullName}</SelectItem>)}</SelectContent>
+                            <SelectContent><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o!.id} value={o!.id}>{o!.fullName}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={vendorFilter} onValueChange={setVendorFilter}>
                             <SelectTrigger><SelectValue placeholder="Vendor..." /></SelectTrigger>
@@ -147,18 +146,23 @@ export function PurchaseOrderTable() {
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
                                 const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
                                 const cs = comparativeStatements?.find(c => c.id === po.csId);
-                                const isWaitingForMe = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
+                                const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
 
                                 return (
-                                    <TableRow key={po.id} className={cn(isWaitingForMe && "bg-orange-500/5")}>
+                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForApproval && "bg-orange-500/5")}>
                                         <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
                                         <TableCell>{employees.find(e => e.id === dn?.gpConcernOfficerId)?.fullName}</TableCell>
-                                        <TableCell><div className="flex items-center gap-2"><Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>{isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>}</div></TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
+                                                {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>

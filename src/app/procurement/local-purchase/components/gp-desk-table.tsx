@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, UserPlus, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -150,14 +150,6 @@ export default function GPDeskTable() {
             .filter(Boolean) as Employee[];
     }, [orgSettings, employees]);
 
-    const userRoleText = useMemo(() => {
-        if (roleData.isSuperAdmin) return "Role: Superadmin";
-        if (roleData.isGPOfficer) return "Role: GP Officer";
-        if (roleData.isManager) return "Role: Manager";
-        if (roleData.isGPConcern) return "Role: GP Concern Officer";
-        return "Role: Employee";
-    }, [roleData]);
-
     const getDepartmentName = (id: string) => sections?.find(s => s.id === id)?.name || 'N/A';
     const getEmployeeName = (id: string) => employees?.find(e => e.id === id)?.fullName || 'N/A';
 
@@ -277,7 +269,6 @@ export default function GPDeskTable() {
                                 className="pl-8"
                             />
                         </div>
-                        <Badge variant="outline">{userRoleText}</Badge>
                         <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={roleData.isGPConcern && !roleData.isSuperAdmin && !roleData.isGPOfficer && !roleData.isManager}>
                             <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
                             <SelectContent>
@@ -324,11 +315,16 @@ export default function GPDeskTable() {
                                 
                                 const needsVendorAssignment = isCurrentUserConcern && (!item.quotations || item.quotations.length === 0);
                                 const needsCsCreation = isCurrentUserConcern && item.quotations && item.quotations.length > 0 && !cs;
-                                const isWaitingForMe = needsVendorAssignment || needsCsCreation || (isGPManager && !item.gpConcernOfficerId);
+                                const isWaitingForAssignment = isGPManager && !item.gpConcernOfficerId;
 
                                 return (
-                                <TableRow key={item.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
-                                    <TableCell>{item.demandNoteNumber}</TableCell>
+                                <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (needsVendorAssignment || needsCsCreation || isWaitingForAssignment) && 'bg-orange-500/5')}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            <span>{item.demandNoteNumber}</span>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
@@ -364,9 +360,9 @@ export default function GPDeskTable() {
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="secondary">No</Badge>
-                                                {isWaitingForMe && (
-                                                    <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
-                                                )}
+                                                {isWaitingForAssignment && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>}
+                                                {needsVendorAssignment && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Vendors</Badge>}
+                                                {needsCsCreation && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Prepare CS</Badge>}
                                             </div>
                                         )}
                                     </TableCell>
@@ -400,7 +396,6 @@ export default function GPDeskTable() {
                 </div>
             </div>
 
-            {/* Assign Concern Officer Dialog */}
             <Dialog open={isAssignConcernOpen} onOpenChange={setIsAssignConcernOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -427,7 +422,6 @@ export default function GPDeskTable() {
                 </DialogContent>
             </Dialog>
 
-            {/* Assign Vendors Dialog */}
             <Dialog open={isAssignVendorOpen} onOpenChange={setIsAssignVendorOpen}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
