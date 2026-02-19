@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Copy, FileText, PackageCheck } from 'lucide-react';
+import { Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, Truck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import type { MRR } from './mrr-entry-form';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export function MRRTable() {
     const { mrrs, isLoading } = useProcurement();
@@ -59,50 +60,66 @@ export function MRRTable() {
                     />
                 </div>
 
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden shadow-sm">
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
-                                <TableHead>MRR Number</TableHead>
-                                <TableHead>Receiving Date</TableHead>
-                                <TableHead>Supplier</TableHead>
-                                <TableHead>Demand Note</TableHead>
-                                <TableHead>Goods Condition</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="font-bold"><FileText className="h-4 w-4 inline mr-2" />MRR Number</TableHead>
+                                <TableHead className="font-bold"><Calendar className="h-4 w-4 inline mr-2" />Receiving Date</TableHead>
+                                <TableHead className="font-bold"><Truck className="h-4 w-4 inline mr-2" />Supplier</TableHead>
+                                <TableHead className="font-bold"><FileText className="h-4 w-4 inline mr-2" />Demand Note</TableHead>
+                                <TableHead className="font-bold"><CheckCircle2 className="h-4 w-4 inline mr-2" />Condition</TableHead>
+                                <TableHead className="text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading Material Receiving Reports...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => (
-                                    <TableRow key={mrr.id}>
+                                    <TableRow key={mrr.id} className="hover:bg-muted/30 transition-colors">
                                         <TableCell>
                                             <div className="flex items-center gap-1">
-                                                <span className="font-medium">{mrr.mrrNumber}</span>
-                                                <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(mrr.mrrNumber); toast({ title: 'Copied!' }); }}>
-                                                    <Copy className="h-3 w-3" />
-                                                </Button>
+                                                <span className="font-bold text-primary">{mrr.mrrNumber}</span>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(mrr.mrrNumber); toast({ title: 'Copied!' }); }}>
+                                                            <Copy className="h-3 w-3" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Copy MRR#</TooltipContent>
+                                                </Tooltip>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{mrr.receivingDate}</TableCell>
-                                        <TableCell>{mrr.supplierName}</TableCell>
-                                        <TableCell>{mrr.demandNoteNumber}</TableCell>
+                                        <TableCell className="font-medium">{mrr.receivingDate}</TableCell>
                                         <TableCell>
-                                            <Badge variant={mrr.goodsCondition === 'Ok' ? 'default' : 'destructive'}>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold">{mrr.supplierName}</span>
+                                                <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{mrr.supplierAddress}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="font-mono">{mrr.demandNoteNumber}</Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge 
+                                                variant={mrr.goodsCondition === 'Ok' ? 'default' : 'destructive'}
+                                                className={cn("flex items-center w-fit gap-1", mrr.goodsCondition === 'Ok' ? "bg-green-600 hover:bg-green-700" : "")}
+                                            >
+                                                {mrr.goodsCondition === 'Ok' ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
                                                 {mrr.goodsCondition}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>View Details</TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(mrr.id)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Report</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-primary"><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>View Details</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4" onClick={() => handleDelete(mrr.id)} /></Button></TooltipTrigger><TooltipContent>Delete Report</TooltipContent></Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
-                                <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No Material Receiving Reports found.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">No Material Receiving Reports found.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>

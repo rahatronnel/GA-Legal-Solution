@@ -17,7 +17,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { 
+    CalendarIcon, 
+    Hash, 
+    Building2, 
+    User, 
+    MapPin, 
+    FileText, 
+    Receipt, 
+    ClipboardList, 
+    Truck, 
+    Box, 
+    Archive, 
+    CheckCircle2, 
+    MessageSquare, 
+    DollarSign,
+    Ruler,
+    Layers,
+    ListOrdered,
+    ArrowDownCircle,
+    Info,
+    Container
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -89,8 +110,8 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
       
       const mrrItems: MRRItem[] = po.items.map(item => ({
         particulars: item.particulars,
-        description: '', // User to fill manually
-        receivedQty: item.quantity, // Default to full PO quantity
+        description: '', 
+        receivedQty: item.quantity,
         unit: item.unit,
         unitPrice: item.unitPrice,
         amount: item.totalPrice
@@ -152,114 +173,178 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Prepare Material Receiving Report (MRR)</DialogTitle>
-          <DialogDescription>Record receipt of goods for PO: {po.poNumber}</DialogDescription>
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+                <ArrowDownCircle className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+                <DialogTitle className="text-2xl">Prepare Material Receiving Report (MRR)</DialogTitle>
+                <DialogDescription>Record physical receipt of goods for Purchase Order: <span className="font-bold text-foreground">{po.poNumber}</span></DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         
         <div className="py-4 space-y-6 flex-grow overflow-y-auto pr-6">
+          {/* Header Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2"><Label>MRR Number</Label><Input value={mrrData.mrrNumber || ''} disabled /></div>
             <div className="space-y-2">
-              <Label>Receiving Date</Label>
+              <Label className="flex items-center gap-2"><Hash className="h-4 w-4 text-muted-foreground" /> MRR Number</Label>
+              <Input value={mrrData.mrrNumber || ''} disabled className="bg-muted/50 font-bold" />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-muted-foreground" /> Receiving Date</Label>
               <Popover>
-                <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick a date"}</Button></PopoverTrigger>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick a date"}</Button>
+                </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={receivingDate} onSelect={(d) => { setReceivingDate(d); setMrrData(p => ({...p, receivingDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>Issue Date</Label>
+              <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4 text-muted-foreground" /> MRR Issue Date</Label>
               <Popover>
-                <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick a date"}</Button></PopoverTrigger>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick a date"}</Button>
+                </PopoverTrigger>
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, issueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="bg-muted/30">
-              <CardHeader className="py-2"><CardTitle className="text-sm">Source Info</CardTitle></CardHeader>
-              <CardContent className="text-sm space-y-1">
-                <p><strong>Department:</strong> {mrrData.departmentName}</p>
-                <p><strong>Demand Note:</strong> {mrrData.demandNoteNumber}</p>
-                <p><strong>Supplier:</strong> {mrrData.supplierName}</p>
-                <p className="text-xs text-muted-foreground">{mrrData.supplierAddress}</p>
+          {/* Auto-Populated Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="bg-primary/5 border-primary/20 shadow-sm">
+              <CardHeader className="py-2 border-b">
+                <CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4" /> Organizational Source</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2 pt-3">
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Department:</span><span className="font-semibold">{mrrData.departmentName}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Section:</span><span className="font-semibold">{mrrData.sectionName}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium">Demand Note Ref:</span><Badge variant="outline">{mrrData.demandNoteNumber}</Badge></div>
               </CardContent>
             </Card>
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2"><Label>Invoice No</Label><Input id="invoiceNumber" value={mrrData.invoiceNumber} onChange={handleInputChange} /></div>
-               <div className="space-y-2"><Label>Challan No</Label><Input id="challanNumber" value={mrrData.challanNumber} onChange={handleInputChange} /></div>
+            <Card className="bg-orange-500/5 border-orange-500/20 shadow-sm">
+              <CardHeader className="py-2 border-b">
+                <CardTitle className="text-sm flex items-center gap-2"><Truck className="h-4 w-4" /> Supplier Information</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2 pt-3">
+                <div className="flex items-center gap-2 font-bold"><User className="h-4 w-4 text-muted-foreground" /> {mrrData.supplierName}</div>
+                <div className="flex items-start gap-2 text-xs text-muted-foreground"><MapPin className="h-4 w-4 flex-shrink-0" /> {mrrData.supplierAddress}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Separator className="opacity-50" />
+
+          {/* Logistics Section */}
+          <div className="space-y-4">
+            <h4 className="font-bold flex items-center gap-2 text-primary"><Truck className="h-5 w-5" /> Logistics & Shipment Details</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Truck className="h-4 w-4" /> Shipment Type</Label>
+                    <Input id="shipmentType" value={mrrData.shipmentType} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" />
+                </div>
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Container Size</Label>
+                    <Input id="containerSize" value={mrrData.containerSize} onChange={handleInputChange} placeholder="e.g. 20ft, 40ft" />
+                </div>
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Archive className="h-4 w-4" /> Container Number</Label>
+                    <Input id="containerNo" value={mrrData.containerNo} onChange={handleInputChange} placeholder="Container ID" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Receipt className="h-4 w-4" /> Invoice Number <MandatoryIndicator /></Label>
+                    <Input id="invoiceNumber" value={mrrData.invoiceNumber} onChange={handleInputChange} placeholder="Enter vendor invoice #" />
+                </div>
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Challan Number <MandatoryIndicator /></Label>
+                    <Input id="challanNumber" value={mrrData.challanNumber} onChange={handleInputChange} placeholder="Enter delivery challan #" />
+                </div>
             </div>
           </div>
 
-          <Separator />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2"><Label>Shipment Type</Label><Input id="shipmentType" value={mrrData.shipmentType} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" /></div>
-            <div className="space-y-2"><Label>Container Size</Label><Input id="containerSize" value={mrrData.containerSize} onChange={handleInputChange} /></div>
-            <div className="space-y-2"><Label>Container No</Label><Input id="containerNo" value={mrrData.containerNo} onChange={handleInputChange} /></div>
-          </div>
-
-          <Card>
-            <CardHeader className="py-3"><CardTitle className="text-base">Received Items</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">SL</TableHead>
-                    <TableHead>Particulars</TableHead>
-                    <TableHead>Description (Manual)</TableHead>
-                    <TableHead className="text-center">Qty</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mrrData.items?.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{item.particulars}</TableCell>
-                      <TableCell><Input value={item.description} onChange={(e) => handleItemDescriptionChange(index, e.target.value)} placeholder="Type description..." /></TableCell>
-                      <TableCell className="text-center">{item.receivedQty}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell className="text-right">{item.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+          {/* Item Table */}
+          <div className="space-y-4">
+            <h4 className="font-bold flex items-center gap-2 text-primary"><Layers className="h-5 w-5" /> Material Verification (Item Details)</h4>
+            <Card className="border shadow-sm overflow-hidden">
+                <Table>
+                    <TableHeader className="bg-muted/50">
+                    <TableRow>
+                        <TableHead className="w-12 text-center"><ListOrdered className="h-4 w-4 mx-auto" /></TableHead>
+                        <TableHead>Particulars</TableHead>
+                        <TableHead className="min-w-[200px]"><Info className="h-4 w-4 inline mr-2" />Material Description</TableHead>
+                        <TableHead className="text-center">Qty</TableHead>
+                        <TableHead className="text-center">Unit</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
-                  ))}
-                  <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={5} className="text-right">Grand Total</TableCell>
-                    <TableCell className="text-right">{mrrData.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                    {mrrData.items?.map((item, index) => (
+                        <TableRow key={index} className="hover:bg-muted/30">
+                        <TableCell className="text-center font-bold text-muted-foreground">{index + 1}</TableCell>
+                        <TableCell className="font-semibold">{item.particulars}</TableCell>
+                        <TableCell><Input value={item.description} onChange={(e) => handleItemDescriptionChange(index, e.target.value)} placeholder="Type manual description..." className="h-8 text-sm" /></TableCell>
+                        <TableCell className="text-center font-medium">{item.receivedQty}</TableCell>
+                        <TableCell className="text-center"><Badge variant="secondary">{item.unit}</Badge></TableCell>
+                        <TableCell className="text-right font-mono font-bold text-primary">{item.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                        </TableRow>
+                    ))}
+                    <TableRow className="font-bold bg-muted/20">
+                        <TableCell colSpan={5} className="text-right text-lg uppercase tracking-tight">Grand Total Amount</TableCell>
+                        <TableCell className="text-right text-lg font-black text-primary underline underline-offset-4 decoration-double">
+                            {mrrData.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                        </TableCell>
+                    </TableRow>
+                    </TableBody>
+                </Table>
+            </Card>
+          </div>
 
+          {/* Condition & Remarks Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Goods Condition</Label>
-                <Select value={mrrData.goodsCondition} onValueChange={(v) => setMrrData(p => ({...p, goodsCondition: v as any}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="Ok">Ok</SelectItem><SelectItem value="Not Ok">Not Ok</SelectItem></SelectContent>
-                </Select>
+            <Card className="p-4 border shadow-sm space-y-4">
+              <h4 className="font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-600" /> Physical Inspection</h4>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-muted-foreground" /> Goods Condition</Label>
+                    <Select value={mrrData.goodsCondition} onValueChange={(v) => setMrrData(p => ({...p, goodsCondition: v as any}))}>
+                    <SelectTrigger className={cn(mrrData.goodsCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Ok" className="text-green-600 font-bold">✅ Good / Ok</SelectItem>
+                        <SelectItem value="Not Ok" className="text-red-600 font-bold">❌ Damaged / Not Ok</SelectItem>
+                    </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Box className="h-4 w-4 text-muted-foreground" /> Box / Package Condition</Label>
+                    <Select value={mrrData.packageCondition} onValueChange={(v) => setMrrData(p => ({...p, packageCondition: v as any}))}>
+                    <SelectTrigger className={cn(mrrData.packageCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Ok" className="text-green-600 font-bold">✅ Intact / Ok</SelectItem>
+                        <SelectItem value="Not Ok" className="text-red-600 font-bold">❌ Broken / Not Ok</SelectItem>
+                    </SelectContent>
+                    </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Box/Package Condition</Label>
-                <Select value={mrrData.packageCondition} onValueChange={(v) => setMrrData(p => ({...p, packageCondition: v as any}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="Ok">Ok</SelectItem><SelectItem value="Not Ok">Not Ok</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Remarks (Optional)</Label>
-              <Textarea id="remarks" value={mrrData.remarks} onChange={handleInputChange} rows={4} placeholder="Type any additional notes here..." />
+            </Card>
+            <div className="space-y-2 p-4 border rounded-lg shadow-sm">
+              <Label className="flex items-center gap-2 font-bold"><MessageSquare className="h-5 w-5 text-primary" /> Additional Remarks (Optional)</Label>
+              <Textarea id="remarks" value={mrrData.remarks} onChange={handleInputChange} rows={6} placeholder="Type any additional notes, observations or discrepancies here..." className="resize-none" />
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Material Receiving Report</Button>
+        <DialogFooter className="border-t pt-4">
+          <Button variant="outline" onClick={() => setIsOpen(false)} className="flex items-center gap-2"><X className="h-4 w-4" /> Cancel</Button>
+          <Button onClick={handleSave} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20">
+            <CheckCircle2 className="h-4 w-4" /> Save Material Receiving Report
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
