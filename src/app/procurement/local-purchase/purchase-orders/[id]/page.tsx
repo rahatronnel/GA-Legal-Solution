@@ -22,7 +22,7 @@ import type { PurchaseOrder } from '../../components/po-entry-form';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
-        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</div>
         <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
     </div>
 );
@@ -114,9 +114,9 @@ function PurchaseOrderView() {
                         <div>
                             <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
                              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span>For Requisition: </span>
+                                For Requisition: 
                                 <Link href={`/procurement/local-purchase/demand-notes/${po.demandNoteId}`} className="text-primary hover:underline">{demandNote?.demandNoteNumber || 'N/A'}</Link>
-                                <span> | Status: </span>
+                                | Status: 
                                 <Badge variant={getStatusVariant(po.approvalStatus)}>{getPOStatusText(po)}</Badge>
                             </div>
                         </div>
@@ -216,11 +216,11 @@ function PurchaseOrderView() {
                         <CardContent className="space-y-4">
                             <div>
                                 <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Mandatory Terms</h4>
-                                <p className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md border">{po.mandatoryTerms || 'No specific terms provided.'}</p>
+                                <div className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md border">{po.mandatoryTerms || 'No specific terms provided.'}</div>
                             </div>
                             <div>
                                 <h4 className="font-semibold text-sm mb-1 uppercase tracking-wider text-muted-foreground">Other Terms</h4>
-                                <p className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md border">{po.otherTerms || 'None.'}</p>
+                                <div className="text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-md border">{po.otherTerms || 'None.'}</div>
                             </div>
                         </CardContent>
                     </Card>

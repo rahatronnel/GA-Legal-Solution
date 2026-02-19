@@ -23,17 +23,13 @@ import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-
 import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 
-/**
- * The inner content component that uses useSearchParams.
- * This needs to be wrapped in Suspense for Next.js App Router.
- */
 function LocalPurchaseContent() {
   const { user } = useUser();
   const { orgSettings, employees, isLoading } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // URL-based tab state
+  // URL-based tab state persistence
   const activeTab = searchParams.get('tab') || 'demand-notes';
 
   const handleTabChange = (value: string) => {
@@ -42,7 +38,6 @@ function LocalPurchaseContent() {
     router.push(`?${params.toString()}`);
   };
 
-  // 1. Role and Access Detection Logic
   const roleData = useMemo(() => {
     const superAdminCheck = user?.email === 'superadmin@galsolution.com';
     const settings = orgSettings?.procurementSettings;
@@ -87,7 +82,6 @@ function LocalPurchaseContent() {
 
   const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = roleData;
 
-  // 2. Tab Visibility Configuration
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes' }];
     
@@ -109,7 +103,7 @@ function LocalPurchaseContent() {
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <p className="text-muted-foreground animate-pulse">Loading Local Purchase module...</p>
+        <p className="text-muted-foreground animate-pulse font-medium">Loading Procurement Dashboard...</p>
       </div>
     );
   }
@@ -127,9 +121,14 @@ function LocalPurchaseContent() {
         </TabsList>
 
         <TabsContent value="demand-notes">
-          <Card>
-            <CardHeader><CardTitle>Demand Notes</CardTitle></CardHeader>
-            <CardContent><DemandNoteTable /></CardContent>
+          <Card className="border-primary/10 shadow-sm">
+            <CardHeader className="bg-muted/30 pb-4">
+                <CardTitle>Requisition Overview</CardTitle>
+                <CardDescription>Track and analyze all local purchase demand notes.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+                <DemandNoteTable />
+            </CardContent>
           </Card>
         </TabsContent>
 
@@ -195,7 +194,7 @@ function LocalPurchaseContent() {
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div>Loading Page...</div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse">Loading Application Modules...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );

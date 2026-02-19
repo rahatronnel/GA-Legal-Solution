@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Link as LinkIcon, Copy } from 'lucide-react';
+import { ArrowLeft, User, FileText, Calendar, DollarSign, Download, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, MoreHorizontal, Hash, MapPin, Phone, Upload, Copy } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -45,7 +45,7 @@ import { Input } from '@/components/ui/input';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
-        <p className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</p>
+        <div className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</div>
         <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
     </div>
 );
@@ -144,7 +144,7 @@ const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; is
                                  {!isReadOnly && (
                                      <div className="flex gap-2">
                                         <Button size="sm" variant="outline" asChild>
-                                            <Label htmlFor={`upload-${vendor.id}`} className="cursor-pointer"><Upload className="mr-2 h-4 w-4"/> {quotation?.fileDataUrl ? 'Replace' : 'Upload'}</Label>
+                                            <Label htmlFor={`upload-${vendor.id}`} className="cursor-pointer flex items-center"><Upload className="mr-2 h-4 w-4"/> {quotation?.fileDataUrl ? 'Replace' : 'Upload'}</Label>
                                         </Button>
                                         <Input id={`upload-${vendor.id}`} type="file" className="hidden" onChange={(e) => handleFileUpload(e, vendor.id)} />
                                      </div>
@@ -258,8 +258,6 @@ function DemandNoteProfileContent() {
     }
     
     const isPendingApproval = demandNote.approvalStatus !== 0 && demandNote.approvalStatus !== 1;
-    const isFinalApproved = demandNote.approvalStatus === 1;
-
     const canApprove = user?.email === 'superadmin@galsolution.com' || (currentUserEmployee && demandNote.currentApproverId === currentUserEmployee.id);
 
     return (
@@ -288,7 +286,10 @@ function DemandNoteProfileContent() {
                                     <TooltipContent>Copy DN Number</TooltipContent>
                                 </Tooltip>
                             </div>
-                            <div className="text-sm text-muted-foreground">Date: {demandNote.date} - Status: <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge></div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                Date: {demandNote.date} - Status: 
+                                <Badge variant={getStatusVariant(demandNote.approvalStatus)}>{getDemandNoteStatusText(demandNote)}</Badge>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
                              {isPendingApproval && canApprove && (
@@ -309,7 +310,7 @@ function DemandNoteProfileContent() {
                                    </AlertDialog>
                                 </>
                              )}
-                             {isFinalApproved && (
+                             {demandNote.approvalStatus === 1 && (
                                 <Button onClick={() => handlePrint(demandNote, 'demand-note')} variant="outline"><Printer className="mr-2 h-4 w-4"/>Print</Button>
                              )}
                              <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
@@ -355,7 +356,7 @@ function DemandNoteProfileContent() {
                                                     <div className="flex-1 flex gap-4 items-center">
                                                         <Avatar className="h-10 w-10 border">
                                                             <AvatarImage src={approver?.profilePicture} alt={approver?.fullName} />
-                                                            <AvatarFallback>{approver?.fullName?.charAt(0) || <UserIcon />}</AvatarFallback>
+                                                            <AvatarFallback>{approver?.fullName?.charAt(0) || <User />}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
                                                             <p className="font-semibold">{step.stepName}</p>
