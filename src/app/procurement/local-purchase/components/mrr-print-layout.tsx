@@ -1,13 +1,14 @@
 
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
+import React, { useMemo } from 'react';
 import type { OrganizationSettings } from '@/app/settings/page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { MRR } from './mrr-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Designation } from '@/app/user-management/components/designation-table';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface MRRPrintLayoutProps {
   mrr: MRR;
