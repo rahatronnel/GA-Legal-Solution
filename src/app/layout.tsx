@@ -8,6 +8,7 @@ import { PrintProvider } from '@/app/vehicle-management/components/print-provide
 import { PrintDriver } from '@/app/vehicle-management/components/print-driver';
 import { FirebaseClientProvider } from '@/firebase';
 import { usePathname } from 'next/navigation';
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 
 export default function RootLayout({
@@ -32,17 +33,19 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         {/* Firebase initialized on the client */}
         <FirebaseClientProvider>
-          <PrintProvider>
-            {/* We only apply 'app-container' (which hides on print) if it's NOT a dedicated print route */}
-            <div className={cn(!isPrintPage && "app-container")}>
-              {children}
-            </div>
-            {/* print-container is used for the legacy dynamic overlay print system */}
-            <div className="print-container">
-              <PrintDriver />
-            </div>
-            <Toaster />
-          </PrintProvider>
+          <TooltipProvider delayDuration={0}>
+            <PrintProvider>
+                {/* We only apply 'app-container' (which hides on print) if it's NOT a dedicated print route */}
+                <div className={cn(!isPrintPage && "app-container")}>
+                {children}
+                </div>
+                {/* print-container is used for the legacy dynamic overlay print system */}
+                <div className="print-container">
+                <PrintDriver />
+                </div>
+                <Toaster />
+            </PrintProvider>
+          </TooltipProvider>
         </FirebaseClientProvider>
       </body>
     </html>

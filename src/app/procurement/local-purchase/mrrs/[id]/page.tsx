@@ -1,14 +1,13 @@
-
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, 
-    Building, CheckCircle2, Hourglass, MoreHorizontal, Hash, Truck, 
+    Building, CheckCircle, Hourglass, MoreHorizontal, Hash, Truck, 
     Package, Box, MapPin, DollarSign, MessageSquare, Tag, Archive 
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProcurement } from '../../components/procurement-provider';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
@@ -130,7 +129,6 @@ export default function MRRProfilePage() {
     const isFinalApproved = mrr.approvalStatus === 1;
 
     return (
-        <TooltipProvider>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
@@ -188,7 +186,7 @@ export default function MRRProfilePage() {
                             <InfoItem icon={Box} label="Container" value={`${mrr.containerNo} (${mrr.containerSize})`} />
                             <InfoItem icon={FileText} label="Invc/Challan" value={`${mrr.invoiceNumber} / ${mrr.challanNumber}`} />
                         </CardContent></Card>
-                        <Card><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CheckCircle2 className="h-4 w-4"/>Condition</CardTitle></CardHeader>
+                        <Card><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CheckCircle className="h-4 w-4"/>Condition</CardTitle></CardHeader>
                         <CardContent className="grid gap-4">
                             <InfoItem icon={Package} label="Goods State" value={<Badge variant={mrr.goodsCondition === 'Ok' ? 'default' : 'destructive'}>{mrr.goodsCondition}</Badge>} />
                             <InfoItem icon={Archive} label="Packaging" value={<Badge variant={mrr.packageCondition === 'Ok' ? 'default' : 'destructive'}>{mrr.packageCondition}</Badge>} />
@@ -212,11 +210,10 @@ export default function MRRProfilePage() {
                         const historyEntry = mrr.approvalHistory?.find((h:any) => h.level === index);
                         const approver = employees?.find(e => e.id === step.approverId);
                         const isPending = mrr.currentApproverId === step.approverId && mrr.approvalStatus > 2;
-                        return (<li key={index} className="flex items-start gap-4 list-none">{historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>);
+                        return (<li key={index} className="flex items-start gap-4 list-none">{historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>);
                     })}</ul></CardContent></Card>
                 </TabsContent>
             </Tabs>
         </div>
-        </TooltipProvider>
     );
 }

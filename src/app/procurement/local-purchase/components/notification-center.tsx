@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
-import { Bell, Check, Info, AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { Bell, Check, Info, AlertCircle, Clock, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +11,7 @@ import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 type Task = {
     id: string;
@@ -30,7 +30,6 @@ export function NotificationCenter() {
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     
-    // Fetch acknowledged tasks for the current user
     const ackRef = useMemoFirebase(() => (firestore && user) ? collection(firestore, 'users', user.uid, 'acknowledgedTasks') : null, [firestore, user]);
     const { data: acknowledgedTasks } = useCollection(ackRef);
 
