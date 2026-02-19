@@ -145,7 +145,7 @@ export function ComparativeStatementTable() {
             if (!cs || !cs.approvalFlow?.steps) return;
             const currentLevel = cs.approvalHistory?.length || 0;
             const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
-            let nextStatus = status === 1 ? (currentLevel + 1 < cs.approvalFlow.steps.length ? currentLevel + 4 : 1) : 0;
+            let nextStatus = status === 1 ? (currentLevel + 1 < cs.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
             let nextApprover = status === 1 && currentLevel + 1 < cs.approvalFlow.steps.length ? cs.approvalFlow.steps[currentLevel + 1].approverId : '';
             setDocumentNonBlocking(doc(csRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
