@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -13,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Clock, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -92,7 +91,7 @@ export function DemandNoteTable() {
         };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead } = roleData;
+    const { isSuperAdmin, isGPOfficer } = roleData;
 
     const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
@@ -119,9 +118,9 @@ export function DemandNoteTable() {
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
             let isVisible = false;
-            if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
+            if (roleData.isSuperAdmin || roleData.isGPOfficer || roleData.isGPConcern || roleData.isManager) {
                 isVisible = true; 
-            } else if (isAnyDeptHead) {
+            } else if (roleData.isAnyDeptHead) {
                 const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
                     dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
                 );
@@ -158,7 +157,7 @@ export function DemandNoteTable() {
 
             return searchTermMatch && statusMatch && stageMatch && dateMatch;
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
-    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead, orgSettings, currentUserEmployee, sections]);
+    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, roleData, orgSettings, currentUserEmployee, sections]);
 
     const approvableItems = useMemo(() => {
         return filteredItems.filter(item => 
@@ -356,10 +355,10 @@ export function DemandNoteTable() {
                                                         {getDemandNoteStatusText(item)}
                                                     </Badge>
                                                     {isWaitingForApproval && (
-                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>
+                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Requisition</Badge>
                                                     )}
                                                     {isWaitingForGP && (
-                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>
+                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign GP Desk</Badge>
                                                     )}
                                                 </div>
                                             </TableCell>

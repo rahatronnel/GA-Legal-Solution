@@ -1,13 +1,12 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, History, CheckCircle2, Clock, User, ArrowRight, Building, FileText, ShoppingCart, GitCommit, ChevronRight } from 'lucide-react';
+import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -256,7 +255,7 @@ export function WorkflowTracker() {
                     {selectedDnId ? (
                         <ScrollArea className="h-full pr-4">
                             <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                                {timeline.map((event, idx) => {
+                                {timeline.map((event) => {
                                     const relativeTime = getRelativeTimeInfo(event.timestamp);
                                     return (
                                         <div key={event.id} className="relative flex items-start group">

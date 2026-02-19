@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -120,7 +119,7 @@ export function ComparativeStatementTable() {
         return safeItems.filter(cs => {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
-                const dn = demandNotes?.find(d => d.id === item.demandNoteId);
+                const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
                     cs.vendorSelectorId === currentUserEmployee.id ||
@@ -222,8 +221,8 @@ export function ComparativeStatementTable() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Select Vendor</Badge>}
-                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Need Approval</Badge>}
+                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Select Awarded Vendor</Badge>}
+                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Statement</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
