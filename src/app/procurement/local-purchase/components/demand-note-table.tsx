@@ -11,8 +11,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Edit, Trash2, Search, Eye, Check, X, Printer, Copy } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Copy } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -22,11 +23,7 @@ import type { DemandNote } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { Input } from '@/components/ui/input';
+import { getDemandNoteStatusText } from '../lib/status-helper';
 import {
   Dialog,
   DialogContent,
@@ -35,12 +32,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
 
 export function DemandNoteTable() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { demandNotes, sections, employees, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
@@ -67,7 +65,7 @@ export function DemandNoteTable() {
             const searchTermMatch = !searchTerm || item.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
             const statusMatch = statusFilter === 'all' || (statusFilter === 'pending' ? (item.approvalStatus !== 1 && item.approvalStatus !== 0) : item.approvalStatus === parseInt(statusFilter));
             return searchTermMatch && statusMatch;
-        }).sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+        }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
     }, [demandNotes, searchTerm, statusFilter]);
 
     const handleSave = (data: Partial<DemandNote>) => {
@@ -86,18 +84,27 @@ export function DemandNoteTable() {
         setIsDeleteConfirmOpen(false);
     };
 
+    const userRoleText = useMemo(() => {
+        if (roleData.isSuperAdmin) return "Role: Superadmin";
+        if (roleData.isGPOfficer) return "Role: GP Officer";
+        return "Role: Employee";
+    }, [roleData]);
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
                 <div className="flex justify-between items-center gap-2">
-                    <div className="relative w-full max-w-xs">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search DN..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-8"
-                        />
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <div className="relative w-full sm:max-w-xs">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search DN..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                        <Badge variant="outline">{userRoleText}</Badge>
                     </div>
                     <Button onClick={() => { setCurrentItem(null); setIsFormOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add DN</Button>
                 </div>
@@ -112,29 +119,32 @@ export function DemandNoteTable() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredItems.map(item => {
-                                const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
-                                return (
-                                    <TableRow key={item.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
-                                        <TableCell>{item.demandNoteNumber}</TableCell>
-                                        <TableCell>{item.date}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant={item.approvalStatus === 1 ? 'default' : 'secondary'}>{getDemandNoteStatusText(item)}</Badge>
-                                                {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white">⚠️ Action Required</Badge>}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button>
-                                                <Button variant="destructive" size="icon" onClick={() => { setCurrentItem(item); setIsDeleteConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                            {filteredItems.length === 0 && (
+                            {isLoading ? (
+                                <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>
+                            ) : filteredItems.length > 0 ? (
+                                filteredItems.map(item => {
+                                    const isWaitingForMe = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
+                                    return (
+                                        <TableRow key={item.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
+                                            <TableCell>{item.demandNoteNumber}</TableCell>
+                                            <TableCell>{item.date}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={item.approvalStatus === 1 ? 'default' : 'secondary'}>{getDemandNoteStatusText(item)}</Badge>
+                                                    {isWaitingForMe && <Badge className="bg-orange-500 animate-pulse text-white">⚠️ Action Required</Badge>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button>
+                                                    <Button variant="destructive" size="icon" onClick={() => { setCurrentItem(item); setIsDeleteConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
+                            ) : (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">No demand notes found.</TableCell>
                                 </TableRow>

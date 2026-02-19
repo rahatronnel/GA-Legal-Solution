@@ -12,9 +12,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Copy, Users, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus } from 'lucide-react';
+import { Search, Eye, Trash2, Check, Printer, X, Users, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
@@ -32,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Label } from '@/components/ui/label';
@@ -234,7 +233,7 @@ export function ComparativeStatementTable() {
             const searchTermMatch = !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || getDemandNoteNumber(cs.demandNoteId).toLowerCase().includes(searchTerm.toLowerCase());
             const vendorMatch = vendorFilter === 'all' || cs.vendorDetails.some((vd: any) => vd.vendorId === vendorFilter);
             return searchTermMatch && vendorMatch;
-        }).sort((a, b) => new Date(b.csDate).getTime() - new Date(a.csDate).getTime());
+        }).sort((a, b) => new Date(b.csDate || 0).getTime() - new Date(a.csDate || 0).getTime());
     }, [comparativeStatements, searchTerm, vendorFilter, demandNotes]);
 
     const approvableItems = useMemo(() => {
@@ -390,12 +389,16 @@ export function ComparativeStatementTable() {
                                     const totals = calculateVendorTotals(cs);
                                     const amount = cs.selectedVendorId ? (totals[cs.selectedVendorId]?.grandTotal || 0) : 0;
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
+                                    
+                                    // Action Required Logic
                                     const isWaitingForMe = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
+                                    const highlightRow = isWaitingForMe || canSelectVendor;
+
                                     return (
-                                        <TableRow key={cs.id} className={isWaitingForMe ? 'bg-orange-500/10' : ''}>
+                                        <TableRow key={cs.id} className={highlightRow ? 'bg-orange-500/10' : ''}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)}
@@ -409,7 +412,7 @@ export function ComparativeStatementTable() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {isWaitingForMe && (
+                                                    {highlightRow && (
                                                         <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Action Required</Badge>
                                                     )}
                                                 </div>
