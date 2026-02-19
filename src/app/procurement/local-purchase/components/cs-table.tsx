@@ -112,14 +112,30 @@ export function ComparativeStatementTable() {
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+    const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
+                      orgSettings?.procurementSettings?.factoryDirectorId === currentUserEmployee?.id;
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
+            // Visibility Check: Admin/GP/Manager see all. Others see what they created or are assigned to approve.
+            let isVisible = isSuperAdmin || isGPOfficer || isManager;
+            if (!isVisible && currentUserEmployee) {
+                const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+                if (cs.createdBy === currentUserEmployee.id || 
+                    cs.currentApproverId === currentUserEmployee.id || 
+                    cs.vendorSelectorId === currentUserEmployee.id ||
+                    dn?.createdBy === currentUserEmployee.id ||
+                    dn?.gpConcernOfficerId === currentUserEmployee.id) {
+                    isVisible = true;
+                }
+            }
+            if (!isVisible) return false;
+
             const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
             return !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || dn?.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
         }).sort((a, b) => new Date(b.csDate || 0).getTime() - new Date(a.csDate || 0).getTime());
-    }, [comparativeStatements, searchTerm, demandNotes]);
+    }, [comparativeStatements, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
     const approvableItems = useMemo(() => filteredItems.filter(i => currentUserEmployee && i.currentApproverId === currentUserEmployee.id && i.approvalStatus !== 1 && i.approvalStatus !== 0 && i.approvalStatus !== 2), [filteredItems, currentUserEmployee]);
 

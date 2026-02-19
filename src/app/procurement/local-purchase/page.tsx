@@ -27,7 +27,7 @@ import { WorkflowTracker } from './components/workflow-tracker';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
-  const { orgSettings, employees } = useProcurement();
+  const { orgSettings, employees, demandNotes, comparativeStatements, purchaseOrders } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -44,12 +44,12 @@ function LocalPurchaseContent() {
     const settings = orgSettings?.procurementSettings;
 
     if (!settings || !employees || !user) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false, isCurrentApprover: false };
     }
 
     const currentEmp = employees.find((e: any) => e.email === user.email);
     if (!currentEmp) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false, isCurrentApprover: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -72,21 +72,27 @@ function LocalPurchaseContent() {
     if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
+    // Check if the user is currently assigned to approve ANY active record
+    const isCurrentApprover = demandNotes.some(dn => dn.currentApproverId === currentEmp.id) ||
+                              comparativeStatements.some(cs => cs.currentApproverId === currentEmp.id) ||
+                              purchaseOrders.some(po => po.currentApproverId === currentEmp.id);
+
     return {
       isSuperAdmin: superAdminCheck,
       isGPOfficer: GPO,
       isGPConcern: GPC,
       isManager: managerCheck,
-      isCsApprover: csApproverCheck
+      isCsApprover: csApproverCheck,
+      isCurrentApprover: isCurrentApprover
     };
-  }, [orgSettings, employees, user]);
+  }, [orgSettings, employees, user, demandNotes, comparativeStatements, purchaseOrders]);
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover } = roleData;
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover } = roleData;
 
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes' }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover;
+    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover || isCurrentApprover;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk' });
     if (canViewCsAndPo) {
@@ -101,7 +107,7 @@ function LocalPurchaseContent() {
       list.push({ id: 'settings', label: 'Settings' });
     }
     return list;
-  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover]);
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover]);
 
   const userRoleText = useMemo(() => {
     if (isSuperAdmin) return "Superadmin";

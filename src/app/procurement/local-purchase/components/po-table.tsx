@@ -45,6 +45,8 @@ export function PurchaseOrderTable() {
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+    const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
+                      orgSettings?.procurementSettings?.factoryDirectorId === currentUserEmployee?.id;
 
     const gpConcernOfficers = useMemo(() => {
         const ids = orgSettings?.procurementSettings?.gpConcernOfficerIds || [];
@@ -54,6 +56,19 @@ export function PurchaseOrderTable() {
     const filteredPOs = useMemo(() => {
         const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
         return safePOs.filter(po => {
+            // Visibility Check
+            let isVisible = isSuperAdmin || isGPOfficer || isManager;
+            if (!isVisible && currentUserEmployee) {
+                const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
+                if (po.createdBy === currentUserEmployee.id || 
+                    po.currentApproverId === currentUserEmployee.id ||
+                    dn?.createdBy === currentUserEmployee.id ||
+                    dn?.gpConcernOfficerId === currentUserEmployee.id) {
+                    isVisible = true;
+                }
+            }
+            if (!isVisible) return false;
+
             const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
             const cs = comparativeStatements?.find(c => c.id === po.csId);
             const lowerTerm = searchTerm.toLowerCase();
@@ -62,7 +77,7 @@ export function PurchaseOrderTable() {
             const gpMatch = gpConcernFilter === 'all' || dn?.gpConcernOfficerId === gpConcernFilter;
             return termMatch && vendorMatch && gpMatch;
         }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements]);
+    }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
     const approvableItems = useMemo(() => filteredPOs.filter(po => currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0), [filteredPOs, currentUserEmployee]);
 

@@ -69,7 +69,7 @@ export function DemandNoteTable() {
     const roleData = useMemo(() => {
         const superAdminCheck = user?.email === 'superadmin@galsolution.com';
         const settings = orgSettings?.procurementSettings;
-        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isDeptHead: false };
+        if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
 
         const GPO = settings.generalPurchaseOfficerId === currentUserEmployee.id;
         const GPC = !!settings.gpConcernOfficerIds?.includes(currentUserEmployee.id);
@@ -79,8 +79,8 @@ export function DemandNoteTable() {
             settings.manufacturingDeptManagerId === currentUserEmployee.id ||
             settings.specializedDeptManagerId === currentUserEmployee.id;
         
-        const deptHeadCheck = settings.departmentHeads?.some(
-            dh => dh.sectionId === currentUserEmployee.departmentId && (dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+        const anyDeptHeadCheck = settings.departmentHeads?.some(
+            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
         );
 
         return {
@@ -88,11 +88,11 @@ export function DemandNoteTable() {
             isGPOfficer: GPO,
             isGPConcern: GPC,
             isManager: managerCheck,
-            isDeptHead: deptHeadCheck
+            isAnyDeptHead: anyDeptHeadCheck
         };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead } = roleData;
+    const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead } = roleData;
 
     const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
 
@@ -121,14 +121,19 @@ export function DemandNoteTable() {
             let isVisible = false;
             if (isSuperAdmin || isGPOfficer || isGPConcern || isManager) {
                 isVisible = true; 
-            } else if (isDeptHead) {
+            } else if (isAnyDeptHead) {
+                // If they are a department head, check if they are head/advisor of the requesting department
                 const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
                     dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
                 );
                 if (isHeadOfThisDept) isVisible = true;
             }
             
+            // Creators must always see their own records
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
+
+            // CRITICAL FIX: Designated current approvers MUST see the record even if they are outside the requesting department
+            if (currentUserEmployee && item.currentApproverId === currentUserEmployee.id) isVisible = true;
 
             if (!isVisible) return false;
 
@@ -157,7 +162,7 @@ export function DemandNoteTable() {
 
             return searchTermMatch && statusMatch && stageMatch && dateMatch;
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
-    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isDeptHead, orgSettings, currentUserEmployee, sections]);
+    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead, orgSettings, currentUserEmployee, sections]);
 
     const approvableItems = useMemo(() => {
         return filteredItems.filter(item => 
