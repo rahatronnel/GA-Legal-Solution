@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -178,7 +177,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         return { itemTotal, discount, grandTotal, vatAmount, taxAmount };
     };
 
-    const nextStep = () => setStep(s => Math.min(s + 1, totalSteps -1));
+    const nextStep = () => setStep(s => Math.min(s + 1, totalSteps - 1));
     const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
     const handleSave = () => {
@@ -192,7 +191,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         }
     
         const { procurementSettings } = orgSettings;
-        const { csApprovalRoles, departmentHeads, specializedDeptManagerId, specializedDeptTaId, managingDirectorId, factoryDirectorId } = procurementSettings || {};
+        const { csApprovalRoles, departmentHeads, specializedDeptManagerId, managingDirectorId, factoryDirectorId } = procurementSettings || {};
         
         if (!csApprovalRoles) {
             toast({ variant: 'destructive', title: 'Error', description: 'CS Approval Roles are not configured in settings.' });
@@ -215,7 +214,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         }
         
         dataToSave.approvalAmount = approvalAmount;
-        dataToSave.approvalAmountBasis = basis;
+        dataToSave.approvalAmountBasis = basis as any;
     
         const approvalSteps: {stepName: string, approverId: string}[] = [];
         const { purchaseManagerId, purchaseDeptTaId, viceFactoryManagerId, accountsManagerId, gmSalesDeptId, gmAdministrationId } = csApprovalRoles;
@@ -299,7 +298,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                                         <TableCell>{item.particulars}</TableCell>
                                                         <TableCell>{item.unit}</TableCell>
                                                         <TableCell>{item.quantity}</TableCell>
-                                                        <TableCell><Input type="number" value={quote?.unitPrice ?? ''} onChange={e => handleItemPriceChange(itemIndex, currentVendor.id, parseFloat(e.target.value) || 0)} /></TableCell>
+                                                        <TableCell><Input type="number" value={quote?.unitPrice ?? ''} onChange={e => handleItemPriceChange(index, currentVendor.id, parseFloat(e.target.value) || 0)} /></TableCell>
                                                         <TableCell className="text-right">{totalPrice.toFixed(2)}</TableCell>
                                                     </TableRow>
                                                 )
@@ -317,7 +316,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                  <CardContent className="space-y-4">
                                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                                         <div className="space-y-2"><Label>Discount Type</Label>
-                                            <Select value={currentVendorDetails?.discountType || 'Amount'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v)}>
+                                            <Select value={currentVendorDetails?.discountType || 'Amount'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'discountType', v as any)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Amount">Amount</SelectItem><SelectItem value="Percentage">Percentage</SelectItem></SelectContent>
                                             </Select>
@@ -339,7 +338,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                         <div className="space-y-2"><Label>Payment Terms</Label><Textarea value={currentVendorDetails?.paymentTerms || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'paymentTerms', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Warranty</Label><Textarea value={currentVendorDetails?.warranty || ''} onChange={e => handleVendorDetailChange(currentVendor.id, 'warranty', e.target.value)}/></div>
                                         <div className="space-y-2"><Label>Quality/Sample Confirmation</Label>
-                                            <Select value={currentVendorDetails?.sampleConfirmed || 'N/A'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'sampleConfirmed', v)}>
+                                            <Select value={currentVendorDetails?.sampleConfirmed || 'N/A'} onValueChange={(v) => handleVendorDetailChange(currentVendor.id, 'sampleConfirmed', v as any)}>
                                                 <SelectTrigger><SelectValue/></SelectTrigger>
                                                 <SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem><SelectItem value="N/A">N/A</SelectItem></SelectContent>
                                             </Select>
