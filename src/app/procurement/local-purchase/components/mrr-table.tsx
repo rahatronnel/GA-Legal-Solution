@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, UserCheck, Upload, X, Check } from 'lucide-react';
+import { Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, UserCheck, Upload, X, Check, HelpCircle, Info, ListOrdered, ShieldCheck, Box, Tag } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -27,10 +27,72 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import type { UploadedFile } from './po-entry-form';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-/**
- * Dialog for GP Concern to finalize the MRR by uploading documents and selecting confirmant.
- */
+const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+                <div className="flex items-center gap-2 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                    <DialogTitle className="text-xl">MRR User Guide</DialogTitle>
+                </div>
+                <DialogDescription>Instructions for high-fidelity Material Receiving Reports.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-grow pr-4">
+                <div className="space-y-6 py-4">
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            The Material Receiving Report (MRR) serves as the official organizational record for the physical receipt of goods. It acts as the "Entry Audit" before items are accepted into inventory or delivered to the requesting department.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Tag className="h-4 w-4"/> Information Flow</h4>
+                        <p className="text-sm text-muted-foreground">
+                            MRRs are generated from <Badge variant="outline">Purchase Orders</Badge> that have been officially sent to vendors. The system automatically pulls item quantities, unit prices, and department data to prevent manual entry errors.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> The Finalization Phase</h4>
+                        <p className="text-sm text-muted-foreground mb-2">
+                            To activate the approval flow, the <strong>GP Concern Officer</strong> must:
+                        </p>
+                        <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
+                            <li>Upload clear scans of the <strong>Vendor Bill/Invoice</strong>.</li>
+                            <li>Upload scans of the <strong>Delivery Challan</strong>.</li>
+                            <li>Select a <strong>Receiver Confirmant</strong> (the specific person who verified the physical goods).</li>
+                        </ul>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> 4-Stage Approval Chain</h4>
+                        <ol className="text-sm text-muted-foreground space-y-2 list-decimal pl-5">
+                            <li><strong>GP Concern:</strong> Initial verification of document clarity and shipment data.</li>
+                            <li><strong>Requested Dept. Manager:</strong> Confirms that the goods meet the original Demand Note requirements.</li>
+                            <li><strong>Purchase Manager:</strong> Commercial and budget sign-off.</li>
+                            <li><strong>Purchase Department TA:</strong> Final technical and logistical validation.</li>
+                        </ol>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Box className="h-4 w-4"/> Quality Inspection</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Users must record both <strong>Goods Condition</strong> and <strong>Package Condition</strong>. If anything is marked "Not Ok", the MRR status highlights the discrepancy for the approvers to review.
+                        </p>
+                    </section>
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={() => onOpenChange(false)}>Understood</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
+
 const FinalizeMrrDialog = ({
     mrr,
     isOpen,
@@ -101,7 +163,7 @@ const FinalizeMrrDialog = ({
                 <div className="py-4 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label className="flex justify-between">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase tracking-tighter">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
                             <input id="up-bill" type="file" multiple className="hidden" onChange={handleFileChange('bill')} />
                             <div className="space-y-1 mt-2">
                                 {billDocs.map(f => (
@@ -111,7 +173,7 @@ const FinalizeMrrDialog = ({
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex justify-between">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase tracking-tighter">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer flex items-center gap-1"><Upload className="h-3 w-3"/>Add</Label></Label>
                             <input id="up-challan" type="file" multiple className="hidden" onChange={handleFileChange('challan')} />
                             <div className="space-y-1 mt-2">
                                 {challanDocs.map(f => (
@@ -122,9 +184,9 @@ const FinalizeMrrDialog = ({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Select Receiver Confirmant</Label>
+                        <Label className="font-bold text-xs uppercase tracking-tighter">Select Receiver Confirmant</Label>
                         <Select value={confirmantId} onValueChange={setConfirmantId}>
-                            <SelectTrigger><SelectValue placeholder="Choose user who confirms receipt..." /></SelectTrigger>
+                            <SelectTrigger className="h-11"><SelectValue placeholder="Choose user who confirms physical receipt..." /></SelectTrigger>
                             <SelectContent>
                                 {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
                             </SelectContent>
@@ -133,7 +195,7 @@ const FinalizeMrrDialog = ({
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4"/> Finalize & Start Approval</Button>
+                    <Button onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 font-bold"><Check className="mr-2 h-4 w-4"/> Finalize & Start Approval</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -150,6 +212,7 @@ export function MRRTable() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isFinalizeOpen, setIsFinalizeOpen] = useState(false);
     const [selectedMrrForFinal, setSelectedMrrForFinal] = useState<MRR | null>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -175,7 +238,6 @@ export function MRRTable() {
         const { procurementSettings } = orgSettings;
         const { departmentHeads, csApprovalRoles } = procurementSettings;
 
-        // Build 4-Stage Approval Flow
         const requestedDeptHeadId = departmentHeads.find(dh => dh.sectionId === dn?.sectionId)?.headId;
         
         const steps = [
@@ -189,7 +251,7 @@ export function MRRTable() {
             documents: { bill: data.bill, challan: data.challan },
             receiverConfirmantId: data.confirmantId,
             approvalFlow: { steps },
-            approvalStatus: 3, // Start stage 1
+            approvalStatus: 3, 
             currentApproverId: steps[0].approverId,
         }, { merge: true });
 
@@ -211,9 +273,12 @@ export function MRRTable() {
     return (
         <TooltipProvider>
             <div className="space-y-4">
-                <div className="relative w-full max-w-md">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search MRR#, Supplier, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                    <div className="relative w-full max-w-md">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search MRR#, Supplier, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                    </div>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
                 </div>
 
                 <div className="border rounded-lg overflow-hidden shadow-sm">
@@ -288,6 +353,7 @@ export function MRRTable() {
             </div>
 
             <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} />
+            <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
         </TooltipProvider>
     );
 }

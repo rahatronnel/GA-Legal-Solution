@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send, PackageCheck } from 'lucide-react';
+import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send, PackageCheck, HelpCircle, ListOrdered, ShieldCheck, UserCheck } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -33,6 +33,57 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { MRREntryForm } from './mrr-entry-form';
+
+const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+                <div className="flex items-center gap-2 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                    <DialogTitle className="text-xl">Purchase Order (PO) User Guide</DialogTitle>
+                </div>
+                <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-grow pr-4">
+                <div className="space-y-6 py-4">
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Purchase Orders are the final commitment stage. They are automatically generated from an <Badge variant="outline">Approved Comparative Statement (CS)</Badge>. The items, units, and awarded prices are strictly inherited from the CS to ensure financial integrity.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Workflow Progression</h4>
+                        <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                            <li><strong>Preparation:</strong> The GP Concern verifies terms, delivery dates, and mandatory instructions.</li>
+                            <li><strong>Approval:</strong> The document moves sequentially through internal review stages.</li>
+                            <li><strong>Dispatch:</strong> Once <Badge>Completed</Badge>, the user MUST click the <Send className="h-3 w-3 inline mx-1"/> button to record the "Sent to Vendor" status.</li>
+                            <li><strong>Receipt:</strong> After dispatch, the PO becomes eligible for a Material Receiving Report (MRR).</li>
+                        </ul>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Approval Roles</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Standard PO approval involves the <strong>Purchase Department Technical Advisor</strong> followed by the <strong>Purchase Manager</strong>. These roles are configured globally in the Procurement Settings.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Visibility & Security</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Access is granted to: Superadmins, GP Officers, the assigned GP Concern, and all past/current approvers in the chain. Approvers retain access to view the PO even after their task is complete for auditing purposes.
+                        </p>
+                    </section>
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={() => onOpenChange(false)}>Got it, Thanks!</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
 
 const POApprovalWizard = ({
     po,
@@ -77,7 +128,7 @@ const POApprovalWizard = ({
                                 <Building className="h-5 w-5" />
                                 <h3 className="font-bold">Step 1: Vendor Audit</h3>
                             </div>
-                            <Card className="bg-muted/30 border-primary/10">
+                            <Card className="bg-muted/30 border-primary/20">
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="space-y-1">
                                         <Label className="text-xs uppercase tracking-wider text-muted-foreground">Supplier Name</Label>
@@ -180,6 +231,7 @@ export function PurchaseOrderTable() {
     const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
     const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
     const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
     
     const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
     const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
@@ -290,7 +342,10 @@ export function PurchaseOrderTable() {
                             </div>
                         )}
                     </div>
-                    {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>}
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                        {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>}
+                    </div>
                 </div>
 
                 <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
@@ -424,6 +479,8 @@ export function PurchaseOrderTable() {
                 onApprove={handleApprovalAction}
                 vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)}
             />
+
+            <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
         </TooltipProvider>
     );
 }
