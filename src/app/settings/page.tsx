@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, ShieldAlert, Layout, CheckCircle2 } from 'lucide-react';
+import { Upload, X, ShieldAlert, Layout, CheckCircle2, Bell } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +26,7 @@ import { BulkDeleteSection } from './components/bulk-delete-section';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 
 type ApprovalStep = {
     stepName: string;
@@ -47,6 +48,7 @@ export type OrganizationSettings = {
   moduleVisibility?: {
     showProcurementManagement: boolean;
     showCoreModules: boolean;
+    enableNotifications: boolean;
   };
   approvalFlow?: {
       effectiveDate: string;
@@ -90,7 +92,8 @@ const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementS
   favicon: '',
   moduleVisibility: {
     showProcurementManagement: true,
-    showCoreModules: true
+    showCoreModules: true,
+    enableNotifications: true
   }
 };
 
@@ -215,7 +218,7 @@ export default function SettingsPage() {
                 <DialogHeader><DialogTitle>Advanced Controls</DialogTitle><DialogDescription>Maintenance tools and module visibility settings.</DialogDescription></DialogHeader>
                 <div className="space-y-6 py-4">
                     <div className="space-y-4">
-                        <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Home Page Visibility</h4>
+                        <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Feature Visibility</h4>
                         <div className="space-y-3">
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-proc" checked={settings.moduleVisibility?.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
@@ -224,6 +227,14 @@ export default function SettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-core" checked={settings.moduleVisibility?.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
                                 <Label htmlFor="vis-core">Show Core Modules Section</Label>
+                            </div>
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label className="font-bold flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Notification System</Label>
+                                    <p className="text-xs text-muted-foreground">Derived task-driven Action Center.</p>
+                                </div>
+                                <Switch checked={settings.moduleVisibility?.enableNotifications} onCheckedChange={(c) => handleVisibilityChange('enableNotifications', c)} />
                             </div>
                         </div>
                         <Button className="w-full mt-2" size="sm" onClick={handleSave}><CheckCircle2 className="mr-2 h-4 w-4"/> Update Visibility</Button>

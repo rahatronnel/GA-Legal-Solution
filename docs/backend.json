@@ -20,7 +20,8 @@
           "type": "object",
           "properties": {
             "showProcurementManagement": { "type": "boolean" },
-            "showCoreModules": { "type": "boolean" }
+            "showCoreModules": { "type": "boolean" },
+            "enableNotifications": { "type": "boolean" }
           }
         },
         "approvalFlow": {
@@ -100,6 +101,17 @@
         }
       },
       "required": ["name", "email"]
+    },
+    "AcknowledgedTask": {
+      "title": "Acknowledged Task",
+      "type": "object",
+      "description": "Represents a user acknowledging a task notification.",
+      "properties": {
+        "userId": { "type": "string" },
+        "taskId": { "type": "string" },
+        "acknowledgedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "taskId"]
     },
     "Department": {
       "title": "Department",
@@ -511,22 +523,6 @@
         "purpose": { "type": "string" },
         "items": { "type": "array", "items": { "$ref": "#/entities/DemandNoteItem" } },
         "remarks": { "type": "string" },
-        "documents": {
-            "type": "object",
-            "properties": {
-                "attachments": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "id": { "type": "string" },
-                            "name": { "type": "string" },
-                            "file": { "type": "string" }
-                        }
-                    }
-                }
-            }
-        },
         "createdBy": { "type": "string", "description": "Employee ID of the creator." },
         "entryDate": { "type": "string", "format": "date-time", "description": "Timestamp of when the demand note was created." },
         "approvalStatus": { "type": "number", "description": "0: Rejected, 1: Approved, 2: Pending" },
@@ -786,6 +782,7 @@
   },
   "firestore": {
     "/settings/organization": { "schema": { "$ref": "#/entities/OrganizationSettings" }, "description": "Stores the single, global configuration for the organization." },
+    "/users/{userId}/acknowledgedTasks/{taskId}": { "schema": { "$ref": "#/entities/AcknowledgedTask" }, "description": "Stores user-specific acknowledgments for tasks." },
     "/departments/{departmentId}": { "schema": { "$ref": "#/entities/Department" }, "description": "Stores organizational departments." },
     "/sections/{sectionId}": { "schema": { "$ref": "#/entities/Section" }, "description": "Stores organization sections or departments." },
     "/designations/{designationId}": { "schema": { "$ref": "#/entities/Designation" }, "description": "Stores job titles and designations." },

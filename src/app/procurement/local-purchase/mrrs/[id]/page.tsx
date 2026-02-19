@@ -178,7 +178,7 @@ export default function MRRProfilePage() {
             </Card>
 
             <Tabs defaultValue="overview">
-                <TabsList><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="documents">Bill & Challan</TabsTrigger><TabsTrigger value="history">Approval Flow</TabsTrigger></TabsList>
+                <TabsList><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="documents">Bill & Challan</TabsTrigger><TabsTrigger value="history">Approval Flow</TabsTrigger></Tabs>
                 
                 <TabsContent value="overview" className="space-y-6 mt-6">
                     <div className="grid md:grid-cols-2 gap-6">

@@ -25,6 +25,7 @@ import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
+import { NotificationCenter } from './components/notification-center';
 import { 
     FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, 
     Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin 
@@ -77,7 +78,6 @@ function LocalPurchaseContent() {
     if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
     if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
 
-    // Enhanced Involvement Check: Includes MRRs and Historical involvement
     const isInvolvedInDn = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id || dn.approvalHistory?.some(h => h.approverId === currentEmp.id));
     const isInvolvedInCs = (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id || cs.approvalHistory?.some(h => h.approverId === currentEmp.id));
     const isInvolvedInPo = (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id || po.approvalHistory?.some(h => h.approverId === currentEmp.id));
@@ -133,8 +133,11 @@ function LocalPurchaseContent() {
     <div className="space-y-6">
       <ModuleHeader />
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Local Purchase Module</h1>
-        <Badge variant="outline" className="px-4 py-1 text-sm">Role: {userRoleText}</Badge>
+        <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">Local Purchase Module</h1>
+            <Badge variant="outline" className="px-4 py-1 text-sm">Role: {userRoleText}</Badge>
+        </div>
+        <NotificationCenter />
       </div>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
