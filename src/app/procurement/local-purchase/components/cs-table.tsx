@@ -13,7 +13,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, Hourglass, MoreHorizontal, Hand, FilePlus, Copy, DollarSign, FileText, AlertTriangle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { 
+    Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, 
+    Hourglass, MoreHorizontal, Hand, FilePlus, Copy, DollarSign, 
+    FileText, AlertTriangle, ChevronRight, ChevronLeft, HelpCircle,
+    ListOrdered, ShieldCheck, UserCheck, Tag, BarChart2
+} from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
@@ -27,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
@@ -38,6 +44,58 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+                <div className="flex items-center gap-2 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                    <DialogTitle className="text-xl">Comparative Statement (CS) Guide</DialogTitle>
+                </div>
+                <DialogDescription>Internal guidelines for vendor quotation analysis and contract awarding.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-grow pr-4">
+                <div className="space-y-6 py-4">
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            The Comparative Statement is designed to perform a high-fidelity "Apples-to-Apples" comparison between multiple vendor bids for a specific Demand Note.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Tag className="h-4 w-4"/> Quotation Entry</h4>
+                        <p className="text-sm text-muted-foreground">
+                            GP Concern Officers input the detailed breakdown from each vendor, including unit prices, specific discounts, VAT/TAX percentages, and commercial terms (Payment & Delivery).
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Awarding Strategy</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Once data is entered, the status moves to <Badge variant="outline">Pending Vendor Selection</Badge>. The authorized officer must then click the <Hand className="h-3 w-3 inline mx-1"/> button to "Award" the contract to the most competitive supplier.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Dynamic Approval Thresholds</h4>
+                        <p className="text-sm text-muted-foreground">The internal approval chain is automatically calculated based on the lowest bid amount:</p>
+                        <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
+                            <li><strong>Up to $10k:</strong> Purchase Manager approval.</li>
+                            <li><strong>$10k - $100k:</strong> Purchase Manager + Technical Advisor.</li>
+                            <li><strong>Above $1M:</strong> Full Management Chain + MD/FD Final sign-off.</li>
+                        </ul>
+                    </section>
+                </div>
+            </ScrollArea>
+            <DialogFooter>
+                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -219,6 +277,7 @@ export function ComparativeStatementTable() {
     const [selectedCsForStatus, setSelectedCsForStatus] = useState<ComparativeStatement | null>(null);
     const [isPoFormOpen, setIsPoFormOpen] = useState(false);
     const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -232,7 +291,6 @@ export function ComparativeStatementTable() {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
-                // Retain access rule: Creator, Approver, ANY past approver, or related DN parties
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
                     cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
@@ -296,6 +354,7 @@ export function ComparativeStatementTable() {
                             </div>
                         )}
                     </div>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
                 </div>
                 <div className="border rounded-lg">
                     <Table>
@@ -359,7 +418,8 @@ export function ComparativeStatementTable() {
             
             <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
             <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => { poRef && addDocumentNonBlocking(poRef, d); toast({ title: 'PO Created' }); }} cs={selectedCsForPo} />
-            
+            <CSUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
+
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader><DialogTitle>Approval Flow: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>

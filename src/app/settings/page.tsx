@@ -206,7 +206,6 @@ export default function SettingsPage() {
             </CardContent>
         </Card>
 
-        {/* Hidden Maintenance & Visibility Trigger */}
         <div className="flex justify-center pt-12">
             <Button variant="ghost" size="icon" className="opacity-10 hover:opacity-100 transition-opacity h-6 w-6 rounded-full" onClick={() => setIsMaintenanceOpen(true)}><ShieldAlert className="h-3 w-3 text-muted-foreground" /></Button>
         </div>
