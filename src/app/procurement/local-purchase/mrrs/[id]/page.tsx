@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -176,7 +177,11 @@ export default function MRRProfilePage() {
             </Card>
 
             <Tabs defaultValue="overview">
-                <TabsList><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="documents">Bill & Challan</TabsTrigger><TabsTrigger value="history">Approval Flow</TabsTrigger></Tabs>
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="documents">Bill & Challan</TabsTrigger>
+                    <TabsTrigger value="history">Approval Flow</TabsTrigger>
+                </TabsList>
                 
                 <TabsContent value="overview" className="space-y-6 mt-6">
                     <div className="grid md:grid-cols-2 gap-6">
