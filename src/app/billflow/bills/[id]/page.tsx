@@ -212,7 +212,7 @@ function BillProfileContent() {
                     <div className="flex justify-between items-start">
                         <div>
                             <CardTitle className="text-2xl">{bill.billReferenceNumber || bill.billId}</CardTitle>
-                            <CardDescription>Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill)}</Badge></CardDescription>
+                            <div className="text-sm text-muted-foreground">Bill from {vendor?.vendorName || 'N/A'} - Status: <Badge variant={getStatusVariant(bill.approvalStatus)}>{getBillStatusText(bill)}</Badge></div>
                         </div>
                         <div className="flex items-center gap-2">
                              {isPendingApproval && (

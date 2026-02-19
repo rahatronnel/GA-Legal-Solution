@@ -124,7 +124,7 @@ const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; is
                 <div className="flex justify-between items-center">
                     <div>
                         <CardTitle>Vendor Quotations</CardTitle>
-                        <CardDescription>Upload and manage quotations from assigned vendors.</CardDescription>
+                        <div className="text-sm text-muted-foreground">Upload and manage quotations from assigned vendors.</div>
                     </div>
                 </div>
             </CardHeader>
@@ -180,7 +180,7 @@ function DemandNoteProfileContent() {
 
     const currentUserEmployee = React.useMemo(() => {
         if (!user || !employees) return null;
-        return employees.find(e => e.email === user.email);
+        return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
     }, [user, employees]);
 
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -395,7 +395,6 @@ function DemandNoteProfileContent() {
                                     <InfoItem icon={FileText} label="Budget Year & List No." value={demandNote.budgetYearAndListNo} />
                                     <InfoItem icon={FileText} label="Purpose of Requisition" value={demandNote.purpose} fullWidth />
                                 </CardContent>
-                            </Card>
 
                             <Card>
                                 <CardHeader><CardTitle>Items</CardTitle></CardHeader>

@@ -252,7 +252,7 @@ function ComparativeStatementView() {
                                                 <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-2 border-primary' : ''}`}>
                                                     <div className="flex flex-col items-center justify-center gap-1">
                                                         <span className="font-semibold">{vendor.vendorName}</span>
-                                                        <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
+                                                        <div className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</div>
                                                         {vendor.id === bestOfferVendorId && <Badge className="mt-1 bg-green-600">Best Offer</Badge>}
                                                         {vendor.id === cs.selectedVendorId && <Badge variant="default" className="mt-1">Selected</Badge>}
                                                         {quotation?.fileDataUrl && (
@@ -306,7 +306,7 @@ function ComparativeStatementView() {
                                             <TableHead key={vendor.id} className={`min-w-[200px] text-center ${vendor.id === bestOfferVendorId ? 'bg-green-100 dark:bg-green-900/30' : ''} ${vendor.id === cs.selectedVendorId ? 'border-2 border-primary' : ''}`}>
                                                 <div className="flex flex-col items-center justify-center gap-1">
                                                     <span className="font-semibold">{vendor.vendorName}</span>
-                                                    <p className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</p>
+                                                    <div className="text-xs text-muted-foreground px-2">{vendor.officeAddress}</div>
                                                 </div>
                                             </TableHead>
                                         ))}
@@ -386,7 +386,7 @@ function ComparativeStatementView() {
                 <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Quotation: {viewingQuotation?.vendorName}</DialogTitle>
-                        <DialogDescription>{viewingQuotation?.fileName}</DialogDescription>
+                        <div className="text-sm text-muted-foreground">{viewingQuotation?.fileName}</div>
                     </DialogHeader>
                     <div className="flex-grow relative">
                         {viewingQuotation?.fileDataUrl.startsWith('data:image/') ? (

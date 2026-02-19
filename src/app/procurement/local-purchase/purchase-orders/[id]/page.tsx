@@ -350,7 +350,7 @@ function PurchaseOrderView() {
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0">
                                         <div>
                                             <CardTitle className="text-lg">{documentLabels[key]}</CardTitle>
-                                            <CardDescription>Upload related documents.</CardDescription>
+                                            <div className="text-sm text-muted-foreground">Upload related documents.</div>
                                         </div>
                                         <div>
                                             <Label htmlFor={`file-${key}`} className="cursor-pointer">
