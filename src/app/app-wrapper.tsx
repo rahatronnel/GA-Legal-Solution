@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +63,7 @@ const ModuleDashboard = () => {
     const auth = useAuth();
     const { user } = useUser();
     const firestore = useFirestore();
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
     const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
@@ -121,26 +122,10 @@ const ModuleDashboard = () => {
                             </DropdownMenuItem>
                         </ChangePasswordDialog>
                         <DropdownMenuSeparator />
-                        <AlertDialog>
-                           <AlertDialogTrigger asChild>
-                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                <span>Logout</span>
-                               </DropdownMenuItem>
-                           </AlertDialogTrigger>
-                           <AlertDialogContent>
-                               <AlertDialogHeader>
-                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                               <AlertDialogDescription>
-                                   You will be logged out of your session.
-                               </AlertDialogDescription>
-                               </AlertDialogHeader>
-                               <AlertDialogFooter>
-                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                               <AlertDialogAction onClick={() => auth.signOut()} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
-                               </AlertDialogFooter>
-                           </AlertDialogContent>
-                        </AlertDialog>
+                        <DropdownMenuItem onSelect={() => setIsLogoutDialogOpen(true)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -208,6 +193,21 @@ const ModuleDashboard = () => {
              <footer className="absolute bottom-4 text-xs text-muted-foreground">
                 © 2024 YKK ERP Solution
             </footer>
+
+            <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+               <AlertDialogContent>
+                   <AlertDialogHeader>
+                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                   <AlertDialogDescription>
+                       You will be logged out of your session.
+                   </AlertDialogDescription>
+                   </AlertDialogHeader>
+                   <AlertDialogFooter>
+                   <AlertDialogCancel>Cancel</AlertDialogCancel>
+                   <AlertDialogAction onClick={() => { auth.signOut(); setIsLogoutDialogOpen(false); }} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
+                   </AlertDialogFooter>
+               </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
