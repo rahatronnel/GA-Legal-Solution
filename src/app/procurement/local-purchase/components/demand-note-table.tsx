@@ -146,7 +146,9 @@ export function DemandNoteTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">No demand notes found.</TableCell>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        No demand notes found.
+                                    </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

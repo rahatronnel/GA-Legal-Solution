@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ModuleHeader } from '@/app/components/module-header';
@@ -143,7 +143,11 @@ export default function LocalPurchasePage() {
   }, [showGPDesk, canViewCsTab, canViewPoTab, isSuperAdmin]);
 
   if (isLoading) {
-      return <div className="p-8 text-center"><p>Loading Local Purchase module...</p></div>;
+      return (
+        <div className="p-8 text-center">
+            <p>Loading Local Purchase module...</p>
+        </div>
+      );
   }
 
   return (

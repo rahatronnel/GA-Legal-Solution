@@ -391,11 +391,11 @@ export function ComparativeStatementTable() {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     
                                     // Action Required Logic
-                                    const isWaitingForMe = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
                                     const canSelectVendor = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
+                                    const isWaitingForMe = (currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) || canSelectVendor;
                                     const canCreatePO = cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNotes.find(d => d.id === cs.demandNoteId)?.gpConcernOfficerId === currentUserEmployee.id));
 
-                                    const highlightRow = isWaitingForMe || canSelectVendor;
+                                    const highlightRow = isWaitingForMe;
 
                                     return (
                                         <TableRow key={cs.id} className={highlightRow ? 'bg-orange-500/10' : ''}>
