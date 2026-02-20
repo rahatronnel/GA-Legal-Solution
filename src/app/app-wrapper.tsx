@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -27,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
@@ -81,7 +79,7 @@ const ModuleDashboard = () => {
 
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
-             <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full">
+             <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full z-50">
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -102,23 +100,24 @@ const ModuleDashboard = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="overflow-hidden rounded-full h-9 w-9"
+                          className="overflow-hidden rounded-full h-9 w-9 border border-white/10"
                         >
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={currentUserEmployee?.profilePicture} alt={currentUserEmployee?.fullName}/>
-                                <AvatarFallback>{currentUserEmployee?.fullName?.charAt(0) || <UserIcon />}</AvatarFallback>
+                                <AvatarFallback className="bg-primary/20 text-white text-xs">{currentUserEmployee?.fullName?.charAt(0) || <UserIcon className="h-4 w-4" />}</AvatarFallback>
                             </Avatar>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>
-                            <p className="font-semibold truncate">{currentUserEmployee?.fullName || user?.email}</p>
-                            <p className="text-xs text-muted-foreground font-normal truncate">{currentUserEmployee?.email || ''}</p>
+                      <DropdownMenuContent align="end" className="w-56 mt-2" sideOffset={8}>
+                        <DropdownMenuLabel className="flex flex-col">
+                            <span className="font-bold truncate text-sm">{currentUserEmployee?.fullName || user?.email}</span>
+                            <span className="text-[10px] text-muted-foreground font-normal truncate">{currentUserEmployee?.email || ''}</span>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <ChangePasswordDialog>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                My Account
+                                <UserIcon className="mr-2 h-4 w-4" />
+                                <span>My Account</span>
                             </DropdownMenuItem>
                         </ChangePasswordDialog>
                         <DropdownMenuSeparator />

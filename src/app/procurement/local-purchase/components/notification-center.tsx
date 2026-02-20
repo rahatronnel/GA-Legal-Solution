@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Bell, Check, Info, AlertCircle, Clock, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Bell, Check, Info, AlertCircle, Clock, ExternalLink, CheckCircle2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
