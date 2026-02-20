@@ -1,8 +1,12 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
-import { Bell, Check, Info, AlertCircle, Clock, ExternalLink, CheckCircle2, FileText, UserPlus, Users, ShoppingCart, Send, Package } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { 
+    Bell, Check, Info, AlertCircle, Clock, ExternalLink, 
+    CheckCircle2, FileText, UserPlus, Users, ShoppingCart, 
+    Send, Package, Copy, ClipboardCheck 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +18,7 @@ import { collection, doc } from 'firebase/firestore';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { differenceInHours, parseISO } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 type Task = {
     id: string;
@@ -28,6 +33,7 @@ type Task = {
 
 export function NotificationCenter() {
     const { user } = useUser();
+    const { toast } = useToast();
     const firestore = useFirestore();
     const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, orgSettings, isLoading } = useProcurement();
 
@@ -37,6 +43,15 @@ export function NotificationCenter() {
     const { data: acknowledgedTasks } = useCollection(ackRef);
 
     const reminderThreshold = orgSettings?.notificationReminderHours || 24;
+
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(text);
+        toast({ title: "Copied to Clipboard", description: `${text} is ready to paste.` });
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     const tasks = useMemo((): Task[] => {
         if (!currentUserEmployee || isLoading) return [];
@@ -97,17 +112,33 @@ export function NotificationCenter() {
 
         // 2. Comparative Statements
         comparativeStatements.forEach(cs => {
-            if (cs.approvalStatus === 2 && cs.vendorSelectorId === uid) {
+            const relatedDN = demandNotes.find(d => d.id === cs.demandNoteId);
+            const poExists = purchaseOrders.some(p => p.csId === cs.id);
+
+            // Awarding stage
+            if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
                 list.push({
-                    id: cs.id, type: 'Comparative Statement', title: cs.csNumber,
-                    description: 'Analysis ready. Please select the awarded vendor.',
+                    id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber,
+                    description: 'Analysis ready. Please select the awarded vendor to start approval.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Award Selection Required', createdAt: cs.csDate,
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
-            } else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0) {
+            } 
+            // PO Prep stage (After full CS approval)
+            else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
                 list.push({
-                    id: cs.id, type: 'Comparative Statement', title: cs.csNumber,
+                    id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
+                    description: 'CS fully approved. Please prepare the formal Purchase Order.',
+                    link: `/procurement/local-purchase?tab=po`,
+                    status: 'PO Preparation Needed', createdAt: cs.csDate, // Ideally we'd have an approvalDate
+                    isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
+                });
+            }
+            // Standard Approval stage
+            else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
+                list.push({
+                    id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber,
                     description: 'Award selection made. Awaiting your approval.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Pending Approval', createdAt: cs.vendorSelectionDate || cs.csDate,
@@ -224,7 +255,17 @@ export function NotificationCenter() {
                                         {task.isOverdue && <Badge className="h-4 text-[9px] bg-red-600 animate-bounce">Urgent Reminder</Badge>}
                                         {!task.isOverdue && isNew && <Badge className="h-4 text-[9px] bg-blue-500">New Task</Badge>}
                                     </div>
-                                    <p className="font-bold text-sm leading-tight mb-1">{task.title}</p>
+                                    <div className="flex items-center justify-between group/title mb-1">
+                                        <p className="font-bold text-sm leading-tight truncate pr-2">{task.title}</p>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6 opacity-0 group-hover/title:opacity-100 transition-opacity" 
+                                            onClick={() => handleCopy(task.title)}
+                                        >
+                                            {copiedId === task.title ? <ClipboardCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                        </Button>
+                                    </div>
                                     <p className="text-xs text-muted-foreground leading-snug mb-3">{task.description}</p>
                                     <div className="flex items-center justify-between gap-2">
                                         <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 font-bold hover:bg-primary/10" asChild>
