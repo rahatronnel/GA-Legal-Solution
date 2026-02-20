@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { 
     CalendarIcon, 
     Hash, 
@@ -41,14 +42,13 @@ import {
     Container,
     X
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
 import type { PurchaseOrder, UploadedFile } from './po-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type MRRItem = {
@@ -195,7 +195,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 <ArrowDownCircle className="h-6 w-6 text-primary" />
             </div>
             <div>
-                <DialogTitle className="text-2xl">Prepare Material Receiving Report (MRR)</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">Prepare Material Receiving Report (MRR)</DialogTitle>
                 <DialogDescription>Record physical receipt of goods for Purchase Order: <span className="font-bold text-foreground">{po.poNumber}</span></DialogDescription>
             </div>
           </div>
@@ -255,8 +255,17 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
             <h4 className="font-bold flex items-center gap-2 text-primary"><Truck className="h-5 w-5" /> Logistics & Shipment Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Truck className="h-4 w-4" /> Shipment Type</Label>
-                    <Input id="shipmentType" value={mrrData.shipmentType || ''} onChange={handleInputChange} placeholder="e.g. Air, Sea, Road" />
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Truck className="h-4 w-4" /> Shipment Type <MandatoryIndicator/></Label>
+                    <Select value={mrrData.shipmentType || ''} onValueChange={(v) => setMrrData(p => ({ ...p, shipmentType: v }))}>
+                        <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Choose mode..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Air">✈️ Air Shipment</SelectItem>
+                            <SelectItem value="Sea">🚢 Sea / Port</SelectItem>
+                            <SelectItem value="Road">🚛 Road Transport</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Ruler className="h-4 w-4" /> Container Size</Label>
@@ -269,11 +278,11 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Receipt className="h-4 w-4" /> Invoice Number <span className="text-red-500">*</span></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Receipt className="h-4 w-4" /> Invoice Number <MandatoryIndicator/></Label>
                     <Input id="invoiceNumber" value={mrrData.invoiceNumber || ''} onChange={handleInputChange} placeholder="Enter vendor invoice #" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><ClipboardList className="h-4 w-4" /> Challan Number <span className="text-red-500">*</span></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><ClipboardList className="h-4 w-4" /> Challan Number <MandatoryIndicator/></Label>
                     <Input id="challanNumber" value={mrrData.challanNumber || ''} onChange={handleInputChange} placeholder="Enter delivery challan #" />
                 </div>
             </div>
@@ -305,7 +314,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                         </TableRow>
                     ))}
                     <TableRow className="font-bold bg-muted/20">
-                        <TableCell colSpan={5} className="text-right text-lg uppercase tracking-tight flex items-center justify-end gap-2"><DollarSign className="h-5 w-5"/> Grand Total Amount</TableCell>
+                        <TableCell colSpan={5} className="text-right text-lg uppercase tracking-tight">Grand Total Amount</TableCell>
                         <TableCell className="text-right text-lg font-black text-primary underline underline-offset-4 decoration-double">
                             {mrrData.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                         </TableCell>
@@ -354,7 +363,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
         <DialogFooter className="border-t pt-4">
           <Button variant="outline" onClick={() => setIsOpen(false)} className="flex items-center gap-2"><X className="h-4 w-4" /> Cancel</Button>
-          <Button onClick={handleSave} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20">
+          <Button onClick={handleSave} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20 font-bold">
             <CheckCircle2 className="h-4 w-4" /> Save Material Receiving Report
           </Button>
         </DialogFooter>

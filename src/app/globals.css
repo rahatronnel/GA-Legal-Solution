@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -76,6 +77,37 @@ body {
     .page-break {
         page-break-before: always;
     }
+
+    /* Professional Scale & Genie Transition Overrides */
+    .animate-genie-in {
+        animation: genieIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .animate-scale-in {
+        animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes genieIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.85);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 }
 
 @media print {
@@ -84,7 +116,6 @@ body {
     margin: 1cm;
   }
   
-  /* Hides standard app content unless it's a dedicated print route */
   .app-container {
       display: none;
   }
@@ -110,7 +141,6 @@ body {
     page-break-inside: avoid;
   }
 
-  /* Ensure the dedicated print page container is always visible */
   .print-page-dedicated {
       display: block !important;
       visibility: visible !important;

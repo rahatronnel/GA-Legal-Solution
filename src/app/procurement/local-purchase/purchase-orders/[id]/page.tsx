@@ -6,7 +6,9 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { useProcurement } from '../../components/procurement-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy, ChevronRight, ChevronLeft, AlertTriangle, Send } from 'lucide-react';
+import { 
+    ArrowLeft, Printer, FileText, Check, X, CheckCircle, Hourglass, MoreHorizontal, User as UserIcon, Building, DollarSign, Calendar, Upload, Download, Copy, ChevronRight, ChevronLeft, AlertTriangle, Send 
+} from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -160,7 +162,7 @@ const POApprovalWizard = ({
                                 Next Step <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <Button onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
+                            <Button onClick={onApprove} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20 font-bold">
                                 <Check className="mr-2 h-4 w-4" /> Finalize Approval
                             </Button>
                         )}
@@ -279,7 +281,7 @@ function PurchaseOrderView() {
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
     const canSend = isApproved && !po?.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
 
-    if (isLoading || po === undefined) return <div className="p-8 text-center">Loading...</div>;
+    if (isLoading || po === undefined) return <div className="p-8 text-center animate-pulse">Loading PO Details...</div>;
     if (po === null) notFound();
 
     return (
@@ -290,7 +292,7 @@ function PurchaseOrderView() {
                     <div className="flex justify-between items-start">
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <CardTitle className="text-2xl">Purchase Order: {po.poNumber}</CardTitle>
+                                <CardTitle className="text-2xl font-bold">Purchase Order: {po.poNumber}</CardTitle>
                                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip>
                             </div>
                              <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
@@ -330,7 +332,7 @@ function PurchaseOrderView() {
                     {isApproved && <TabsTrigger value="documents">Uploads</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="overview" className="space-y-6 mt-6">
-                    <Card><CardHeader><CardTitle className="text-lg">Vendor & Delivery</CardTitle></CardHeader>
+                    <Card><CardHeader><CardTitle className="text-lg font-bold">Vendor & Delivery</CardTitle></CardHeader>
                     <CardContent className="grid md:grid-cols-2 gap-6">
                         <InfoItem icon={Building} label="Vendor" value={vendor?.vendorName} />
                         <InfoItem icon={Calendar} label="Expected Delivery" value={po.expectedDeliveryDate} />
@@ -338,7 +340,7 @@ function PurchaseOrderView() {
                             <InfoItem icon={Send} label="Sent to Vendor On" value={new Date(po.sentToVendorDate!).toLocaleString()} fullWidth />
                         )}
                     </CardContent></Card>
-                    <Card><CardHeader><CardTitle className="text-lg">Ordered Items</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader><TableBody>{po.items.map((item, idx) => (<TableRow key={idx}><TableCell>{item.particulars}</TableCell><TableCell>{item.quantity} {item.unit}</TableCell><TableCell className="text-right">{item.totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
+                    <Card><CardHeader><CardTitle className="text-lg font-bold">Ordered Items</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Total Price</TableHead></TableRow></TableHeader><TableBody>{po.items.map((item, idx) => (<TableRow key={idx}><TableCell className="font-medium">{item.particulars}</TableCell><TableCell>{item.quantity} {item.unit}</TableCell><TableCell className="text-right font-bold">{item.totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
                 </TabsContent>
                 <TabsContent value="approval" className="mt-6">
                      <Card><CardContent className="py-6"><ul className="space-y-4">{po.approvalFlow?.steps.map((step, index) => { const historyEntry = po.approvalHistory?.find(h => h.level === index); const isPending = po.currentApproverId === step.approverId && isPendingApproval; return (<li key={index} className="flex items-start gap-4 list-none">{historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}<div className="flex-1 flex gap-4 items-center"><Avatar className="h-10 w-10 border"><AvatarFallback>{employees?.find(e => e.id === step.approverId)?.fullName?.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{employees?.find(e => e.id === step.approverId)?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div></div></li>); })}</ul></CardContent></Card>
@@ -349,9 +351,9 @@ function PurchaseOrderView() {
                             {(Object.keys(documentLabels) as DocType[]).map(key => (
                                 <Card key={key}>
                                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                        <CardTitle className="text-lg">{documentLabels[key]}</CardTitle>
+                                        <CardTitle className="text-lg font-bold">{documentLabels[key]}</CardTitle>
                                         <div className="flex items-center gap-2">
-                                            <Label htmlFor={`file-${key}`} className="cursor-pointer text-sm font-medium text-primary hover:underline flex items-center gap-1"><Upload className="h-4 w-4" /> Add File(s)</Label>
+                                            <Label htmlFor={`file-${key}`} className="cursor-pointer text-sm font-bold text-primary hover:underline flex items-center gap-1"><Upload className="h-4 w-4" /> Add File(s)</Label>
                                             <Input id={`file-${key}`} type="file" className="hidden" multiple onChange={handleFileChange(key)} />
                                         </div>
                                     </CardHeader>

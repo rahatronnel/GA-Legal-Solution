@@ -43,7 +43,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
         } catch { return ts; }
     };
 
-    // Extract signatures from history
     const approvers = mrr.approvalHistory
         ?.filter(h => h.status === 'Approved')
         .map(h => {
@@ -54,7 +53,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
 
     return (
         <div className="p-6 bg-white text-black font-sans min-h-[29.7cm] flex flex-col border-2 border-black m-4">
-            {/* Header Section */}
             <div className="grid grid-cols-[1fr_1.5fr] border-b-2 border-black overflow-hidden">
                 <div className="p-4 border-r-2 border-black flex flex-col justify-center items-center text-center">
                     <h1 className="text-3xl font-black uppercase tracking-tight">{orgSettings.name}</h1>
@@ -65,7 +63,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                         <span className="font-bold text-base">শুধুমাত্র অভ্যন্তরীণ ব্যবহারের জন্য</span>
                         <div className="text-right">
                             <p>for internal use only</p>
-                            <p>only</p>
                         </div>
                     </div>
                     <div className="flex-1 p-3 flex justify-center items-center">
@@ -74,51 +71,19 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 </div>
             </div>
 
-            {/* Info Section */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 p-4 text-xs">
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Department:</span>
-                    <span>{mrr.departmentName}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">SL No:</span>
-                    <span className="font-mono">{mrr.mrrNumber}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Section:</span>
-                    <span>{mrr.sectionName}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Material Receiving Date:</span>
-                    <span>{mrr.receivingDate}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Name of Supplier:</span>
-                    <span>{mrr.supplierName}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">MRR Issue Date:</span>
-                    <span>{mrr.MRR_IssueDate}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Address/Origin:</span>
-                    <span>{mrr.supplierAddress}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Shipment Type:</span>
-                    <span>{mrr.shipmentType}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Container No:</span>
-                    <span>{mrr.containerNo || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between border-b border-black/20 pb-1">
-                    <span className="font-bold">Container Size:</span>
-                    <span>{mrr.containerSize || 'N/A'}</span>
-                </div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Department:</span><span>{mrr.departmentName}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">SL No:</span><span className="font-mono">{mrr.mrrNumber}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Section:</span><span>{mrr.sectionName}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Material Receiving Date:</span><span>{mrr.receivingDate}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Name of Supplier:</span><span>{mrr.supplierName}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">MRR Issue Date:</span><span>{mrr.MRR_IssueDate}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Address/Origin:</span><span>{mrr.supplierAddress}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Shipment Type:</span><span>{mrr.shipmentType}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Container No:</span><span>{mrr.containerNo || 'N/A'}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Container Size:</span><span>{mrr.containerSize || 'N/A'}</span></div>
             </div>
 
-            {/* Item Table */}
             <div className="flex-grow mt-4">
                 <table className="w-full border-collapse border-2 border-black text-[10px]">
                     <thead>
@@ -149,7 +114,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                                 <td className="border-2 border-black p-2 text-right font-mono">{formatCurrency(item.amount)}</td>
                             </tr>
                         ))}
-                        {/* Fill empty rows to maintain structure if few items */}
                         {Array.from({ length: Math.max(0, 8 - mrr.items.length) }).map((_, i) => (
                             <tr key={`empty-${i}`} className="h-8">
                                 <td className="border-2 border-black p-2"></td>
@@ -170,7 +134,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 </table>
             </div>
 
-            {/* Conditions Section */}
             <div className="grid grid-cols-2 gap-8 p-4 mt-4 border-2 border-black text-xs font-bold bg-gray-50/50">
                 <div className="flex items-center gap-4">
                     <span>Goods Condition:</span>
@@ -192,11 +155,9 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 </div>
             </div>
 
-            {/* Signature Section */}
             <div className="mt-12">
                 <p className="text-right text-xs font-bold mb-4 uppercase tracking-widest mr-4">Respective (C&F and Others)</p>
                 <div className="grid grid-cols-5 gap-x-2 gap-y-12">
-                    {/* Prepared By */}
                     <div className="text-center">
                         <div className="h-10 flex items-center justify-center">
                             {preparer?.signature && <Image src={preparer.signature} alt="Sig" width={80} height={30} className="object-contain" />}
@@ -207,8 +168,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                             <p className="text-[7px] text-gray-400">{formatDateTime(mrr.createdAt)}</p>
                         </div>
                     </div>
-
-                    {/* Approvers Grid */}
                     {Array.from({ length: 19 }).map((_, i) => {
                         const approver = approvers[i];
                         return (

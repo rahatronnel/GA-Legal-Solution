@@ -63,8 +63,6 @@ export function NotificationCenter() {
         // 1. Demand Notes
         demandNotes.forEach(dn => {
             const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
-            
-            // Approval stage
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
                 list.push({
                     id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber,
@@ -74,8 +72,6 @@ export function NotificationCenter() {
                     isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
                 });
             }
-            
-            // GP Officer Assignment stage
             if (isGPOfficer && dn.approvalStatus === 1 && !dn.gpConcernOfficerId) {
                 list.push({
                     id: dn.id + '-assign', type: 'Demand Note', title: dn.demandNoteNumber,
@@ -85,10 +81,7 @@ export function NotificationCenter() {
                     isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
                 });
             }
-
-            // GP Concern stages
             if (dn.gpConcernOfficerId === uid && dn.approvalStatus === 1) {
-                // Sourcing stage
                 if (!dn.quotations || dn.quotations.length === 0) {
                     list.push({
                         id: dn.id + '-source', type: 'Demand Note', title: dn.demandNoteNumber,
@@ -98,7 +91,6 @@ export function NotificationCenter() {
                         isOverdue: dn.gpAssignedDate ? differenceInHours(now, parseISO(dn.gpAssignedDate)) >= reminderThreshold : false
                     });
                 } else if (!comparativeStatements.some(cs => cs.demandNoteId === dn.id)) {
-                    // CS stage
                     list.push({
                         id: dn.id + '-cs', type: 'Demand Note', title: dn.demandNoteNumber,
                         description: 'Quotations collected. Please prepare the CS.',
@@ -114,32 +106,26 @@ export function NotificationCenter() {
         comparativeStatements.forEach(cs => {
             const relatedDN = demandNotes.find(d => d.id === cs.demandNoteId);
             const poExists = purchaseOrders.some(p => p.csId === cs.id);
-
-            // Awarding stage
             if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber,
-                    description: 'Analysis ready. Please select the awarded vendor to start approval.',
+                    description: 'Analysis ready. Please select the awarded vendor.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Award Selection Required', createdAt: cs.csDate,
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
-            } 
-            // PO Prep stage (After full CS approval)
-            else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
+            } else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
-                    description: 'CS fully approved. Please prepare the formal Purchase Order.',
+                    description: 'CS fully approved. Please prepare the PO.',
                     link: `/procurement/local-purchase?tab=po`,
                     status: 'PO Preparation Needed', createdAt: cs.csDate, 
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
-            }
-            // Standard Approval stage
-            else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
+            } else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
                 list.push({
                     id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber,
-                    description: 'Award selection made. Awaiting your approval.',
+                    description: 'Awaiting your signature.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Pending Approval', createdAt: cs.vendorSelectionDate || cs.csDate,
                     isOverdue: cs.vendorSelectionDate ? differenceInHours(now, parseISO(cs.vendorSelectionDate)) >= reminderThreshold : false
@@ -147,36 +133,24 @@ export function NotificationCenter() {
             }
         });
 
-        // 3. Purchase Orders
+        // 3. Purchase Orders & MRRs
         purchaseOrders.forEach(po => {
             if (po.currentApproverId === uid && po.approvalStatus !== 1 && po.approvalStatus !== 0) {
                 list.push({
                     id: po.id, type: 'Purchase Order', title: po.poNumber,
-                    description: 'Formal commitment awaiting your signature.',
+                    description: 'Formal commitment awaiting signature.',
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'Pending Approval', createdAt: po.createdAt,
                     isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
                 });
-            } else if (po.approvalStatus === 1 && !po.isSentToVendor) {
-                const dn = demandNotes.find(d => d.id === po.demandNoteId);
-                if (dn?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid) {
-                    list.push({
-                        id: po.id + '-dispatch', type: 'Purchase Order', title: po.poNumber,
-                        description: 'PO is fully approved. Please dispatch to the vendor.',
-                        link: `/procurement/local-purchase/purchase-orders/${po.id}`,
-                        status: 'Dispatch Required', createdAt: po.createdAt,
-                        isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
-                    });
-                }
             }
         });
 
-        // 4. MRRs
         mrrs.forEach(mrr => {
             if (mrr.approvalStatus === 2 && mrr.createdBy === uid) {
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,
-                    description: 'Initial entry made. Please finalize with Bill and Challan scans.',
+                    description: 'Finalize with Bill/Challan scans.',
                     link: `/procurement/local-purchase/mrrs/${mrr.id}`,
                     status: 'Finalization Required', createdAt: mrr.createdAt,
                     isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
@@ -184,7 +158,7 @@ export function NotificationCenter() {
             } else if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,
-                    description: 'Shipment verification awaiting your approval.',
+                    description: 'Awaiting your approval.',
                     link: `/procurement/local-purchase/mrrs/${mrr.id}`,
                     status: 'Pending Approval', createdAt: mrr.createdAt,
                     isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
@@ -203,11 +177,7 @@ export function NotificationCenter() {
     const handleAcknowledge = (taskId: string) => {
         if (!firestore || !user) return;
         const ref = doc(firestore, 'users', user.uid, 'acknowledgedTasks', taskId);
-        setDocumentNonBlocking(ref, { 
-            userId: user.uid, 
-            taskId, 
-            acknowledgedAt: new Date().toISOString() 
-        }, { merge: true });
+        setDocumentNonBlocking(ref, { userId: user.uid, taskId, acknowledgedAt: new Date().toISOString() }, { merge: true });
     };
 
     if (orgSettings?.moduleVisibility?.enableNotifications === false) return null;
@@ -215,7 +185,7 @@ export function NotificationCenter() {
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10">
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-transform active:scale-95">
                     <Bell className="h-5 w-5" />
                     {unacknowledgedTasks.length > 0 && (
                         <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
@@ -225,76 +195,44 @@ export function NotificationCenter() {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-                <div className="flex items-center justify-between p-4 bg-muted/50">
+            <PopoverContent className="w-80 p-0 shadow-2xl animate-genie-in" align="end">
+                <div className="flex items-center justify-between p-4 bg-muted/50 border-b">
                     <div className="flex items-center gap-2">
                         <h3 className="font-bold text-sm">Action Center</h3>
-                        <Badge variant="secondary" className="h-5">{tasks.length}</Badge>
+                        <Badge variant="secondary">{tasks.length}</Badge>
                     </div>
-                    {unacknowledgedTasks.length > 0 && <p className="text-[10px] text-muted-foreground font-medium">{unacknowledgedTasks.length} New Actions</p>}
                 </div>
-                <Separator />
                 <ScrollArea className="h-80">
                     <div className="divide-y">
-                        {tasks.length > 0 ? tasks.map(task => {
+                        {tasks.map(task => {
                             const isNew = unacknowledgedTasks.some(ut => ut.id === task.id);
                             return (
-                                <div key={task.id} className={cn("p-4 group transition-colors", isNew ? "bg-primary/5 border-l-2 border-primary" : "bg-background")}>
-                                    <div className="flex items-start justify-between gap-2 mb-1">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("p-1.5 rounded-md", 
-                                                task.isOverdue ? "bg-red-500 text-white animate-pulse" : (isNew ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")
-                                            )}>
-                                                {task.type === 'Demand Note' && <FileText className="h-3 w-3" />}
-                                                {task.type === 'Comparative Statement' && <ShoppingCart className="h-3 w-3" />}
-                                                {task.type === 'Purchase Order' && <Send className="h-3 w-3" />}
-                                                {task.type === 'MRR' && <Package className="h-3 w-3" />}
-                                            </div>
-                                            <span className="text-[10px] font-black uppercase tracking-wider">{task.type}</span>
+                                <div key={task.id} className={cn("p-4 transition-all duration-300", isNew ? "bg-primary/5 border-l-4 border-primary" : "bg-background")}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className={cn("p-1 rounded", task.isOverdue ? "bg-red-500 text-white" : "bg-muted text-muted-foreground")}>
+                                            {task.type === 'Demand Note' ? <FileText className="h-3 w-3" /> : <ShoppingCart className="h-3 w-3" />}
                                         </div>
-                                        {task.isOverdue && <Badge className="h-4 text-[9px] bg-red-600 animate-bounce">Urgent Reminder</Badge>}
-                                        {!task.isOverdue && isNew && <Badge className="h-4 text-[9px] bg-blue-500">New Task</Badge>}
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">{task.type}</span>
                                     </div>
-                                    <div className="flex items-center justify-between group/title mb-1">
-                                        <p className="font-bold text-sm leading-tight truncate pr-2">{task.title}</p>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-6 w-6 opacity-0 group-hover/title:opacity-100 transition-opacity" 
-                                            onClick={() => handleCopy(task.title)}
-                                        >
-                                            {copiedId === task.title ? <ClipboardCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-snug mb-3">{task.description}</p>
                                     <div className="flex items-center justify-between gap-2">
-                                        <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 font-bold hover:bg-primary/10" asChild>
-                                            <Link href={task.link} onClick={() => isNew && handleAcknowledge(task.id)}>
-                                                Process Action <ExternalLink className="h-3 w-3 ml-1" />
-                                            </Link>
+                                        <p className="font-bold text-sm truncate">{task.title}</p>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(task.title)}>
+                                            {copiedId === task.title ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                                         </Button>
-                                        {isNew && (
-                                            <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 font-bold hover:bg-green-500 hover:text-white" onClick={() => handleAcknowledge(task.id)}>
-                                                <Check className="h-3 w-3 mr-1" /> Acknowledge
-                                            </Button>
-                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 font-bold" asChild onClick={() => isNew && handleAcknowledge(task.id)}>
+                                            <Link href={task.link}>Process <ExternalLink className="ml-1 h-3 w-3"/></Link>
+                                        </Button>
+                                        {isNew && <Button size="sm" variant="ghost" className="h-7 text-[10px] font-bold text-primary" onClick={() => handleAcknowledge(task.id)}>Acknowledge</Button>}
                                     </div>
                                 </div>
                             );
-                        }) : (
-                            <div className="p-8 text-center">
-                                <CheckCircle2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-muted-foreground">All clear! No tasks awaiting action.</p>
-                            </div>
-                        )}
+                        })}
+                        {tasks.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm">No pending tasks.</div>}
                     </div>
                 </ScrollArea>
-                <Separator />
-                <div className="p-2 bg-muted/20 text-center">
-                    <Button variant="link" size="sm" className="text-[10px] h-auto p-0" asChild>
-                        <Link href="/procurement/local-purchase">Access Procurement Dashboard</Link>
-                    </Button>
-                </div>
             </PopoverContent>
         </Popover>
     );
