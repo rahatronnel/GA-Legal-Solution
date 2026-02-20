@@ -73,9 +73,9 @@ body {
         transform-origin: top right;
     }
 
-    /* High-Fidelity Wavy Centered Genie for Dialogs - Anti-Jump Center logic */
+    /* High-Fidelity Ultra-Smooth Wavy Centered Genie for Dialogs */
     .animate-dialog-in {
-        animation: dialogWavyGenie 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: dialogWavyGenie 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     /* Elite Scale Transition for Selects/Popovers */
@@ -104,15 +104,18 @@ body {
     @keyframes dialogWavyGenie {
         0% {
             opacity: 0;
-            transform: translate(-50%, 100%) scaleX(0.1) scaleY(0.01);
-            filter: blur(15px);
+            transform: translate(-50%, 50%) scaleX(0.3) scaleY(0.01);
+            filter: blur(10px);
         }
         40% {
             opacity: 0.8;
-            transform: translate(-50%, -65%) scaleX(1.1) scaleY(0.85);
+            transform: translate(-50%, -60%) scaleX(1.08) scaleY(0.85);
         }
         70% {
-            transform: translate(-50%, -45%) scaleX(0.95) scaleY(1.05);
+            transform: translate(-50%, -45%) scaleX(0.96) scaleY(1.04);
+        }
+        85% {
+            transform: translate(-50%, -52%) scaleX(1.02) scaleY(0.98);
         }
         100% {
             opacity: 1;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -47,15 +46,16 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
         .map(h => {
             const employee = employees.find(e => e.id === h.approverId);
             const designation = designations.find(d => d.id === employee?.designationId);
-            return { ...h, employee, designation };
+            const step = mrr.approvalFlow?.steps?.[h.level];
+            return { ...h, employee, designation, title: step?.stepName || 'Approved By' };
         }) || [];
 
     return (
         <div className="p-6 bg-white text-black font-sans min-h-[29.7cm] flex flex-col border-2 border-black m-4">
             <div className="grid grid-cols-[1fr_1.5fr] border-b-2 border-black overflow-hidden">
                 <div className="p-4 border-r-2 border-black flex flex-col justify-center items-center text-center bg-gray-50">
-                    <h1 className="text-3xl font-black uppercase tracking-tight">{orgSettings.name}</h1>
-                    <p className="text-[10px] mt-1 opacity-70">{orgSettings.address}</p>
+                    <h1 className="text-2xl font-black uppercase tracking-tight">{orgSettings.name}</h1>
+                    <p className="text-[9px] mt-1 opacity-70">{orgSettings.address}</p>
                 </div>
                 <div className="flex flex-col">
                     <div className="flex-1 p-2 flex justify-between items-center text-[10px] border-b-2 border-black px-4 italic bg-gray-100">
@@ -77,10 +77,8 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Receiving Date:</span><span>{mrr.receivingDate}</span></div>
                 <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Name of Supplier:</span><span className="font-bold">{mrr.supplierName}</span></div>
                 <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">MRR Issue Date:</span><span>{mrr.MRR_IssueDate}</span></div>
-                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Address/Origin:</span><span className="text-[10px] italic">{mrr.supplierAddress}</span></div>
+                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Address/Origin:</span><span className="text-[10px] italic truncate ml-4">{mrr.supplierAddress}</span></div>
                 <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Shipment Type:</span><span className="font-bold text-primary">{mrr.shipmentType}</span></div>
-                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Container No:</span><span className="font-mono">{mrr.containerNo || 'N/A'}</span></div>
-                <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold uppercase tracking-tighter">Container Size:</span><span>{mrr.containerSize || 'N/A'}</span></div>
             </div>
 
             <div className="mt-4">
@@ -90,7 +88,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                             <th className="border-2 border-black p-2 text-center w-10">Sl No</th>
                             <th className="border-2 border-black p-2 text-left">Invoice No</th>
                             <th className="border-2 border-black p-2 text-left">DN Number</th>
-                            <th className="border-2 border-black p-2 text-left">Challan No</th>
                             <th className="border-2 border-black p-2 text-left">Material / Item Name</th>
                             <th className="border-2 border-black p-2 text-center">Qty</th>
                             <th className="border-2 border-black p-2 text-center">Unit</th>
@@ -103,7 +100,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                                 <td className="border-2 border-black p-2 text-center font-bold">{idx + 1}</td>
                                 <td className="border-2 border-black p-2">{mrr.invoiceNumber}</td>
                                 <td className="border-2 border-black p-2 font-mono">{mrr.demandNoteNumber}</td>
-                                <td className="border-2 border-black p-2">{mrr.challanNumber}</td>
                                 <td className="border-2 border-black p-2">
                                     <p className="font-bold">{item.particulars}</p>
                                     {item.description && <p className="text-[8px] italic opacity-70">Des: {item.description}</p>}
@@ -114,7 +110,7 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                             </tr>
                         ))}
                         <tr className="bg-gray-100 font-black">
-                            <td colSpan={7} className="border-2 border-black p-2 text-right uppercase tracking-wider">Grand Total Value</td>
+                            <td colSpan={6} className="border-2 border-black p-2 text-right uppercase tracking-wider">Grand Total Value</td>
                             <td className="border-2 border-black p-2 text-right font-mono text-base underline underline-offset-4 decoration-double">{formatCurrency(mrr.totalAmount)}</td>
                         </tr>
                     </tbody>
@@ -130,7 +126,6 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                     <span className="uppercase tracking-tighter">Goods Condition:</span>
                     <div className="flex gap-4">
                         <span className={cn(mrr.goodsCondition === 'Ok' ? "underline decoration-2 text-green-700" : "opacity-30")}>✅ OK</span>
-                        <span className="opacity-20">|</span>
                         <span className={cn(mrr.goodsCondition === 'Not Ok' ? "underline decoration-2 text-red-600" : "opacity-30")}>❌ Not OK</span>
                     </div>
                 </div>
@@ -138,40 +133,35 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                     <span className="uppercase tracking-tighter">Package Condition:</span>
                     <div className="flex gap-4">
                         <span className={cn(mrr.packageCondition === 'Ok' ? "underline decoration-2 text-green-700" : "opacity-30")}>✅ Intact</span>
-                        <span className="opacity-20">|</span>
                         <span className={cn(mrr.packageCondition === 'Not Ok' ? "underline decoration-2 text-red-600" : "opacity-30")}>❌ Broken</span>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-auto pt-12">
-                <p className="text-right text-[10px] font-black mb-4 uppercase tracking-widest mr-4 border-b-2 border-black w-fit ml-auto">Signatory Matrix (C&F and Operational Audit)</p>
-                <div className="grid grid-cols-5 gap-x-2 gap-y-12">
+            <div className="mt-auto pt-8">
+                <div className="grid grid-cols-4 gap-4">
                     <div className="text-center">
                         <div className="h-10 flex items-center justify-center">
                             {preparer?.signature && <Image src={preparer.signature} alt="Sig" width={80} height={30} className="object-contain" />}
                         </div>
                         <div className="border-t-2 border-black pt-1">
-                            <p className="text-[10px] font-bold truncate">{preparer?.fullName || 'N/A'}</p>
+                            <p className="text-[9px] font-bold truncate">{preparer?.fullName || 'N/A'}</p>
                             <p className="text-[8px] text-gray-600 uppercase font-black">Prepared By</p>
                             <p className="text-[7px] text-gray-400">{formatDateTime(mrr.createdAt)}</p>
                         </div>
                     </div>
-                    {Array.from({ length: 19 }).map((_, i) => {
-                        const approver = approvers[i];
-                        return (
-                            <div key={i} className="text-center">
-                                <div className="h-10 flex items-center justify-center">
-                                    {approver?.employee?.signature && <Image src={approver.employee.signature} alt="Sig" width={80} height={30} className="object-contain" />}
-                                </div>
-                                <div className="border-t border-black pt-1 opacity-60">
-                                    <p className="text-[10px] font-bold truncate">{approver?.employee?.fullName || ''}</p>
-                                    <p className="text-[8px] text-gray-600 uppercase">Signatory-{i + 1}</p>
-                                    <p className="text-[7px] text-gray-400">{approver ? formatDateTime(approver.timestamp) : ''}</p>
-                                </div>
+                    {approvers.map((sig, i) => (
+                        <div key={i} className="text-center">
+                            <div className="h-10 flex items-center justify-center">
+                                {sig.employee?.signature && <Image src={sig.employee.signature} alt="Sig" width={80} height={30} className="object-contain" />}
                             </div>
-                        )
-                    })}
+                            <div className="border-t-2 border-black pt-1">
+                                <p className="text-[9px] font-bold truncate">{sig.employee?.fullName}</p>
+                                <p className="text-[8px] text-gray-600 uppercase font-black">{sig.title}</p>
+                                <p className="text-[7px] text-gray-400">{formatDateTime(sig.timestamp)}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

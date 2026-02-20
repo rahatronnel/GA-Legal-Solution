@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -12,33 +11,41 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useProcurement } from './procurement-provider';
-import type { PurchaseOrder } from './po-entry-form';
-import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-    Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, 
-    Hourglass, MoreHorizontal, Check, X, Filter, Copy, 
-    ChevronRight, ChevronLeft, AlertTriangle, Building, 
-    DollarSign, Send, PackageCheck, HelpCircle, ListOrdered, 
-    ShieldCheck, UserCheck 
-} from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { PurchaseOrderForm } from './po-entry-form';
+import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useProcurement } from './procurement-provider';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
+import type { PurchaseOrder } from './po-entry-form';
+import { PurchaseOrderForm } from './po-entry-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from '@/components/ui/checkbox';
+import type { OrganizationSettings } from '@/app/settings/page';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
 import { MRREntryForm } from './mrr-entry-form';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
 const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -222,274 +229,277 @@ const POApprovalWizard = ({
 };
 
 export function PurchaseOrderTable() {
-    const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, mrrs, isLoading, orgSettings } = useProcurement();
-    const { user } = useUser();
-    const { toast } = useToast();
-    const firestore = useFirestore();
-    const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
-    const mrrCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
+  const { toast } = useToast();
+  const firestore = useFirestore();
+  const { handlePrint } = usePrint();
+  const { user } = useUser();
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [vendorFilter, setVendorFilter] = useState('all');
-    const [gpConcernFilter, setGpConcernFilter] = useState('all');
-    const [selectedRows, setSelectedRows] = useState<string[]>([]);
-    const [isPrepareDialogOpen, setIsPrepareDialogOpen] = useState(false);
-    const [isPoFormOpen, setIsPoFormOpen] = useState(false);
-    const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
-    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
-    const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
-    const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
-    const [isGuideOpen, setIsGuideOpen] = useState(false);
-    
-    const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
-    const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
+  const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, mrrs, isLoading, orgSettings } = useProcurement();
+  
+  const poCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]);
+  const mrrCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
 
-    const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-    const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
-    const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('all');
+  const [gpConcernFilter, setGpConcernFilter] = useState('all');
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [isPrepareDialogOpen, setIsPrepareDialogOpen] = useState(false);
+  const [isPoFormOpen, setIsPoFormOpen] = useState(false);
+  const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedPoForStatus, setSelectedPoForStatus] = useState<PurchaseOrder | null>(null);
+  const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
+  const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  
+  const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
+  const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
+
+  const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
+  const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
                       orgSettings?.procurementSettings?.factoryDirectorId === currentUserEmployee?.id;
 
-    const gpConcernOfficers = useMemo(() => {
-        const ids = orgSettings?.procurementSettings?.gpConcernOfficerIds || [];
-        return ids.map(id => employees.find(e => e.id === id)).filter(Boolean);
-    }, [orgSettings, employees]);
+  const gpConcernOfficers = useMemo(() => {
+    const ids = orgSettings?.procurementSettings?.gpConcernOfficerIds || [];
+    return ids.map(id => employees.find(e => e.id === id)).filter(Boolean);
+  }, [orgSettings, employees]);
 
-    const filteredPOs = useMemo(() => {
-        const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
-        return safePOs.filter(po => {
-            let isVisible = isSuperAdmin || isGPOfficer || isManager;
-            if (!isVisible && currentUserEmployee) {
-                const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
-                if (po.createdBy === currentUserEmployee.id || 
-                    po.currentApproverId === currentUserEmployee.id ||
-                    po.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
-                    dn?.createdBy === currentUserEmployee.id ||
-                    dn?.gpConcernOfficerId === currentUserEmployee.id) {
-                    isVisible = true;
-                }
-            }
-            if (!isVisible) return false;
-
+  const filteredPOs = useMemo(() => {
+    const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
+    return safePOs.filter(po => {
+        let isVisible = isSuperAdmin || isGPOfficer || isManager;
+        if (!isVisible && currentUserEmployee) {
             const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
-            const cs = comparativeStatements?.find(c => c.id === po.csId);
-            const lowerTerm = searchTerm.toLowerCase();
-            const termMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || cs?.csNumber.toLowerCase().includes(lowerTerm) || dn?.demandNoteNumber.toLowerCase().includes(lowerTerm);
-            const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
-            const gpMatch = gpConcernFilter === 'all' || dn?.gpConcernOfficerId === gpConcernFilter;
-            return termMatch && vendorMatch && gpMatch;
-        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
+            if (po.createdBy === currentUserEmployee.id || 
+                po.currentApproverId === currentUserEmployee.id ||
+                po.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
+                dn?.createdBy === currentUserEmployee.id ||
+                dn?.gpConcernOfficerId === currentUserEmployee.id) {
+                isVisible = true;
+            }
+        }
+        if (!isVisible) return false;
 
-    const approvableItems = useMemo(() => filteredPOs.filter(po => currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0), [filteredPOs, currentUserEmployee]);
+        const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
+        const cs = comparativeStatements?.find(c => c.id === po.csId);
+        const lowerTerm = searchTerm.toLowerCase();
+        const termMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || cs?.csNumber.toLowerCase().includes(lowerTerm) || dn?.demandNoteNumber.toLowerCase().includes(lowerTerm);
+        const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
+        const gpMatch = gpConcernFilter === 'all' || dn?.gpConcernOfficerId === gpConcernFilter;
+        return termMatch && vendorMatch && gpMatch;
+    }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }, [purchaseOrders, searchTerm, vendorFilter, gpConcernFilter, demandNotes, comparativeStatements, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
-    const handleApprovalAction = (poId: string) => {
-        if (!firestore || !currentUserEmployee || !poCollectionRef) return;
-        const po = purchaseOrders.find(p => p.id === poId);
+  const approvableItems = useMemo(() => filteredPOs.filter(po => currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0), [filteredPOs, currentUserEmployee]);
+
+  const handleApprovalAction = (poId: string) => {
+    if (!firestore || !currentUserEmployee || !poCollectionRef) return;
+    const po = purchaseOrders.find(p => p.id === poId);
+    if (!po || !po.approvalFlow?.steps) return;
+
+    const currentLevel = po.approvalHistory?.length || 0;
+    const newHistoryEntry = { 
+        approverId: currentUserEmployee.id, 
+        status: 'Approved' as const, 
+        timestamp: new Date().toISOString(), 
+        level: currentLevel, 
+        remarks: 'Approved via wizard' 
+    };
+
+    let nextStatus = currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1;
+    let nextApprover = currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
+
+    setDocumentNonBlocking(doc(poCollectionRef, poId), { 
+        approvalStatus: nextStatus, 
+        currentApproverId: nextApprover, 
+        approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] 
+    }, { merge: true });
+
+    setIsApprovalWizardOpen(false);
+    toast({ title: "Success", description: "Purchase Order approved." });
+  };
+
+  const handleSendToVendor = (poId: string) => {
+    if (!firestore || !poCollectionRef) return;
+    setDocumentNonBlocking(doc(poCollectionRef, poId), {
+        isSentToVendor: true,
+        sentToVendorDate: new Date().toISOString()
+    }, { merge: true });
+    toast({ title: "PO Sent", description: "Purchase Order has been marked as sent to vendor." });
+  };
+
+  const handleBulkApproval = (status: number) => {
+    if (!firestore || !currentUserEmployee || !poCollectionRef) return;
+    selectedRows.forEach(id => {
+        const po = purchaseOrders.find(p => p.id === id);
         if (!po || !po.approvalFlow?.steps) return;
-
         const currentLevel = po.approvalHistory?.length || 0;
-        const newHistoryEntry = { 
-            approverId: currentUserEmployee.id, 
-            status: 'Approved', 
-            timestamp: new Date().toISOString(), 
-            level: currentLevel, 
-            remarks: 'Approved via wizard' 
-        };
+        const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
+        let nextStatus = status === 1 ? (currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
+        let nextApprover = status === 1 && currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
+        setDocumentNonBlocking(doc(poCollectionRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] }, { merge: true });
+    });
+    setSelectedRows([]);
+    toast({ title: "Success" });
+  };
 
-        let nextStatus = currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1;
-        let nextApprover = currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
-
-        setDocumentNonBlocking(doc(poCollectionRef, poId), { 
-            approvalStatus: nextStatus, 
-            currentApproverId: nextApprover, 
-            approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] 
-        }, { merge: true });
-
-        setIsApprovalWizardOpen(false);
-        toast({ title: "Success", description: "Purchase Order approved." });
-    };
-
-    const handleSendToVendor = (poId: string) => {
-        if (!firestore || !poCollectionRef) return;
-        setDocumentNonBlocking(doc(poCollectionRef, poId), {
-            isSentToVendor: true,
-            sentToVendorDate: new Date().toISOString()
-        }, { merge: true });
-        toast({ title: "PO Sent", description: "Purchase Order has been marked as sent to vendor." });
-    };
-
-    const handleBulkApproval = (status: number) => {
-        if (!firestore || !currentUserEmployee || !poCollectionRef) return;
-        selectedRows.forEach(id => {
-            const po = purchaseOrders.find(p => p.id === id);
-            if (!po || !po.approvalFlow?.steps) return;
-            const currentLevel = po.approvalHistory?.length || 0;
-            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
-            let nextStatus = status === 1 ? (currentLevel + 1 < po.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
-            let nextApprover = status === 1 && currentLevel + 1 < po.approvalFlow.steps.length ? po.approvalFlow.steps[currentLevel + 1].approverId : '';
-            setDocumentNonBlocking(doc(poCollectionRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(po.approvalHistory || []), newHistoryEntry] }, { merge: true });
-        });
-        setSelectedRows([]);
-        toast({ title: "Success" });
-    };
-
-    return (
-        <TooltipProvider>
-            <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <div className="relative w-full sm:w-[350px]">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search PO#, CS#, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+  return (
+    <TooltipProvider>
+        <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative w-full sm:w-[350px]">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search PO#, CS#, DN#..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                    </div>
+                    {selectedRows.length > 0 && (
+                        <div className="flex items-center gap-2 ml-4">
+                            <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                         </div>
-                        {selectedRows.length > 0 && (
-                            <div className="flex items-center gap-2 ml-4">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
-                        {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)}><FilePlus className="mr-2 h-4 w-4" /> Prepare PO</Button>}
-                    </div>
+                    )}
                 </div>
-
-                <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
-                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="GP Concern..." /></SelectTrigger>
-                            <SelectContent className="animate-scale-in"><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o!.id} value={o!.id}>{o!.fullName}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <Select value={vendorFilter} onValueChange={setVendorFilter}>
-                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Vendor..." /></SelectTrigger>
-                            <SelectContent className="animate-scale-in"><SelectItem value="all">All Vendors</SelectItem>{vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }}><XCircle className="mr-2 h-4 w-4" /> Clear All</Button>
-                    </div>
-                </div>
-
-                <div className="border rounded-lg">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                                <TableHead>PO Number</TableHead>
-                                <TableHead>CS Number</TableHead>
-                                <TableHead>Demand Note</TableHead>
-                                <TableHead>Vendor</TableHead>
-                                <TableHead>GP Concern</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredPOs.length > 0 ? filteredPOs.map((po) => {
-                                const dn = demandNotes?.find(note => note.id === po.demandNoteId);
-                                const cs = comparativeStatements?.find(c => c.id === po.csId);
-                                const mrr = mrrs.find(m => m.poId === po.id);
-                                const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
-                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
-                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
-                                const isApprovable = approvableItems.some(i => i.id === po.id);
-
-                                return (
-                                    <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend || canMrr) && "bg-orange-500/5")}>
-                                        <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy PO#</TooltipContent></Tooltip></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
-                                        <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
-                                        <TableCell>{employees.find(e => e.id === dn?.gpConcernOfficerId)?.fullName}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
-                                                {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Purchase Order</Badge>}
-                                                {canSend && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Send to Vendor</Badge>}
-                                                {canMrr && <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap">⚠️ Prepare MRR</Badge>}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                {isWaitingForApproval && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="mr-2 h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Informed Approval</TooltipContent></Tooltip>
-                                                )}
-                                                {canSend && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Mark as Sent to Vendor</TooltipContent></Tooltip>
-                                                )}
-                                                {canMrr && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Prepare MRR</TooltipContent></Tooltip>
-                                                )}
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                {po.approvalStatus === 1 && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print in New Tab</TooltipContent></Tooltip>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            }) : <TableRow><TableCell colSpan={8} className="text-center h-24">No POs found.</TableCell></TableRow>}
-                        </TableBody>
-                    </Table>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                    {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Prepare PO</Button>}
                 </div>
             </div>
 
-            <Dialog open={isPrepareDialogOpen} onOpenChange={setIsPrepareDialogOpen}>
-                <DialogContent className="animate-dialog-in"><DialogHeader><DialogTitle>Prepare PO</DialogTitle></DialogHeader>
-                    <ScrollArea className="h-64 border rounded-md">
-                        {comparativeStatements.filter(cs => cs.approvalStatus === 1 && !purchaseOrders.some(po => po.csId === cs.id)).map(cs => (
-                            <div key={cs.id} className="p-3 border-b flex justify-between items-center">
-                                <div><p className="font-semibold">{cs.csNumber}</p><p className="text-xs">{vendors.find(v => v.id === cs.selectedVendorId)?.vendorName}</p></div>
-                                <Button size="sm" onClick={() => { setSelectedCsForPo(cs); setIsPrepareDialogOpen(false); setIsPoFormOpen(true); }}>Select</Button>
-                            </div>
-                        ))}
-                    </ScrollArea>
-                </DialogContent>
-            </Dialog>
+            <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
+                        <SelectTrigger className="animate-scale-in"><SelectValue placeholder="GP Concern..." /></SelectTrigger>
+                        <SelectContent className="animate-scale-in"><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o!.id} value={o!.id}>{o!.fullName}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Select value={vendorFilter} onValueChange={setVendorFilter}>
+                        <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Vendor..." /></SelectTrigger>
+                        <SelectContent className="animate-scale-in"><SelectItem value="all">All Vendors</SelectItem>{vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }}><XCircle className="mr-2 h-4 w-4" /> Clear All</Button>
+                </div>
+            </div>
 
-            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => addDocumentNonBlocking(poCollectionRef!, d)} cs={selectedCsForPo} />
+            <div className="border rounded-lg">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
+                            <TableHead>PO Number</TableHead>
+                            <TableHead>CS Number</TableHead>
+                            <TableHead>Demand Note</TableHead>
+                            <TableHead>Vendor</TableHead>
+                            <TableHead>GP Concern</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredPOs.length > 0 ? filteredPOs.map((po) => {
+                            const dn = demandNotes?.find(note => note.id === po.demandNoteId);
+                            const cs = comparativeStatements?.find(c => c.id === po.csId);
+                            const mrr = mrrs.find(m => m.poId === po.id);
+                            const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
+                            const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
+                            const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
+                            const isApprovable = approvableItems.some(i => i.id === po.id);
 
-            <MRREntryForm 
-                isOpen={isMrrFormOpen} 
-                setIsOpen={setIsMrrFormOpen} 
-                po={selectedPoForMrr} 
-                onSave={(d) => { mrrCollectionRef && addDocumentNonBlocking(mrrCollectionRef, d); toast({ title: 'MRR Prepared' }); }} 
-            />
-
-            <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-md animate-dialog-in">
-                    <DialogHeader><DialogTitle>PO Approval Flow</DialogTitle></DialogHeader>
-                    <div className="py-4 space-y-4">
-                        {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
-                            const historyEntry = selectedPoForStatus.approvalHistory?.find(h => h.level === index);
-                            const approver = employees?.find(e => e.id === step.approverId);
-                            const isPending = selectedPoForStatus.currentApproverId === step.approverId && selectedPoForStatus.approvalStatus !== 1 && selectedPoForStatus.approvalStatus !== 0;
                             return (
-                                <li key={index} className="flex items-center gap-4 list-none">
-                                    {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                    <div className="flex-1 flex gap-3 items-center">
-                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar>
-                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </div>
-                </DialogContent>
-            </Dialog>
+                                <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend || canMrr) && "bg-orange-500/5")}>
+                                    <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
+                                    <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy PO#</TooltipContent></Tooltip></div></TableCell>
+                                    <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
+                                    <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
+                                    <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
+                                    <TableCell>{employees.find(e => e.id === dn?.gpConcernOfficerId)?.fullName}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
+                                            {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Purchase Order</Badge>}
+                                            {canSend && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Send to Vendor</Badge>}
+                                            {canMrr && <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap">⚠️ Prepare MRR</Badge>}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            {isWaitingForApproval && (
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="mr-2 h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Informed Approval</TooltipContent></Tooltip>
+                                            )}
+                                            {canSend && (
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="mr-2 h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Mark as Sent to Vendor</TooltipContent></Tooltip>
+                                            )}
+                                            {canMrr && (
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="mr-2 h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Prepare MRR</TooltipContent></Tooltip>
+                                            )}
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
+                                            {po.approvalStatus === 1 && (
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print in New Tab</TooltipContent></Tooltip>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        }) : <TableRow><TableCell colSpan={8} className="text-center h-24">No POs found.</TableCell></TableRow>}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
 
-            <POApprovalWizard 
-                isOpen={isApprovalWizardOpen}
-                onOpenChange={setIsApprovalWizardOpen}
-                po={selectedPoForApproval}
-                onApprove={handleApprovalAction}
-                vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)}
-            />
+        <Dialog open={isPrepareDialogOpen} onOpenChange={setIsPrepareDialogOpen}>
+            <DialogContent className="animate-dialog-in"><DialogHeader><DialogTitle>Prepare PO</DialogTitle></DialogHeader>
+                <ScrollArea className="h-64 border rounded-md">
+                    {comparativeStatements.filter(cs => cs.approvalStatus === 1 && !purchaseOrders.some(po => po.csId === cs.id)).map(cs => (
+                        <div key={cs.id} className="p-3 border-b flex justify-between items-center">
+                            <div><p className="font-semibold">{cs.csNumber}</p><p className="text-xs">{vendors.find(v => v.id === cs.selectedVendorId)?.vendorName}</p></div>
+                            <Button size="sm" onClick={() => { setSelectedCsForPo(cs); setIsPrepareDialogOpen(false); setIsPoFormOpen(true); }}>Select</Button>
+                        </div>
+                    ))}
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
 
-            <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
-        </TooltipProvider>
-    );
+        <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => poCollectionRef && addDocumentNonBlocking(poCollectionRef, d)} cs={selectedCsForPo} />
+
+        <MRREntryForm 
+            isOpen={isMrrFormOpen} 
+            setIsOpen={setIsMrrFormOpen} 
+            po={selectedPoForMrr} 
+            onSave={(d) => { mrrCollectionRef && addDocumentNonBlocking(mrrCollectionRef, d); toast({ title: 'MRR Prepared' }); }} 
+        />
+
+        <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
+            <DialogContent className="sm:max-w-md animate-dialog-in">
+                <DialogHeader><DialogTitle>PO Approval Flow</DialogTitle></DialogHeader>
+                <div className="py-4 space-y-4">
+                    {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
+                        const historyEntry = selectedPoForStatus.approvalHistory?.find(h => h.level === index);
+                        const approver = employees?.find(e => e.id === step.approverId);
+                        const isPending = selectedPoForStatus.currentApproverId === step.approverId && selectedPoForStatus.approvalStatus !== 1 && selectedPoForStatus.approvalStatus !== 0;
+                        return (
+                            <li key={index} className="flex items-center gap-4 list-none">
+                                {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                <div className="flex-1 flex gap-3 items-center">
+                                    <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar>
+                                    <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <POApprovalWizard 
+            isOpen={isApprovalWizardOpen}
+            onOpenChange={setIsApprovalWizardOpen}
+            po={selectedPoForApproval}
+            onApprove={handleApprovalAction}
+            vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)}
+        />
+
+        <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
+    </TooltipProvider>
+  );
 }

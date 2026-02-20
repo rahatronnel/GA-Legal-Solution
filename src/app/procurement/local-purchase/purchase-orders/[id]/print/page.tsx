@@ -1,63 +1,76 @@
-
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import { useProcurement } from '../../../components/procurement-provider';
 import { POPrintLayout } from '../../../components/po-print-layout';
+import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
+import type { PurchaseOrder } from '../../../components/po-entry-form';
+import type { DemandNote } from '../../../components/demand-note-entry-form';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Designation } from '@/app/user-management/components/designation-table';
+import type { DeliveryPlace } from '../../../components/delivery-place-table';
+import type { OrganizationSettings } from '@/app/settings/page';
 
 export default function POPrintPage() {
     const params = useParams();
-    const { purchaseOrders, demandNotes, vendors, employees, designations, deliveryPlaces, orgSettings, isLoading } = useProcurement();
+    const firestore = useFirestore();
+    const { id } = params;
 
-    const po = useMemo(() => {
-        if (isLoading || !purchaseOrders) return undefined;
-        return purchaseOrders.find((p: any) => p.id === params.id) || null;
-    }, [params.id, purchaseOrders, isLoading]);
+    // Targeted fetching for near-instant response
+    const poRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'purchaseOrders', id as string) : null, [firestore, id]);
+    const { data: po, isLoading: l1 } = useDoc<PurchaseOrder>(poRef);
 
-    const demandNote = useMemo(() => {
-        if (!po || !demandNotes) return undefined;
-        return demandNotes.find((dn: any) => dn.id === po.demandNoteId);
-    }, [po, demandNotes]);
+    const dnRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'demandNotes', po.demandNoteId) : null, [firestore, po]);
+    const { data: demandNote, isLoading: l2 } = useDoc<DemandNote>(dnRef);
 
-    const vendor = useMemo(() => {
-        if (!po || !vendors) return undefined;
-        return vendors.find((v: any) => v.id === po.vendorId);
-    }, [po, vendors]);
+    const vendorRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'vendors', po.vendorId) : null, [firestore, po]);
+    const { data: vendor, isLoading: l3 } = useDoc<Vendor>(vendorRef);
+
+    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+    const { data: employees, isLoading: l4 } = useCollection<Employee>(employeesRef);
+
+    const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+    const { data: designations, isLoading: l5 } = useCollection<Designation>(designationsRef);
+
+    const placesRef = useMemoFirebase(() => firestore ? collection(firestore, 'deliveryPlaces') : null, [firestore]);
+    const { data: deliveryPlaces, isLoading: l6 } = useCollection<DeliveryPlace>(placesRef);
+
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings, isLoading: l7 } = useDoc<OrganizationSettings>(settingsRef);
+
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     useEffect(() => {
-        // High-performance instant print trigger
         if (!isLoading && po && demandNote && vendor && orgSettings) {
             const timer = setTimeout(() => {
                 window.print();
-            }, 300); // 300ms rendering handshake
+            }, 100); // 100ms ultra-fast trigger
             return () => clearTimeout(timer);
         }
     }, [isLoading, po, demandNote, vendor, orgSettings]);
 
-    if (isLoading || po === undefined) {
+    if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="font-bold text-sm text-muted-foreground animate-pulse italic">Preparing high-fidelity Purchase Order...</p>
+                <p className="font-bold text-sm text-muted-foreground animate-pulse italic">Synchronizing document for print...</p>
             </div>
         );
     }
 
-    if (po === null) {
-        notFound();
-    }
-
-    if (!orgSettings) return <div className="p-8 text-center bg-white text-black font-bold">Error: Organization Settings Not Found.</div>;
+    if (!po) notFound();
+    if (!orgSettings) return <div className="p-8 text-center">Settings not available.</div>;
 
     return (
         <div className="bg-white min-h-screen">
             <POPrintLayout 
                 po={po}
-                demandNote={demandNote}
-                vendor={vendor}
-                employees={employees}
-                designations={designations}
-                deliveryPlaces={deliveryPlaces}
+                demandNote={demandNote || undefined}
+                vendor={vendor || undefined}
+                employees={employees || []}
+                designations={designations || []}
+                deliveryPlaces={deliveryPlaces || []}
                 orgSettings={orgSettings}
             />
         </div>
