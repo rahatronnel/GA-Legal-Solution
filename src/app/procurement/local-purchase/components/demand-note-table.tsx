@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -38,7 +39,7 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
@@ -51,7 +52,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                 </div>
                 <DialogDescription>Internal guidelines for material and service requisitions.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[65vh] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -79,11 +80,12 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                     <Separator />
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Access & Visibility</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Requisitions are visible to the creator, all approvers in the chain, and GP personnel. Management can track the status in real-time via the <Badge variant="outline">Action Beacons</Badge> displayed in the list view.
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Requisitions are visible to the creator, all approvers in the chain, and GP personnel. Management can track the status in real-time via the <Badge variant="outline">Action Beacons</Badge> displayed in the list view. This ensures a transparent and audit-ready procurement cycle.
                         </p>
                     </section>
                 </div>
+                <ScrollBar orientation="vertical" />
             </ScrollArea>
             <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>

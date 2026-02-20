@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -10,17 +11,23 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { useProcurement } from './procurement-provider';
 import type { PurchaseOrder } from './po-entry-form';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, Hourglass, MoreHorizontal, Check, X, Filter, Copy, ChevronRight, ChevronLeft, AlertTriangle, Building, DollarSign, Send, PackageCheck, HelpCircle, ListOrdered, ShieldCheck, UserCheck } from 'lucide-react';
+import { 
+    Search, XCircle, FilePlus, Eye, Printer, Info, CheckCircle, 
+    Hourglass, MoreHorizontal, Check, X, Filter, Copy, 
+    ChevronRight, ChevronLeft, AlertTriangle, Building, 
+    DollarSign, Send, PackageCheck, HelpCircle, ListOrdered, 
+    ShieldCheck, UserCheck 
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { PurchaseOrderForm } from './po-entry-form';
 import { useToast } from '@/hooks/use-toast';
 import { collection, doc } from 'firebase/firestore';
@@ -43,7 +50,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[65vh] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
@@ -71,11 +78,14 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     <Separator />
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Visibility & Security</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Access is granted to: Superadmins, GP Officers, the assigned GP Concern, and all past/current approvers in the chain. Approvers retain access to view the PO even after their task is complete for auditing purposes.
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Access is granted to: Superadmins, GP Officers, the assigned GP Concern, and all past/current approvers in the chain. Approvers retain access to view the PO even after their task is complete for auditing purposes. 
+                            <br/><br/>
+                            This system ensures total transparency and accountability for every organizational expenditure.
                         </p>
                     </section>
                 </div>
+                <ScrollBar orientation="vertical" />
             </ScrollArea>
             <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Got it, Thanks!</Button>
@@ -377,12 +387,12 @@ export function PurchaseOrderTable() {
                         </TableHeader>
                         <TableBody>
                             {filteredPOs.length > 0 ? filteredPOs.map((po) => {
-                                const dn = demandNotes?.find(dn => dn.id === po.demandNoteId);
+                                const dn = demandNotes?.find(note => note.id === po.demandNoteId);
                                 const cs = comparativeStatements?.find(c => c.id === po.csId);
                                 const mrr = mrrs.find(m => m.poId === po.id);
                                 const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
-                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
-                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
+                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
+                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
 
                                 return (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -25,11 +26,11 @@ export default function POPrintPage() {
     }, [po, vendors]);
 
     useEffect(() => {
+        // High-performance instant print trigger
         if (!isLoading && po && demandNote && vendor && orgSettings) {
-            // High-speed instant trigger
             const timer = setTimeout(() => {
                 window.print();
-            }, 300); 
+            }, 300); // 300ms rendering handshake
             return () => clearTimeout(timer);
         }
     }, [isLoading, po, demandNote, vendor, orgSettings]);
@@ -37,7 +38,7 @@ export default function POPrintPage() {
     if (isLoading || po === undefined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="font-bold text-sm text-muted-foreground italic">Preparing high-fidelity Purchase Order...</p>
+                <p className="font-bold text-sm text-muted-foreground animate-pulse italic">Preparing high-fidelity Purchase Order...</p>
             </div>
         );
     }

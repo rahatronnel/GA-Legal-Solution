@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -15,11 +16,11 @@ export default function MRRPrintPage() {
     }, [params.id, mrrs, isLoading]);
 
     useEffect(() => {
+        // High-performance instant print trigger
         if (!isLoading && mrr && orgSettings) {
-            // High-speed instant trigger
             const timer = setTimeout(() => {
                 window.print();
-            }, 300);
+            }, 300); // 300ms rendering handshake
             return () => clearTimeout(timer);
         }
     }, [isLoading, mrr, orgSettings]);
@@ -27,7 +28,7 @@ export default function MRRPrintPage() {
     if (isLoading || mrr === undefined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="font-bold text-sm text-muted-foreground italic">Formatting bilingual MRR document...</p>
+                <p className="font-bold text-sm text-muted-foreground animate-pulse italic">Formatting bilingual MRR document...</p>
             </div>
         );
     }
