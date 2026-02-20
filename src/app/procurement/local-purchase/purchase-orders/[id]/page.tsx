@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { getPOStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { PurchaseOrder, UploadedFile } from '../../components/po-entry-form';
@@ -24,9 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { imageToDataUrl, cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>

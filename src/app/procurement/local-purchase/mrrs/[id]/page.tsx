@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, 
     Building, CheckCircle, Hourglass, MoreHorizontal, Hash, Truck, 
-    Package, Box, MapPin, DollarSign, MessageSquare, Tag, Archive, CheckCircle2 
+    Package, Box, MapPin, Tag, Archive, CheckCircle2 
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -28,10 +28,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useProcurement } from '../../components/procurement-provider';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
-import { Separator } from '@/components/ui/separator';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
@@ -160,14 +159,16 @@ export default function MRRProfilePage() {
                                 </>
                             )}
                             {isFinalApproved && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
-                                            <Printer className="mr-2 h-4 w-4"/> Print MRR
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
-                                </Tooltip>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
+                                                <Printer className="mr-2 h-4 w-4"/> Print MRR
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>

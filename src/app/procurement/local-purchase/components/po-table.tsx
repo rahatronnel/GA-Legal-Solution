@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -36,7 +35,7 @@ import { MRREntryForm } from './mrr-entry-form';
 
 const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
             <DialogHeader>
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
@@ -44,7 +43,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4">
+            <ScrollArea className="flex-grow pr-4 max-h-[60vh]">
                 <div className="space-y-6 py-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
@@ -78,7 +77,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     </section>
                 </div>
             </ScrollArea>
-            <DialogFooter>
+            <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Got it, Thanks!</Button>
             </DialogFooter>
         </DialogContent>
@@ -111,7 +110,7 @@ const POApprovalWizard = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl animate-dialog-in">
                 <DialogHeader>
                     <DialogTitle>Approve Purchase Order: {po.poNumber}</DialogTitle>
                     <div className="flex items-center gap-2 mt-2">
@@ -192,12 +191,12 @@ const POApprovalWizard = ({
                 </div>
 
                 <DialogFooter className="flex justify-between w-full border-t pt-4">
-                    <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>
+                    <Button variant="outline" onClick={() => setStep(prev => prev - 1)} disabled={step === 1}>
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     <div className="flex gap-2">
                         {step < 3 ? (
-                            <Button onClick={() => setStep(s => s + 1)}>
+                            <Button onClick={() => setStep(prev => prev + 1)}>
                                 Next Step <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
@@ -351,12 +350,12 @@ export function PurchaseOrderTable() {
                 <div className="p-4 border rounded-lg bg-muted/20 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Select value={gpConcernFilter} onValueChange={setGpConcernFilter}>
-                            <SelectTrigger><SelectValue placeholder="GP Concern..." /></SelectTrigger>
-                            <SelectContent><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o!.id} value={o!.id}>{o!.fullName}</SelectItem>)}</SelectContent>
+                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="GP Concern..." /></SelectTrigger>
+                            <SelectContent className="animate-scale-in"><SelectItem value="all">All GP Concerns</SelectItem>{gpConcernOfficers.map(o => <SelectItem key={o!.id} value={o!.id}>{o!.fullName}</SelectItem>)}</SelectContent>
                         </Select>
                         <Select value={vendorFilter} onValueChange={setVendorFilter}>
-                            <SelectTrigger><SelectValue placeholder="Vendor..." /></SelectTrigger>
-                            <SelectContent><SelectItem value="all">All Vendors</SelectItem>{vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
+                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Vendor..." /></SelectTrigger>
+                            <SelectContent className="animate-scale-in"><SelectItem value="all">All Vendors</SelectItem>{vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent>
                         </Select>
                         <Button variant="ghost" onClick={() => { setSearchTerm(''); setVendorFilter('all'); setGpConcernFilter('all'); }}><XCircle className="mr-2 h-4 w-4" /> Clear All</Button>
                     </div>
@@ -389,9 +388,9 @@ export function PurchaseOrderTable() {
                                 return (
                                     <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend || canMrr) && "bg-orange-500/5")}>
                                         <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy PO#</TooltipContent></Tooltip></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                        <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy PO#</TooltipContent></Tooltip></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{cs?.csNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs?.csNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
+                                        <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
                                         <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
                                         <TableCell>{employees.find(e => e.id === dn?.gpConcernOfficerId)?.fullName}</TableCell>
                                         <TableCell>
@@ -405,18 +404,18 @@ export function PurchaseOrderTable() {
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 {isWaitingForApproval && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Informed Approval</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Informed Approval</TooltipContent></Tooltip>
                                                 )}
                                                 {canSend && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Mark as Sent to Vendor</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Mark as Sent to Vendor</TooltipContent></Tooltip>
                                                 )}
                                                 {canMrr && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Prepare MRR</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Prepare MRR</TooltipContent></Tooltip>
                                                 )}
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
                                                 {po.approvalStatus === 1 && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent>Print in New Tab</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print in New Tab</TooltipContent></Tooltip>
                                                 )}
                                             </div>
                                         </TableCell>
@@ -429,7 +428,7 @@ export function PurchaseOrderTable() {
             </div>
 
             <Dialog open={isPrepareDialogOpen} onOpenChange={setIsPrepareDialogOpen}>
-                <DialogContent><DialogHeader><DialogTitle>Prepare PO</DialogTitle></DialogHeader>
+                <DialogContent className="animate-dialog-in"><DialogHeader><DialogTitle>Prepare PO</DialogTitle></DialogHeader>
                     <ScrollArea className="h-64 border rounded-md">
                         {comparativeStatements.filter(cs => cs.approvalStatus === 1 && !purchaseOrders.some(po => po.csId === cs.id)).map(cs => (
                             <div key={cs.id} className="p-3 border-b flex justify-between items-center">
@@ -451,7 +450,7 @@ export function PurchaseOrderTable() {
             />
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader><DialogTitle>PO Approval Flow</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {

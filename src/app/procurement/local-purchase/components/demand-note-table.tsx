@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -44,7 +43,7 @@ import { Separator } from '@/components/ui/separator';
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
             <DialogHeader>
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
@@ -52,7 +51,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                 </div>
                 <DialogDescription>Internal guidelines for material and service requisitions.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4">
+            <ScrollArea className="flex-grow pr-4 max-h-[60vh]">
                 <div className="space-y-6 py-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -86,7 +85,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                     </section>
                 </div>
             </ScrollArea>
-            <DialogFooter>
+            <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
             </DialogFooter>
         </DialogContent>
@@ -328,8 +327,8 @@ export function DemandNoteTable() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger><SelectValue placeholder="Approval Status" /></SelectTrigger>
-                            <SelectContent>
+                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Approval Status" /></SelectTrigger>
+                            <SelectContent className="animate-scale-in">
                                 <SelectItem value="all">All Statuses</SelectItem>
                                 <SelectItem value="pending">Pending Approval</SelectItem>
                                 <SelectItem value="1">Final Approved</SelectItem>
@@ -338,8 +337,8 @@ export function DemandNoteTable() {
                         </Select>
 
                         <Select value={stageFilter} onValueChange={setStageFilter}>
-                            <SelectTrigger><SelectValue placeholder="Workflow Stage" /></SelectTrigger>
-                            <SelectContent>
+                            <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Workflow Stage" /></SelectTrigger>
+                            <SelectContent className="animate-scale-in">
                                 <SelectItem value="all">All Stages</SelectItem>
                                 <SelectItem value="gp_assigned">GP Desk Assigned</SelectItem>
                                 <SelectItem value="cs_prepared">CS Prepared</SelectItem>
@@ -430,10 +429,10 @@ export function DemandNoteTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedNoteForStatus(item); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent>Approval Flow</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View Details</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print DN</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => { setCurrentItem(item); setIsDeleteConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Delete Record</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedNoteForStatus(item); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Approval Flow</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent className="animate-scale-in">View Details</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print DN</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => { setCurrentItem(item); setIsDeleteConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Delete Record</TooltipContent></Tooltip>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -451,7 +450,7 @@ export function DemandNoteTable() {
             <DemandNoteUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
             
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent>
+                <DialogContent className="animate-dialog-in">
                     <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><div className="text-sm text-muted-foreground">This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</div></DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
@@ -461,7 +460,7 @@ export function DemandNoteTable() {
             </Dialog>
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent className="sm:max-w-lg animate-dialog-in">
                     <DialogHeader><DialogTitle>Approval Flow: {selectedNoteForStatus?.demandNoteNumber}</DialogTitle></DialogHeader>
                     <div className="py-4">
                         <ul className="space-y-4">

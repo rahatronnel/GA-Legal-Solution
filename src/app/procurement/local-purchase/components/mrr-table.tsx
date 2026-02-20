@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -34,7 +33,7 @@ import { Label } from '@/components/ui/label';
 import type { UploadedFile } from './po-entry-form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from 'cmdk';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,7 +41,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
             <DialogHeader>
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
@@ -50,7 +49,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                 </div>
                 <DialogDescription>Instructions for high-fidelity Material Receiving Reports.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4">
+            <ScrollArea className="flex-grow pr-4 max-h-[60vh]">
                 <div className="space-y-6 py-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -89,7 +88,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                     </section>
                 </div>
             </ScrollArea>
-            <DialogFooter>
+            <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Understood</Button>
             </DialogFooter>
         </DialogContent>
@@ -154,7 +153,7 @@ const FinalizeMrrDialog = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl animate-dialog-in">
                 <DialogHeader>
                     <DialogTitle>Finalize MRR: {mrr.mrrNumber}</DialogTitle>
                     <DialogDescription>Upload Bill/Invoice and Challan to initiate approval.</DialogDescription>
@@ -175,8 +174,8 @@ const FinalizeMrrDialog = ({
                     <div className="space-y-2">
                         <Label className="font-bold text-xs uppercase">Receiver Confirmant</Label>
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
-                            <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between animate-scale-in">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 animate-scale-in">
                                 <Command>
                                     <CommandInput placeholder="Search..." />
                                     <CommandList>
@@ -346,7 +345,7 @@ export function MRRTable() {
                                                                     <Printer className="h-4 w-4" />
                                                                 </Button>
                                                             </TooltipTrigger>
-                                                            <TooltipContent>Open in New Tab & Print</TooltipContent>
+                                                            <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
                                                         </Tooltip>
                                                     )}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>
@@ -366,7 +365,7 @@ export function MRRTable() {
             <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={demandNotes || []} />
             
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader><DialogTitle>MRR Approval Flow</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {

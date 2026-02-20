@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -48,7 +47,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
             <DialogHeader>
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
@@ -56,7 +55,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Internal guidelines for vendor quotation analysis and contract awarding.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4">
+            <ScrollArea className="flex-grow pr-4 max-h-[60vh]">
                 <div className="space-y-6 py-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -90,7 +89,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     </section>
                 </div>
             </ScrollArea>
-            <DialogFooter>
+            <DialogFooter className="border-t pt-4">
                 <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
             </DialogFooter>
         </DialogContent>
@@ -154,7 +153,7 @@ const VendorSelectionDialog: React.FC<{
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl animate-dialog-in">
                 <DialogHeader>
                     <DialogTitle>Award Contract: {cs?.csNumber}</DialogTitle>
                     <div className="flex items-center gap-2 mt-2">
@@ -170,8 +169,8 @@ const VendorSelectionDialog: React.FC<{
                             <div className="space-y-2">
                                 <Label className="text-lg">Step 1: Select Vendor & Review Financials</Label>
                                 <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-                                    <SelectTrigger className="h-12 text-lg"><SelectValue placeholder="Choose a vendor to award..." /></SelectTrigger>
-                                    <SelectContent>
+                                    <SelectTrigger className="h-12 text-lg animate-scale-in"><SelectValue placeholder="Choose a vendor to award..." /></SelectTrigger>
+                                    <SelectContent className="animate-scale-in">
                                         {(cs?.vendorDetails || []).map(detail => {
                                             const v = vendors.find(v => v.id === detail.vendorId);
                                             return <SelectItem key={detail.vendorId} value={detail.vendorId}>{v?.vendorName}</SelectItem>
@@ -387,8 +386,8 @@ export function ComparativeStatementTable() {
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
                                             <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
-                                            <TableCell><div className="flex items-center gap-1"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip></div></TableCell>
+                                            <TableCell><div className="flex items-center gap-1"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
+                                            <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell>
@@ -421,7 +420,7 @@ export function ComparativeStatementTable() {
             <CSUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent className="sm:max-w-lg animate-dialog-in">
                     <DialogHeader><DialogTitle>Approval Flow: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
