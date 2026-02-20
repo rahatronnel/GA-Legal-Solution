@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, ShieldAlert, Layout, CheckCircle2, Bell } from 'lucide-react';
+import { Upload, X, ShieldAlert, Layout, CheckCircle2, Bell, Clock } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,6 +45,7 @@ export type OrganizationSettings = {
   registrationNumber: string;
   logo: string; 
   favicon: string; 
+  notificationReminderHours: number;
   moduleVisibility?: {
     showProcurementManagement: boolean;
     showCoreModules: boolean;
@@ -89,6 +91,7 @@ const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementS
   registrationNumber: 'C-12345/67',
   logo: '',
   favicon: '',
+  notificationReminderHours: 24,
   moduleVisibility: {
     showProcurementManagement: true,
     showCoreModules: true,
@@ -128,7 +131,10 @@ export default function SettingsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    setSettings(prev => ({ ...prev, [id]: value }));
+    setSettings(prev => ({ 
+        ...prev, 
+        [id]: id === 'notificationReminderHours' ? parseInt(value) || 0 : value 
+    }));
   };
 
   const handleVisibilityChange = (key: keyof NonNullable<OrganizationSettings['moduleVisibility']>, value: boolean) => {
@@ -185,6 +191,11 @@ export default function SettingsPage() {
                     <div className="space-y-2 sm:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" value={settings.address} onChange={handleInputChange} /></div>
                     <div className="space-y-2"><Label htmlFor="contactNumber">Contact Number</Label><Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} /></div>
                     <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={settings.email} onChange={handleInputChange} /></div>
+                    <div className="space-y-2">
+                        <Label htmlFor="notificationReminderHours" className="flex items-center gap-2"><Clock className="h-4 w-4" /> Notification Reminder Threshold (Hours)</Label>
+                        <Input id="notificationReminderHours" type="number" value={settings.notificationReminderHours} onChange={handleInputChange} />
+                        <p className="text-[10px] text-muted-foreground">Re-notify users if task is unaddressed after these many hours.</p>
+                    </div>
                 </div>
                 <div className="md:col-span-1 space-y-6">
                     <div className="space-y-2">

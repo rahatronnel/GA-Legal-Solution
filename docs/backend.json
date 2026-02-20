@@ -16,6 +16,7 @@
         "registrationNumber": { "type": "string", "description": "Official registration number." },
         "logo": { "type": "string", "description": "Data URL of the organization's logo." },
         "favicon": { "type": "string", "description": "Data URL of the favicon." },
+        "notificationReminderHours": { "type": "number", "description": "Hours after which a pending task triggers a reminder/escalation.", "default": 24 },
         "moduleVisibility": {
           "type": "object",
           "properties": {
@@ -33,13 +34,14 @@
                     "type": "array",
                     "description": "An ordered list of approval steps.",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "stepName": { "type": "string" },
-                            "approverId": { "type": "string" },
-                            "statusName": { "type": "string" }
-                        },
-                        "required": ["stepName", "approverId", "statusName"]
+                        "object": {
+                            "properties": {
+                                "stepName": { "type": "string" },
+                                "approverId": { "type": "string" },
+                                "statusName": { "type": "string" }
+                            },
+                            "required": ["stepName", "approverId", "statusName"]
+                        }
                     }
                 }
             }
