@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { 
     CalendarIcon, 
     Hash, 
@@ -47,8 +49,6 @@ import type { PurchaseOrder, UploadedFile } from './po-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 
 export type MRRItem = {
   particulars: string;

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -25,7 +24,7 @@ import { imageToDataUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
@@ -72,6 +71,7 @@ const POApprovalWizard = ({
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Approve Purchase Order: {po.poNumber}</DialogTitle>
+                    <DialogDescription>Review vendor and financial data to sign off on this commitment.</DialogDescription>
                     <div className="flex items-center gap-2 mt-2">
                         <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 1 ? "bg-primary" : "bg-muted")} />
                         <div className={cn("h-2 flex-1 rounded-full transition-all", step >= 2 ? "bg-primary" : "bg-muted")} />
