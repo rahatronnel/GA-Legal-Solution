@@ -189,7 +189,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col animate-dialog-in">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -212,24 +212,24 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
               <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> Receiving Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick date"}</Button>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal animate-scale-in"><CalendarIcon className="mr-2 h-4 w-4" />{receivingDate ? format(receivingDate, "PPP") : "Pick date"}</Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={receivingDate} onSelect={(d) => { setReceivingDate(d); setMrrData(p => ({...p, receivingDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
+                <PopoverContent className="w-auto p-0 animate-scale-in"><Calendar mode="single" selected={receivingDate} onSelect={(d) => { setReceivingDate(d); setMrrData(p => ({...p, receivingDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> MRR Issue Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick date"}</Button>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal animate-scale-in"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick date"}</Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, MRR_IssueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
+                <PopoverContent className="w-auto p-0 animate-scale-in"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, MRR_IssueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-primary/5 border-primary/20 shadow-sm">
+            <Card className="bg-primary/5 border-primary/20 shadow-sm animate-scale-in">
               <CardHeader className="py-2 border-b">
                 <CardTitle className="text-sm flex items-center gap-2"><Building2 className="h-4 w-4" /> Organizational Source</CardTitle>
               </CardHeader>
@@ -239,7 +239,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 <div className="flex justify-between items-center"><span className="text-muted-foreground font-medium flex items-center gap-2"><Hash className="h-3 w-3"/> Demand Note Ref:</span><Badge variant="outline">{mrrData.demandNoteNumber}</Badge></div>
               </CardContent>
             </Card>
-            <Card className="bg-orange-500/5 border-orange-500/20 shadow-sm">
+            <Card className="bg-orange-500/5 border-orange-500/20 shadow-sm animate-scale-in">
               <CardHeader className="py-2 border-b">
                 <CardTitle className="text-sm flex items-center gap-2"><Truck className="h-4 w-4" /> Supplier Information</CardTitle>
               </CardHeader>
@@ -258,10 +258,10 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Truck className="h-4 w-4" /> Shipment Type <MandatoryIndicator/></Label>
                     <Select value={mrrData.shipmentType || ''} onValueChange={(v) => setMrrData(p => ({ ...p, shipmentType: v }))}>
-                        <SelectTrigger className="bg-background">
+                        <SelectTrigger className="bg-background animate-scale-in">
                             <SelectValue placeholder="Choose mode..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="animate-scale-in">
                             <SelectItem value="Air">✈️ Air Shipment</SelectItem>
                             <SelectItem value="Sea">🚢 Sea / Port</SelectItem>
                             <SelectItem value="Road">🚛 Road Transport</SelectItem>
@@ -291,7 +291,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
           <div className="space-y-4">
             <h4 className="font-bold flex items-center gap-2 text-primary"><Layers className="h-5 w-5" /> Material Verification (Item Details)</h4>
-            <Card className="border shadow-sm overflow-hidden">
+            <Card className="border shadow-sm overflow-hidden animate-scale-in">
                 <Table>
                     <TableHeader className="bg-muted/50">
                     <TableRow>
@@ -326,16 +326,16 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-4 border shadow-sm space-y-4">
+            <Card className="p-4 border shadow-sm space-y-4 animate-scale-in">
               <h4 className="font-bold flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-green-600" /> Physical Inspection</h4>
               <div className="space-y-4">
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CheckCircle2 className="h-4 w-4" /> Goods Condition</Label>
                     <Select value={mrrData.goodsCondition} onValueChange={(v) => setMrrData(p => ({...p, goodsCondition: v as any}))}>
-                    <SelectTrigger className={cn(mrrData.goodsCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
+                    <SelectTrigger className={cn("animate-scale-in", mrrData.goodsCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
                         <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="animate-scale-in">
                         <SelectItem value="Ok" className="text-green-600 font-bold">✅ Good / Ok</SelectItem>
                         <SelectItem value="Not Ok" className="text-red-600 font-bold">❌ Damaged / Not Ok</SelectItem>
                     </SelectContent>
@@ -344,10 +344,10 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Box className="h-4 w-4" /> Box / Package Condition</Label>
                     <Select value={mrrData.packageCondition} onValueChange={(v) => setMrrData(p => ({...p, packageCondition: v as any}))}>
-                    <SelectTrigger className={cn(mrrData.packageCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
+                    <SelectTrigger className={cn("animate-scale-in", mrrData.packageCondition === 'Ok' ? "border-green-500 text-green-700 bg-green-50" : "border-red-500 text-red-700 bg-red-50")}>
                         <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="animate-scale-in">
                         <SelectItem value="Ok" className="text-green-600 font-bold">✅ Intact / Ok</SelectItem>
                         <SelectItem value="Not Ok" className="text-red-600 font-bold">❌ Broken / Not Ok</SelectItem>
                     </SelectContent>
@@ -355,7 +355,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 </div>
               </div>
             </Card>
-            <div className="space-y-2 p-4 border rounded-lg shadow-sm">
+            <div className="space-y-2 p-4 border rounded-lg shadow-sm animate-scale-in">
               <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><MessageSquare className="h-5 w-5 text-primary" /> Additional Remarks (Optional)</Label>
               <Textarea id="remarks" value={mrrData.remarks || ''} onChange={handleInputChange} rows={6} placeholder="Type any additional notes, observations or discrepancies here..." className="resize-none" />
             </div>

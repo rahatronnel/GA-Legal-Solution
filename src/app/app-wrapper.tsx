@@ -108,7 +108,7 @@ const ModuleDashboard = () => {
                             </Avatar>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 mt-2" sideOffset={8}>
+                      <DropdownMenuContent align="end" className="w-56 mt-2 animate-scale-in" sideOffset={8}>
                         <DropdownMenuLabel className="flex flex-col">
                             <span className="font-bold truncate text-sm">{currentUserEmployee?.fullName || user?.email}</span>
                             <span className="text-[10px] text-muted-foreground font-normal truncate">{currentUserEmployee?.email || ''}</span>
@@ -194,7 +194,7 @@ const ModuleDashboard = () => {
             </footer>
 
             <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
-               <AlertDialogContent>
+               <AlertDialogContent className="animate-dialog-in">
                    <AlertDialogHeader>
                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                    <AlertDialogDescription>

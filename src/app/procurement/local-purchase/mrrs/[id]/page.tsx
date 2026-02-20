@@ -145,14 +145,14 @@ export default function MRRProfilePage() {
                                 <>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild><Button size="sm" className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4"/>Approve</Button></AlertDialogTrigger>
-                                        <AlertDialogContent>
+                                        <AlertDialogContent className="animate-dialog-in">
                                             <AlertDialogHeader><AlertDialogTitle>Approve MRR?</AlertDialogTitle><AlertDialogDescription>Confirm receipt and condition of materials.</AlertDialogDescription></AlertDialogHeader>
                                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleApproval(1)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><X className="mr-2 h-4 w-4"/>Reject</Button></AlertDialogTrigger>
-                                        <AlertDialogContent>
+                                        <AlertDialogContent className="animate-dialog-in">
                                             <AlertDialogHeader><AlertDialogTitle>Reject MRR?</AlertDialogTitle><AlertDialogDescription>This will halt the procurement cycle for this shipment.</AlertDialogDescription></AlertDialogHeader>
                                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive" onClick={() => handleApproval(0)}>Confirm Reject</AlertDialogAction></AlertDialogFooter>
                                         </AlertDialogContent>
@@ -167,7 +167,7 @@ export default function MRRProfilePage() {
                                                 <Printer className="mr-2 h-4 w-4"/> Print MRR
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>Open in New Tab & Print</TooltipContent>
+                                        <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
@@ -178,7 +178,7 @@ export default function MRRProfilePage() {
             </Card>
 
             <Tabs defaultValue="overview">
-                <TabsList>
+                <TabsList className="animate-scale-in">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="documents">Bill & Challan</TabsTrigger>
                     <TabsTrigger value="history">Approval Flow</TabsTrigger>
@@ -186,13 +186,13 @@ export default function MRRProfilePage() {
                 
                 <TabsContent value="overview" className="space-y-6 mt-6">
                     <div className="grid md:grid-cols-2 gap-6">
-                        <Card><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Truck className="h-4 w-4"/>Logistics</CardTitle></CardHeader>
+                        <Card className="animate-scale-in"><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Truck className="h-4 w-4"/>Logistics</CardTitle></CardHeader>
                         <CardContent className="grid gap-4">
                             <InfoItem icon={Tag} label="Shipment Type" value={mrr.shipmentType} />
                             <InfoItem icon={Box} label="Container" value={`${mrr.containerNo} (${mrr.containerSize})`} />
                             <InfoItem icon={FileText} label="Invc/Challan" value={`${mrr.invoiceNumber} / ${mrr.challanNumber}`} />
                         </CardContent></Card>
-                        <Card><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CheckCircle className="h-4 w-4"/>Condition</CardTitle></CardHeader>
+                        <Card className="animate-scale-in"><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><CheckCircle className="h-4 w-4"/>Condition</CardTitle></CardHeader>
                         <CardContent className="grid gap-4">
                             <InfoItem icon={Package} label="Goods State" value={<Badge variant={mrr.goodsCondition === 'Ok' ? 'default' : 'destructive'}>{mrr.goodsCondition}</Badge>} />
                             <InfoItem icon={Archive} label="Packaging" value={<Badge variant={mrr.packageCondition === 'Ok' ? 'default' : 'destructive'}>{mrr.packageCondition}</Badge>} />
@@ -200,7 +200,7 @@ export default function MRRProfilePage() {
                         </CardContent></Card>
                     </div>
 
-                    <Card><CardHeader><CardTitle className="text-lg">Received Items</CardTitle></CardHeader>
+                    <Card className="animate-scale-in"><CardHeader><CardTitle className="text-lg">Received Items</CardTitle></CardHeader>
                     <CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Description</TableHead><TableHead className="text-center">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
                     <TableBody>{mrr.items.map((item: any, i: number) => (<TableRow key={i}><TableCell className="font-bold">{item.particulars}</TableCell><TableCell className="italic text-xs">{item.description}</TableCell><TableCell className="text-center">{item.receivedQty} {item.unit}</TableCell><TableCell className="text-right font-mono">{item.unitPrice.toLocaleString()}</TableCell><TableCell className="text-right font-bold">{item.amount.toLocaleString()}</TableCell></TableRow>))}</TableBody>
                     </Table></CardContent></Card>
@@ -212,7 +212,7 @@ export default function MRRProfilePage() {
                 </TabsContent>
 
                 <TabsContent value="history" className="mt-6">
-                    <Card><CardContent className="py-6"><ul className="space-y-4">{mrr.approvalFlow?.steps.map((step: any, index: number) => {
+                    <Card className="animate-scale-in"><CardContent className="py-6"><ul className="space-y-4">{mrr.approvalFlow?.steps.map((step: any, index: number) => {
                         const historyEntry = mrr.approvalHistory?.find((h:any) => h.level === index);
                         const approver = employees?.find(e => e.id === step.approverId);
                         const isPending = mrr.currentApproverId === step.approverId && mrr.approvalStatus > 2;

@@ -77,31 +77,34 @@ body {
         page-break-before: always;
     }
 
-    /* Elite macOS-style Genie Transition */
+    /* Elite wavy macOS-style Genie Transition */
     .animate-genie-in {
-        animation: genieIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: genieIn 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6) forwards;
     }
 
     /* Professional Scale Transition for Dropdowns/Popovers */
     .animate-scale-in {
-        animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Specialized Centered Genie Effect for Dialogs */
+    /* Specialized Centered Wavy Genie Effect for Dialogs */
     .animate-dialog-in {
-        animation: dialogIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: dialogIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     @keyframes genieIn {
         0% {
             opacity: 0;
-            transform: translateY(100%) scaleX(0.1) scaleY(0.1);
+            transform: translateY(100%) scaleX(0.05) scaleY(0.1);
             transform-origin: bottom center;
-            filter: blur(10px);
+            filter: blur(15px);
         }
-        60% {
-            opacity: 1;
-            transform: translateY(-10%) scaleX(1.1) scaleY(0.9);
+        50% {
+            opacity: 0.7;
+            transform: translateY(-15%) scaleX(1.15) scaleY(0.85);
+        }
+        75% {
+            transform: translateY(5%) scaleX(0.95) scaleY(1.05);
         }
         100% {
             opacity: 1;
@@ -114,28 +117,34 @@ body {
     @keyframes scaleIn {
         from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.85) translateY(-5px);
         }
         to {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1) translateY(0);
         }
     }
 
     @keyframes dialogIn {
         0% {
             opacity: 0;
-            transform: translate(-50%, 100%) scaleX(0.1) scaleY(0.5);
+            transform: translate(-50%, 100%) scaleX(0.1) scaleY(0.3);
             transform-origin: bottom center;
+            filter: blur(10px);
+        }
+        40% {
+            opacity: 0.8;
+            transform: translate(-50%, -60%) scaleX(1.1) scaleY(0.85);
         }
         70% {
             opacity: 1;
-            transform: translate(-50%, -55%) scaleX(1.05) scaleY(0.95);
+            transform: translate(-50%, -45%) scaleX(0.95) scaleY(1.05);
         }
         100% {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
             transform-origin: center center;
+            filter: blur(0);
         }
     }
 }
