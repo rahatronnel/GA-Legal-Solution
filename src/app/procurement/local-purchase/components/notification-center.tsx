@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -60,9 +59,11 @@ export function NotificationCenter() {
         const uid = currentUserEmployee.id;
         const now = new Date();
 
-        // 1. Demand Notes
+        // 1. Demand Notes Lifecycle
         demandNotes.forEach(dn => {
             const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
+            
+            // Pending Approval
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
                 list.push({
                     id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber,
@@ -72,15 +73,19 @@ export function NotificationCenter() {
                     isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
                 });
             }
+            
+            // GP Officer Assignment Needed
             if (isGPOfficer && dn.approvalStatus === 1 && !dn.gpConcernOfficerId) {
                 list.push({
                     id: dn.id + '-assign', type: 'Demand Note', title: dn.demandNoteNumber,
-                    description: 'Final approved. Please assign a GP Concern Officer.',
+                    description: 'Approved. Please assign a GP Concern Officer.',
                     link: `/procurement/local-purchase?tab=gp-desk`,
                     status: 'GP Assignment Needed', createdAt: dn.entryDate,
                     isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
                 });
             }
+
+            // GP Concern Tasks
             if (dn.gpConcernOfficerId === uid && dn.approvalStatus === 1) {
                 if (!dn.quotations || dn.quotations.length === 0) {
                     list.push({
@@ -102,30 +107,36 @@ export function NotificationCenter() {
             }
         });
 
-        // 2. Comparative Statements
+        // 2. Comparative Statements Lifecycle
         comparativeStatements.forEach(cs => {
             const relatedDN = demandNotes.find(d => d.id === cs.demandNoteId);
             const poExists = purchaseOrders.some(p => p.csId === cs.id);
+            
+            // Award Selection (GP Concern)
             if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber,
-                    description: 'Analysis ready. Please select the awarded vendor.',
+                    description: 'CS Prepared. Please select the awarded vendor.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Award Selection Required', createdAt: cs.csDate,
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
-            } else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
+            } 
+            // PO Preparation (GP Concern)
+            else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
-                    description: 'CS fully approved. Please prepare the PO.',
+                    description: 'CS Approved. Please prepare the Purchase Order.',
                     link: `/procurement/local-purchase?tab=po`,
                     status: 'PO Preparation Needed', createdAt: cs.csDate, 
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
-            } else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
+            } 
+            // CS Approval
+            else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
                 list.push({
                     id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber,
-                    description: 'Awaiting your signature.',
+                    description: 'Awaiting your analysis approval signature.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Pending Approval', createdAt: cs.vendorSelectionDate || cs.csDate,
                     isOverdue: cs.vendorSelectionDate ? differenceInHours(now, parseISO(cs.vendorSelectionDate)) >= reminderThreshold : false
@@ -138,7 +149,7 @@ export function NotificationCenter() {
             if (po.currentApproverId === uid && po.approvalStatus !== 1 && po.approvalStatus !== 0) {
                 list.push({
                     id: po.id, type: 'Purchase Order', title: po.poNumber,
-                    description: 'Formal commitment awaiting signature.',
+                    description: 'Formal commitment awaiting your signature.',
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'Pending Approval', createdAt: po.createdAt,
                     isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
@@ -158,7 +169,7 @@ export function NotificationCenter() {
             } else if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,
-                    description: 'Awaiting your approval.',
+                    description: 'Awaiting your report approval.',
                     link: `/procurement/local-purchase/mrrs/${mrr.id}`,
                     status: 'Pending Approval', createdAt: mrr.createdAt,
                     isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
@@ -209,10 +220,14 @@ export function NotificationCenter() {
                             return (
                                 <div key={task.id} className={cn("p-4 transition-all duration-300", isNew ? "bg-primary/5 border-l-4 border-primary" : "bg-background")}>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <div className={cn("p-1 rounded", task.isOverdue ? "bg-red-500 text-white" : "bg-muted text-muted-foreground")}>
-                                            {task.type === 'Demand Note' ? <FileText className="h-3 w-3" /> : <ShoppingCart className="h-3 w-3" />}
+                                        <div className={cn("p-1.5 rounded-md", isNew ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                                            {task.type === 'Demand Note' && <FileText className="h-3 w-3" />}
+                                            {task.type === 'Comparative Statement' && <Info className="h-3 w-3" />}
+                                            {task.type === 'Purchase Order' && <ShoppingCart className="h-3 w-3" />}
+                                            {task.type === 'MRR' && <Package className="h-3 w-3" />}
                                         </div>
                                         <span className="text-[10px] font-bold uppercase tracking-widest">{task.type}</span>
+                                        {task.isOverdue && <Badge variant="destructive" className="ml-auto text-[8px] h-4 animate-pulse">Urgent Reminder</Badge>}
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
                                         <p className="font-bold text-sm truncate">{task.title}</p>
@@ -220,7 +235,7 @@ export function NotificationCenter() {
                                             {copiedId === task.title ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mb-3">{task.description}</p>
+                                    <p className="text-xs text-muted-foreground mb-3 leading-tight">{task.description}</p>
                                     <div className="flex gap-2">
                                         <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 font-bold" asChild onClick={() => isNew && handleAcknowledge(task.id)}>
                                             <Link href={task.link}>Process <ExternalLink className="ml-1 h-3 w-3"/></Link>

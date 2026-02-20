@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -102,6 +101,8 @@ interface MRRFormProps {
   onSave: (data: Partial<MRR>) => void;
   po: PurchaseOrder | null;
 }
+
+const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 
 export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
   const { toast } = useToast();
