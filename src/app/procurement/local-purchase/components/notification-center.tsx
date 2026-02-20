@@ -131,7 +131,7 @@ export function NotificationCenter() {
                     id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
                     description: 'CS fully approved. Please prepare the formal Purchase Order.',
                     link: `/procurement/local-purchase?tab=po`,
-                    status: 'PO Preparation Needed', createdAt: cs.csDate, // Ideally we'd have an approvalDate
+                    status: 'PO Preparation Needed', createdAt: cs.csDate, 
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
             }
