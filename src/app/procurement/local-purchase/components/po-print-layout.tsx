@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -11,6 +10,7 @@ import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import type { DeliveryPlace } from './delivery-place-table';
+import { numberToWords } from '@/lib/utils';
 
 interface POPrintLayoutProps {
   po: PurchaseOrder;
@@ -132,6 +132,10 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                         </tr>
                     </tbody>
                 </table>
+                <div className="mt-2 p-2 border-2 border-black bg-gray-50 text-xs">
+                    <span className="font-bold">Amount in Words: </span>
+                    <span className="italic">{numberToWords(po.netPayableAmount || 0)}</span>
+                </div>
             </div>
 
             <div className="space-y-6 mb-32">

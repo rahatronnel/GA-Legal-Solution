@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -17,9 +16,10 @@ export default function MRRPrintPage() {
 
     useEffect(() => {
         if (!isLoading && mrr && orgSettings) {
+            // Optimized instant trigger
             const timer = setTimeout(() => {
                 window.print();
-            }, 800);
+            }, 300);
             return () => clearTimeout(timer);
         }
     }, [isLoading, mrr, orgSettings]);
@@ -27,7 +27,7 @@ export default function MRRPrintPage() {
     if (isLoading || mrr === undefined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="animate-pulse font-bold">Generating Official MRR Document...</p>
+                <p className="font-bold text-sm text-muted-foreground italic">Formatting bilingual MRR document...</p>
             </div>
         );
     }
@@ -36,10 +36,10 @@ export default function MRRPrintPage() {
         notFound();
     }
 
-    if (!orgSettings) return <div className="p-8 text-center bg-white text-black">Settings not found.</div>;
+    if (!orgSettings) return <div className="p-8 text-center bg-white text-black font-bold">Error: Settings Not Found.</div>;
 
     return (
-        <div className="bg-white min-h-screen print-page-dedicated">
+        <div className="bg-white min-h-screen">
             <MRRPrintLayout 
                 mrr={mrr}
                 employees={employees}

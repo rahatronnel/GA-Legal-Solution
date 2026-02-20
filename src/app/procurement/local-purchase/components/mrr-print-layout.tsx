@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { MRR } from './mrr-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Designation } from '@/app/user-management/components/designation-table';
-import { cn } from '@/lib/utils';
+import { cn, numberToWords } from '@/lib/utils';
 import Image from 'next/image';
 
 interface MRRPrintLayoutProps {
@@ -83,7 +83,7 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 <div className="flex justify-between border-b border-black/20 pb-1"><span className="font-bold">Container Size:</span><span>{mrr.containerSize || 'N/A'}</span></div>
             </div>
 
-            <div className="flex-grow mt-4">
+            <div className="mt-4">
                 <table className="w-full border-collapse border-2 border-black text-[10px]">
                     <thead>
                         <tr className="bg-gray-50">
@@ -113,24 +113,16 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                                 <td className="border-2 border-black p-2 text-right font-mono">{formatCurrency(item.amount)}</td>
                             </tr>
                         ))}
-                        {Array.from({ length: Math.max(0, 8 - mrr.items.length) }).map((_, i) => (
-                            <tr key={`empty-${i}`} className="h-8">
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2"></td>
-                                <td className="border-2 border-black p-2 text-right"></td>
-                            </tr>
-                        ))}
                         <tr className="bg-gray-100 font-bold">
                             <td colSpan={7} className="border-2 border-black p-2 text-right uppercase tracking-wider">Grand Total Amount</td>
                             <td className="border-2 border-black p-2 text-right font-mono text-base">{formatCurrency(mrr.totalAmount)}</td>
                         </tr>
                     </tbody>
                 </table>
+                <div className="mt-2 p-2 border-2 border-black bg-gray-50 text-[10px]">
+                    <span className="font-bold">Amount in Words: </span>
+                    <span className="italic">{numberToWords(mrr.totalAmount || 0)}</span>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 p-4 mt-4 border-2 border-black text-xs font-bold bg-gray-50/50">
@@ -154,7 +146,7 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                 </div>
             </div>
 
-            <div className="mt-12">
+            <div className="mt-auto pt-12">
                 <p className="text-right text-xs font-bold mb-4 uppercase tracking-widest mr-4">Respective (C&F and Others)</p>
                 <div className="grid grid-cols-5 gap-x-2 gap-y-12">
                     <div className="text-center">

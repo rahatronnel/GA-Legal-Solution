@@ -25,11 +25,11 @@ export default function POPrintPage() {
     }, [po, vendors]);
 
     useEffect(() => {
-        // Trigger print only when everything is loaded
         if (!isLoading && po && demandNote && vendor && orgSettings) {
+            // Instant trigger for professional users
             const timer = setTimeout(() => {
                 window.print();
-            }, 800); // 800ms is usually enough for data URLs/images to render
+            }, 300); 
             return () => clearTimeout(timer);
         }
     }, [isLoading, po, demandNote, vendor, orgSettings]);
@@ -37,7 +37,7 @@ export default function POPrintPage() {
     if (isLoading || po === undefined) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="animate-pulse font-bold">Generating Professional Purchase Order...</p>
+                <p className="font-bold text-sm text-muted-foreground italic">Preparing high-fidelity Purchase Order...</p>
             </div>
         );
     }
@@ -46,10 +46,10 @@ export default function POPrintPage() {
         notFound();
     }
 
-    if (!orgSettings) return <div className="p-8 text-center bg-white text-black">Settings not found.</div>;
+    if (!orgSettings) return <div className="p-8 text-center bg-white text-black font-bold">Error: Organization Settings Not Found.</div>;
 
     return (
-        <div className="bg-white min-h-screen print-page-dedicated">
+        <div className="bg-white min-h-screen">
             <POPrintLayout 
                 po={po}
                 demandNote={demandNote}

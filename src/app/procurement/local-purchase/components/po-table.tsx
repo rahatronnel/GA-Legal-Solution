@@ -43,8 +43,8 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[60vh]">
-                <div className="space-y-6 py-4">
+            <ScrollArea className="flex-grow pr-4 max-h-[60vh] border rounded-md">
+                <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
