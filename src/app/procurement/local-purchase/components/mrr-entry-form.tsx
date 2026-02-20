@@ -223,7 +223,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal animate-scale-in"><CalendarIcon className="mr-2 h-4 w-4" />{issueDate ? format(issueDate, "PPP") : "Pick date"}</Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 animate-scale-in"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMrrData(p => ({...p, MRR_IssueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
+                <PopoverContent className="w-auto p-0 animate-scale-in"><Calendar mode="single" selected={issueDate} onSelect={(d) => { setIssueDate(d); setMData(p => ({...p, MRR_IssueDate: d ? format(d, 'yyyy-MM-dd') : ''})) }} /></PopoverContent>
               </Popover>
             </div>
           </div>

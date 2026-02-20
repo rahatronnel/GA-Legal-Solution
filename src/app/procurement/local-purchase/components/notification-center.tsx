@@ -190,8 +190,8 @@ export function NotificationCenter() {
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-transform active:scale-95">
-                    <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-transform active:scale-95 group">
+                    <Bell className={cn("h-5 w-5", unacknowledgedTasks.length > 0 && "animate-bell-ring text-primary")} />
                     {unacknowledgedTasks.length > 0 && (
                         <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -200,11 +200,11 @@ export function NotificationCenter() {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 shadow-2xl animate-genie-in" align="end">
+            <PopoverContent className="w-80 p-0 shadow-2xl animate-liquid-genie" align="end" sideOffset={12}>
                 <div className="flex items-center justify-between p-4 bg-muted/50 border-b">
                     <div className="flex items-center gap-2">
                         <h3 className="font-bold text-sm">Action Center</h3>
-                        <Badge variant="secondary">{tasks.length}</Badge>
+                        <Badge variant="secondary" className="animate-scale-in">{tasks.length}</Badge>
                     </div>
                 </div>
                 <ScrollArea className="h-80">
@@ -225,13 +225,13 @@ export function NotificationCenter() {
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
                                         <p className="font-bold text-sm truncate">{task.title}</p>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(task.title)}>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-primary/10" onClick={() => handleCopy(task.title)}>
                                             {copiedId === task.title ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground mb-3 leading-tight">{task.description}</p>
                                     <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 font-bold" asChild onClick={() => isNew && handleAcknowledge(task.id)}>
+                                        <Button size="sm" variant="outline" className="h-7 text-[10px] flex-1 font-bold shadow-sm" asChild onClick={() => isNew && handleAcknowledge(task.id)}>
                                             <Link href={task.link}>Process <ExternalLink className="ml-1 h-3 w-3"/></Link>
                                         </Button>
                                         {isNew && <Button size="sm" variant="ghost" className="h-7 text-[10px] font-bold text-primary" onClick={() => handleAcknowledge(task.id)}>Acknowledge</Button>}
@@ -239,7 +239,7 @@ export function NotificationCenter() {
                                 </div>
                             );
                         })}
-                        {tasks.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm">No pending tasks.</div>}
+                        {tasks.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm flex flex-col items-center gap-2"><ClipboardCheck className="h-10 w-10 opacity-20" /><p>No pending tasks.</p></div>}
                     </div>
                 </ScrollArea>
             </PopoverContent>
