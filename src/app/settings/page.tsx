@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -224,7 +223,7 @@ export default function SettingsPage() {
         </div>
 
         <Dialog open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md animate-dialog-in">
                 <DialogHeader><DialogTitle>Advanced Controls</DialogTitle><DialogDescription>Maintenance tools and module visibility settings.</DialogDescription></DialogHeader>
                 <div className="space-y-6 py-4">
                     <div className="space-y-4">
