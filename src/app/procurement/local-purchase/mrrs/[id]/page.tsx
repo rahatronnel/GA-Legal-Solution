@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProcurement } from '../../components/procurement-provider';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
@@ -160,16 +160,14 @@ export default function MRRProfilePage() {
                                 </>
                             )}
                             {isFinalApproved && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
-                                                <Printer className="mr-2 h-4 w-4"/> Print MRR
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
+                                            <Printer className="mr-2 h-4 w-4"/> Print MRR
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
+                                </Tooltip>
                             )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
