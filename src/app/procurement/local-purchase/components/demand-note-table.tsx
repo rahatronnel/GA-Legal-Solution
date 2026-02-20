@@ -51,7 +51,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                 </div>
                 <DialogDescription>Internal guidelines for material and service requisitions.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[60vh] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 max-h-[65vh] border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -466,7 +466,7 @@ export function DemandNoteTable() {
                         <ul className="space-y-4">
                             {selectedNoteForStatus?.approvalFlow?.steps.map((step, index) => {
                                 const historyEntry = selectedNoteForStatus.approvalHistory?.find((h:any) => h.level === index);
-                                const approver = employees?.find(e => e.id === step.approverId);
+                                const approver = (employees || []).find(e => e.id === step.approverId);
                                 const isPending = selectedNoteForStatus.currentApproverId === step.approverId && selectedNoteForStatus.approvalStatus !== 1 && selectedNoteForStatus.approvalStatus !== 0;
                                 let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
                                 return (

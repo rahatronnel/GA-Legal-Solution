@@ -16,7 +16,7 @@ export default function MRRPrintPage() {
 
     useEffect(() => {
         if (!isLoading && mrr && orgSettings) {
-            // Optimized instant trigger
+            // High-speed instant trigger
             const timer = setTimeout(() => {
                 window.print();
             }, 300);

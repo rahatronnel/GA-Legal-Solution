@@ -55,7 +55,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Internal guidelines for vendor quotation analysis and contract awarding.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[60vh] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 max-h-[65vh] border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>

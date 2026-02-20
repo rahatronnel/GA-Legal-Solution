@@ -26,7 +26,7 @@ export default function POPrintPage() {
 
     useEffect(() => {
         if (!isLoading && po && demandNote && vendor && orgSettings) {
-            // Instant trigger for professional users
+            // High-speed instant trigger
             const timer = setTimeout(() => {
                 window.print();
             }, 300); 

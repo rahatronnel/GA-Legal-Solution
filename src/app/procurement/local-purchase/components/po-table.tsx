@@ -43,7 +43,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 max-h-[60vh] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 max-h-[65vh] border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
@@ -381,8 +381,8 @@ export function PurchaseOrderTable() {
                                 const cs = comparativeStatements?.find(c => c.id === po.csId);
                                 const mrr = mrrs.find(m => m.poId === po.id);
                                 const isWaitingForApproval = currentUserEmployee && po.currentApproverId === currentUserEmployee.id && po.approvalStatus !== 1 && po.approvalStatus !== 0;
-                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
-                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id));
+                                const canSend = po.approvalStatus === 1 && !po.isSentToVendor && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
+                                const canMrr = po.isSentToVendor && !mrr && (isSuperAdmin || isGPOfficer || (currentUserEmployee && demandNote?.gpConcernOfficerId === currentUserEmployee.id));
                                 const isApprovable = approvableItems.some(i => i.id === po.id);
 
                                 return (
@@ -404,7 +404,7 @@ export function PurchaseOrderTable() {
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 {isWaitingForApproval && (
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Informed Approval</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="mr-2 h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Informed Approval</TooltipContent></Tooltip>
                                                 )}
                                                 {canSend && (
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Mark as Sent to Vendor</TooltipContent></Tooltip>
