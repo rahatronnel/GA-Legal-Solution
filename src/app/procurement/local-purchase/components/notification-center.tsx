@@ -63,7 +63,6 @@ export function NotificationCenter() {
         demandNotes.forEach(dn => {
             const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
             
-            // Pending Approval
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
                 list.push({
                     id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber,
@@ -74,7 +73,6 @@ export function NotificationCenter() {
                 });
             }
             
-            // GP Officer Assignment Needed
             if (isGPOfficer && dn.approvalStatus === 1 && !dn.gpConcernOfficerId) {
                 list.push({
                     id: dn.id + '-assign', type: 'Demand Note', title: dn.demandNoteNumber,
@@ -85,7 +83,6 @@ export function NotificationCenter() {
                 });
             }
 
-            // GP Concern Tasks
             if (dn.gpConcernOfficerId === uid && dn.approvalStatus === 1) {
                 if (!dn.quotations || dn.quotations.length === 0) {
                     list.push({
@@ -112,7 +109,6 @@ export function NotificationCenter() {
             const relatedDN = demandNotes.find(d => d.id === cs.demandNoteId);
             const poExists = purchaseOrders.some(p => p.csId === cs.id);
             
-            // Award Selection (GP Concern)
             if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber,
@@ -122,7 +118,6 @@ export function NotificationCenter() {
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
             } 
-            // PO Preparation (GP Concern)
             else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
                 list.push({
                     id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
@@ -132,7 +127,6 @@ export function NotificationCenter() {
                     isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
                 });
             } 
-            // CS Approval
             else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
                 list.push({
                     id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber,
