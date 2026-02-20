@@ -129,14 +129,13 @@ export default function MRRProfilePage() {
     const isFinalApproved = mrr.approvalStatus === 1;
 
     return (
-        <TooltipProvider>
         <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
                             <div className="flex items-center gap-2">
-                                <CardTitle className="text-2xl">{mrr.mrrNumber}</CardTitle>
+                                <CardTitle className="text-2xl font-bold">{mrr.mrrNumber}</CardTitle>
                                 <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
                             </div>
                             <div className="text-sm text-muted-foreground mt-1">Material Receiving Report finalized on {new Date(mrr.createdAt).toLocaleString()}</div>
@@ -161,14 +160,16 @@ export default function MRRProfilePage() {
                                 </>
                             )}
                             {isFinalApproved && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
-                                            <Printer className="mr-2 h-4 w-4"/> Print MRR
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Open in New Tab & Print</TooltipContent>
-                                </Tooltip>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="outline" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
+                                                <Printer className="mr-2 h-4 w-4"/> Print MRR
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Open in New Tab & Print</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
                             <Button variant="outline" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
                         </div>
@@ -220,6 +221,5 @@ export default function MRRProfilePage() {
                 </TabsContent>
             </Tabs>
         </div>
-        </TooltipProvider>
     );
 }

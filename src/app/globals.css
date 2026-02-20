@@ -86,6 +86,10 @@ body {
         animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
+    .animate-dialog-in {
+        animation: dialogIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     @keyframes genieIn {
         from {
             opacity: 0;
@@ -105,6 +109,18 @@ body {
         to {
             opacity: 1;
             transform: scale(1);
+        }
+    }
+
+    /* Specialized Dialog Animation to maintain 50% translation centering */
+    @keyframes dialogIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -48%) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
     }
 }
