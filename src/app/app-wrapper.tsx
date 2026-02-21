@@ -68,7 +68,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
              <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full z-50">
-                <div className="relative w-full max-w-sm">
+                <div className="relative w-full max-sm:hidden max-w-xs">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
@@ -208,7 +208,7 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  // Optimized Fetching: Retrieve ONLY the current user's record instead of the full database.
+  // High-Performance Handshake: Fetch ONLY the current user record instead of the full database.
   const userEmployeeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
@@ -232,15 +232,15 @@ export function AppWrapper() {
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
-  // CRITICAL HANDSHAKE: Eradicate module visibility flicker by gating Dashboard revealing until settings strictly available.
-  // We bypass employee check for superadmin to speed up their login.
+  // CRITICAL GATING: Eradicate module visibility flicker by waiting for strict data hydration.
+  // Superadmin bypasses the employee record check to speed up their entry.
   const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
 
   if (isUserLoading || (user && isHydratingData)) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Accelerating Organizational Handshake...</p>
+        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Establishing Secure Organizational Handshake...</p>
       </div>
     );
   }

@@ -59,12 +59,12 @@ function LocalPurchaseContent() {
     const settings = orgSettings?.procurementSettings;
 
     if (!settings || !employees || !user) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false, isCSApproverRole: false };
     }
 
     const currentEmp = employees.find((e: any) => e.email === user.email);
     if (!currentEmp) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false, isCSApproverRole: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -75,27 +75,32 @@ function LocalPurchaseContent() {
       settings.manufacturingDeptManagerId === currentEmp.id ||
       settings.specializedDeptManagerId === currentEmp.id;
     
-    // Check if user is a configured approver (Dept Head or Tech Advisor)
     const anyDeptHeadCheck = settings.departmentHeads?.some(
         dh => dh.headId === currentEmp.id || dh.technicalAdvisorId === currentEmp.id
     );
+
+    // CRITICAL: Grant access to tabs if user is in any CS approval role (Purchase Manager, TA, etc.)
+    const csRoles = settings.csApprovalRoles;
+    const isCSApproverRoleCheck = csRoles && Object.values(csRoles).includes(currentEmp.id);
 
     return {
       isSuperAdmin: superAdminCheck,
       isGPOfficer: GPO,
       isGPConcern: GPC,
       isManager: managerCheck,
-      isAnyDeptHead: anyDeptHeadCheck
+      isAnyDeptHead: anyDeptHeadCheck,
+      isCSApproverRole: isCSApproverRoleCheck
     };
   }, [orgSettings, employees, user]);
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead } = roleData;
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead, isCSApproverRole } = roleData;
 
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-    // Approvers (Dept Heads) must also have access to the Analysis tabs
-    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead;
+    
+    // Informed Tab Visibility: Grant access to analysis tabs for all approvers
+    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead || isCSApproverRole;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
     if (canViewCsAndPo) {
@@ -109,7 +114,7 @@ function LocalPurchaseContent() {
       list.push({ id: 'settings', label: 'Settings', icon: Settings });
     }
     return list;
-  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead]);
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead, isCSApproverRole]);
 
   const gridColsCount = tabsList.length;
 
@@ -124,8 +129,8 @@ function LocalPurchaseContent() {
                 <h1 className="text-3xl font-black tracking-tight text-foreground">Local Purchase</h1>
                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Supply Chain Command</p>
             </div>
-            <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20 font-black">
-                {isSuperAdmin ? 'SUPERADMIN' : (isGPOfficer ? 'GP OFFICER' : (isGPConcern ? 'CONCERN' : 'MANAGER'))}
+            <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20 font-black uppercase">
+                {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : (isManager ? 'Manager' : (isCSApproverRole ? 'CS Approver' : 'User'))))}
             </Badge>
         </div>
         <div className="flex items-center gap-2">
@@ -216,7 +221,7 @@ function LocalPurchaseContent() {
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
             </ShadTabsContent>
-            <ShadTabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ShadTabsContent value="settings" className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <DemandNoteApprovalSettings />
             </ShadTabsContent>
           </>
@@ -266,7 +271,7 @@ function LocalPurchaseContent() {
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><div className="flex flex-col items-center gap-4"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="animate-pulse font-black text-xs uppercase tracking-widest text-muted-foreground">Handshaking Database...</p></div></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><div className="flex flex-col items-center gap-4"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="animate-pulse font-black text-xs uppercase tracking-widest text-muted-foreground">Accelerating Organizational Handshake...</p></div></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );

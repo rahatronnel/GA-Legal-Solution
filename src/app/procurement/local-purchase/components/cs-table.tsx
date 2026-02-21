@@ -500,7 +500,7 @@ export function ComparativeStatementTable() {
                                 <li key={index} className="flex items-start gap-4 list-none">
                                     {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
                                     <div className="flex-1 flex gap-3 items-center">
-                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || <UserCheck />}</AvatarFallback></Avatar>
+                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
                                         <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
                                     </div>
                                 </li>
