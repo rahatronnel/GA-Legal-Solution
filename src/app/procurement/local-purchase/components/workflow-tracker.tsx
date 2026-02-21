@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -6,7 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer, Send } from 'lucide-react';
+import { 
+    Search, CheckCircle2, Clock, User, Building, FileText, 
+    ShoppingCart, ChevronRight, Package, Timer, Send, History 
+} from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';

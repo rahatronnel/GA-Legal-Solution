@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -29,7 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, deleteDoc } from 'firebase/firestore';
 import type { DemandNote } from './demand-note-entry-form';
 import type { MRR } from './mrr-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -372,6 +373,14 @@ export function MRRTable() {
         toast({ title: "Success", description: "Records processed successfully." });
     };
 
+    const handleDeleteRecord = async (id: string) => {
+        if (!firestore) return;
+        try {
+            await deleteDoc(doc(firestore, 'mrrs', id));
+            toast({ title: 'Record Deleted' });
+        } catch (err) { toast({ variant: 'destructive', title: 'Delete Failed' }); }
+    };
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -487,7 +496,7 @@ export function MRRTable() {
                                                     )}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedMrrForStatus(mrr); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/mrrs/${mrr.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => mrrColRef && deleteDocumentNonBlocking(doc(mrrColRef, mrr.id))}><Trash2 className="h-4 w-4" /></Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteRecord(mrr.id)}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
