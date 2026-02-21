@@ -19,14 +19,14 @@ import {
     UserPlus, Copy, HelpCircle, Info, Tag, ShieldCheck, ListOrdered,
     Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X,
     Package, BarChart2, TrendingUp, DollarSign, Gavel, Truck, ChevronRight,
-    ShoppingCart, Box, UserCheck, Upload
+    ShoppingCart, Box, UserCheck, Upload, Hourglass, MoreHorizontal
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote } from './demand-note-entry-form';
+import type { DemandNote, Quotation } from './demand-note-entry-form';
 import type { MRR } from './mrr-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
@@ -112,7 +112,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-emerald-600"><FilePlus className="h-4 w-4"/> Evidence Collection</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked.
+                                        To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked to the record.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -121,7 +121,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded.
+                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -133,12 +133,12 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                         Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**.
                                     </p>
                                 </CardContent>
-                            </div>
+                            </Card>
                         </div>
 
                         <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
                             <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Box className="h-4 w-4" /> Physical Condition Check</h5>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
                                 Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering inventory.
                             </p>
                         </div>
@@ -322,7 +322,7 @@ export function MRRTable() {
             currentApproverId: steps[0].approverId,
         }, { merge: true });
         setIsFinalizeOpen(false);
-        toast({ title: 'Finalized' });
+        toast({ title: 'Finalized MRR Successfully' });
     };
 
     const handleBulkApproval = (status: number) => {
@@ -331,13 +331,13 @@ export function MRRTable() {
             const mrr = mrrs.find(m => m.id === id);
             if (!mrr || !mrr.approvalFlow?.steps) return;
             const currentLevel = mrr.approvalHistory?.length || 0;
-            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk' };
+            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
             let nextStatus = status === 1 ? (currentLevel + 1 < mrr.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
             let nextApprover = status === 1 && currentLevel + 1 < mrr.approvalFlow.steps.length ? mrr.approvalFlow.steps[currentLevel + 1].approverId : '';
             setDocumentNonBlocking(doc(mrrColRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(mrr.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
         setSelectedRows([]);
-        toast({ title: 'Success' });
+        toast({ title: "Success", description: "Records processed successfully." });
     };
 
     return (
@@ -356,7 +356,7 @@ export function MRRTable() {
                             </div>
                         )}
                     </div>
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 animate-scale-in" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 animate-scale-in" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Operational Guide</Button>
                 </div>
 
                 <div className="border rounded-lg overflow-hidden shadow-sm">
@@ -367,13 +367,14 @@ export function MRRTable() {
                                 <TableHead className="font-bold">MRR Details</TableHead>
                                 <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
+                                <TableHead className="font-bold text-right">Amount</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
                                 <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => {
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
@@ -386,12 +387,17 @@ export function MRRTable() {
                                             <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="font-bold">{mrr.mrrNumber}</span><span className="text-[10px] text-muted-foreground">PO: {mrr.poId}</span></div></TableCell>
                                             <TableCell><span className="text-xs">{employees?.find(e => e.id === mrr.createdBy)?.fullName}</span></TableCell>
-                                            <TableCell><span className="text-xs">{mrr.supplierName}</span></TableCell>
+                                            <TableCell><span className="text-xs truncate max-w-[150px]" title={mrr.supplierName}>{mrr.supplierName}</span></TableCell>
+                                            <TableCell className="text-right font-mono font-bold text-primary">{mrr.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'}>{getMRRStatusText(mrr)}</Badge>
-                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse">⚠️ Finalize Required</Badge>}
-                                                    {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse">⚠️ Approve Report</Badge>}
+                                                <div className="flex flex-col gap-1 items-start py-1">
+                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap">{getMRRStatusText(mrr)}</Badge>
+                                                    <span className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
+                                                        <span>{new Date(mrr.createdAt).toLocaleDateString()}</span>
+                                                        <span>{new Date(mrr.createdAt).toLocaleTimeString()}</span>
+                                                    </span>
+                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[10px]">⚠️ Finalize Required</Badge>}
+                                                    {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[10px]">⚠️ Approve Report</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -402,7 +408,7 @@ export function MRRTable() {
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/mrrs/${mrr.id}/print`, '_blank')}>
-                                                                        <Printer className="h-4 w-4" />
+                                                                        <Printer className="mr-2 h-4 w-4" />
                                                                     </Button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent className="animate-scale-in">Open in New Tab & Print</TooltipContent>
@@ -417,7 +423,7 @@ export function MRRTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No reports found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No reports found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>

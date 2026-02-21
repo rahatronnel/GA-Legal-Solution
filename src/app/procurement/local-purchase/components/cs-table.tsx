@@ -11,7 +11,13 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Hand, FilePlus, Copy, DollarSign, FileText, AlertTriangle, ChevronRight, ChevronLeft, HelpCircle, ListOrdered, ShieldCheck, UserCheck, Tag, BarChart2, TrendingUp, Wallet, Gavel, GitCommitHorizontal, MapPin } from 'lucide-react';
+import { 
+    PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, 
+    XCircle, Hand, FilePlus, Copy, DollarSign, FileText, AlertTriangle, 
+    ChevronRight, ChevronLeft, HelpCircle, ListOrdered, ShieldCheck, 
+    UserCheck, Tag, BarChart2, TrendingUp, Wallet, Gavel, 
+    GitCommitHorizontal, MapPin, Info, Hourglass, MoreHorizontal 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useDoc } from '@/firebase';
