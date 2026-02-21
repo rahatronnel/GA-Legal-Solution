@@ -38,6 +38,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { MRREntryForm } from './mrr-entry-form';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
@@ -253,6 +263,11 @@ export function PurchaseOrderTable() {
   const [isApprovalWizardOpen, setIsApprovalWizardOpen] = useState(false);
   const [selectedPoForApproval, setSelectedPoForApproval] = useState<PurchaseOrder | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  
+  // Warning system for missing documents
+  const [isDocWarningOpen, setIsDocWarningOpen] = useState(false);
+  const [missingDocs, setMissingDocs] = useState<string[]>([]);
+  const [pendingPoForMrr, setPendingPoForMrr] = useState<PurchaseOrder | null>(null);
   const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
   const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
 
@@ -312,6 +327,23 @@ export function PurchaseOrderTable() {
     });
     setSelectedRows([]);
     toast({ title: "Bulk Action Processed" });
+  };
+
+  const handlePrepareMrrWithWarning = (po: PurchaseOrder) => {
+    const missing: string[] = [];
+    if (!po.documents?.poAcknowledgement?.length) missing.push('PO Acknowledgement');
+    if (!po.documents?.invoice?.length) missing.push('Vendor Invoice');
+    if (!po.documents?.mushok?.length) missing.push('Mushok (VAT)');
+    if (!po.documents?.challan?.length) missing.push('Delivery Challan');
+
+    if (missing.length > 0) {
+        setMissingDocs(missing);
+        setPendingPoForMrr(po);
+        setIsDocWarningOpen(true);
+    } else {
+        setSelectedPoForMrr(po);
+        setIsMrrFormOpen(true);
+    }
   };
 
   return (
@@ -391,7 +423,7 @@ export function PurchaseOrderTable() {
                                         <div className="flex justify-end gap-2">
                                             {isWaitingForApproval && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForApproval(po); setIsApprovalWizardOpen(true); }}><Check className="mr-2 h-4 w-4" /></Button>}
                                             {canSend && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => handleSendToVendor(po.id)}><Send className="mr-2 h-4 w-4" /></Button>}
-                                            {canMrr && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button>}
+                                            {canMrr && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => handlePrepareMrrWithWarning(po)}><PackageCheck className="h-4 w-4" /></Button>}
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
                                             {po.approvalStatus === 1 && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="mr-2 h-4 w-4"/></Button>}
@@ -422,7 +454,40 @@ export function PurchaseOrderTable() {
         </Dialog>
 
         <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => poRef && addDocumentNonBlocking(poRef, d)} cs={selectedCsForPo} />
-        <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
+        
+        <AlertDialog open={isDocWarningOpen} onOpenChange={setIsDocWarningOpen}>
+            <AlertDialogContent className="animate-dialog-in">
+                <AlertDialogHeader>
+                    <div className="flex items-center gap-2 text-destructive">
+                        <AlertTriangle className="h-6 w-6" />
+                        <AlertDialogTitle>Missing Mandatory Evidence</AlertDialogTitle>
+                    </div>
+                    <AlertDialogDescription>
+                        The following Purchase Order documents have not been uploaded:
+                        <ul className="list-disc pl-6 mt-2 font-bold text-foreground">
+                            {missingDocs.map((doc, i) => <li key={i}>{doc}</li>)}
+                        </ul>
+                        <p className="mt-4">You can proceed to prepare the MRR for logistics purposes, or go back to the PO to upload the final documents now.</p>
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => {
+                        setIsDocWarningOpen(false);
+                        if (pendingPoForMrr) window.open(`/procurement/local-purchase/purchase-orders/${pendingPoForMrr.id}`, '_blank');
+                    }}>Go to PO (Upload)</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => {
+                        setSelectedPoForMrr(pendingPoForMrr);
+                        setIsMrrFormOpen(true);
+                        setIsDocWarningOpen(false);
+                    }}>Proceed Anyway</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        {isMrrFormOpen && (
+            <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
+        )}
+
         <POApprovalWizard isOpen={isApprovalWizardOpen} onOpenChange={setIsApprovalWizardOpen} po={selectedPoForApproval} onApprove={() => handleApprovalAction(selectedPoForApproval!.id)} vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)} />
         
         {isGuideOpen && <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}

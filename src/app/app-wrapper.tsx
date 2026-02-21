@@ -208,7 +208,6 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  // High-Performance targeted query for current user profile to eradicate delay.
   const userEmployeeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
@@ -231,8 +230,6 @@ export function AppWrapper() {
   }, [orgSettings]);
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-
-  // CRITICAL GATING: Wait for strict profile handshake before revealing dashboard to ensure module visibility is immediate.
   const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
 
   if (isUserLoading || (user && isHydratingData)) {
