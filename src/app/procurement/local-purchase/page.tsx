@@ -79,7 +79,7 @@ function LocalPurchaseContent() {
         dh => dh.headId === currentEmp.id || dh.technicalAdvisorId === currentEmp.id
     );
 
-    // CRITICAL: Grant access to tabs if user is in any CS approval role (Purchase Manager, TA, etc.)
+    // CRITICAL: Grant access to tabs if user is in any CS approval role defined in settings.
     const csRoles = settings.csApprovalRoles;
     const isCSApproverRoleCheck = csRoles && Object.values(csRoles).includes(currentEmp.id);
 
@@ -99,11 +99,11 @@ function LocalPurchaseContent() {
     const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
     
-    // Informed Tab Visibility: Grant access to analysis tabs for all approvers
-    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead || isCSApproverRole;
+    // Explicit tab visibility for all configured approver roles.
+    const canViewExecutionTabs = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead || isCSApproverRole;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
-    if (canViewCsAndPo) {
+    if (canViewExecutionTabs) {
         list.push({ id: 'cs', label: 'CS', icon: BarChart2 });
         list.push({ id: 'po', label: 'PO', icon: ClipboardCheck });
         list.push({ id: 'mrr', label: 'MRR', icon: Package });
@@ -130,7 +130,7 @@ function LocalPurchaseContent() {
                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Supply Chain Command</p>
             </div>
             <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20 font-black uppercase">
-                {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : (isManager ? 'Manager' : (isCSApproverRole ? 'CS Approver' : 'User'))))}
+                {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : (isManager ? 'Manager' : (isCSApproverRole ? 'Approver' : 'User'))))}
             </Badge>
         </div>
         <div className="flex items-center gap-2">

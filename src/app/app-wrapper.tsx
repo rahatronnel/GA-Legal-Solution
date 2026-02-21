@@ -208,7 +208,7 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  // High-Performance Handshake: Fetch ONLY the current user record instead of the full database.
+  // High-Performance targeted query for current user profile to eradicate delay.
   const userEmployeeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
@@ -232,15 +232,14 @@ export function AppWrapper() {
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
-  // CRITICAL GATING: Eradicate module visibility flicker by waiting for strict data hydration.
-  // Superadmin bypasses the employee record check to speed up their entry.
+  // CRITICAL GATING: Wait for strict profile handshake before revealing dashboard to ensure module visibility is immediate.
   const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
 
   if (isUserLoading || (user && isHydratingData)) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Establishing Secure Organizational Handshake...</p>
+        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Accelerating Organizational Handshake...</p>
       </div>
     );
   }

@@ -19,7 +19,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export type ComparativeStatementItem = {
     demandNoteItemId: string;
@@ -76,8 +77,9 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const { toast } = useToast();
     const { vendors, employees, orgSettings } = useProcurement();
     const { user } = useUser();
+    const firestore = useFirestore();
     
-    const [step, setStep] = useState(0); // 0 for initial info, 1+ for vendors
+    const [step, setStep] = useState(0); 
     const [csData, setCsData] = useState<Partial<Omit<ComparativeStatement, 'id'>>>({});
     const [csDate, setCsDate] = useState<Date | undefined>(new Date());
     const [newQuotations, setNewQuotations] = useState<Record<string, { fileName: string; fileDataUrl: string }>>({});
@@ -87,7 +89,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         return vendors.filter(v => demandNote.quotations!.some(q => q.vendorId === v.id));
     }, [demandNote, vendors]);
 
-    const totalSteps = assignedVendors.length + 1; // +1 for the initial info step
+    const totalSteps = assignedVendors.length + 1; 
     const progress = Math.round((step / totalSteps) * 100);
 
     useEffect(() => {
@@ -163,7 +165,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 toast({
                     variant: "destructive",
                     title: "File Too Large",
-                    description: `This file exceeds the organizational limit (${Math.round(FIRESTORE_MAX_FILE_SIZE / 1024)}KB). Please compress or reduce the number of pages.`
+                    description: `This file exceeds the limit (~750KB). Please optimize the document.`
                 });
                 return;
             }
@@ -174,7 +176,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                     ...prev,
                     [vendorId]: { fileName: file.name, fileDataUrl: dataUrl }
                 }));
-                toast({ title: "Quotation Hydrated", description: `${file.name} is ready for processing.` });
+                toast({ title: "Quotation Linked", description: `${file.name} is ready for processing.` });
             } catch (err) {
                 toast({ variant: 'destructive', title: 'Upload error' });
             }
@@ -209,71 +211,72 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
     const handleSave = () => {
-        if (!demandNote) return;
+        if (!demandNote || !firestore) return;
     
-        const dataToSave: any = { ...csData, newQuotations };
+        const dataToSave: any = { ...csData };
     
-        if (!orgSettings || !demandNote) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load required settings or demand note.' });
+        if (!orgSettings) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load organization settings.' });
             return;
         }
     
+        // Informed Synchronization: Update Demand Note quotations with new files
+        const updatedQuotations = (demandNote.quotations || []).map(q => {
+            if (newQuotations[q.vendorId]) {
+                return { ...q, ...newQuotations[q.vendorId] };
+            }
+            return q;
+        });
+
+        const noteRef = doc(firestore, 'demandNotes', demandNote.id);
+        setDocumentNonBlocking(noteRef, { quotations: updatedQuotations }, { merge: true });
+
         const { procurementSettings } = orgSettings;
         const { csApprovalRoles, departmentHeads, specializedDeptManagerId, managingDirectorId, factoryDirectorId } = procurementSettings || {};
         
-        if (!csApprovalRoles) {
-            toast({ variant: 'destructive', title: 'Error', description: 'CS Approval Roles are not configured in settings.' });
-            return;
-        }
-    
         const vendorTotals = (csData.vendorDetails || []).map(vd => calculateTotals(vd.vendorId).grandTotal);
-    
         let approvalAmount = 0;
-        const basis = csApprovalRoles.approvalAmountBasis || 'Minimum';
-    
+        const basis = csApprovalRoles?.approvalAmountBasis || 'Minimum';
+
         if (vendorTotals.length > 0) {
-            if (basis === 'Minimum') {
-                approvalAmount = Math.min(...vendorTotals);
-            } else if (basis === 'Maximum') {
-                approvalAmount = Math.max(...vendorTotals);
-            } else { // Average
-                approvalAmount = vendorTotals.reduce((sum, total) => sum + total, 0) / vendorTotals.length;
-            }
+            if (basis === 'Minimum') approvalAmount = Math.min(...vendorTotals);
+            else if (basis === 'Maximum') approvalAmount = Math.max(...vendorTotals);
+            else approvalAmount = vendorTotals.reduce((sum, total) => sum + total, 0) / vendorTotals.length;
         }
         
         dataToSave.approvalAmount = approvalAmount;
         dataToSave.approvalAmountBasis = basis as any;
     
         const approvalSteps: {stepName: string, approverId: string}[] = [];
-        const { purchaseManagerId, purchaseDeptTaId, viceFactoryManagerId, accountsManagerId, gmSalesDeptId, gmAdministrationId } = csApprovalRoles;
+        const roles = csApprovalRoles;
         const requesterDeptTA = (departmentHeads || []).find(dh => dh.sectionId === demandNote.sectionId)?.technicalAdvisorId;
     
         if (approvalAmount <= 9999) {
-            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
+            if (roles?.purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: roles.purchaseManagerId });
         } else if (approvalAmount <= 99999) {
-            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
-            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+            if (roles?.purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: roles.purchaseManagerId });
+            if (roles?.purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: roles.purchaseDeptTaId });
         } else if (approvalAmount <= 999999) {
-            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
-            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+            if (roles?.purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: roles.purchaseManagerId });
+            if (roles?.purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: roles.purchaseDeptTaId });
             if (requesterDeptTA) approvalSteps.push({ stepName: "Requester Dept. TA", approverId: requesterDeptTA });
             if (specializedDeptManagerId) approvalSteps.push({ stepName: "Specialized Dept. Manager", approverId: specializedDeptManagerId });
         } else {
-            if (purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: purchaseManagerId });
-            if (purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: purchaseDeptTaId });
+            if (roles?.purchaseManagerId) approvalSteps.push({ stepName: 'Purchase Manager', approverId: roles.purchaseManagerId });
+            if (roles?.purchaseDeptTaId) approvalSteps.push({ stepName: 'Purchase Department TA', approverId: roles.purchaseDeptTaId });
             if (requesterDeptTA) approvalSteps.push({ stepName: "Requester Dept. TA", approverId: requesterDeptTA });
             if (specializedDeptManagerId) approvalSteps.push({ stepName: "Specialized Dept. Manager", approverId: specializedDeptManagerId });
-            if (viceFactoryManagerId) approvalSteps.push({ stepName: "Vice Factory Manager", approverId: viceFactoryManagerId });
-            if (accountsManagerId) approvalSteps.push({ stepName: "Accounts Manager", approverId: accountsManagerId });
-            if (gmSalesDeptId) approvalSteps.push({ stepName: "GM Sales Department", approverId: gmSalesDeptId });
-            if (gmAdministrationId) approvalSteps.push({ stepName: "GM-Administration", approverId: gmAdministrationId });
+            if (roles?.viceFactoryManagerId) approvalSteps.push({ stepName: "Vice Factory Manager", approverId: roles.viceFactoryManagerId });
+            if (roles?.accountsManagerId) approvalSteps.push({ stepName: "Accounts Manager", approverId: roles.accountsManagerId });
+            if (roles?.gmSalesDeptId) approvalSteps.push({ stepName: "GM Sales Department", approverId: roles.gmSalesDeptId });
+            if (roles?.gmAdministrationId) approvalSteps.push({ stepName: "GM-Administration", approverId: roles.gmAdministrationId });
             if (managingDirectorId || factoryDirectorId) {
                 approvalSteps.push({ stepName: "Final Approval (MD/FD)", approverId: managingDirectorId || factoryDirectorId! });
             }
         }
         
         dataToSave.approvalFlow = { steps: approvalSteps };
-        dataToSave.approvalStatus = 2; // Pending Vendor Selection
+        dataToSave.approvalStatus = 2; 
         dataToSave.currentApproverId = '';
         dataToSave.vendorSelectorId = dataToSave.createdBy;
         dataToSave.approvalHistory = [];
@@ -333,7 +336,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                     <h3 className="font-bold text-xl">Vendor: {currentVendor.vendorName}</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {currentQuotation ? (
+                                    {currentQuotation?.fileDataUrl ? (
                                         <div className="flex items-center gap-2 bg-background p-1.5 rounded-md border text-xs shadow-sm">
                                             <FileText className="h-4 w-4 text-primary" />
                                             <span className="max-w-[150px] truncate font-semibold">{currentQuotation.fileName}</span>
@@ -344,7 +347,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                     )}
                                     <Label htmlFor={`cs-up-${currentVendor.id}`} className="cursor-pointer">
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-md hover:bg-primary/90 transition-colors">
-                                            <Upload className="h-3 w-3" /> {currentQuotation ? 'Replace Quote' : 'Upload Quote'}
+                                            <Upload className="h-3 w-3" /> {currentQuotation?.fileDataUrl ? 'Replace Quote' : 'Upload Quote'}
                                         </div>
                                         <Input id={`cs-up-${currentVendor.id}`} type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => handleQuotationUpload(e, currentVendor.id)} />
                                     </Label>

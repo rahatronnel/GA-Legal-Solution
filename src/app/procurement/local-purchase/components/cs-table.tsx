@@ -16,7 +16,8 @@ import {
     XCircle, Hand, FilePlus, Copy, DollarSign, FileText, AlertTriangle, 
     ChevronRight, ChevronLeft, HelpCircle, ListOrdered, ShieldCheck, 
     UserCheck, Tag, BarChart2, TrendingUp, Wallet, Gavel, 
-    GitCommitHorizontal, MapPin, Info, Hourglass, MoreHorizontal 
+    GitCommitHorizontal, MapPin, Info, Hourglass, MoreHorizontal,
+    CheckCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';

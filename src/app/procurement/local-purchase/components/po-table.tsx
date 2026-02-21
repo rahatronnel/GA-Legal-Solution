@@ -17,7 +17,8 @@ import {
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
     ListOrdered, ShieldCheck, ShoppingCart, TrendingUp, DollarSign, 
-    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck, Package, Truck
+    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck, Package, Truck,
+    CheckCircle2
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -126,7 +127,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Management Oversight</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        Visibility is restricted to GP personnel and assigned approvers. Every signature is digitally timestamped for accounting audit trails.
+                                        Every signature is digitally timestamped for accounting audit trails. Visibility is restricted to personnel within the organizational chain.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -436,7 +437,7 @@ export function PurchaseOrderTable() {
                         const isPending = selectedPoForStatus.currentApproverId === step.approverId && selectedPoForStatus.approvalStatus !== 1;
                         return (
                             <li key={index} className="flex items-center gap-4 list-none">
-                                {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                {historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
                                 <div className="flex-1">
                                     <p className="font-bold text-sm">{step.stepName}</p>
                                     <p className="text-xs text-muted-foreground">{employees?.find(e => e.id === step.approverId)?.fullName}</p>
