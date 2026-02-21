@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote, Quotation } from './demand-note-entry-form';
+import type { DemandNote } from './demand-note-entry-form';
 import type { MRR } from './mrr-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
@@ -36,12 +36,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn, imageToDataUrl } from '@/lib/utils';
-import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { UploadedFile } from './po-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
@@ -345,7 +346,7 @@ export function MRRTable() {
             <div className="space-y-4">
                 <div className="flex justify-between items-center flex-wrap gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <div className="relative w-full sm:max-w-md">
+                        <div className="relative w-full sm:max-md">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search MRR#, Supplier..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
                         </div>
@@ -392,10 +393,10 @@ export function MRRTable() {
                                             <TableCell>
                                                 <div className="flex flex-col gap-1 items-start py-1 text-[10px]">
                                                     <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap text-[9px] h-4">{getMRRStatusText(mrr)}</Badge>
-                                                    <span className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
+                                                    <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
                                                         <span>{new Date(mrr.createdAt).toLocaleDateString()}</span>
                                                         <span>{new Date(mrr.createdAt).toLocaleTimeString()}</span>
-                                                    </span>
+                                                    </div>
                                                     {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Finalize Required</Badge>}
                                                     {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Approve Report</Badge>}
                                                 </div>

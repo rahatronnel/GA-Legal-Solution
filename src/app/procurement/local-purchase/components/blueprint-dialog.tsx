@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -20,11 +19,12 @@ import {
     Workflow, FileText, Users, BarChart2, ShoppingCart, Package, 
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
-    MousePointerClick, ArrowDownCircle, Send, Factory, UserCheck,
-    Briefcase, ClipboardCheck, Zap, TrendingUp, Search
+    Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
+    History, Layers, UserPlus
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 const BlueprintSection = ({ 
     icon: Icon, 
@@ -115,7 +115,6 @@ export function BlueprintDialog({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[98vw] h-[95vh] flex flex-col p-0 overflow-hidden animate-dialog-in border-none shadow-2xl">
-                {/* Header Branding */}
                 <div className="bg-primary p-8 text-primary-foreground shrink-0 relative overflow-hidden">
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-6">
@@ -134,7 +133,6 @@ export function BlueprintDialog({
                             </div>
                         </div>
                     </div>
-                    {/* Abstract background elements */}
                     <div className="absolute -top-24 -right-24 h-64 w-64 bg-white/5 rounded-full blur-3xl" />
                     <div className="absolute -bottom-24 -left-24 h-64 w-64 bg-white/5 rounded-full blur-3xl" />
                 </div>
@@ -153,8 +151,6 @@ export function BlueprintDialog({
 
                         <ScrollArea className="flex-1 px-8 py-8">
                             <div className="max-w-7xl mx-auto space-y-16 pb-32">
-                                
-                                {/* TAB 1: Lifecycle Overview */}
                                 <TabsContent value="lifecycle" className="mt-0 space-y-12">
                                     <section className="space-y-8">
                                         <div className="text-center space-y-2">
@@ -164,49 +160,41 @@ export function BlueprintDialog({
                                         
                                         <div className="relative p-12 border-4 border-dashed rounded-[3rem] bg-background shadow-2xl overflow-hidden">
                                             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 relative z-10">
-                                                {/* Step 1 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-blue-600 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(37,99,235,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-blue-600/20"><FileText className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">DN Entry</p><p className="text-[10px] text-muted-foreground leading-tight">Digital<br/>Requisition</p></div>
                                                 </div>
                                                 <div className="hidden md:flex items-center justify-center pt-8"><ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" /></div>
-                                                {/* Step 2 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-emerald-600 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(5,150,105,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-emerald-600/20"><Users className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">GP Desk</p><p className="text-[10px] text-muted-foreground leading-tight">Vendor<br/>Sourcing</p></div>
                                                 </div>
                                                 <div className="hidden md:flex items-center justify-center pt-8"><ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" /></div>
-                                                {/* Step 3 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-amber-600 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(217,119,6,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-amber-600/20"><BarChart2 className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">CS Audit</p><p className="text-[10px] text-muted-foreground leading-tight">Price<br/>Analysis</p></div>
                                                 </div>
                                                 <div className="hidden md:flex items-center justify-center pt-8"><ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" /></div>
-                                                {/* Step 4 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-purple-600 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(147,51,234,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-purple-600/20"><ShieldCheck className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">Execution</p><p className="text-[10px] text-muted-foreground leading-tight">Executive<br/>Approval</p></div>
                                                 </div>
                                                 <div className="hidden md:flex items-center justify-center pt-8"><ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" /></div>
-                                                {/* Step 5 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-indigo-600 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(79,70,229,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-indigo-600/20"><ShoppingCart className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">Contract</p><p className="text-[10px] text-muted-foreground leading-tight">Purchase<br/>Order</p></div>
                                                 </div>
                                                 <div className="hidden md:flex items-center justify-center pt-8"><ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" /></div>
-                                                {/* Step 6 */}
                                                 <div className="flex flex-col items-center gap-4 group">
                                                     <div className="h-20 w-20 rounded-3xl bg-slate-800 text-white flex items-center justify-center shadow-[0_20px_50px_rgba(30,41,59,0.3)] group-hover:scale-110 transition-transform duration-500 ring-4 ring-white border-4 border-slate-800/20"><Package className="h-10 w-10" /></div>
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">Receipt</p><p className="text-[10px] text-muted-foreground leading-tight">Inventory<br/>Entry (MRR)</p></div>
                                                 </div>
                                             </div>
-                                            {/* Connector Line */}
                                             <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-slate-800 -translate-y-1/2 opacity-10 hidden md:block" />
                                         </div>
                                     </section>
                                 </TabsContent>
 
-                                {/* TAB 2: Demand Note */}
                                 <TabsContent value="requisition" className="mt-0">
                                     <BlueprintSection icon={FileText} title="Demand Note (DN) Generation" colorClass="bg-blue-600 border-blue-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -223,7 +211,6 @@ export function BlueprintDialog({
                                     </BlueprintSection>
                                 </TabsContent>
 
-                                {/* TAB 3: GP Sourcing */}
                                 <TabsContent value="sourcing" className="mt-0">
                                     <BlueprintSection icon={Users} title="GP Desk & Sourcing Intelligence" colorClass="bg-emerald-600 border-emerald-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -248,19 +235,18 @@ export function BlueprintDialog({
                                     </BlueprintSection>
                                 </TabsContent>
 
-                                {/* TAB 4: CS Thresholds */}
                                 <TabsContent value="analysis" className="mt-0">
                                     <BlueprintSection icon={BarChart2} title="Comparative Analysis & Approval Matrix" colorClass="bg-amber-600 border-amber-800">
                                         <div className="space-y-8">
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                <LogicCard icon={TrendingDown} title="Best Offer Algorithm" description="System automatically compares total landed costs (Price + VAT + Tax - Discount) and flags the most economical bid with a green visual beacon." />
+                                                <LogicCard icon={TrendingUp} title="Best Offer Algorithm" description="System automatically compares total landed costs (Price + VAT + Tax - Discount) and flags the most economical bid with a green visual beacon." />
                                                 <LogicCard icon={Gavel} title="Decision Freeze" description="Once a vendor is awarded, the CS data is frozen. Any changes require a full audit reset, protecting the integrity of the selection process." />
                                                 <LogicCard icon={ListOrdered} title="Sequential Signing" description="Approvals must happen in strict sequence. The system notifies the next person only after the current level is signed and timestamped." />
                                             </div>
 
                                             <Card className="bg-amber-50 border-amber-200">
                                                 <CardHeader className="border-b border-amber-200 bg-amber-100/50">
-                                                    <CardTitle className="text-lg font-black uppercase flex items-center gap-2 text-amber-900"><ShieldCheck className="h-5 w-5" /> Dynamic Threshold Logic (Current Active Configuration)</CardTitle>
+                                                    <CardTitle className="text-lg font-black uppercase flex items-center gap-2 text-amber-900"><ShieldCheck className="h-5 w-5" /> Dynamic Threshold Logic (Live System Settings)</CardTitle>
                                                 </CardHeader>
                                                 <CardContent className="p-0 overflow-hidden">
                                                     <Table>
@@ -300,7 +286,6 @@ export function BlueprintDialog({
                                     </BlueprintSection>
                                 </TabsContent>
 
-                                {/* TAB 5: PO & Compliance */}
                                 <TabsContent value="execution" className="mt-0">
                                     <BlueprintSection icon={ClipboardCheck} title="Contract Execution & Receipt Compliance" colorClass="bg-purple-600 border-purple-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -321,7 +306,7 @@ export function BlueprintDialog({
                                         </div>
 
                                         <Card className="border-purple-200 bg-purple-50/30">
-                                            <CardHeader><CardTitle className="text-base font-black uppercase text-purple-900 tracking-widest flex items-center gap-2"><History className="h-5 w-5"/> The Bill Approval Flow Visualizer (Live Settings)</CardTitle></CardHeader>
+                                            <CardHeader><CardTitle className="text-base font-black uppercase text-purple-900 tracking-widest flex items-center gap-2"><History className="h-5 w-5"/> The Bill Approval Flow Visualizer (Live Configuration)</CardTitle></CardHeader>
                                             <CardContent className="py-12 px-8">
                                                 <div className="relative flex flex-col md:flex-row justify-between items-center gap-12">
                                                     {currentApprovalChain.length > 0 ? currentApprovalChain.map((step, idx) => (
@@ -349,7 +334,7 @@ export function BlueprintDialog({
                                                             )}
                                                         </React.Fragment>
                                                     )) : (
-                                                        <div className="p-8 text-center text-muted-foreground italic font-bold">No live approval flow configured in Master Data.</div>
+                                                        <div className="p-8 text-center text-muted-foreground italic font-bold">No live approval flow configured in settings.</div>
                                                     )}
                                                 </div>
                                             </CardContent>
