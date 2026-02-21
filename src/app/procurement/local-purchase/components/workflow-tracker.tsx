@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -166,9 +167,10 @@ export function WorkflowTracker() {
             });
 
             // PO Approvals
-            po.approvalHistory?.forEach((h: any, idx: number) => {
+            po.approvalHistory?.forEach((h: any, i: number) => {
+                const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
                 events.push({
-                    id: `po-appr-${idx}`,
+                    id: `po-appr-${i}`,
                     title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval',
                     description: `Purchase Order signature received.`,
                     timestamp: h.timestamp,
@@ -239,9 +241,9 @@ export function WorkflowTracker() {
     const selectedDn = demandNotes.find(d => d.id === selectedDnId);
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-0">
-            <Card className="lg:col-span-1 flex flex-col h-full min-h-0">
-                <CardHeader className="pb-3">
+        <div className="flex flex-col md:flex-row gap-6 h-full min-h-0 overflow-hidden">
+            <Card className="w-full md:w-[350px] flex flex-col h-full min-h-0 shrink-0">
+                <CardHeader className="pb-3 shrink-0">
                     <CardTitle className="text-lg">Select Requisition</CardTitle>
                     <div className="relative mt-2">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -253,7 +255,7 @@ export function WorkflowTracker() {
                         />
                     </div>
                 </CardHeader>
-                <CardContent className="p-0 flex-grow overflow-hidden">
+                <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
                     <ScrollArea className="h-full">
                         <div className="divide-y">
                             {filteredNotes.map(dn => (
@@ -283,8 +285,8 @@ export function WorkflowTracker() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 flex flex-col h-full min-h-0 bg-muted/5">
-                <CardHeader className="border-b">
+            <Card className="flex-1 flex flex-col h-full min-h-0 bg-muted/5 overflow-hidden">
+                <CardHeader className="border-b shrink-0">
                     {selectedDn ? (
                         <div className="flex justify-between items-center">
                             <div>
@@ -303,7 +305,7 @@ export function WorkflowTracker() {
                         <CardTitle className="text-xl text-muted-foreground">Select a requisition to view history</CardTitle>
                     )}
                 </CardHeader>
-                <CardContent className="flex-grow overflow-hidden p-6">
+                <CardContent className="flex-1 overflow-hidden p-6 min-h-0">
                     {selectedDnId ? (
                         <ScrollArea className="h-full pr-4">
                             <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">

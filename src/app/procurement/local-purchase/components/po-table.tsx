@@ -54,16 +54,16 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
-            <DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-0">
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
                     <DialogTitle className="text-xl">Purchase Order (PO) User Guide</DialogTitle>
                 </div>
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="h-[450px] border rounded-md">
-                <div className="space-y-6 p-4">
+            <ScrollArea className="flex-1 min-h-0">
+                <div className="space-y-6 p-6">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -89,7 +89,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
                 <ScrollBar orientation="vertical" />
             </ScrollArea>
-            <DialogFooter className="border-t pt-4">
+            <DialogFooter className="p-4 border-t">
                 <Button onClick={() => onOpenChange(false)}>Dismiss</Button>
             </DialogFooter>
         </DialogContent>
@@ -298,7 +298,7 @@ export function PurchaseOrderTable() {
                                         {po.netPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col gap-1 items-start">
+                                        <div className="flex flex-col gap-1 items-start py-1">
                                             <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap">{getPOStatusText(po)}</Badge>
                                             {po.isSentToVendor && po.sentToVendorDate && (
                                                 <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">

@@ -23,9 +23,6 @@ import {
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser, useFirestore, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Badge } from '@/components/ui/badge';
-import type { ComparativeStatement } from './cs-entry-form';
-import { useToast } from '@/hooks/use-toast';
 import { collection, doc } from 'firebase/firestore';
 import {
   Dialog,
@@ -62,7 +59,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </div>
             </div>
 
-            <ScrollArea className="flex-grow">
+            <ScrollArea className="flex-1 min-h-0">
                 <div className="p-6 space-y-8 pb-12">
                     {/* Process Flow Graph */}
                     <section className="space-y-4">
@@ -490,7 +487,7 @@ export function ComparativeStatementTable() {
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = (employees || []).find(e => e.id === step.approverId);
-                            const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0;
+                            const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 2;
                             return (
                                 <li key={index} className="flex items-start gap-4 list-none">
                                     {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}

@@ -193,7 +193,7 @@ export function UserAuditReport() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Calendar className="h-3 w-3" /> Date Range</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Clock className="h-3 w-3" /> Date Range</Label>
                         <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full bg-background" />
                     </div>
                     <div className="flex gap-2">
@@ -234,7 +234,7 @@ export function UserAuditReport() {
                     <CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5 text-primary" /> Performance Audit Trail</CardTitle>
                     <CardDescription>Comprehensive log of operations with precise lag-time metrics.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 flex-grow overflow-hidden">
+                <CardContent className="p-0 flex-grow overflow-hidden min-h-0">
                     <ScrollArea className="h-full">
                         <Table>
                             <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">

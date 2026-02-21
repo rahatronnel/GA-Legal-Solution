@@ -4,7 +4,7 @@
 import React, { useMemo, Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs'; // Using alias
 import { ModuleHeader } from '@/app/components/module-header';
 import { DemandNoteApprovalSettings } from './components/demand-note-approval-settings';
 import { DemandNoteTable } from './components/demand-note-table';
@@ -35,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { UserAuditReport } from './components/user-audit-report';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { Tabs as ShadTabs, TabsContent as ShadTabsContent, TabsList as ShadTabsList, TabsTrigger as ShadTabsTrigger } from "@/components/ui/tabs";
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -144,72 +145,72 @@ function LocalPurchaseContent() {
         </div>
       </div>
       
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full h-auto p-1 bg-muted/50 rounded-xl" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
+      <ShadTabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <ShadTabsList className="grid w-full h-auto p-1 bg-muted/50 rounded-xl" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            <ShadTabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                 <tab.icon className="h-4 w-4" />
                 <span className="hidden lg:inline font-bold text-xs uppercase tracking-tight">{tab.label}</span>
-            </TabsTrigger>
+            </ShadTabsTrigger>
           ))}
-        </TabsList>
+        </ShadTabsList>
 
-        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <DemandNoteTable />
-        </TabsContent>
-        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        </ShadTabsContent>
+        <ShadTabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <GPDeskTable />
-        </TabsContent>
-        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        </ShadTabsContent>
+        <ShadTabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <ComparativeStatementTable />
-        </TabsContent>
-        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        </ShadTabsContent>
+        <ShadTabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <PurchaseOrderTable />
-        </TabsContent>
-        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        </ShadTabsContent>
+        <ShadTabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <MRRTable />
-        </TabsContent>
+        </ShadTabsContent>
 
         {isSuperAdmin && (
           <>
-            <TabsContent value="master-data" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ShadTabsContent value="master-data" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                <LegacyBillFlowProvider>
                 <MasterDataProvider>
-                  <Tabs defaultValue="vendors" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto bg-muted/30 p-1 rounded-lg">
-                      <TabsTrigger value="vendors" className="text-[10px] font-bold">VENDORS</TabsTrigger>
-                      <TabsTrigger value="v-cat" className="text-[10px] font-bold">V-CAT</TabsTrigger>
-                      <TabsTrigger value="v-nature" className="text-[10px] font-bold">V-NATURE</TabsTrigger>
-                      <TabsTrigger value="bill-items" className="text-[10px] font-bold">B-ITEMS</TabsTrigger>
-                      <TabsTrigger value="i-cat" className="text-[10px] font-bold">I-CAT</TabsTrigger>
-                      <TabsTrigger value="codes" className="text-[10px] font-bold">CODES</TabsTrigger>
-                      <TabsTrigger value="types" className="text-[10px] font-bold">DN-TYPES</TabsTrigger>
-                      <TabsTrigger value="places" className="text-[10px] font-bold">OFFICES</TabsTrigger>
-                    </TabsList>
+                  <ShadTabs defaultValue="vendors" className="w-full">
+                    <ShadTabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto bg-muted/30 p-1 rounded-lg">
+                      <ShadTabsTrigger value="vendors" className="text-[10px] font-bold">VENDORS</ShadTabsTrigger>
+                      <ShadTabsTrigger value="v-cat" className="text-[10px] font-bold">V-CAT</ShadTabsTrigger>
+                      <ShadTabsTrigger value="v-nature" className="text-[10px] font-bold">V-NATURE</ShadTabsTrigger>
+                      <ShadTabsTrigger value="bill-items" className="text-[10px] font-bold">B-ITEMS</ShadTabsTrigger>
+                      <ShadTabsTrigger value="i-cat" className="text-[10px] font-bold">I-CAT</ShadTabsTrigger>
+                      <ShadTabsTrigger value="codes" className="text-[10px] font-bold">CODES</ShadTabsTrigger>
+                      <ShadTabsTrigger value="types" className="text-[10px] font-bold">DN-TYPES</ShadTabsTrigger>
+                      <ShadTabsTrigger value="places" className="text-[10px] font-bold">OFFICES</ShadTabsTrigger>
+                    </ShadTabsList>
                     
-                    <TabsContent value="vendors" className="mt-4"><VendorTable /></TabsContent>
-                    <TabsContent value="v-cat" className="mt-4"><VendorCategoryTable /></TabsContent>
-                    <TabsContent value="v-nature" className="mt-4"><VendorNatureOfBusinessTable /></TabsContent>
-                    <TabsContent value="bill-items" className="mt-4"><BillItemMasterTable /></TabsContent>
-                    <TabsContent value="i-cat" className="mt-4"><BillItemCategoryTable /></TabsContent>
-                    <TabsContent value="codes" className="mt-4"><ProcessCodeTable /></TabsContent>
-                    <TabsContent value="types" className="mt-4"><DemandTypeTable /></TabsContent>
-                    <TabsContent value="places" className="mt-4"><DeliveryPlaceTable /></TabsContent>
-                  </Tabs>
+                    <ShadTabsContent value="vendors" className="mt-4"><VendorTable /></ShadTabsContent>
+                    <ShadTabsContent value="v-cat" className="mt-4"><VendorCategoryTable /></ShadTabsContent>
+                    <ShadTabsContent value="v-nature" className="mt-4"><VendorNatureOfBusinessTable /></ShadTabsContent>
+                    <ShadTabsContent value="bill-items" className="mt-4"><BillItemMasterTable /></ShadTabsContent>
+                    <ShadTabsContent value="i-cat" className="mt-4"><BillItemCategoryTable /></ShadTabsContent>
+                    <ShadTabsContent value="codes" className="mt-4"><ProcessCodeTable /></ShadTabsContent>
+                    <ShadTabsContent value="types" className="mt-4"><DemandTypeTable /></ShadTabsContent>
+                    <ShadTabsContent value="places" className="mt-4"><DeliveryPlaceTable /></ShadTabsContent>
+                  </ShadTabs>
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
-            </TabsContent>
-            <TabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            </ShadTabsContent>
+            <ShadTabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               <DemandNoteApprovalSettings />
-            </TabsContent>
+            </ShadTabsContent>
           </>
         )}
-      </Tabs>
+      </ShadTabs>
 
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
         <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
-            <div className="p-6 flex-grow overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center mb-4 border-b pb-4">
+            <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
+                <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-primary">Fleet & Procurement Workflow Tracker</DialogTitle>
                         <DialogDescription>Comprehensive audit trail and lifecycle visibility for every requisition.</DialogDescription>
@@ -225,8 +226,8 @@ function LocalPurchaseContent() {
 
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
         <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
-            <div className="p-6 flex-grow overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center mb-4 border-b pb-4">
+            <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
+                <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-primary">User Activity Audit & Response Metrics</DialogTitle>
                         <DialogDescription>Analyze organizational efficiency and user performance lag times with precision.</DialogDescription>
