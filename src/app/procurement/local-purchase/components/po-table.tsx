@@ -17,7 +17,8 @@ import {
     PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, 
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
-    ListOrdered, ShieldCheck 
+    ListOrdered, ShieldCheck, ShoppingCart, TrendingUp, DollarSign, 
+    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -42,43 +43,108 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-0">
-                <div className="flex items-center gap-2 text-primary">
-                    <HelpCircle className="h-6 w-6" />
-                    <DialogTitle className="text-xl">Purchase Order (PO) User Guide</DialogTitle>
+        <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+            <div className="bg-primary p-6 text-primary-foreground shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <ShoppingCart className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                        <DialogTitle className="text-2xl font-black tracking-tight text-white">PO Master Operational Guide</DialogTitle>
+                        <DialogDescription className="text-primary-foreground/80 font-medium">Standard operating procedures for formal vendor commitment & legal documentation.</DialogDescription>
+                    </div>
                 </div>
-                <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
-            </DialogHeader>
+            </div>
+
             <ScrollArea className="flex-1 min-h-0">
-                <div className="space-y-6 p-6 pb-24">
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Purchase Orders are the final commitment stage. They are automatically generated from an <Badge variant="outline">Approved Comparative Statement (CS)</Badge>.
-                        </p>
+                <div className="p-6 space-y-8 pb-24">
+                    <section className="space-y-4">
+                        <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" /> Commitment Lifecycle Flow
+                        </h4>
+                        <div className="relative p-6 border-2 border-dashed rounded-2xl bg-muted/30 overflow-hidden">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><BarChart2 className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">CS<br/>Approved</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><FileText className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">PO Draft<br/>Prepared</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group scale-125">
+                                    <div className="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-2xl ring-4 ring-primary/20 group-hover:rotate-12 transition-transform"><ShoppingCart className="h-6 w-6" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight text-primary">Signature<br/>Chain</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Send className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">PO Sent<br/>to Vendor</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ClipboardCheck className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Ready for<br/>Receipt (MRR)</span>
+                                </div>
+                            </div>
+                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/10 -translate-y-1/2 hidden md:block" />
+                        </div>
                     </section>
+
                     <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Workflow Progression</h4>
-                        <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
-                            <li><strong>Preparation:</strong> The GP Concern verifies terms, delivery dates, and mandatory instructions.</li>
-                            <li><strong>Approval:</strong> The document moves sequentially through internal review stages.</li>
-                            <li><strong>Dispatch:</strong> Click <Send className="h-3 w-3 inline mx-1"/> to mark as formally sent to the vendor.</li>
-                        </ul>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Management Oversight</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Visibility is restricted to GP personnel and the assigned approvers in the chain. All signatures are timestamped.
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-blue-600"><Gavel className="h-4 w-4"/> Legal Commitment</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    The Purchase Order is a legally binding contract. Once approved and sent, it authorizes the vendor to deliver and invoice. <strong>Terms & Conditions</strong> must be reviewed carefully.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-emerald-600"><DollarSign className="h-4 w-4"/> Financial Integrity</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    PO amounts are automatically synced from the **Approved CS**. This prevents unauthorized price changes and ensures that only the management-vetted bid is committed.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-amber-600"><Send className="h-4 w-4"/> Dispatch Protocol</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Approval is only the first step. You must click the **"Send to Vendor"** icon to formally release the PO. This timestamp is critical for tracking vendor lead-time performance.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Digital Signature Audit</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Every PO requires a technical audit (TA) and commercial sign-off. These signatures are digitally locked and appear on the physical printout for total accountability.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
+                        <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Info className="h-4 w-4" /> Operational Note</h5>
+                        <p className="text-xs text-muted-foreground italic">
+                            POs cannot be modified once they enter the approval chain. If a correction is needed, the current approver must **Reject** the PO, and a new one must be generated from the CS Desk.
                         </p>
-                    </section>
+                    </div>
                 </div>
                 <ScrollBar orientation="vertical" />
             </ScrollArea>
-            <DialogFooter className="p-4 border-t">
-                <Button onClick={() => onOpenChange(false)}>Dismiss</Button>
+            
+            <DialogFooter className="p-4 border-t shrink-0">
+                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Access PO Desk</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -249,8 +315,8 @@ export function PurchaseOrderTable() {
                     )}
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="text-primary border-primary" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
-                    {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Prepare PO</Button>}
+                    <Button variant="outline" className="text-primary border-primary animate-scale-in" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                    {(isSuperAdmin || isGPOfficer) && <Button onClick={() => setIsPrepareDialogOpen(true)} className="animate-scale-in"><PlusCircle className="mr-2 h-4 w-4" /> Prepare PO</Button>}
                 </div>
             </div>
 
@@ -264,7 +330,7 @@ export function PurchaseOrderTable() {
                             <TableHead className="font-bold">Vendor</TableHead>
                             <TableHead className="font-bold">Amount</TableHead>
                             <TableHead className="font-bold">Status</TableHead>
-                            <TableHead className="text-right font-bold">Actions</TableHead>
+                            <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
