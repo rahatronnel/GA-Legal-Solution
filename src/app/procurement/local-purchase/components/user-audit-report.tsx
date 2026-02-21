@@ -129,8 +129,8 @@ export function UserAuditReport() {
     };
 
     return (
-        <div className="space-y-6 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-6 flex flex-col h-full min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><UserCheck className="h-4 w-4" /> Filter by User</Label>
                     <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -150,7 +150,7 @@ export function UserAuditReport() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
                 <Card className="bg-primary/5">
                     <CardHeader className="py-2"><CardTitle className="text-xs uppercase">Total Actions</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{filteredActivities.length}</div></CardContent>
@@ -165,13 +165,13 @@ export function UserAuditReport() {
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader>
+            <Card className="flex-grow min-h-0 flex flex-col">
+                <CardHeader className="shrink-0">
                     <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Activity Audit Trail</CardTitle>
                     <CardDescription>Comprehensive log of all user operations and efficiency metrics.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <ScrollArea className="h-[500px]">
+                <CardContent className="p-0 flex-grow overflow-hidden">
+                    <ScrollArea className="h-full">
                         <Table>
                             <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                 <TableRow>

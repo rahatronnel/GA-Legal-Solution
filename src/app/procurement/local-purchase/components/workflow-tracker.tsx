@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -240,8 +239,8 @@ export function WorkflowTracker() {
     const selectedDn = demandNotes.find(d => d.id === selectedDnId);
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
-            <Card className="lg:col-span-1 flex flex-col h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-0">
+            <Card className="lg:col-span-1 flex flex-col h-full min-h-0">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Select Requisition</CardTitle>
                     <div className="relative mt-2">
@@ -284,7 +283,7 @@ export function WorkflowTracker() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 flex flex-col h-full bg-muted/5">
+            <Card className="lg:col-span-2 flex flex-col h-full min-h-0 bg-muted/5">
                 <CardHeader className="border-b">
                     {selectedDn ? (
                         <div className="flex justify-between items-center">
@@ -292,7 +291,7 @@ export function WorkflowTracker() {
                                 <CardTitle className="text-xl">Workflow Tracker: {selectedDn.demandNoteNumber}</CardTitle>
                                 <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                     <Timer className="h-4 w-4 text-primary" />
-                                    <span className="font-bold text-foreground">Total Process Duration:</span>
+                                    <span className="font-bold text-foreground">Total Cycle Time:</span>
                                     <span className="text-primary font-bold">{totalCycleTimeText || 'Calculating...'}</span>
                                 </div>
                             </div>
@@ -301,7 +300,7 @@ export function WorkflowTracker() {
                             </Button>
                         </div>
                     ) : (
-                        <CardTitle className="text-xl text-muted-foreground">Select a requisition to view its history</CardTitle>
+                        <CardTitle className="text-xl text-muted-foreground">Select a requisition to view history</CardTitle>
                     )}
                 </CardHeader>
                 <CardContent className="flex-grow overflow-hidden p-6">
@@ -371,7 +370,7 @@ export function WorkflowTracker() {
                         <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
                             <History className="h-24 w-24 mb-4" />
                             <h3 className="text-xl font-semibold">No Requisition Selected</h3>
-                            <p className="text-sm max-w-[300px]">Choose a Demand Note from the left panel to track its full audit trail and cycle time.</p>
+                            <p className="text-sm max-w-[300px]">Choose a Demand Note from the left panel to track its full audit trail.</p>
                         </div>
                     )}
                 </CardContent>

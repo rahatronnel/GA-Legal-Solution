@@ -69,15 +69,17 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Workflow Progression</h4>
                         <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
-                            <li><strong>Preparation:</strong> GP Concern verifies terms and delivery dates.</li>
-                            <li><strong>Approval:</strong> Document moves through review stages.</li>
-                            <li><strong>Dispatch:</strong> Click <Send className="h-3 w-3 inline mx-1"/> to mark as sent.</li>
+                            <li><strong>Preparation:</strong> The GP Concern verifies terms, delivery dates, and mandatory instructions.</li>
+                            <li><strong>Approval:</strong> The document moves sequentially through internal review stages.</li>
+                            <li><strong>Dispatch:</strong> Click <Send className="h-3 w-3 inline mx-1"/> to mark as formally sent to the vendor.</li>
                         </ul>
                     </section>
                     <Separator />
                     <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Visibility</h4>
-                        <p className="text-sm text-muted-foreground">Access is granted to GP personnel and assigned approvers.</p>
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Management Oversight</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Visibility is restricted to GP personnel and the assigned approvers in the dynamic chain. All signatures are timestamped.
+                        </p>
                     </section>
                 </div>
                 <ScrollBar orientation="vertical" />

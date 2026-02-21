@@ -26,9 +26,9 @@ import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
 import { 
-    FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, 
+    FileText, Briefcase, BarChart2, ClipboardCheck, Package, 
     Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin,
-    History, UserCheck, ShieldCheck, Info, HelpCircle, X
+    History, UserCheck, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -208,7 +208,7 @@ function LocalPurchaseContent() {
 
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
         <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
-            <div className="p-6 flex-grow overflow-hidden">
+            <div className="p-6 flex-grow overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black">Fleet & Procurement Workflow Tracker</DialogTitle>
@@ -216,14 +216,16 @@ function LocalPurchaseContent() {
                     </DialogHeader>
                     <Button variant="ghost" size="icon" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
-                <WorkflowTracker />
+                <div className="flex-grow min-h-0">
+                    <WorkflowTracker />
+                </div>
             </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
         <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0">
-            <div className="p-6 flex-grow overflow-hidden">
+            <div className="p-6 flex-grow overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-4 border-b pb-4">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black">User Activity Audit & Response Metrics</DialogTitle>
@@ -231,7 +233,9 @@ function LocalPurchaseContent() {
                     </DialogHeader>
                     <Button variant="ghost" size="icon" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
-                <UserAuditReport />
+                <div className="flex-grow min-h-0">
+                    <UserAuditReport />
+                </div>
             </div>
         </DialogContent>
       </Dialog>
