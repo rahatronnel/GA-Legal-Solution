@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -109,6 +110,11 @@ body {
         10%, 30% { transform: rotate(15deg); }
         20%, 40% { transform: rotate(-15deg); }
         50% { transform: rotate(0); }
+    }
+
+    @keyframes progress {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(400%); }
     }
 }
 

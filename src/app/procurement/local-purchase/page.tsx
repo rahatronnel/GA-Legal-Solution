@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense, useState } from 'react';
@@ -27,13 +28,14 @@ import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
 import { 
     FileText, Briefcase, BarChart2, ClipboardCheck, Package, 
-    Database, Settings, History, UserCheck, X
+    Database, Settings, History, UserCheck, X, Workflow
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { UserAuditReport } from './components/user-audit-report';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { BlueprintDialog } from './components/blueprint-dialog';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -43,6 +45,7 @@ function LocalPurchaseContent() {
 
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [isBlueprintOpen, setIsBlueprintOpen] = useState(false);
 
   const activeTab = searchParams.get('tab') || 'demand-notes';
 
@@ -120,6 +123,15 @@ function LocalPurchaseContent() {
             </Badge>
         </div>
         <div className="flex items-center gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-transform active:scale-95 text-blue-600" onClick={() => setIsBlueprintOpen(true)}>
+                        <Workflow className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="animate-scale-in">Operational Blueprint Master</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-transform active:scale-95" onClick={() => setIsTrackerOpen(true)}>
@@ -238,6 +250,8 @@ function LocalPurchaseContent() {
             </div>
         </DialogContent>
       </Dialog>
+
+      <BlueprintDialog isOpen={isBlueprintOpen} onOpenChange={setIsBlueprintOpen} />
 
     </div>
     </TooltipProvider>
