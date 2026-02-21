@@ -343,6 +343,7 @@ export function PurchaseOrderTable() {
                             <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                             <TableHead className="font-bold">PO Number</TableHead>
                             <TableHead className="font-bold">Demand Note</TableHead>
+                            <TableHead className="font-bold">GP Concern</TableHead>
                             <TableHead className="font-bold">Vendor</TableHead>
                             <TableHead className="font-bold">Amount</TableHead>
                             <TableHead className="font-bold">Status</TableHead>
@@ -363,6 +364,11 @@ export function PurchaseOrderTable() {
                                     <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
                                     <TableCell><div className="flex items-center gap-1 font-medium"><span>{po.poNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
                                     <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-primary">{employees?.find(e => e.id === dn?.gpConcernOfficerId)?.fullName || 'Unassigned'}</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-xs max-w-[150px] truncate">{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
                                     <TableCell className="font-bold font-mono text-primary">
                                         {po.netPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
@@ -393,7 +399,7 @@ export function PurchaseOrderTable() {
                                     </TableCell>
                                 </TableRow>
                             )
-                        }) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Purchase Orders matching your search criteria.</TableCell></TableRow>}
+                        }) : <TableRow><TableCell colSpan={8} className="h-24 text-center text-muted-foreground italic">No Purchase Orders matching your search criteria.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </div>

@@ -64,7 +64,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                     <div className="p-6 space-y-8 pb-32">
                         <section className="space-y-4">
                             <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4" /> Receipt Verification Flow
+                                <TrendingUp className="h-4 w-4" /> Visual Lifecycle Flow
                             </h4>
                             <div className="relative p-6 border-2 border-dashed rounded-2xl bg-muted/30 overflow-hidden">
                                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
@@ -352,7 +352,7 @@ export function MRRTable() {
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})</Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                             </div>
                         )}

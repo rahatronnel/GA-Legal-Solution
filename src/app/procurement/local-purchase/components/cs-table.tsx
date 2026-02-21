@@ -428,8 +428,8 @@ export function ComparativeStatementTable() {
                 </div>
                 <div className="border rounded-lg overflow-hidden shadow-sm">
                     <Table>
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead className="font-bold">CS Number</TableHead>
                                 <TableHead className="font-bold">Demand Note</TableHead>
