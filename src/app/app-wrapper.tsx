@@ -209,7 +209,7 @@ export function AppWrapper() {
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
   const userEmployeeQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email) return null;
+    if (!firestore || !user?.email || user.email === 'superadmin@galsolution.com') return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
   }, [firestore, user?.email]);
   

@@ -17,7 +17,7 @@ import {
     ChevronRight, ChevronLeft, HelpCircle, ListOrdered, ShieldCheck, 
     UserCheck, Tag, BarChart2, TrendingUp, Wallet, Gavel, 
     GitCommitHorizontal, MapPin, Info, Hourglass, MoreHorizontal,
-    CheckCircle
+    CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
@@ -188,7 +188,7 @@ const VendorSelectionDialog: React.FC<{
     }, [isOpen]);
 
     const selectedVendor = vendors.find(v => v.id === selectedVendorId);
-    const selectedVendorDetail = cs?.vendorDetails.find(d => d.vendorId === selectedVendorId);
+    const selectedVendorDetail = cs?.vendorDetails.find(d => d.id === selectedVendorId);
 
     const financials = useMemo(() => {
         if (!cs || !selectedVendorId) return null;
@@ -497,7 +497,7 @@ export function ComparativeStatementTable() {
                             const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 2;
                             return (
                                 <li key={index} className="flex items-start gap-4 list-none">
-                                    {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                    {historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
                                     <div className="flex-1 flex gap-3 items-center">
                                         <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
                                         <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
