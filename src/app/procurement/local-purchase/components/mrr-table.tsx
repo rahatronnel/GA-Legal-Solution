@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -491,7 +490,7 @@ export function MRRTable() {
                             return (
                                 <li key={index} className="flex items-center gap-4 list-none">
                                     {historyEntry ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                    <div className="flex-1 flex gap-3 items-center">
+                                    <div className="flex-1 gap-3 items-center">
                                         <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0)}</AvatarFallback></Avatar>
                                         <div><p className="font-semibold text-sm">{step.stepName}</p><p className="text-xs text-muted-foreground">{approver?.fullName}</p></div>
                                     </div>

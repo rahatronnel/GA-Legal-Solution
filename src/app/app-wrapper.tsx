@@ -239,7 +239,7 @@ export function AppWrapper() {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Accelerating Organizational Handshake...</p>
+        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Establishing Secure Organizational Handshake...</p>
       </div>
     );
   }

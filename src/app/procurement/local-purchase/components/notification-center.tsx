@@ -140,6 +140,9 @@ export function NotificationCenter() {
 
         // 3. Purchase Orders & MRRs
         purchaseOrders.forEach(po => {
+            const relatedDN = demandNotes.find(d => d.id === po.demandNoteId);
+            const isConcern = relatedDN?.gpConcernOfficerId === uid;
+
             if (po.currentApproverId === uid && po.approvalStatus !== 1 && po.approvalStatus !== 0) {
                 list.push({
                     id: po.id, type: 'Purchase Order', title: po.poNumber,
@@ -147,6 +150,28 @@ export function NotificationCenter() {
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'Pending Approval', createdAt: po.createdAt,
                     isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
+                });
+            }
+
+            // TRIGGER: PO approved but not sent to vendor
+            if (isConcern && po.approvalStatus === 1 && !po.isSentToVendor) {
+                list.push({
+                    id: po.id + '-send', type: 'Purchase Order', title: po.poNumber,
+                    description: 'PO is fully approved. Please send it to the vendor.',
+                    link: `/procurement/local-purchase/purchase-orders/${po.id}`,
+                    status: 'PO Dispatch Required', createdAt: po.createdAt,
+                    isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
+                });
+            }
+
+            // TRIGGER: PO sent but MRR not prepared
+            if (isConcern && po.isSentToVendor && !mrrs.some(m => m.poId === po.id)) {
+                list.push({
+                    id: po.id + '-mrr', type: 'MRR', title: po.poNumber,
+                    description: 'PO sent to vendor. Please prepare the MRR upon receipt.',
+                    link: `/procurement/local-purchase/purchase-orders/${po.id}`,
+                    status: 'MRR Preparation Needed', createdAt: po.sentToVendorDate || po.createdAt,
+                    isOverdue: po.sentToVendorDate ? differenceInHours(now, parseISO(po.sentToVendorDate)) >= reminderThreshold : false
                 });
             }
         });
