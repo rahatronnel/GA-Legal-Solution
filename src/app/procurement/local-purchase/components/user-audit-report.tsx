@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useProcurement } from './procurement-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fns';
-import { UserCheck, Clock, CheckCircle2, AlertTriangle, Timer, Calendar, Search, Filter } from 'lucide-react';
+import { UserCheck, Clock, CheckCircle2, AlertTriangle, Timer, Calendar, Search, Filter, Building, LayoutGrid, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -22,15 +23,19 @@ type ActivityItem = {
     action: string;
     timestamp: string;
     reference: string;
+    userId: string;
     shouldHaveDoneAt?: string;
     lagMinutes?: number;
 };
 
 export function UserAuditReport() {
-    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, isLoading } = useProcurement();
+    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, departments, sections, isLoading } = useProcurement();
     
     const [selectedUserId, setSelectedUserId] = useState<string>('all');
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [deptId, setDeptId] = useState('all');
+    const [sectionId, setSectionId] = useState('all');
 
     const activities = useMemo(() => {
         if (isLoading) return [];
@@ -38,7 +43,7 @@ export function UserAuditReport() {
 
         // Aggregate All Histories
         demandNotes.forEach(dn => {
-            list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy } as any);
+            list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy });
             
             dn.approvalHistory?.forEach((h: any, i: number) => {
                 const prevActionTime = i === 0 ? dn.entryDate : dn.approvalHistory[i-1].timestamp;
@@ -47,7 +52,7 @@ export function UserAuditReport() {
                     timestamp: h.timestamp, reference: dn.demandNoteNumber, userId: h.approverId,
                     shouldHaveDoneAt: prevActionTime,
                     lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prevActionTime))
-                } as any);
+                });
             });
 
             if (dn.gpAssignedDate) {
@@ -56,14 +61,14 @@ export function UserAuditReport() {
                     timestamp: dn.gpAssignedDate, reference: dn.demandNoteNumber, userId: dn.gpAssignedBy,
                     shouldHaveDoneAt: dn.entryDate,
                     lagMinutes: differenceInMinutes(parseISO(dn.gpAssignedDate), parseISO(dn.entryDate))
-                } as any);
+                });
             }
 
             if (dn.vendorAssignmentDate) {
                 list.push({ 
                     id: dn.id + '-va', type: 'Demand Note', action: 'Assigned Vendors', 
                     timestamp: dn.vendorAssignmentDate, reference: dn.demandNoteNumber, userId: dn.gpConcernOfficerId,
-                    shouldHaveDoneAt: dn.gpAssignedDate,
+                    shouldHaveDoneAt: dn.gpAssignedBy ? dn.gpAssignedDate : undefined,
                     lagMinutes: dn.gpAssignedDate ? differenceInMinutes(parseISO(dn.vendorAssignmentDate), parseISO(dn.gpAssignedDate)) : undefined
                 } as any);
             }
@@ -71,31 +76,31 @@ export function UserAuditReport() {
 
         comparativeStatements.forEach(cs => {
             const dn = demandNotes.find(d => d.id === cs.demandNoteId);
-            list.push({ id: cs.id + '-c', type: 'CS', action: 'Prepared CS', timestamp: cs.csDate, reference: cs.csNumber, userId: cs.createdBy, shouldHaveDoneAt: dn?.vendorAssignmentDate, lagMinutes: dn?.vendorAssignmentDate ? differenceInMinutes(parseISO(cs.csDate), parseISO(dn.vendorAssignmentDate)) : undefined } as any);
+            list.push({ id: cs.id + '-c', type: 'CS', action: 'Prepared CS', timestamp: cs.csDate, reference: cs.csNumber, userId: cs.createdBy, shouldHaveDoneAt: dn?.vendorAssignmentDate, lagMinutes: dn?.vendorAssignmentDate ? differenceInMinutes(parseISO(cs.csDate), parseISO(dn.vendorAssignmentDate)) : undefined });
             
             if (cs.vendorSelectionDate) {
-                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId, shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) } as any);
+                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId, shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) });
             }
 
             cs.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? cs.vendorSelectionDate : cs.approvalHistory[i-1].timestamp;
-                list.push({ id: cs.id + '-a-' + i, type: 'CS', action: `Approved CS Step ${i+1}`, timestamp: h.timestamp, reference: cs.csNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: prev ? differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) : undefined } as any);
+                list.push({ id: cs.id + '-a-' + i, type: 'CS', action: `Approved CS Step ${i+1}`, timestamp: h.timestamp, reference: cs.csNumber, userId: h.approverId, shouldHaveDoneAt: prev || undefined, lagMinutes: prev ? differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) : undefined });
             });
         });
 
         purchaseOrders.forEach(po => {
-            list.push({ id: po.id + '-c', type: 'PO', action: 'Drafted PO', timestamp: po.createdAt, reference: po.poNumber, userId: po.createdBy } as any);
+            list.push({ id: po.id + '-c', type: 'PO', action: 'Drafted PO', timestamp: po.createdAt, reference: po.poNumber, userId: po.createdBy });
             po.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
-                list.push({ id: po.id + '-a-' + i, type: 'PO', action: `Approved PO Step ${i+1}`, timestamp: h.timestamp, reference: po.poNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) } as any);
+                list.push({ id: po.id + '-a-' + i, type: 'PO', action: `Approved PO Step ${i+1}`, timestamp: h.timestamp, reference: po.poNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
             });
         });
 
         mrrs.forEach(mrr => {
-            list.push({ id: mrr.id + '-c', type: 'MRR', action: 'Recorded Receipt', timestamp: mrr.createdAt, reference: mrr.mrrNumber, userId: mrr.createdBy } as any);
+            list.push({ id: mrr.id + '-c', type: 'MRR', action: 'Recorded Receipt', timestamp: mrr.createdAt, reference: mrr.mrrNumber, userId: mrr.createdBy });
             mrr.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? mrr.createdAt : mrr.approvalHistory[i-1].timestamp;
-                list.push({ id: mrr.id + '-a-' + i, type: 'MRR', action: `Approved MRR Step ${i+1}`, timestamp: h.timestamp, reference: mrr.mrrNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) } as any);
+                list.push({ id: mrr.id + '-a-' + i, type: 'MRR', action: `Approved MRR Step ${i+1}`, timestamp: h.timestamp, reference: mrr.mrrNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
             });
         });
 
@@ -104,11 +109,23 @@ export function UserAuditReport() {
 
     const filteredActivities = useMemo(() => {
         return activities.filter(act => {
-            const userMatch = selectedUserId === 'all' || (act as any).userId === selectedUserId;
+            const emp = employees.find(e => e.id === act.userId);
+            if (!emp) return false;
+
+            const userMatch = selectedUserId === 'all' || act.userId === selectedUserId;
             const dateMatch = !dateRange?.from || isWithinInterval(parseISO(act.timestamp), { start: dateRange.from, end: dateRange.to || dateRange.from });
-            return userMatch && dateMatch;
+            const deptMatch = deptId === 'all' || emp.departmentId === deptId;
+            const sectionMatch = sectionId === 'all' || emp.sectionId === sectionId;
+            
+            const lowerSearch = searchTerm.toLowerCase();
+            const searchMatch = !searchTerm || 
+                emp.fullName.toLowerCase().includes(lowerSearch) || 
+                emp.userIdCode.toLowerCase().includes(lowerSearch) ||
+                act.reference.toLowerCase().includes(lowerSearch);
+
+            return userMatch && dateMatch && deptMatch && sectionMatch && searchMatch;
         });
-    }, [activities, selectedUserId, dateRange]);
+    }, [activities, selectedUserId, dateRange, deptId, sectionId, searchTerm, employees]);
 
     const formatLag = (minutes?: number) => {
         if (minutes === undefined) return 'N/A';
@@ -130,86 +147,138 @@ export function UserAuditReport() {
 
     return (
         <div className="space-y-6 flex flex-col h-full min-h-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><UserCheck className="h-4 w-4" /> Filter by User</Label>
-                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                        <SelectTrigger><SelectValue placeholder="Select user..." /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Personnel</SelectItem>
-                            {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+            <div className="p-4 border rounded-xl bg-muted/10 space-y-4 shrink-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Search className="h-3 w-3" /> Quick Search</Label>
+                        <Input 
+                            placeholder="Type Name or Employee Code..." 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                            className="bg-background"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Building className="h-3 w-3" /> Department</Label>
+                        <Select value={deptId} onValueChange={setDeptId}>
+                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Departments" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Departments</SelectItem>
+                                {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><LayoutGrid className="h-3 w-3" /> Section</Label>
+                        <Select value={sectionId} onValueChange={setSectionId}>
+                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Sections" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sections</SelectItem>
+                                {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label className="flex items-center gap-2"><Calendar className="h-4 w-4" /> Date Range</Label>
-                    <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full" />
-                </div>
-                <div className="flex items-end">
-                    <Button variant="ghost" onClick={() => { setSelectedUserId('all'); setDateRange(undefined); }} className="w-full">Reset Filters</Button>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><UserCheck className="h-3 w-3" /> Specific Personnel</Label>
+                        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Personnel" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Personnel</SelectItem>
+                                {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Calendar className="h-3 w-3" /> Date Range</Label>
+                        <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full bg-background" />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="destructive" 
+                            className="flex-1 font-bold" 
+                            onClick={() => { 
+                                setSelectedUserId('all'); 
+                                setDateRange(undefined); 
+                                setSearchTerm(''); 
+                                setDeptId('all'); 
+                                setSectionId('all'); 
+                            }}
+                        >
+                            <X className="mr-2 h-4 w-4" /> Reset All
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
-                <Card className="bg-primary/5">
-                    <CardHeader className="py-2"><CardTitle className="text-xs uppercase">Total Actions</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{filteredActivities.length}</div></CardContent>
+                <Card className="bg-primary/5 border-primary/20">
+                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Filtered Actions</CardTitle></CardHeader>
+                    <CardContent><div className="text-3xl font-black">{filteredActivities.length}</div></CardContent>
                 </Card>
-                <Card className="bg-green-500/5">
-                    <CardHeader className="py-2"><CardTitle className="text-xs uppercase">Avg Response Time</CardTitle></CardHeader>
+                <Card className="bg-green-500/5 border-green-500/20">
+                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Avg Efficiency (Lag)</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
+                        <div className="text-3xl font-black text-green-600">
                             {formatLag(Math.round(filteredActivities.reduce((acc, a) => acc + (a.lagMinutes || 0), 0) / (filteredActivities.filter(a => a.lagMinutes !== undefined).length || 1)))}
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <Card className="flex-grow min-h-0 flex flex-col">
-                <CardHeader className="shrink-0">
-                    <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Activity Audit Trail</CardTitle>
-                    <CardDescription>Comprehensive log of all user operations and efficiency metrics.</CardDescription>
+            <Card className="flex-grow min-h-0 flex flex-col border-primary/10 overflow-hidden">
+                <CardHeader className="shrink-0 border-b bg-muted/5">
+                    <CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5 text-primary" /> Performance Audit Trail</CardTitle>
+                    <CardDescription>Comprehensive log of operations with precise lag-time metrics.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 flex-grow overflow-hidden">
                     <ScrollArea className="h-full">
                         <Table>
                             <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                 <TableRow>
-                                    <TableHead>Personnel</TableHead>
-                                    <TableHead>Module</TableHead>
-                                    <TableHead>Operation</TableHead>
-                                    <TableHead>Reference</TableHead>
-                                    <TableHead>Actual Time</TableHead>
-                                    <TableHead className="text-right">Response Time (Lag)</TableHead>
+                                    <TableHead className="font-bold">Personnel</TableHead>
+                                    <TableHead className="font-bold">Module</TableHead>
+                                    <TableHead className="font-bold">Operation</TableHead>
+                                    <TableHead className="font-bold">Reference</TableHead>
+                                    <TableHead className="font-bold">Execution Time</TableHead>
+                                    <TableHead className="text-right font-bold">Response Lag</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredActivities.map((act) => {
-                                    const emp = employees.find(e => e.id === (act as any).userId);
+                                    const emp = employees.find(e => e.id === act.userId);
                                     return (
-                                        <TableRow key={act.id} className="hover:bg-muted/30">
+                                        <TableRow key={act.id} className="hover:bg-muted/30 transition-colors group">
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Avatar className="h-7 w-7 border"><AvatarFallback className="text-[10px]">{emp?.fullName?.charAt(0)}</AvatarFallback></Avatar>
-                                                    <span className="text-xs font-bold">{emp?.fullName || 'System'}</span>
+                                                    <Avatar className="h-8 w-8 border-2 group-hover:border-primary transition-colors">
+                                                        <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-black">{emp?.fullName || 'System'}</span>
+                                                        <span className="text-[9px] text-muted-foreground uppercase">{emp?.userIdCode}</span>
+                                                    </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell><Badge variant="outline" className="text-[10px]">{act.type}</Badge></TableCell>
-                                            <TableCell className="text-xs font-medium">{act.action}</TableCell>
-                                            <TableCell className="text-xs font-mono">{act.reference}</TableCell>
-                                            <TableCell className="text-[10px]">{format(parseISO(act.timestamp), 'PP p')}</TableCell>
+                                            <TableCell><Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter">{act.type}</Badge></TableCell>
+                                            <TableCell className="text-xs font-bold text-foreground/80">{act.action}</TableCell>
+                                            <TableCell className="text-xs font-mono font-bold text-primary">{act.reference}</TableCell>
+                                            <TableCell className="text-[10px] font-medium">{format(parseISO(act.timestamp), 'PP p')}</TableCell>
                                             <TableCell className={cn("text-right text-xs", getLagColor(act.lagMinutes))}>
                                                 <div className="flex flex-col items-end">
-                                                    <span>{formatLag(act.lagMinutes)}</span>
-                                                    {act.shouldHaveDoneAt && <span className="text-[8px] opacity-50 italic">Since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
+                                                    <span className="font-black">{formatLag(act.lagMinutes)}</span>
+                                                    {act.shouldHaveDoneAt && <span className="text-[8px] opacity-50 italic">Pending since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     );
                                 })}
-                                {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No audit data matches your filters.</TableCell></TableRow>}
+                                {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground font-bold italic">No audit data matches the current filters.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
+                        <ScrollBar orientation="vertical" />
                     </ScrollArea>
                 </CardContent>
             </Card>
