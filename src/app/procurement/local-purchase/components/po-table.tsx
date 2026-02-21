@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -28,16 +27,15 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { MRREntryForm } from './mrr-entry-form';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
 function POUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
@@ -419,7 +417,8 @@ export function PurchaseOrderTable() {
         <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => poRef && addDocumentNonBlocking(poRef, d)} cs={selectedCsForPo} />
         <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
         <POApprovalWizard isOpen={isApprovalWizardOpen} onOpenChange={setIsApprovalWizardOpen} po={selectedPoForApproval} onApprove={() => handleApprovalAction(selectedPoForApproval!.id)} vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)} />
-        <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
+        
+        {isGuideOpen && <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
 
         <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
             <DialogContent className="sm:max-w-md animate-dialog-in">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -14,6 +13,9 @@ import {
     DialogFooter 
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
     Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, 
@@ -27,19 +29,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote, Quotation } from './demand-note-entry-form';
+import type { DemandNote } from './demand-note-entry-form';
 import type { MRR } from './mrr-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { UploadedFile } from './po-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -371,7 +369,7 @@ export function MRRTable() {
                                 <TableHead className="font-bold">Supplier</TableHead>
                                 <TableHead className="font-bold text-right">Amount</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
+                                <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -455,7 +453,7 @@ export function MRRTable() {
                 </DialogContent>
             </Dialog>
 
-            <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
+            {isGuideOpen && <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
         </TooltipProvider>
     );
 }
