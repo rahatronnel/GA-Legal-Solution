@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -27,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote, Quotation } from './demand-note-entry-form';
+import type { DemandNote } from './demand-note-entry-form';
 import type { MRR } from './mrr-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
@@ -41,115 +40,119 @@ import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helpe
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { UploadedFile } from './po-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
-const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
-            <div className="bg-primary p-6 text-primary-foreground shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <Package className="h-8 w-8 text-white" />
-                    </div>
-                    <div>
-                        <DialogTitle className="text-2xl font-black tracking-tight text-white">MRR Master Operational Guide</DialogTitle>
-                        <DialogDescription className="text-primary-foreground/80 font-medium">Standard standards for physical material receipt, quality audit, and evidence collection.</DialogDescription>
-                    </div>
-                </div>
-            </div>
-
-            <ScrollArea className="flex-1 min-h-0">
-                <div className="p-6 space-y-8 pb-24">
-                    <section className="space-y-4">
-                        <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4" /> Receipt Verification Flow
-                        </h4>
-                        <div className="relative p-6 border-2 border-dashed rounded-2xl bg-muted/30 overflow-hidden">
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
-                                <div className="flex flex-col items-center gap-2 group">
-                                    <div className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ShoppingCart className="h-5 w-5" /></div>
-                                    <span className="text-[10px] font-black text-center uppercase leading-tight">PO Dispatched<br/>to Vendor</span>
-                                </div>
-                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
-                                <div className="flex flex-col items-center gap-2 group">
-                                    <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Truck className="h-5 w-5" /></div>
-                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Physical<br/>Delivery Receipt</span>
-                                </div>
-                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
-                                <div className="flex flex-col items-center gap-2 group scale-125">
-                                    <div className="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-2xl ring-4 ring-primary/20 group-hover:rotate-12 transition-transform"><Package className="h-6 w-6" /></div>
-                                    <span className="text-[10px] font-black text-center uppercase leading-tight text-primary">Evidence<br/>Upload (Invoice)</span>
-                                </div>
-                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
-                                <div className="flex flex-col items-center gap-2 group">
-                                    <div className="h-10 w-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><CheckCircle2 className="h-5 w-5" /></div>
-                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Store Manager<br/>Approval</span>
-                                </div>
-                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
-                                <div className="flex flex-col items-center gap-2 group">
-                                    <div className="h-10 w-10 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ShieldCheck className="h-5 w-5" /></div>
-                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Flow Finalized<br/>(Accounting)</span>
-                                </div>
-                            </div>
-                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/10 -translate-y-1/2 hidden md:block" />
+const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+                <div className="bg-primary p-6 text-primary-foreground shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <Package className="h-8 w-8 text-white" />
                         </div>
-                    </section>
-
-                    <Separator />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
-                            <CardContent className="pt-6 space-y-2">
-                                <h5 className="font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-4 w-4"/> The "Entry Audit" Objective</h5>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    The MRR is the official organizational proof that goods have entered the premises. It validates that the **Quantity** and **Quality** match the original Demand Note requirements.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
-                            <CardContent className="pt-6 space-y-2">
-                                <h5 className="font-bold flex items-center gap-2 text-emerald-600"><FilePlus className="h-4 w-4"/> Evidence Collection</h5>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
-                            <CardContent className="pt-6 space-y-2">
-                                <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
-                            <CardContent className="pt-6 space-y-2">
-                                <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Multi-Stage Verification</h5>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**.
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
-                        <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Box className="h-4 w-4" /> Physical Condition Check</h5>
-                        <p className="text-xs text-muted-foreground">
-                            Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering inventory.
-                        </p>
+                        <div>
+                            <DialogTitle className="text-2xl font-black tracking-tight text-white">MRR Master Operational Guide</DialogTitle>
+                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard standards for physical material receipt, quality audit, and evidence collection.</DialogDescription>
+                        </div>
                     </div>
                 </div>
-                <ScrollBar orientation="vertical" />
-            </ScrollArea>
-            
-            <DialogFooter className="p-4 border-t shrink-0">
-                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Perform Receipt</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
-);
+
+                <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-6 space-y-8 pb-32">
+                        <section className="space-y-4">
+                            <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4" /> Receipt Verification Flow
+                            </h4>
+                            <div className="relative p-6 border-2 border-dashed rounded-2xl bg-muted/30 overflow-hidden">
+                                <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+                                    <div className="flex flex-col items-center gap-2 group">
+                                        <div className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ShoppingCart className="h-5 w-5" /></div>
+                                        <span className="text-[10px] font-black text-center uppercase leading-tight">PO Dispatched<br/>to Vendor</span>
+                                    </div>
+                                    <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                    <div className="flex flex-col items-center gap-2 group">
+                                        <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Truck className="h-5 w-5" /></div>
+                                        <span className="text-[10px] font-black text-center uppercase leading-tight">Physical<br/>Delivery Receipt</span>
+                                    </div>
+                                    <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                    <div className="flex flex-col items-center gap-2 group scale-125">
+                                        <div className="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-2xl ring-4 ring-primary/20 group-hover:rotate-12 transition-transform"><Package className="h-6 w-6" /></div>
+                                        <span className="text-[10px] font-black text-center uppercase leading-tight text-primary">Evidence<br/>Upload (Invoice)</span>
+                                    </div>
+                                    <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                    <div className="flex flex-col items-center gap-2 group">
+                                        <div className="h-10 w-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><CheckCircle2 className="h-5 w-5" /></div>
+                                        <span className="text-[10px] font-black text-center uppercase leading-tight">Store Manager<br/>Approval</span>
+                                    </div>
+                                    <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                    <div className="flex flex-col items-center gap-2 group">
+                                        <div className="h-10 w-10 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ShieldCheck className="h-5 w-5" /></div>
+                                        <span className="text-[10px] font-black text-center uppercase leading-tight">Flow Finalized<br/>(Accounting)</span>
+                                    </div>
+                                </div>
+                                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/10 -translate-y-1/2 hidden md:block" />
+                            </div>
+                        </section>
+
+                        <Separator />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                                <CardContent className="pt-6 space-y-2">
+                                    <h5 className="font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-4 w-4"/> The "Entry Audit" Objective</h5>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        The MRR is the official organizational proof that goods have entered the premises. It validates that the **Quantity** and **Quality** match the original Demand Note requirements.
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+                                <CardContent className="pt-6 space-y-2">
+                                    <h5 className="font-bold flex items-center gap-2 text-emerald-600"><FilePlus className="h-4 w-4"/> Evidence Collection</h5>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked.
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+                                <CardContent className="pt-6 space-y-2">
+                                    <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded.
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+                                <CardContent className="pt-6 space-y-2">
+                                    <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Multi-Stage Verification</h5>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**.
+                                    </p>
+                                </CardContent>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
+                            <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Box className="h-4 w-4" /> Physical Condition Check</h5>
+                            <p className="text-xs text-muted-foreground">
+                                Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering inventory.
+                            </p>
+                        </div>
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+                
+                <DialogFooter className="p-4 border-t shrink-0">
+                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Perform Receipt</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 const FinalizeMrrDialog = ({
     mrr,
@@ -163,8 +166,8 @@ const FinalizeMrrDialog = ({
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     onFinalize: (docData: { bill: UploadedFile[], challan: UploadedFile[], confirmantId: string }) => void;
-    employees: any[];
-    demandNotes: any[];
+    employees: Employee[];
+    demandNotes: DemandNote[];
 }) => {
     const { toast } = useToast();
     const [billDocs, setBillDocs] = useState<UploadedFile[]>([]);

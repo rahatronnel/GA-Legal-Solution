@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -13,10 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fns';
-import { UserCheck, Clock, Search, Filter, Building, LayoutGrid, X } from 'lucide-react';
+import { UserCheck, Clock, Search, Filter, Building, LayoutGrid, X, ChevronsUpDown, Check, ScrollText } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 type ActivityItem = {
@@ -34,6 +35,7 @@ export function UserAuditReport() {
     const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, departments, sections, isLoading } = useProcurement();
     
     const [selectedUserId, setSelectedUserId] = useState<string>('all');
+    const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [searchTerm, setSearchTerm] = useState('');
     const [deptId, setDeptId] = useState('all');
@@ -146,23 +148,29 @@ export function UserAuditReport() {
         return 'text-destructive font-black';
     };
 
+    const selectedEmployeeLabel = useMemo(() => {
+        if (selectedUserId === 'all') return "All Personnel";
+        const emp = employees.find(e => e.id === selectedUserId);
+        return emp ? `${emp.fullName} (${emp.userIdCode})` : "All Personnel";
+    }, [selectedUserId, employees]);
+
     return (
         <div className="space-y-6 flex flex-col h-full min-h-0">
             <div className="p-4 border rounded-xl bg-muted/10 space-y-4 shrink-0">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Search className="h-3 w-3" /> Quick Search</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-black text-muted-foreground"><Search className="h-3 w-3" /> Quick Scenario Search</Label>
                         <Input 
-                            placeholder="Type Name or Employee Code..." 
+                            placeholder="Type Ref#, Name, or Code..." 
                             value={searchTerm} 
                             onChange={(e) => setSearchTerm(e.target.value)} 
-                            className="bg-background"
+                            className="bg-background h-10 font-bold"
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Building className="h-3 w-3" /> Department</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-black text-muted-foreground"><Building className="h-3 w-3" /> Filter by Department</Label>
                         <Select value={deptId} onValueChange={setDeptId}>
-                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Departments" /></SelectTrigger>
+                            <SelectTrigger className="bg-background h-10"><SelectValue placeholder="All Departments" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Departments</SelectItem>
                                 {(departments || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
@@ -170,9 +178,9 @@ export function UserAuditReport() {
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><LayoutGrid className="h-3 w-3" /> Section</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-black text-muted-foreground"><LayoutGrid className="h-3 w-3" /> Filter by Section</Label>
                         <Select value={sectionId} onValueChange={setSectionId}>
-                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Sections" /></SelectTrigger>
+                            <SelectTrigger className="bg-background h-10"><SelectValue placeholder="All Sections" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Sections</SelectItem>
                                 {(sections || []).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -183,23 +191,51 @@ export function UserAuditReport() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><UserCheck className="h-3 w-3" /> Specific Personnel</Label>
-                        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                            <SelectTrigger className="bg-background"><SelectValue placeholder="All Personnel" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Personnel</SelectItem>
-                                {(employees || []).map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-black text-muted-foreground"><UserCheck className="h-3 w-3" /> Target Specific Personnel</Label>
+                        <Popover open={userPopoverOpen} onOpenChange={setUserPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between h-10 bg-background font-bold">
+                                    <span className="truncate">{selectedEmployeeLabel}</span>
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 animate-scale-in">
+                                <Command>
+                                    <CommandInput placeholder="Type Name or Code..." />
+                                    <CommandList>
+                                        <CommandEmpty>No personnel matched.</CommandEmpty>
+                                        <CommandGroup>
+                                            <CommandItem onSelect={() => { setSelectedUserId('all'); setUserPopoverOpen(false); }}>
+                                                <Check className={cn("mr-2 h-4 w-4", selectedUserId === 'all' ? "opacity-100" : "opacity-0")} />
+                                                All Personnel
+                                            </CommandItem>
+                                            {employees.map(emp => (
+                                                <CommandItem 
+                                                    key={emp.id} 
+                                                    value={`${emp.fullName} ${emp.userIdCode}`}
+                                                    onSelect={() => { setSelectedUserId(emp.id); setUserPopoverOpen(false); }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedUserId === emp.id ? "opacity-100" : "opacity-0")} />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-xs">{emp.fullName}</span>
+                                                        <span className="text-[10px] text-muted-foreground uppercase">{emp.userIdCode}</span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase font-bold text-muted-foreground"><Clock className="h-3 w-3" /> Date Range</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase font-black text-muted-foreground"><Clock className="h-3 w-3" /> Execution Date Range</Label>
                         <DateRangePicker date={dateRange} onDateChange={setDateRange} className="w-full bg-background" />
                     </div>
                     <div className="flex gap-2">
                         <Button 
                             variant="outline" 
-                            className="flex-1 font-bold text-destructive hover:bg-destructive/10" 
+                            className="flex-1 font-black text-xs uppercase text-destructive hover:bg-destructive/10 border-destructive/20 h-10" 
                             onClick={() => { 
                                 setSelectedUserId('all'); 
                                 setDateRange(undefined); 
@@ -208,7 +244,7 @@ export function UserAuditReport() {
                                 setSectionId('all'); 
                             }}
                         >
-                            <X className="mr-2 h-4 w-4" /> Reset All
+                            <X className="mr-2 h-4 w-4" /> Reset Filters
                         </Button>
                     </div>
                 </div>
@@ -216,11 +252,11 @@ export function UserAuditReport() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
                 <Card className="bg-primary/5 border-primary/20 shadow-sm animate-scale-in">
-                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Filtered Actions</CardTitle></CardHeader>
+                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Total Filtered Actions</CardTitle></CardHeader>
                     <CardContent><div className="text-3xl font-black">{filteredActivities.length}</div></CardContent>
                 </Card>
                 <Card className="bg-green-500/5 border-green-500/20 shadow-sm animate-scale-in">
-                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Avg Efficiency (Lag)</CardTitle></CardHeader>
+                    <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Avg Response Lag</CardTitle></CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-green-600">
                             {formatLag(Math.round(filteredActivities.reduce((acc, a) => acc + (a.lagMinutes || 0), 0) / (filteredActivities.filter(a => a.lagMinutes !== undefined).length || 1)))}
@@ -229,55 +265,60 @@ export function UserAuditReport() {
                 </Card>
             </div>
 
-            <Card className="flex-grow min-h-0 flex flex-col border-primary/10 overflow-hidden shadow-lg">
+            <Card className="flex-grow min-h-0 flex flex-col border-primary/10 overflow-hidden shadow-2xl">
                 <CardHeader className="shrink-0 border-b bg-muted/5">
-                    <CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5 text-primary" /> Performance Audit Trail</CardTitle>
-                    <CardDescription>Comprehensive log of operations with precise lag-time metrics.</CardDescription>
+                    <CardTitle className="flex items-center gap-2 text-lg font-black"><Clock className="h-5 w-5 text-primary" /> Performance Audit Trail (Full Scenario)</CardTitle>
+                    <CardDescription className="font-bold">Aggressive audit trail documenting organizational response precision.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 flex-grow overflow-hidden min-h-0">
                     <ScrollArea className="h-full">
-                        <div className="pb-24">
+                        <div className="pb-32">
                             <Table>
                                 <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
                                     <TableRow>
-                                        <TableHead className="font-bold">Personnel</TableHead>
-                                        <TableHead className="font-bold">Module</TableHead>
-                                        <TableHead className="font-bold">Operation</TableHead>
-                                        <TableHead className="font-bold">Reference</TableHead>
-                                        <TableHead className="font-bold">Execution Time</TableHead>
-                                        <TableHead className="text-right font-bold">Response Lag</TableHead>
+                                        <TableHead className="font-black uppercase text-[10px]">Personnel</TableHead>
+                                        <TableHead className="font-black uppercase text-[10px]">Module</TableHead>
+                                        <TableHead className="font-black uppercase text-[10px]">Operation</TableHead>
+                                        <TableHead className="font-black uppercase text-[10px]">Reference</TableHead>
+                                        <TableHead className="font-black uppercase text-[10px]">Execution Time</TableHead>
+                                        <TableHead className="text-right font-black uppercase text-[10px]">Response Lag</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredActivities.map((act) => {
                                         const emp = employees.find(e => e.id === act.userId);
                                         return (
-                                            <TableRow key={act.id} className="hover:bg-muted/30 transition-colors group">
+                                            <TableRow key={act.id} className="hover:bg-muted/30 transition-colors group h-16">
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                                        <Avatar className="h-8 w-8 border-2 group-hover:border-primary transition-colors">
-                                                            <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                                        <Avatar className="h-10 w-10 border-2 group-hover:border-primary transition-colors">
+                                                            <AvatarFallback className="text-xs font-black">{emp?.fullName?.charAt(0) || '?'}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-black">{emp?.fullName || 'System'}</span>
-                                                            <span className="text-[9px] text-muted-foreground uppercase">{emp?.userIdCode}</span>
+                                                            <span className="text-sm font-black tracking-tight">{emp?.fullName || 'System'}</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase font-bold">{emp?.userIdCode}</span>
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell><Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter">{act.type}</Badge></TableCell>
-                                                <TableCell className="text-xs font-bold text-foreground/80">{act.action}</TableCell>
-                                                <TableCell className="text-xs font-mono font-bold text-primary">{act.reference}</TableCell>
-                                                <TableCell className="text-[10px] font-medium">{format(parseISO(act.timestamp), 'PP p')}</TableCell>
-                                                <TableCell className={cn("text-right text-xs", getLagColor(act.lagMinutes))}>
+                                                <TableCell><Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter border-primary/20">{act.type}</Badge></TableCell>
+                                                <TableCell className="text-sm font-bold text-foreground/80">{act.action}</TableCell>
+                                                <TableCell className="text-sm font-mono font-black text-primary">{act.reference}</TableCell>
+                                                <TableCell className="text-[11px] font-medium leading-tight">
+                                                    <div className="flex flex-col">
+                                                        <span>{format(parseISO(act.timestamp), 'PP')}</span>
+                                                        <span className="text-muted-foreground">{format(parseISO(act.timestamp), 'p')}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className={cn("text-right text-sm", getLagColor(act.lagMinutes))}>
                                                     <div className="flex flex-col items-end">
                                                         <span className="font-black">{formatLag(act.lagMinutes)}</span>
-                                                        {act.shouldHaveDoneAt && <span className="text-[8px] opacity-50 italic">Pending since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
+                                                        {act.shouldHaveDoneAt && <span className="text-[9px] opacity-50 italic font-medium">Wait time since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
                                         );
                                     })}
-                                    {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground font-bold italic">No audit data matches the current filters.</TableCell></TableRow>}
+                                    {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-64 text-center text-muted-foreground font-black uppercase text-xs tracking-widest opacity-30">No Audit Trail Records Match Your Parameters</TableCell></TableRow>}
                                 </TableBody>
                             </Table>
                         </div>

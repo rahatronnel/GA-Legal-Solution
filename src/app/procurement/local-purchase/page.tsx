@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, Suspense, useState } from 'react';
@@ -136,7 +135,7 @@ function LocalPurchaseContent() {
                         <UserCheck className="h-5 w-5 text-primary" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="animate-scale-in">User Activity Audit</TooltipContent>
+                <TooltipContent className="animate-scale-in">Performance Audit Trail</TooltipContent>
             </Tooltip>
 
             <Separator orientation="vertical" className="h-8 mx-2" />
@@ -207,12 +206,12 @@ function LocalPurchaseContent() {
       </ShadTabs>
 
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
-        <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
+        <DialogContent className="sm:max-w-[95vw] h-[95vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
                 <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
                     <div>
-                        <DialogTitle className="text-2xl font-black text-primary">Fleet & Procurement Workflow Tracker</DialogTitle>
-                        <DialogDescription>Comprehensive audit trail and lifecycle visibility for every requisition.</DialogDescription>
+                        <DialogTitle className="text-2xl font-black text-primary">Organizational Workflow Tracker</DialogTitle>
+                        <DialogDescription className="font-bold">Comprehensive audit trail and lifecycle visibility for every requisition.</DialogDescription>
                     </div>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
@@ -224,12 +223,12 @@ function LocalPurchaseContent() {
       </Dialog>
 
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
-        <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
+        <DialogContent className="sm:max-w-[98vw] h-[95vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
                 <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
                     <div>
-                        <DialogTitle className="text-2xl font-black text-primary">User Activity Audit & Response Metrics</DialogTitle>
-                        <DialogDescription>Analyze organizational efficiency and user performance lag times with precision.</DialogDescription>
+                        <DialogTitle className="text-2xl font-black text-primary uppercase tracking-tighter">Personnel Performance & Activity Analytics</DialogTitle>
+                        <DialogDescription className="font-bold text-destructive">Advanced diagnostic view of organizational efficiency and response lag metrics.</DialogDescription>
                     </div>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>

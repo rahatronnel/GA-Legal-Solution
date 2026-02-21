@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,19 +57,12 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/mrrs/[id]': dynamic(() => import('./procurement/local-purchase/mrrs/[id]/page'), { ssr: false }),
 };
 
-const ModuleDashboard = () => {    
+const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: OrganizationSettings, employees: Employee[] }) => {    
     const auth = useAuth();
     const { user } = useUser();
-    const firestore = useFirestore();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
-    const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-    const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
-
-    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
-    const { data: employees } = useCollection<Employee>(employeesRef);
-    
-    const currentUserEmployee = React.useMemo(() => {
+    const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
         return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
     }, [user, employees]);
@@ -218,7 +211,10 @@ export function AppWrapper() {
 
   const firestore = useFirestore();
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-  const { data: orgSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+  const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
+
+  const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
 
   useEffect(() => {
     if (orgSettings?.favicon) {
@@ -234,10 +230,14 @@ export function AppWrapper() {
   }, [orgSettings]);
 
 
-  if (isUserLoading) {
+  // CRITICAL HANDSHAKE: Eradicate module visibility flicker by gating Dashboard revealing until settings AND personnel are strictly available.
+  const isHydratingData = isLoadingSettings || isLoadingEmployees || !orgSettings || !employees || !orgSettings.moduleVisibility;
+
+  if (isUserLoading || (user && isHydratingData)) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <p>Loading...</p>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
+        <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Establishing Secure Organizational Handshake...</p>
       </div>
     );
   }
@@ -271,5 +271,5 @@ export function AppWrapper() {
     );
   }
 
-  return <ModuleDashboard />;
+  return <ModuleDashboard orgSettings={orgSettings!} employees={employees || []} />;
 }
