@@ -28,7 +28,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -146,7 +145,7 @@ const POApprovalWizard = ({
 
                     {step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <h3 className="font-bold flex items-center gap-2"><Info className="h-5 w-5" /> Step 2: Financials</h3>
+                            <h3 className="font-bold flex items-center gap-2"><DollarSign className="h-5 w-5" /> Step 2: Financials</h3>
                             <div className="flex justify-between text-xl font-black"><span>Total Amount:</span><span className="text-primary">{formatCurrency(po.netPayableAmount)}</span></div>
                         </div>
                     )}
@@ -171,7 +170,6 @@ const POApprovalWizard = ({
 export function PurchaseOrderTable() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { handlePrint } = usePrint();
   const { user } = useUser();
 
   const { purchaseOrders, vendors, demandNotes, employees, comparativeStatements, mrrs, isLoading, orgSettings } = useProcurement();
@@ -268,17 +266,17 @@ export function PurchaseOrderTable() {
                 </div>
             </div>
 
-            <div className="border rounded-lg">
+            <div className="border rounded-lg overflow-hidden shadow-sm">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
                             <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                            <TableHead>PO Number</TableHead>
-                            <TableHead>Demand Note</TableHead>
-                            <TableHead>Vendor</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="font-bold">PO Number</TableHead>
+                            <TableHead className="font-bold">Demand Note</TableHead>
+                            <TableHead className="font-bold">Vendor</TableHead>
+                            <TableHead className="font-bold">Amount</TableHead>
+                            <TableHead className="font-bold">Status</TableHead>
+                            <TableHead className="text-right font-bold">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -293,17 +291,17 @@ export function PurchaseOrderTable() {
                             return (
                                 <TableRow key={po.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || canSend || canMrr) && "bg-orange-500/5")}>
                                     <TableCell><Checkbox checked={selectedRows.includes(po.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(po.id) ? prev.filter(r => r !== po.id) : [...prev, po.id])} disabled={!isApprovable} /></TableCell>
-                                    <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
+                                    <TableCell><div className="flex items-center gap-1 font-medium"><span>{po.poNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
                                     <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
-                                    <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
-                                    <TableCell className="font-bold">
+                                    <TableCell className="text-xs">{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
+                                    <TableCell className="font-bold font-mono text-primary">
                                         {po.netPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-1 items-start">
-                                            <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
+                                            <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap">{getPOStatusText(po)}</Badge>
                                             {po.isSentToVendor && po.sentToVendorDate && (
-                                                <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1">
+                                                <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
                                                     <span>{new Date(po.sentToVendorDate).toLocaleDateString()}</span>
                                                     <span>{new Date(po.sentToVendorDate).toLocaleTimeString()}</span>
                                                 </div>
@@ -325,21 +323,24 @@ export function PurchaseOrderTable() {
                                     </TableCell>
                                 </TableRow>
                             )
-                        }) : <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">No records matching search.</TableCell></TableRow>}
+                        }) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Purchase Orders matching your search criteria.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </div>
         </div>
 
         <Dialog open={isPrepareDialogOpen} onOpenChange={setIsPrepareDialogOpen}>
-            <DialogContent className="animate-dialog-in"><DialogHeader><DialogTitle>Prepare PO from Approved CS</DialogTitle></DialogHeader>
-                <ScrollArea className="h-64 border rounded-md">
+            <DialogContent className="animate-dialog-in max-w-lg"><DialogHeader><DialogTitle>Select Approved CS to Prepare PO</DialogTitle><DialogDescription>Choose a finalized statement to generate an official Purchase Order.</DialogDescription></DialogHeader>
+                <ScrollArea className="h-64 border rounded-md p-2 bg-muted/5">
                     {comparativeStatements.filter(cs => cs.approvalStatus === 1 && !purchaseOrders.some(po => po.csId === cs.id)).map(cs => (
-                        <div key={cs.id} className="p-3 border-b flex justify-between items-center hover:bg-muted/50">
-                            <div><p className="font-bold text-sm">{cs.csNumber}</p><p className="text-[10px] text-muted-foreground">{vendors.find(v => v.id === cs.selectedVendorId)?.vendorName}</p></div>
-                            <Button size="sm" variant="outline" onClick={() => { setSelectedCsForPo(cs); setIsPrepareDialogOpen(false); setIsPoFormOpen(true); }}>Select</Button>
+                        <div key={cs.id} className="p-3 border-b flex justify-between items-center hover:bg-muted/50 rounded-lg transition-colors mb-1">
+                            <div><p className="font-bold text-sm">{cs.csNumber}</p><p className="text-[10px] text-muted-foreground uppercase font-black">{vendors.find(v => v.id === cs.selectedVendorId)?.vendorName}</p></div>
+                            <Button size="sm" variant="outline" onClick={() => { setSelectedCsForPo(cs); setIsPrepareDialogOpen(false); setIsPoFormOpen(true); }}>Select CS</Button>
                         </div>
                     ))}
+                    {comparativeStatements.filter(cs => cs.approvalStatus === 1 && !purchaseOrders.some(po => po.csId === cs.id)).length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground text-xs italic">No approved Comparative Statements available for PO generation.</div>
+                    )}
                 </ScrollArea>
             </DialogContent>
         </Dialog>
@@ -351,7 +352,7 @@ export function PurchaseOrderTable() {
 
         <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
             <DialogContent className="sm:max-w-md animate-dialog-in">
-                <DialogHeader><DialogTitle>PO Audit Flow</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>PO Audit Flow: {selectedPoForStatus?.poNumber}</DialogTitle></DialogHeader>
                 <div className="py-4 space-y-4">
                     {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
                         const historyEntry = selectedPoForStatus.approvalHistory?.find(h => h.level === index);
@@ -362,6 +363,7 @@ export function PurchaseOrderTable() {
                                 <div className="flex-1">
                                     <p className="font-bold text-sm">{step.stepName}</p>
                                     <p className="text-xs text-muted-foreground">{employees?.find(e => e.id === step.approverId)?.fullName}</p>
+                                    {historyEntry && <p className="text-[10px] text-muted-foreground italic">Approved on {new Date(historyEntry.timestamp).toLocaleString()}</p>}
                                 </div>
                             </li>
                         );

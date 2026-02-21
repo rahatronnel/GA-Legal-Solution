@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fns';
-import { UserCheck, Clock, CheckCircle2, AlertTriangle, Timer, Calendar, Search, Filter, Building, LayoutGrid, X } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserCheck, Clock, Search, Filter, Building, LayoutGrid, X } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
@@ -59,7 +59,7 @@ export function UserAuditReport() {
             if (dn.gpAssignedDate) {
                 list.push({ 
                     id: dn.id + '-gpa', type: 'Demand Note', action: 'Assigned GP Concern', 
-                    timestamp: dn.gpAssignedDate, reference: dn.demandNoteNumber, userId: dn.gpAssignedBy,
+                    timestamp: dn.gpAssignedDate, reference: dn.demandNoteNumber, userId: dn.gpAssignedBy || 'System',
                     shouldHaveDoneAt: dn.entryDate,
                     lagMinutes: differenceInMinutes(parseISO(dn.gpAssignedDate), parseISO(dn.entryDate))
                 });
@@ -68,10 +68,10 @@ export function UserAuditReport() {
             if (dn.vendorAssignmentDate) {
                 list.push({ 
                     id: dn.id + '-va', type: 'Demand Note', action: 'Assigned Vendors', 
-                    timestamp: dn.vendorAssignmentDate, reference: dn.demandNoteNumber, userId: dn.gpConcernOfficerId,
-                    shouldHaveDoneAt: dn.gpAssignedBy ? dn.gpAssignedDate : undefined,
-                    lagMinutes: dn.gpAssignedDate ? differenceInMinutes(parseISO(dn.vendorAssignmentDate), parseISO(dn.gpAssignedDate)) : undefined
-                } as any);
+                    timestamp: dn.vendorAssignmentDate, reference: dn.demandNoteNumber, userId: dn.gpConcernOfficerId || 'System',
+                    shouldHaveDoneAt: dn.gpAssignedDate || dn.entryDate,
+                    lagMinutes: differenceInMinutes(parseISO(dn.vendorAssignmentDate), parseISO(dn.gpAssignedDate || dn.entryDate))
+                });
             }
         });
 
@@ -80,7 +80,7 @@ export function UserAuditReport() {
             list.push({ id: cs.id + '-c', type: 'CS', action: 'Prepared CS', timestamp: cs.csDate, reference: cs.csNumber, userId: cs.createdBy, shouldHaveDoneAt: dn?.vendorAssignmentDate, lagMinutes: dn?.vendorAssignmentDate ? differenceInMinutes(parseISO(cs.csDate), parseISO(dn.vendorAssignmentDate)) : undefined });
             
             if (cs.vendorSelectionDate) {
-                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId, shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) });
+                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId || 'System', shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) });
             }
 
             cs.approvalHistory?.forEach((h: any, i: number) => {
@@ -198,8 +198,8 @@ export function UserAuditReport() {
                     </div>
                     <div className="flex gap-2">
                         <Button 
-                            variant="destructive" 
-                            className="flex-1 font-bold" 
+                            variant="outline" 
+                            className="flex-1 font-bold text-destructive hover:bg-destructive/10" 
                             onClick={() => { 
                                 setSelectedUserId('all'); 
                                 setDateRange(undefined); 
@@ -215,11 +215,11 @@ export function UserAuditReport() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
-                <Card className="bg-primary/5 border-primary/20">
+                <Card className="bg-primary/5 border-primary/20 shadow-sm animate-scale-in">
                     <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Filtered Actions</CardTitle></CardHeader>
                     <CardContent><div className="text-3xl font-black">{filteredActivities.length}</div></CardContent>
                 </Card>
-                <Card className="bg-green-500/5 border-green-500/20">
+                <Card className="bg-green-500/5 border-green-500/20 shadow-sm animate-scale-in">
                     <CardHeader className="py-2"><CardTitle className="text-[10px] uppercase font-black text-muted-foreground">Avg Efficiency (Lag)</CardTitle></CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-green-600">
@@ -229,7 +229,7 @@ export function UserAuditReport() {
                 </Card>
             </div>
 
-            <Card className="flex-grow min-h-0 flex flex-col border-primary/10 overflow-hidden">
+            <Card className="flex-grow min-h-0 flex flex-col border-primary/10 overflow-hidden shadow-lg">
                 <CardHeader className="shrink-0 border-b bg-muted/5">
                     <CardTitle className="flex items-center gap-2 text-lg"><Clock className="h-5 w-5 text-primary" /> Performance Audit Trail</CardTitle>
                     <CardDescription>Comprehensive log of operations with precise lag-time metrics.</CardDescription>
@@ -237,7 +237,7 @@ export function UserAuditReport() {
                 <CardContent className="p-0 flex-grow overflow-hidden">
                     <ScrollArea className="h-full">
                         <Table>
-                            <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                            <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
                                 <TableRow>
                                     <TableHead className="font-bold">Personnel</TableHead>
                                     <TableHead className="font-bold">Module</TableHead>
@@ -255,7 +255,7 @@ export function UserAuditReport() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-8 w-8 border-2 group-hover:border-primary transition-colors">
-                                                        <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0)}</AvatarFallback>
+                                                        <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0) || '?'}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-black">{emp?.fullName || 'System'}</span>

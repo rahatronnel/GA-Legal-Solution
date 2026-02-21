@@ -74,7 +74,7 @@ body {
         transform-origin: top right;
     }
 
-    /* Ultra-Smooth Wavy macOS Genie Transition - FIXED CENTER POINT */
+    /* Ultra-Smooth Wavy macOS Genie Transition - EXPLICIT CENTER POINT FIX */
     .animate-dialog-in {
         animation: dialogWavyGenie 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
@@ -154,11 +154,11 @@ body {
   }
   
   .app-container {
-      display: none;
+      display: none !important;
   }
 
   .print-container {
-      display: block;
+      display: block !important;
   }
 
   body {

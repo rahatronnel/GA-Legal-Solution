@@ -28,8 +28,7 @@ import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
 import { 
     FileText, Briefcase, BarChart2, ClipboardCheck, Package, 
-    Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin,
-    History, UserCheck, X
+    Database, Settings, History, UserCheck, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -114,17 +113,17 @@ function LocalPurchaseContent() {
       <div className="flex justify-between items-center bg-muted/20 p-4 rounded-2xl border">
         <div className="flex items-center gap-4">
             <div>
-                <h1 className="text-3xl font-black tracking-tight">Local Purchase</h1>
+                <h1 className="text-3xl font-black tracking-tight text-foreground">Local Purchase</h1>
                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Supply Chain Command</p>
             </div>
-            <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20">
-                {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : 'Manager'))}
+            <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20 font-black">
+                {isSuperAdmin ? 'SUPERADMIN' : (isGPOfficer ? 'GP OFFICER' : (isGPConcern ? 'CONCERN' : 'MANAGER'))}
             </Badge>
         </div>
         <div className="flex items-center gap-2">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10" onClick={() => setIsTrackerOpen(true)}>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-transform active:scale-95" onClick={() => setIsTrackerOpen(true)}>
                         <History className="h-5 w-5 text-primary" />
                     </Button>
                 </TooltipTrigger>
@@ -133,7 +132,7 @@ function LocalPurchaseContent() {
             
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10" onClick={() => setIsAuditOpen(true)}>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-transform active:scale-95" onClick={() => setIsAuditOpen(true)}>
                         <UserCheck className="h-5 w-5 text-primary" />
                     </Button>
                 </TooltipTrigger>
@@ -148,44 +147,44 @@ function LocalPurchaseContent() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full h-auto p-1 bg-muted/50 rounded-xl" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-background transition-all">
+            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
                 <tab.icon className="h-4 w-4" />
-                <span className="hidden lg:inline font-bold text-xs uppercase">{tab.label}</span>
+                <span className="hidden lg:inline font-bold text-xs uppercase tracking-tight">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2">
+        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <DemandNoteTable />
         </TabsContent>
-        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2">
+        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <GPDeskTable />
         </TabsContent>
-        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2">
+        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <ComparativeStatementTable />
         </TabsContent>
-        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2">
+        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <PurchaseOrderTable />
         </TabsContent>
-        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2">
+        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <MRRTable />
         </TabsContent>
 
         {isSuperAdmin && (
           <>
-            <TabsContent value="master-data">
+            <TabsContent value="master-data" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                <LegacyBillFlowProvider>
                 <MasterDataProvider>
                   <Tabs defaultValue="vendors" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto bg-muted/30 p-1 rounded-lg">
-                      <TabsTrigger value="vendors" className="text-xs">Vendors</TabsTrigger>
-                      <TabsTrigger value="v-cat" className="text-xs">V-Cat</TabsTrigger>
-                      <TabsTrigger value="v-nature" className="text-xs">V-Nature</TabsTrigger>
-                      <TabsTrigger value="bill-items" className="text-xs">B-Items</TabsTrigger>
-                      <TabsTrigger value="i-cat" className="text-xs">I-Cat</TabsTrigger>
-                      <TabsTrigger value="codes" className="text-xs">Codes</TabsTrigger>
-                      <TabsTrigger value="types" className="text-xs">DN-Types</TabsTrigger>
-                      <TabsTrigger value="places" className="text-xs">Offices</TabsTrigger>
+                      <TabsTrigger value="vendors" className="text-[10px] font-bold">VENDORS</TabsTrigger>
+                      <TabsTrigger value="v-cat" className="text-[10px] font-bold">V-CAT</TabsTrigger>
+                      <TabsTrigger value="v-nature" className="text-[10px] font-bold">V-NATURE</TabsTrigger>
+                      <TabsTrigger value="bill-items" className="text-[10px] font-bold">B-ITEMS</TabsTrigger>
+                      <TabsTrigger value="i-cat" className="text-[10px] font-bold">I-CAT</TabsTrigger>
+                      <TabsTrigger value="codes" className="text-[10px] font-bold">CODES</TabsTrigger>
+                      <TabsTrigger value="types" className="text-[10px] font-bold">DN-TYPES</TabsTrigger>
+                      <TabsTrigger value="places" className="text-[10px] font-bold">OFFICES</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="vendors" className="mt-4"><VendorTable /></TabsContent>
@@ -200,7 +199,7 @@ function LocalPurchaseContent() {
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
             </TabsContent>
-            <TabsContent value="settings">
+            <TabsContent value="settings" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               <DemandNoteApprovalSettings />
             </TabsContent>
           </>
@@ -208,14 +207,14 @@ function LocalPurchaseContent() {
       </Tabs>
 
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
-        <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
+        <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 border-b pb-4">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">Fleet & Procurement Workflow Tracker</DialogTitle>
-                        <DialogDescription>Audit trail and lifecycle visibility.</DialogDescription>
+                        <DialogTitle className="text-2xl font-black text-primary">Fleet & Procurement Workflow Tracker</DialogTitle>
+                        <DialogDescription>Comprehensive audit trail and lifecycle visibility for every requisition.</DialogDescription>
                     </DialogHeader>
-                    <Button variant="ghost" size="icon" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
                 <div className="flex-grow min-h-0">
                     <WorkflowTracker />
@@ -225,14 +224,14 @@ function LocalPurchaseContent() {
       </Dialog>
 
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
-        <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0">
+        <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-4 border-b pb-4">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">User Activity Audit & Response Metrics</DialogTitle>
-                        <DialogDescription>Analyze organizational efficiency and user performance lag times.</DialogDescription>
+                        <DialogTitle className="text-2xl font-black text-primary">User Activity Audit & Response Metrics</DialogTitle>
+                        <DialogDescription>Analyze organizational efficiency and user performance lag times with precision.</DialogDescription>
                     </DialogHeader>
-                    <Button variant="ghost" size="icon" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
                 <div className="flex-grow min-h-0">
                     <UserAuditReport />
@@ -248,7 +247,7 @@ function LocalPurchaseContent() {
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-black text-muted-foreground">Handshaking Database...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><div className="flex flex-col items-center gap-4"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p className="animate-pulse font-black text-xs uppercase tracking-widest text-muted-foreground">Handshaking Database...</p></div></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );
