@@ -3,43 +3,44 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogDescription, 
+    DialogFooter 
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { 
     Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, 
     Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, 
     UserCheck, Upload, X, HelpCircle, Info, ListOrdered, 
     ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal, Printer, Check,
-    Package, BarChart2, TrendingUp, DollarSign, Gavel, ClipboardCheck, ChevronRight
+    Package, BarChart2, TrendingUp, DollarSign, Gavel, ClipboardCheck, ChevronRight,
+    ShoppingCart
 } from 'lucide-react';
-import { useProcurement } from './procurement-provider';
-import { useUser, useFirestore, useMemoMemoFirebase, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
-import { Badge } from '@/components/ui/badge';
-import type { MRR } from './mrr-entry-form';
-import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn, imageToDataUrl } from '@/lib/utils';
-import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useProcurement } from './procurement-provider';
+import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import type { DemandNote, Quotation } from './demand-note-entry-form';
+import type { MRR } from './mrr-entry-form';
+import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import type { UploadedFile } from './po-entry-form';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
-import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { cn, imageToDataUrl } from '@/lib/utils';
+import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -364,7 +365,7 @@ export function MRRTable() {
                                 <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="text-right font-bold">Actions</TableHead>
+                                <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -425,7 +426,7 @@ export function MRRTable() {
                 <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader><DialogTitle>MRR Approval Flow</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
-                        {selectedMrrForStatus?.approvalFlow?.steps.map((step, index) => {
+                        {selectedMrrForStatus?.approvalFlow?.steps.map((step: any, index: number) => {
                             const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = employees?.find(e => e.id === step.approverId);
                             const isPending = selectedMrrForStatus.currentApproverId === step.approverId && selectedMrrForStatus.approvalStatus > 2;

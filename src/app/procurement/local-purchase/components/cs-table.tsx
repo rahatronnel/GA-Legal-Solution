@@ -56,7 +56,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                         <BarChart2 className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                        <DialogTitle className="text-2xl font-black tracking-tight">CS Master Operational Guide</DialogTitle>
+                        <DialogTitle className="text-2xl font-black tracking-tight text-white">CS Master Operational Guide</DialogTitle>
                         <DialogDescription className="text-primary-foreground/80 font-medium">Internal standards for high-fidelity procurement analysis & vendor awarding.</DialogDescription>
                     </div>
                 </div>
@@ -152,7 +152,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </ScrollArea>
             
             <DialogFooter className="p-4 border-t shrink-0">
-                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest">Understood, Let's Analyze</Button>
+                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Let's Analyze</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
