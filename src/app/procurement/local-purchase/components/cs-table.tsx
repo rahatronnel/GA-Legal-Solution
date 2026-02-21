@@ -292,7 +292,7 @@ const VendorSelectionDialog: React.FC<{
                                     You are about to award the contract to <span className="font-bold text-foreground">{selectedVendor?.vendorName}</span> for <span className="font-bold text-primary">{formatCurrency(financials?.total || 0)}</span>.
                                 </p>
                                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm font-medium text-yellow-700 dark:text-yellow-400 mt-4">
-                                    This action will freeze the selection and start the multi-level internal approval workflow. This cannot be undone easily.
+                                    This action will freeze the selection and start the multi-level internal approval workflow.
                                 </div>
                             </div>
                         </div>
@@ -300,7 +300,7 @@ const VendorSelectionDialog: React.FC<{
                 </div>
 
                 <DialogFooter className="flex justify-between w-full border-t pt-4">
-                    <Button variant="outline" onClick={() => handleBack} disabled={step === 1}>
+                    <Button variant="outline" onClick={handleBack} disabled={step === 1}>
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     <div className="flex gap-2">

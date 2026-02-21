@@ -20,7 +20,7 @@ import {
     UserPlus, Copy, HelpCircle, Info, Tag, ShieldCheck, ListOrdered,
     Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X,
     Package, BarChart2, TrendingUp, DollarSign, Gavel, Truck, ChevronRight,
-    ShoppingCart, Box
+    ShoppingCart, Box, UserCheck, Upload
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -101,7 +101,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-4 w-4"/> The "Entry Audit" Objective</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    The MRR is the official organizational proof that goods have entered the premises. It validates that the **Quantity** and **Quality** match the original Demand Note requirements before the vendor can be paid.
+                                    The MRR is the official organizational proof that goods have entered the premises. It validates that the **Quantity** and **Quality** match the original Demand Note requirements.
                                 </p>
                             </CardContent>
                         </Card>
@@ -110,7 +110,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-emerald-600"><FilePlus className="h-4 w-4"/> Evidence Collection</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked to the record for audit transparency.
+                                    To finalize an MRR, the GP Concern **must upload** clear scans of the **Vendor Bill/Invoice** and the **Delivery Challan**. These documents are permanently linked.
                                 </p>
                             </CardContent>
                         </Card>
@@ -119,7 +119,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier of the asset's condition.
+                                    A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded.
                                 </p>
                             </CardContent>
                         </Card>
@@ -128,7 +128,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Multi-Stage Verification</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**. Only then is the receipt officially recognized.
+                                    Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**.
                                 </p>
                             </CardContent>
                         </Card>
@@ -137,7 +137,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                     <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
                         <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Box className="h-4 w-4" /> Physical Condition Check</h5>
                         <p className="text-xs text-muted-foreground">
-                            Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering the organizational inventory.
+                            Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering inventory.
                         </p>
                     </div>
                 </div>
@@ -238,7 +238,7 @@ const FinalizeMrrDialog = ({
                                         <CommandEmpty>No one found.</CommandEmpty>
                                         <CommandGroup>
                                             {employees.map((emp) => (
-                                                <CommandItem key={emp.id} onSelect={() => { setConfirmantId(emp.id); setOpenSearch(false); }}>
+                                                <CommandItem key={emp.id} value={emp.fullName} onSelect={() => { setConfirmantId(emp.id); setOpenSearch(false); }}>
                                                     <Check className={cn("mr-2 h-4 w-4", confirmantId === emp.id ? "opacity-100" : "opacity-0")} />
                                                     {emp.fullName}
                                                 </CommandItem>

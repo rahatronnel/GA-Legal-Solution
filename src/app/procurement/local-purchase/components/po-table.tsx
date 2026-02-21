@@ -18,7 +18,7 @@ import {
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
     ListOrdered, ShieldCheck, ShoppingCart, TrendingUp, DollarSign, 
-    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck
+    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck, Package
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -29,7 +29,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -100,7 +99,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-blue-600"><Gavel className="h-4 w-4"/> Legal Commitment</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    The Purchase Order is a legally binding contract. Once approved and sent, it authorizes the vendor to deliver and invoice. <strong>Terms & Conditions</strong> must be reviewed carefully.
+                                    The Purchase Order is a legally binding contract. Once approved and sent, it authorizes the vendor to deliver and invoice.
                                 </p>
                             </CardContent>
                         </Card>
@@ -109,7 +108,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-emerald-600"><DollarSign className="h-4 w-4"/> Financial Integrity</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    PO amounts are automatically synced from the **Approved CS**. This prevents unauthorized price changes and ensures that only the management-vetted bid is committed.
+                                    PO amounts are automatically synced from the **Approved CS**. This prevents unauthorized price changes.
                                 </p>
                             </CardContent>
                         </Card>
@@ -118,7 +117,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-amber-600"><Send className="h-4 w-4"/> Dispatch Protocol</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Approval is only the first step. You must click the **"Send to Vendor"** icon to formally release the PO. This timestamp is critical for tracking vendor lead-time performance.
+                                    Approval is only the first step. You must click the **"Send to Vendor"** icon to formally release the PO.
                                 </p>
                             </CardContent>
                         </Card>
@@ -127,7 +126,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                             <CardContent className="pt-6 space-y-2">
                                 <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Digital Signature Audit</h5>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Every PO requires a technical audit (TA) and commercial sign-off. These signatures are digitally locked and appear on the physical printout for total accountability.
+                                    Every PO requires a technical audit (TA) and commercial sign-off. These signatures are digitally locked.
                                 </p>
                             </CardContent>
                         </Card>
@@ -136,7 +135,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
                         <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Info className="h-4 w-4" /> Operational Note</h5>
                         <p className="text-xs text-muted-foreground italic">
-                            POs cannot be modified once they enter the approval chain. If a correction is needed, the current approver must **Reject** the PO, and a new one must be generated from the CS Desk.
+                            POs cannot be modified once they enter the approval chain.
                         </p>
                     </div>
                 </div>
@@ -401,7 +400,7 @@ export function PurchaseOrderTable() {
 
         <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => poRef && addDocumentNonBlocking(poRef, d)} cs={selectedCsForPo} />
         <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
-        <POApprovalWizard isOpen={isApprovalWizardOpen} onOpenChange={setIsApprovalWizardOpen} po={selectedPoForApproval} onApprove={handleApprovalAction} vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)} />
+        <POApprovalWizard isOpen={isApprovalWizardOpen} onOpenChange={setIsApprovalWizardOpen} po={selectedPoForApproval} onApprove={() => handleApprovalAction(selectedPoForApproval!.id)} vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)} />
         <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
         <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
