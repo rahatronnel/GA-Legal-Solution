@@ -76,7 +76,7 @@ body {
 
     /* Ultra-Smooth Wavy macOS Genie Transition - FIXED CENTER POINT */
     .animate-dialog-in {
-        animation: dialogWavyGenie 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation: dialogWavyGenie 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     /* Bouncy Bell Notification Heartbeat */

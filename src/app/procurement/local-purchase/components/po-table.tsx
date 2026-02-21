@@ -16,7 +16,7 @@ import {
     PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, 
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
-    ListOrdered 
+    ListOrdered, ShieldCheck 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
