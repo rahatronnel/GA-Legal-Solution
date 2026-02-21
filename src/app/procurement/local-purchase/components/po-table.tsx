@@ -12,16 +12,16 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, ListOrdered, ShieldCheck, UserCheck, Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
-import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { PurchaseOrder } from './po-entry-form';
 import { PurchaseOrderForm } from './po-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';

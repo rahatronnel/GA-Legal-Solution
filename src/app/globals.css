@@ -74,8 +74,7 @@ body {
         transform-origin: top right;
     }
 
-    /* High-Fidelity Ultra-Smooth Wavy Centered Genie for Dialogs */
-    /* Hand-calibrated keyframes to maintain perfect center while squashing/stretching */
+    /* Ultra-Smooth Wavy macOS Genie Transition */
     .animate-dialog-in {
         animation: dialogWavyGenie 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
