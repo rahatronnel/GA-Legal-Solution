@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -39,7 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
-const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+function POUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
@@ -148,9 +149,9 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </DialogContent>
         </Dialog>
     );
-};
+}
 
-const POApprovalWizard = ({
+function POApprovalWizard({
     po,
     isOpen,
     onOpenChange,
@@ -162,7 +163,7 @@ const POApprovalWizard = ({
     onOpenChange: (open: boolean) => void;
     onApprove: (poId: string) => void;
     vendor: any;
-}) => {
+}) {
     const [step, setStep] = useState(1);
 
     useEffect(() => {
@@ -229,7 +230,7 @@ const POApprovalWizard = ({
             </DialogContent>
         </Dialog>
     );
-};
+}
 
 export function PurchaseOrderTable() {
   const { toast } = useToast();

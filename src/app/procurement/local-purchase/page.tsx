@@ -60,12 +60,12 @@ function LocalPurchaseContent() {
     const settings = orgSettings?.procurementSettings;
 
     if (!settings || !employees || !user) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
     }
 
     const currentEmp = employees.find((e: any) => e.email === user.email);
     if (!currentEmp) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -75,21 +75,28 @@ function LocalPurchaseContent() {
       settings.factoryDirectorId === currentEmp.id ||
       settings.manufacturingDeptManagerId === currentEmp.id ||
       settings.specializedDeptManagerId === currentEmp.id;
+    
+    // Check if user is a configured approver (Dept Head or Tech Advisor)
+    const anyDeptHeadCheck = settings.departmentHeads?.some(
+        dh => dh.headId === currentEmp.id || dh.technicalAdvisorId === currentEmp.id
+    );
 
     return {
       isSuperAdmin: superAdminCheck,
       isGPOfficer: GPO,
       isGPConcern: GPC,
       isManager: managerCheck,
+      isAnyDeptHead: anyDeptHeadCheck
     };
   }, [orgSettings, employees, user]);
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager } = roleData;
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead } = roleData;
 
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
+    // Approvers (Dept Heads) must also have access to the Analysis tabs
+    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
     if (canViewCsAndPo) {
@@ -103,7 +110,7 @@ function LocalPurchaseContent() {
       list.push({ id: 'settings', label: 'Settings', icon: Settings });
     }
     return list;
-  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isAnyDeptHead]);
 
   const gridColsCount = tabsList.length;
 

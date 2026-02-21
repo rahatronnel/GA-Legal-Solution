@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -39,7 +40,7 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
-const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+function CSUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
@@ -150,7 +151,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </DialogContent>
         </Dialog>
     );
-};
+}
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -343,9 +344,11 @@ export function ComparativeStatementTable() {
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
+            // Strict Approver Access: Admin/Managers see all, Approvers see their list
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+                // Visible if they created it, are current approver (pending), or are in history (approved)
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
                     cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
@@ -391,6 +394,33 @@ export function ComparativeStatementTable() {
         });
         setSelectedRows([]);
         toast({ title: 'Processed' });
+    };
+
+    const handleSaveCs = (dataWithQuotes: any) => {
+        if (!firestore || !csRef) return;
+        const { newQuotations, ...csData } = dataWithQuotes;
+        
+        addDocumentNonBlocking(csRef, csData);
+
+        // Update DemandNote if new quotations were uploaded in the CS form
+        if (newQuotations && Object.keys(newQuotations).length > 0) {
+            const dn = demandNotes.find(d => d.id === csData.demandNoteId);
+            if (dn) {
+                const updatedQuotations = [...(dn.quotations || [])];
+                Object.entries(newQuotations).forEach(([vendorId, quote]: [string, any]) => {
+                    const existingIdx = updatedQuotations.findIndex(q => q.vendorId === vendorId);
+                    if (existingIdx !== -1) {
+                        updatedQuotations[existingIdx] = { vendorId, ...quote };
+                    } else {
+                        updatedQuotations.push({ vendorId, ...quote });
+                    }
+                });
+                const dnRef = doc(firestore, 'demandNotes', dn.id);
+                setDocumentNonBlocking(dnRef, { quotations: updatedQuotations, gpStatus: 'Assigned' }, { merge: true });
+            }
+        }
+        
+        toast({ title: 'Success', description: 'Comparative Statement saved successfully.' });
     };
 
     return (
@@ -465,7 +495,7 @@ export function ComparativeStatementTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria or access rights.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>

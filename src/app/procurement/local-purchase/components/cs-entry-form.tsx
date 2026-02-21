@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPin, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPin, DollarSign, Clock, CheckCircle2, Upload, FileText, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useProcurement } from './procurement-provider';
-import type { DemandNote } from './demand-note-entry-form';
+import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,7 +69,7 @@ export type ComparativeStatement = {
 interface CsFormProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (data: Partial<ComparativeStatement>) => void;
+  onSave: (data: any) => void;
   demandNote: DemandNote | null;
 }
 
@@ -81,6 +81,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const [step, setStep] = useState(0); // 0 for initial info, 1+ for vendors
     const [csData, setCsData] = useState<Partial<Omit<ComparativeStatement, 'id'>>>({});
     const [csDate, setCsDate] = useState<Date | undefined>(new Date());
+    const [newQuotations, setNewQuotations] = useState<Record<string, { fileName: string; fileDataUrl: string }>>({});
     
     const assignedVendors = useMemo(() => {
         if (!demandNote?.quotations || !vendors) return [];
@@ -123,6 +124,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                 createdBy: loggedInEmployee?.id || '',
             });
             setCsDate(new Date());
+            setNewQuotations({});
         }
     }, [isOpen, demandNote, assignedVendors, user, employees]);
     
@@ -154,6 +156,22 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         });
     }
 
+    const handleQuotationUpload = async (e: React.ChangeEvent<HTMLInputElement>, vendorId: string) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                const dataUrl = await imageToDataUrl(file);
+                setNewQuotations(prev => ({
+                    ...prev,
+                    [vendorId]: { fileName: file.name, fileDataUrl: dataUrl }
+                }));
+                toast({ title: "Quotation Hydrated", description: `${file.name} is ready for processing.` });
+            } catch (err) {
+                toast({ variant: 'destructive', title: 'Upload error' });
+            }
+        }
+    };
+
     const calculateTotals = (vendorId: string) => {
         const itemTotal = csData.items?.reduce((sum, item) => {
             const quote = item.vendorQuotes.find(q => q.vendorId === vendorId);
@@ -184,7 +202,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const handleSave = () => {
         if (!demandNote) return;
     
-        const dataToSave: Partial<ComparativeStatement> = { ...csData };
+        const dataToSave: any = { ...csData, newQuotations };
     
         if (!orgSettings || !demandNote) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load required settings or demand note.' });
@@ -258,6 +276,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const currentVendor = step > 0 ? assignedVendors[step - 1] : null;
     const currentVendorDetails = currentVendor ? csData.vendorDetails?.find(d => d.vendorId === currentVendor.id) : null;
     const currentVendorTotals = currentVendor ? calculateTotals(currentVendor.id) : null;
+    const currentQuotation = currentVendor ? (newQuotations[currentVendor.id] || demandNote?.quotations?.find(q => q.vendorId === currentVendor.id)) : null;
 
     if (!isOpen || !demandNote) return null;
 
@@ -266,7 +285,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
             <DialogContent className="sm:max-w-6xl h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Comparative Statement for DN: {demandNote.demandNoteNumber}</DialogTitle>
-                    <DialogDescription>Enter quotation details from each vendor.</DialogDescription>
+                    <DialogDescription>Enter quotation details and upload vendor bids for micro-level comparison.</DialogDescription>
                     <Progress value={progress} className="w-full mt-2" />
                 </DialogHeader>
                 <div className="py-4 space-y-4 flex-grow overflow-y-auto pr-6">
@@ -299,9 +318,28 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                     )}
                     {step > 0 && currentVendor && (
                          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border">
-                                <div className="p-2 bg-primary text-primary-foreground rounded-md"><User className="h-5 w-5" /></div>
-                                <h3 className="font-bold text-xl">Vendor: {currentVendor.vendorName}</h3>
+                             <div className="flex justify-between items-center p-3 bg-muted rounded-lg border">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary text-primary-foreground rounded-md"><User className="h-5 w-5" /></div>
+                                    <h3 className="font-bold text-xl">Vendor: {currentVendor.vendorName}</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {currentQuotation ? (
+                                        <div className="flex items-center gap-2 bg-background p-1.5 rounded-md border text-xs shadow-sm">
+                                            <FileText className="h-4 w-4 text-primary" />
+                                            <span className="max-w-[150px] truncate font-semibold">{currentQuotation.fileName}</span>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setNewQuotations(p => { const n = {...p}; delete n[currentVendor.id]; return n; })}><X className="h-3 w-3" /></Button>
+                                        </div>
+                                    ) : (
+                                        <Badge variant="outline" className="text-destructive border-destructive">No Quotation Uploaded</Badge>
+                                    )}
+                                    <Label htmlFor={`cs-up-${currentVendor.id}`} className="cursor-pointer">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-md hover:bg-primary/90 transition-colors">
+                                            <Upload className="h-3 w-3" /> {currentQuotation ? 'Replace Quote' : 'Upload Quote'}
+                                        </div>
+                                        <Input id={`cs-up-${currentVendor.id}`} type="file" className="hidden" onChange={(e) => handleQuotationUpload(e, currentVendor.id)} />
+                                    </Label>
+                                </div>
                              </div>
                              
                              <Card className="shadow-sm border-primary/10">
