@@ -2,15 +2,13 @@
 
 import React, { useMemo, useState } from 'react';
 import { 
-    Bell, Check, Info, AlertCircle, Clock, ExternalLink, 
-    CheckCircle2, FileText, UserPlus, Users, ShoppingCart, 
-    Send, Package, Copy, ClipboardCheck 
+    Bell, Check, Clock, ExternalLink, 
+    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -153,7 +151,6 @@ export function NotificationCenter() {
                 });
             }
 
-            // TRIGGER: PO approved but not sent to vendor
             if (isConcern && po.approvalStatus === 1 && !po.isSentToVendor) {
                 list.push({
                     id: po.id + '-send', type: 'Purchase Order', title: po.poNumber,
@@ -164,7 +161,6 @@ export function NotificationCenter() {
                 });
             }
 
-            // TRIGGER: PO sent but MRR not prepared
             if (isConcern && po.isSentToVendor && !mrrs.some(m => m.poId === po.id)) {
                 list.push({
                     id: po.id + '-mrr', type: 'MRR', title: po.poNumber,
@@ -177,6 +173,19 @@ export function NotificationCenter() {
         });
 
         mrrs.forEach(mrr => {
+            const relatedDN = demandNotes.find(dn => dn.demandNoteNumber === mrr.demandNoteNumber);
+            
+            // New Notification: Requester Confirmation
+            if (relatedDN && relatedDN.createdBy === uid && !mrr.requesterConfirmedAt) {
+                list.push({
+                    id: mrr.id + '-confirm-receipt', type: 'MRR', title: mrr.mrrNumber,
+                    description: 'Goods delivered at gate. Please confirm receipt quality and quantity.',
+                    link: `/procurement/local-purchase?tab=demand-notes`,
+                    status: 'Requester Verification Needed', createdAt: mrr.createdAt,
+                    isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
+                });
+            }
+
             if (mrr.approvalStatus === 2 && mrr.createdBy === uid) {
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,

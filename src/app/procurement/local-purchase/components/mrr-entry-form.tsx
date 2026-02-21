@@ -83,6 +83,8 @@ export type MRR = {
   createdBy: string;
   createdAt: string;
   receiverConfirmantId?: string;
+  requesterConfirmedAt?: string;
+  requesterConfirmedBy?: string;
   documents: {
       bill: UploadedFile[];
       challan: UploadedFile[];

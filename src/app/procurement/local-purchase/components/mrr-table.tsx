@@ -350,6 +350,8 @@ export function MRRTable() {
             approvalFlow: { steps },
             approvalStatus: 3, 
             currentApproverId: steps[0].approverId,
+            requesterConfirmedAt: '', // Reset/Init for Requester Confirmation
+            requesterConfirmedBy: '',
         }, { merge: true });
         setIsFinalizeOpen(false);
         toast({ title: 'Finalized MRR Successfully' });
@@ -368,23 +370,6 @@ export function MRRTable() {
         });
         setSelectedRows([]);
         toast({ title: "Success", description: "Records processed successfully." });
-    };
-
-    const handlePrepareMrrWithWarning = (po: PurchaseOrder) => {
-        const missing: string[] = [];
-        if (!po.documents?.poAcknowledgement?.length) missing.push('PO Acknowledgement');
-        if (!po.documents?.invoice?.length) missing.push('Vendor Invoice');
-        if (!po.documents?.mushok?.length) missing.push('Mushok (VAT)');
-        if (!po.documents?.challan?.length) missing.push('Delivery Challan');
-
-        if (missing.length > 0) {
-            setMissingDocs(missing);
-            setPendingPoForMrr(po);
-            setIsDocWarningOpen(true);
-        } else {
-            setSelectedPoForMrr(po);
-            setIsMrrFormOpen(true);
-        }
     };
 
     return (
@@ -482,6 +467,7 @@ export function MRRTable() {
                                                     <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap text-[9px] h-4">{getMRRStatusText(mrr)}</Badge>
                                                     {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Finalize Required</Badge>}
                                                     {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Approve Report</Badge>}
+                                                    {mrr.requesterConfirmedAt && <Badge variant="outline" className="bg-green-50 text-green-700 text-[8px] h-3">Requester Confirmed</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -536,41 +522,6 @@ export function MRRTable() {
                     </div>
                 </DialogContent>
             </Dialog>
-
-            <AlertDialog open={isDocWarningOpen} onOpenChange={setIsDocWarningOpen}>
-                <AlertDialogContent className="animate-dialog-in">
-                    <AlertDialogHeader>
-                        <div className="flex items-center gap-2 text-destructive">
-                            <AlertTriangle className="h-6 w-6" />
-                            <AlertDialogTitle>Missing Mandatory Evidence</AlertDialogTitle>
-                        </div>
-                        <AlertDialogDescription>
-                            The following Purchase Order documents have not been uploaded:
-                            <ul className="list-disc pl-6 mt-2 font-bold text-foreground">
-                                {missingDocs.map((doc, i) => <li key={i}>{doc}</li>)}
-                            </ul>
-                            <p className="mt-4">You can proceed to prepare the MRR for logistics purposes, or go back to the PO to upload the final documents now.</p>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => {
-                            setIsDocWarningOpen(false);
-                            if (pendingPoForMrr) window.open(`/procurement/local-purchase/purchase-orders/${pendingPoForMrr.id}`, '_blank');
-                        }}>Go to PO (Upload)</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {
-                            setSelectedPoForMrr(pendingPoForMrr);
-                            setIsMrrFormOpen(true);
-                            setIsDocWarningOpen(false);
-                        }}>Proceed Anyway</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {isMrrFormOpen && (
-                <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
-            )}
-
-            {isGuideOpen && <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
         </TooltipProvider>
     );
 }

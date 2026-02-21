@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -13,7 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, ShieldCheck, UserCheck, Tag } from 'lucide-react';
+import { 
+    PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, 
+    CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, 
+    ShieldCheck, UserCheck, CheckCircle2, PackageCheck
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -98,10 +101,11 @@ export function DemandNoteTable() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { demandNotes, employees, sections, comparativeStatements, purchaseOrders, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, comparativeStatements, purchaseOrders, mrrs, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
+    const mrrRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -157,6 +161,7 @@ export function DemandNoteTable() {
             const po = purchaseOrders?.find(p => p.demandNoteId === dn.id);
             const creator = employees?.find(e => e.id === dn.createdBy);
             const concern = employees?.find(e => e.id === dn.gpConcernOfficerId);
+            const mrr = mrrs?.find(m => m.demandNoteNumber === dn.demandNoteNumber);
             
             return {
                 ...dn,
@@ -166,9 +171,11 @@ export function DemandNoteTable() {
                 poPreparedDate: po?.createdAt || null,
                 hasCs: !!cs,
                 hasPo: !!po,
+                mrrId: mrr?.id || null,
+                mrrConfirmed: !!mrr?.requesterConfirmedAt
             };
         });
-    }, [demandNotes, comparativeStatements, purchaseOrders, employees]);
+    }, [demandNotes, comparativeStatements, purchaseOrders, mrrs, employees]);
 
     const filteredItems = useMemo(() => {
         return enrichedItems.filter(item => {
@@ -272,6 +279,15 @@ export function DemandNoteTable() {
 
         toast({ title: 'Success', description: `${selectedRows.length} records processed.` });
         setSelectedRows([]);
+    };
+
+    const handleConfirmMRR = (mrrId: string) => {
+        if (!firestore || !mrrRef || !currentUserEmployee) return;
+        setDocumentNonBlocking(doc(mrrRef, mrrId), {
+            requesterConfirmedAt: new Date().toISOString(),
+            requesterConfirmedBy: currentUserEmployee.id
+        }, { merge: true });
+        toast({ title: 'Receipt Confirmed', description: 'Your official acknowledgement has been recorded.' });
     };
 
     const handleSave = (data: Partial<DemandNote>) => {
@@ -381,10 +397,11 @@ export function DemandNoteTable() {
                                 filteredItems.map(item => {
                                     const isWaitingForApproval = currentUserEmployee && item.currentApproverId === currentUserEmployee.id && item.approvalStatus !== 1 && item.approvalStatus !== 0;
                                     const isWaitingForGP = (roleData.isGPOfficer || roleData.isSuperAdmin) && item.approvalStatus === 1 && !item.gpConcernOfficerId;
+                                    const canConfirmMRR = item.mrrId && !item.mrrConfirmed && currentUserEmployee?.id === item.createdBy;
                                     const isApprovable = approvableItems.some(ai => ai.id === item.id);
 
                                     return (
-                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || isWaitingForGP) && "bg-orange-500/5")}>
+                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || isWaitingForGP || canConfirmMRR) && "bg-orange-500/5")}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(item.id)}
@@ -419,6 +436,9 @@ export function DemandNoteTable() {
                                                     {isWaitingForGP && (
                                                         <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>
                                                     )}
+                                                    {canConfirmMRR && (
+                                                        <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap">✅ Confirm Receipt</Badge>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -431,6 +451,9 @@ export function DemandNoteTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    {canConfirmMRR && (
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => handleConfirmMRR(item.mrrId!)}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Confirm MRR Receipt</TooltipContent></Tooltip>
+                                                    )}
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedNoteForStatus(item); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Approval Flow</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent className="animate-scale-in">View Details</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print DN</TooltipContent></Tooltip>

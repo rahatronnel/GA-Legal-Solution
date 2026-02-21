@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, History, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer, Send } from 'lucide-react';
+import { Search, CheckCircle2, Clock, User, Building, FileText, ShoppingCart, ChevronRight, Package, Timer, Send } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,7 +24,7 @@ type TimelineEvent = {
         designation: string;
         image?: string;
     };
-    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr' | 'sending';
+    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr' | 'sending' | 'confirmation';
     status: 'completed' | 'pending' | 'rejected';
 };
 
@@ -168,7 +167,6 @@ export function WorkflowTracker() {
 
             // PO Approvals
             po.approvalHistory?.forEach((h: any, i: number) => {
-                const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
                 events.push({
                     id: `po-appr-${i}`,
                     title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval',
@@ -205,6 +203,19 @@ export function WorkflowTracker() {
                 type: 'mrr',
                 status: 'completed'
             });
+
+            // 8. Requester Confirmation
+            if (mrr.requesterConfirmedAt) {
+                events.push({
+                    id: 'mrr-confirmation',
+                    title: 'Requester Acknowledgement',
+                    description: `Issuing Officer confirmed final receipt quality and quantity.`,
+                    timestamp: mrr.requesterConfirmedAt,
+                    user: getEmployeeInfo(mrr.requesterConfirmedBy),
+                    type: 'confirmation',
+                    status: 'completed'
+                });
+            }
         }
 
         return events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -324,6 +335,7 @@ export function WorkflowTracker() {
                                                 {event.type === 'po' && <Building className="h-4 w-4" />}
                                                 {event.type === 'sending' && <Send className="h-4 w-4" />}
                                                 {event.type === 'mrr' && <Package className="h-4 w-4" />}
+                                                {event.type === 'confirmation' && <BadgeCheck className="h-4 w-4" />}
                                             </div>
 
                                             <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -379,4 +391,24 @@ export function WorkflowTracker() {
             </Card>
         </div>
     );
+}
+
+function BadgeCheck({ className }: { className?: string }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+        >
+            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+            <path d="m9 12 2 2 4-4" />
+        </svg>
+    )
 }
