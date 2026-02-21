@@ -61,7 +61,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-black tracking-tight text-white">PO Master Operational Guide</DialogTitle>
-                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard operating procedures for formal vendor commitment &amp; legal documentation.</DialogDescription>
+                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard operating procedures for formal vendor commitment & legal documentation.</DialogDescription>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@ function POApprovalWizard({
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <h3 className="font-bold flex items-center gap-2"><Info className="h-5 w-5 text-blue-500" /> Step 1: Vendor Audit</h3>
                             <Card className="bg-muted/30 p-4 border-primary/10">
-                                <CardContent className="p-0">
+                                <CardContent className="p-0 pt-4">
                                     <p className="font-bold text-lg">{vendor?.vendorName}</p>
                                     <p className="text-sm text-muted-foreground">{vendor?.officeAddress}</p>
                                 </CardContent>
@@ -236,7 +236,7 @@ function POApprovalWizard({
                     {step < 3 ? (
                         <Button onClick={() => setStep(prev => prev + 1)}>Next Review Step <ChevronRight className="ml-2 h-4 w-4" /></Button>
                     ) : (
-                        <Button variant="destructive" onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve &amp; Sign PO</Button>
+                        <Button variant="destructive" onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve & Sign PO</Button>
                     )}
                 </DialogFooter>
             </DialogContent>
@@ -492,7 +492,7 @@ export function PurchaseOrderTable() {
 
         <POApprovalWizard isOpen={isApprovalWizardOpen} onOpenChange={setIsApprovalWizardOpen} po={selectedPoForApproval} onApprove={() => handleApprovalAction(selectedPoForApproval!.id)} vendor={vendors.find(v => v.id === selectedPoForApproval?.vendorId)} />
         
-        {isGuideOpen && <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
+        <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
         <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
             <DialogContent className="sm:max-md animate-dialog-in">

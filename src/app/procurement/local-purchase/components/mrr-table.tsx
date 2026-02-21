@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -68,7 +67,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-black tracking-tight text-white">MRR Master Operational Guide</DialogTitle>
-                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard standards for physical material receipt, quality audit, and evidence collection.</DialogDescription>
+                            <DialogDescription className="text-primary-foreground/80 font-medium">Internal standards for material receipt, quality audit, and evidence collection.</DialogDescription>
                         </div>
                     </div>
                 </div>
@@ -249,7 +248,7 @@ function FinalizeMrrDialog({
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-between animate-scale-in">
-                                    {selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}
+                                    {selectedEmployee ? selectedEmployee.fullName : "Select verifier..."}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
@@ -293,7 +292,6 @@ export function MRRTable() {
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedMrrForStatus, setSelectedMrrForStatus] = useState<MRR | null>(null);
     
-    // Warning system for missing documents
     const [isDocWarningOpen, setIsDocWarningOpen] = useState(false);
     const [missingDocs, setMissingDocs] = useState<string[]>([]);
     const [pendingPoForMrr, setPendingPoForMrr] = useState<PurchaseOrder | null>(null);
@@ -527,7 +525,7 @@ export function MRRTable() {
 
             <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={demandNotes || []} />
             
-            {isGuideOpen && <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
+            <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md animate-dialog-in">

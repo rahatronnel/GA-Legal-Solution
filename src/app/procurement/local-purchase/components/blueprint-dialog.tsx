@@ -123,7 +123,7 @@ export function BlueprintDialog({
                             </div>
                             <div className="space-y-1">
                                 <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">Operational Blueprint Master</h1>
-                                <p className="text-sm font-bold text-primary-foreground/60 uppercase tracking-[0.3em]">End-to-End Local Purchase Lifecycle &amp; Logic Matrix</p>
+                                <p className="text-sm font-bold text-primary-foreground/60 uppercase tracking-[0.3em]">End-to-End Local Purchase Lifecycle & Logic Matrix</p>
                             </div>
                         </div>
                         <div className="flex gap-4">
@@ -145,7 +145,7 @@ export function BlueprintDialog({
                                 <TabsTrigger value="access" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><Lock className="h-4 w-4"/> Access Matrix</TabsTrigger>
                                 <TabsTrigger value="notifications" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><Bell className="h-4 w-4"/> Notification Engine</TabsTrigger>
                                 <TabsTrigger value="requisition" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><FileText className="h-4 w-4"/> DN Logic</TabsTrigger>
-                                <TabsTrigger value="execution" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><ShoppingCart className="h-4 w-4"/> PO &amp; Compliance</TabsTrigger>
+                                <TabsTrigger value="execution" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><ShoppingCart className="h-4 w-4"/> PO & Compliance</TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -293,7 +293,7 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="execution" className="mt-0">
-                                    <BlueprintSection icon={ClipboardCheck} title="Contract Execution &amp; Receipt Compliance" colorClass="bg-purple-600 border-purple-800">
+                                    <BlueprintSection icon={ClipboardCheck} title="Contract Execution & Receipt Compliance" colorClass="bg-purple-600 border-purple-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-6">
                                                 <h4 className="font-black uppercase tracking-tight text-lg flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-purple-600"/> Purchase Order (PO) Standard</h4>
@@ -359,7 +359,7 @@ export function BlueprintDialog({
                             <div className="flex -space-x-3">
                                 {[1,2,3,4].map(i => <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-primary text-[10px] font-black flex items-center justify-center text-white shadow-md shadow-primary/20">YK</div>)}
                             </div>
-                            <p className="text-xs font-bold text-muted-foreground italic">Authorized for presentation to Client &amp; Management Auditors.</p>
+                            <p className="text-xs font-bold text-muted-foreground italic">Authorized for presentation to Client & Management Auditors.</p>
                         </div>
                         <Button onClick={() => onOpenChange(false)} className="px-12 font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20">Exit Blueprint View</Button>
                     </div>

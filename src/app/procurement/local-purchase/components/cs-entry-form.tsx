@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPin, DollarSign, Clock, CheckCircle2, Upload, FileText, X } from 'lucide-react';
+import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPin, DollarSign, Clock, CheckCircle2, Upload, FileText, X, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
