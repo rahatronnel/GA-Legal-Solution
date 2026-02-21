@@ -20,7 +20,7 @@ import {
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
     Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
-    History, Layers, UserPlus, Tag, Bell, Lock, Eye
+    History, Layers, UserPlus, Tag, Bell, Lock, Eye, Briefcase
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';

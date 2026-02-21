@@ -241,7 +241,7 @@ const VendorSelectionDialog: React.FC<{
                     {step === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-2">
-                                <Label className="text-lg">Step 1: Select Vendor &amp; Review Financials</Label>
+                                <Label className="text-lg">Step 1: Select Vendor & Review Financials</Label>
                                 <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
                                     <SelectTrigger className="h-12 text-lg animate-scale-in"><SelectValue placeholder="Choose a vendor to award..." /></SelectTrigger>
                                     <SelectContent className="animate-scale-in">
