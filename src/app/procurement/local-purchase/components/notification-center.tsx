@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { 
     Bell, Check, Clock, ExternalLink, 
-    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info 
+    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info, AlertTriangle 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,6 +27,7 @@ type Task = {
     status: string;
     createdAt: string;
     isOverdue?: boolean;
+    reminderCount: number;
 };
 
 export function NotificationCenter() {
@@ -58,46 +59,58 @@ export function NotificationCenter() {
         const uid = currentUserEmployee.id;
         const now = new Date();
 
+        const calculateReminders = (timestamp: string) => {
+            const hoursPending = differenceInHours(now, parseISO(timestamp));
+            return {
+                isOverdue: hoursPending >= reminderThreshold,
+                reminderCount: Math.floor(hoursPending / reminderThreshold)
+            };
+        };
+
         // 1. Demand Notes Lifecycle
         demandNotes.forEach(dn => {
             const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
             
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
+                const r = calculateReminders(dn.entryDate);
                 list.push({
                     id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber,
                     description: 'Awaiting your internal approval signature.',
                     link: `/procurement/local-purchase/demand-notes/${dn.id}`,
                     status: 'Pending Approval', createdAt: dn.entryDate,
-                    isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
+                    ...r
                 });
             }
             
             if (isGPOfficer && dn.approvalStatus === 1 && !dn.gpConcernOfficerId) {
+                const r = calculateReminders(dn.entryDate);
                 list.push({
                     id: dn.id + '-assign', type: 'Demand Note', title: dn.demandNoteNumber,
                     description: 'Approved. Please assign a GP Concern Officer.',
                     link: `/procurement/local-purchase?tab=gp-desk`,
                     status: 'GP Assignment Needed', createdAt: dn.entryDate,
-                    isOverdue: differenceInHours(now, parseISO(dn.entryDate)) >= reminderThreshold
+                    ...r
                 });
             }
 
             if (dn.gpConcernOfficerId === uid && dn.approvalStatus === 1) {
                 if (!dn.quotations || dn.quotations.length === 0) {
+                    const r = calculateReminders(dn.gpAssignedDate || dn.entryDate);
                     list.push({
                         id: dn.id + '-source', type: 'Demand Note', title: dn.demandNoteNumber,
                         description: 'You are assigned. Please assign vendors for quotations.',
                         link: `/procurement/local-purchase?tab=gp-desk`,
                         status: 'Vendor Sourcing Needed', createdAt: dn.gpAssignedDate || dn.entryDate,
-                        isOverdue: dn.gpAssignedDate ? differenceInHours(now, parseISO(dn.gpAssignedDate)) >= reminderThreshold : false
+                        ...r
                     });
                 } else if (!comparativeStatements.some(cs => cs.demandNoteId === dn.id)) {
+                    const r = calculateReminders(dn.vendorAssignmentDate || dn.entryDate);
                     list.push({
                         id: dn.id + '-cs', type: 'Demand Note', title: dn.demandNoteNumber,
                         description: 'Quotations collected. Please prepare the CS.',
                         link: `/procurement/local-purchase?tab=gp-desk`,
                         status: 'CS Preparation Needed', createdAt: dn.vendorAssignmentDate || dn.entryDate,
-                        isOverdue: dn.vendorAssignmentDate ? differenceInHours(now, parseISO(dn.vendorAssignmentDate)) >= reminderThreshold : false
+                        ...r
                     });
                 }
             }
@@ -109,30 +122,33 @@ export function NotificationCenter() {
             const poExists = purchaseOrders.some(p => p.csId === cs.id);
             
             if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
+                const r = calculateReminders(cs.csDate);
                 list.push({
                     id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber,
                     description: 'CS Prepared. Please select the awarded vendor.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Award Selection Required', createdAt: cs.csDate,
-                    isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
+                    ...r
                 });
             } 
             else if (cs.approvalStatus === 1 && !poExists && (relatedDN?.gpConcernOfficerId === uid || orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid)) {
+                const r = calculateReminders(cs.csDate);
                 list.push({
                     id: cs.id + '-po-prep', type: 'Purchase Order', title: cs.csNumber,
                     description: 'CS Approved. Please prepare the Purchase Order.',
                     link: `/procurement/local-purchase?tab=po`,
                     status: 'PO Preparation Needed', createdAt: cs.csDate, 
-                    isOverdue: differenceInHours(now, parseISO(cs.csDate)) >= reminderThreshold
+                    ...r
                 });
             } 
             else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
+                const r = calculateReminders(cs.vendorSelectionDate || cs.csDate);
                 list.push({
                     id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber,
                     description: 'Awaiting your analysis approval signature.',
                     link: `/procurement/local-purchase/comparative-statements/${cs.id}`,
                     status: 'Pending Approval', createdAt: cs.vendorSelectionDate || cs.csDate,
-                    isOverdue: cs.vendorSelectionDate ? differenceInHours(now, parseISO(cs.vendorSelectionDate)) >= reminderThreshold : false
+                    ...r
                 });
             }
         });
@@ -143,32 +159,35 @@ export function NotificationCenter() {
             const isConcern = relatedDN?.gpConcernOfficerId === uid;
 
             if (po.currentApproverId === uid && po.approvalStatus !== 1 && po.approvalStatus !== 0) {
+                const r = calculateReminders(po.createdAt);
                 list.push({
                     id: po.id, type: 'Purchase Order', title: po.poNumber,
                     description: 'Formal commitment awaiting your signature.',
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'Pending Approval', createdAt: po.createdAt,
-                    isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
+                    ...r
                 });
             }
 
             if (isConcern && po.approvalStatus === 1 && !po.isSentToVendor) {
+                const r = calculateReminders(po.createdAt);
                 list.push({
                     id: po.id + '-send', type: 'Purchase Order', title: po.poNumber,
                     description: 'PO is fully approved. Please send it to the vendor.',
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'PO Dispatch Required', createdAt: po.createdAt,
-                    isOverdue: differenceInHours(now, parseISO(po.createdAt)) >= reminderThreshold
+                    ...r
                 });
             }
 
             if (isConcern && po.isSentToVendor && !mrrs.some(m => m.poId === po.id)) {
+                const r = calculateReminders(po.sentToVendorDate || po.createdAt);
                 list.push({
                     id: po.id + '-mrr', type: 'MRR', title: po.poNumber,
                     description: 'PO sent to vendor. Please prepare the MRR upon receipt.',
                     link: `/procurement/local-purchase/purchase-orders/${po.id}`,
                     status: 'MRR Preparation Needed', createdAt: po.sentToVendorDate || po.createdAt,
-                    isOverdue: po.sentToVendorDate ? differenceInHours(now, parseISO(po.sentToVendorDate)) >= reminderThreshold : false
+                    ...r
                 });
             }
         });
@@ -177,30 +196,33 @@ export function NotificationCenter() {
             const relatedDN = demandNotes.find(dn => dn.demandNoteNumber === mrr.demandNoteNumber);
             
             if (relatedDN && relatedDN.createdBy === uid && !mrr.requesterConfirmedAt) {
+                const r = calculateReminders(mrr.createdAt);
                 list.push({
                     id: mrr.id + '-confirm-receipt', type: 'MRR', title: mrr.mrrNumber,
                     description: 'Goods delivered at gate. Please confirm receipt quality and quantity.',
                     link: `/procurement/local-purchase?tab=demand-notes`,
                     status: 'Requester Verification Needed', createdAt: mrr.createdAt,
-                    isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
+                    ...r
                 });
             }
 
             if (mrr.approvalStatus === 2 && mrr.createdBy === uid) {
+                const r = calculateReminders(mrr.createdAt);
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,
                     description: 'Finalize with Bill/Challan scans.',
                     link: `/procurement/local-purchase/mrrs/${mrr.id}`,
                     status: 'Finalization Required', createdAt: mrr.createdAt,
-                    isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
+                    ...r
                 });
             } else if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
+                const r = calculateReminders(mrr.createdAt);
                 list.push({
                     id: mrr.id, type: 'MRR', title: mrr.mrrNumber,
                     description: 'Awaiting your report approval.',
                     link: `/procurement/local-purchase/mrrs/${mrr.id}`,
                     status: 'Pending Approval', createdAt: mrr.createdAt,
-                    isOverdue: differenceInHours(now, parseISO(mrr.createdAt)) >= reminderThreshold
+                    ...r
                 });
             }
         });
@@ -255,7 +277,11 @@ export function NotificationCenter() {
                                             {task.type === 'MRR' && <Package className="h-3 w-3" />}
                                         </div>
                                         <span className="text-[10px] font-bold uppercase tracking-widest">{task.type}</span>
-                                        {task.isOverdue && <Badge variant="destructive" className="ml-auto text-[8px] h-4 animate-pulse">Urgent Reminder</Badge>}
+                                        {task.reminderCount > 0 && (
+                                            <Badge variant="destructive" className="ml-auto text-[8px] h-4 animate-pulse uppercase font-black">
+                                                Urgent: Reminder #{task.reminderCount}
+                                            </Badge>
+                                        )}
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
                                         <p className="font-bold text-sm truncate">{task.title}</p>

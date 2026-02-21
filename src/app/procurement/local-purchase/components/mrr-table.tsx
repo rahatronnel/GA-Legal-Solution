@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -380,6 +381,23 @@ export function MRRTable() {
         } catch (err) { toast({ variant: 'destructive', title: 'Delete Failed' }); }
     };
 
+    const handlePrepareMrrWithWarning = (po: PurchaseOrder) => {
+        const missing: string[] = [];
+        if (!po.documents?.poAcknowledgement?.length) missing.push('PO Acknowledgement');
+        if (!po.documents?.invoice?.length) missing.push('Vendor Invoice');
+        if (!po.documents?.mushok?.length) missing.push('Mushok (VAT)');
+        if (!po.documents?.challan?.length) missing.push('Delivery Challan');
+
+        if (missing.length > 0) {
+            setMissingDocs(missing);
+            setPendingPoForMrr(po);
+            setIsDocWarningOpen(true);
+        } else {
+            setSelectedPoForMrr(po);
+            setIsMrrFormOpen(true);
+        }
+    };
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -532,6 +550,39 @@ export function MRRTable() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={isDocWarningOpen} onOpenChange={setIsDocWarningOpen}>
+                <AlertDialogContent className="animate-dialog-in">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-2 text-destructive mb-2">
+                            <AlertTriangle className="h-6 w-6" />
+                            <AlertDialogTitle>Missing Mandatory Evidence</AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription>
+                            The following Purchase Order documents have not been uploaded:
+                            <ul className="list-disc pl-6 mt-2 font-bold text-foreground">
+                                {missingDocs.map((doc, i) => <li key={i}>{doc}</li>)}
+                            </ul>
+                            <p className="mt-4 text-xs">You can proceed to prepare the MRR for urgent logistics, or go to the PO to upload the final scans now.</p>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setIsDocWarningOpen(false);
+                            if (pendingPoForMrr) window.open(`/procurement/local-purchase/purchase-orders/${pendingPoForMrr.id}`, '_blank');
+                        }}>Go to PO (Upload)</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            setSelectedPoForMrr(pendingPoForMrr);
+                            setIsMrrFormOpen(true);
+                            setIsDocWarningOpen(false);
+                        }}>Proceed Anyway</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {isMrrFormOpen && (
+                <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
+            )}
         </TooltipProvider>
     );
 }
