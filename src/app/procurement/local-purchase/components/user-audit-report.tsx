@@ -158,7 +158,7 @@ export function UserAuditReport() {
         <div className="space-y-4 flex flex-col h-full min-h-0 p-2">
             {/* ULTRA COMPACT FILTER BAR */}
             <div className="flex flex-wrap items-end gap-3 p-3 border rounded-xl bg-background shadow-sm shrink-0">
-                <div className="flex-1 min-w-[180px]">
+                <div className="flex-1 min-w-[120px] max-w-[180px]">
                     <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Quick Search</Label>
                     <div className="relative">
                         <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
@@ -171,8 +171,8 @@ export function UserAuditReport() {
                     </div>
                 </div>
 
-                <div className="w-[160px]">
-                    <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block text-blue-600">Target Personnel</Label>
+                <div className="w-[140px]">
+                    <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block text-blue-600">Personnel</Label>
                     <Popover open={userPopoverOpen} onOpenChange={setUserPopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-between h-8 bg-background font-bold text-xs px-2">
@@ -210,31 +210,31 @@ export function UserAuditReport() {
                     </Popover>
                 </div>
 
-                <div className="w-[140px]">
+                <div className="w-[120px]">
                     <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Department</Label>
                     <Select value={deptId} onValueChange={setDeptId}>
                         <SelectTrigger className="h-8 text-xs font-bold"><SelectValue placeholder="All" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Departments</SelectItem>
+                            <SelectItem value="all">All</SelectItem>
                             {(departments || []).map(d => <SelectItem key={d.id} value={d.id} className="text-xs">{d.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
 
-                <div className="w-[140px]">
+                <div className="w-[120px]">
                     <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Section</Label>
                     <Select value={sectionId} onValueChange={setSectionId}>
                         <SelectTrigger className="h-8 text-xs font-bold"><SelectValue placeholder="All" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Sections</SelectItem>
+                            <SelectItem value="all">All</SelectItem>
                             {(sections || []).map(s => <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
 
-                <div className="w-[240px]">
+                <div className="w-[220px]">
                     <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Execution Window</Label>
-                    <DateRangePicker date={dateRange} onDateChange={setDateRange} className="h-8 [&_button]:h-8 [&_button]:text-xs [&_button]:font-bold" />
+                    <DateRangePicker date={dateRange} onDateChange={setDateRange} className="h-8 [&_button]:h-8 [&_button]:text-xs [&_button]:font-bold [&_button]:w-full" />
                 </div>
 
                 <Button 
