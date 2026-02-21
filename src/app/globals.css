@@ -73,19 +73,19 @@ body {
         transform-origin: top right;
     }
 
-    /* Ultra-Smooth Wavy macOS Genie Transition - Perfectly Centered & No Jump */
+    /* Ultra-Smooth Wavy macOS Genie Transition - Perfectly Centered */
     .animate-dialog-in {
-        animation: dialogWavyGenie 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    /* Elite Scale Transition for Selects/Popovers */
-    .animate-scale-in {
-        animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: dialogWavyGenie 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     /* Bouncy Bell Notification Heartbeat */
     .animate-bell-ring {
         animation: bellRing 2s ease-in-out infinite;
+    }
+
+    /* Refined Scale Transition */
+    .animate-scale-in {
+        animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes liquidGenie {
@@ -97,9 +97,6 @@ body {
         60% {
             transform: scale(1.1) translateY(5px) rotate(2deg);
         }
-        80% {
-            transform: scale(0.95) translateY(-2px) rotate(-1deg);
-        }
         100% {
             opacity: 1;
             transform: scale(1) translateY(0) rotate(0deg);
@@ -110,21 +107,18 @@ body {
     @keyframes dialogWavyGenie {
         0% {
             opacity: 0;
-            transform: translate(-50%, -20%) scaleX(0.1) scaleY(0.01);
+            transform: translate(-50%, -50%) scale(0.1);
             filter: blur(15px);
         }
         30% {
             opacity: 0.5;
-            transform: translate(-50%, -60%) scaleX(1.15) scaleY(0.7);
+            transform: translate(-50%, -50%) scaleX(1.15) scaleY(0.7);
         }
         55% {
-            transform: translate(-50%, -45%) scaleX(0.9) scaleY(1.1);
+            transform: translate(-50%, -50%) scaleX(0.9) scaleY(1.1);
         }
         75% {
-            transform: translate(-50%, -52%) scaleX(1.05) scaleY(0.95);
-        }
-        90% {
-            transform: translate(-50%, -49%) scaleX(0.98) scaleY(1.02);
+            transform: translate(-50%, -50%) scaleX(1.05) scaleY(0.95);
         }
         100% {
             opacity: 1;
@@ -136,7 +130,7 @@ body {
     @keyframes scaleIn {
         from {
             opacity: 0;
-            transform: scale(0.9) translateY(-5px);
+            transform: scale(0.95) translateY(-5px);
         }
         to {
             opacity: 1;

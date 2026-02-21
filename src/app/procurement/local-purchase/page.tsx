@@ -38,7 +38,7 @@ import { Separator } from '@/components/ui/separator';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
-  const { orgSettings, employees, demandNotes, comparativeStatements, purchaseOrders, mrrs } = useProcurement();
+  const { orgSettings, employees } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -58,12 +58,12 @@ function LocalPurchaseContent() {
     const settings = orgSettings?.procurementSettings;
 
     if (!settings || !employees || !user) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false, isCurrentApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
 
     const currentEmp = employees.find((e: any) => e.email === user.email);
     if (!currentEmp) {
-      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isCsApprover: false, isCurrentApprover: false };
+      return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false };
     }
 
     const GPO = settings.generalPurchaseOfficerId === currentEmp.id;
@@ -136,7 +136,7 @@ function LocalPurchaseContent() {
                         <UserCheck className="h-5 w-5 text-primary" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="animate-scale-in">User Audit & Response Report</TooltipContent>
+                <TooltipContent className="animate-scale-in">User Activity Audit</TooltipContent>
             </Tooltip>
 
             <Separator orientation="vertical" className="h-8 mx-2" />
@@ -147,32 +147,26 @@ function LocalPurchaseContent() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full h-auto p-1 bg-muted/50 rounded-xl" style={{ gridTemplateColumns: `repeat(${gridColsCount}, minmax(0, 1fr))` }}>
           {tabsList.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg">
+            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 rounded-lg data-[state=active]:bg-background transition-all">
                 <tab.icon className="h-4 w-4" />
-                <span className="hidden lg:inline font-bold text-xs uppercase tracking-tight">{tab.label}</span>
+                <span className="hidden lg:inline font-bold text-xs uppercase">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <Card className="border-none shadow-none bg-transparent">
-            <DemandNoteTable />
-          </Card>
+        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2">
+          <DemandNoteTable />
         </TabsContent>
-
-        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2">
           <GPDeskTable />
         </TabsContent>
-
-        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2">
           <ComparativeStatementTable />
         </TabsContent>
-
-        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2">
           <PurchaseOrderTable />
         </TabsContent>
-
-        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2">
           <MRRTable />
         </TabsContent>
 
@@ -212,21 +206,17 @@ function LocalPurchaseContent() {
         )}
       </Tabs>
 
-      {/* --- Global Analysis Dialogs --- */}
-      
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
         <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
             <div className="p-6 flex-grow overflow-hidden">
                 <div className="flex justify-between items-center mb-4">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black">Fleet & Procurement Workflow Tracker</DialogTitle>
-                        <DialogDescription>Full audit trail and lifecycle visibility for every requisition.</DialogDescription>
+                        <DialogDescription>Audit trail and lifecycle visibility.</DialogDescription>
                     </DialogHeader>
                     <Button variant="ghost" size="icon" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
-                <div className="h-full pb-12">
-                    <WorkflowTracker />
-                </div>
+                <WorkflowTracker />
             </div>
         </DialogContent>
       </Dialog>
@@ -234,10 +224,10 @@ function LocalPurchaseContent() {
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
         <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0">
             <div className="p-6 flex-grow overflow-hidden">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 border-b pb-4">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black">User Activity Audit & Response Metrics</DialogTitle>
-                        <DialogDescription>Analyze organizational efficiency and individual user performance lag times.</DialogDescription>
+                        <DialogDescription>Analyze organizational efficiency and user performance lag times.</DialogDescription>
                     </DialogHeader>
                     <Button variant="ghost" size="icon" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
@@ -253,7 +243,7 @@ function LocalPurchaseContent() {
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium text-muted-foreground text-xl font-black uppercase tracking-widest">Handshaking Database...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-black text-muted-foreground">Handshaking Database...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );

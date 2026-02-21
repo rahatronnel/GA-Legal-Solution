@@ -5,14 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { useProcurement } from './procurement-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
-import { format, parseISO, isWithinInterval, differenceInHours, differenceInMinutes } from 'date-fns';
+import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { UserCheck, Clock, CheckCircle2, AlertTriangle, Timer, Calendar, Search, Filter } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 type ActivityItem = {
     id: string;
@@ -36,10 +38,8 @@ export function UserAuditReport() {
 
         // Aggregate All Histories
         demandNotes.forEach(dn => {
-            // Creation
             list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy } as any);
             
-            // Approvals
             dn.approvalHistory?.forEach((h: any, i: number) => {
                 const prevActionTime = i === 0 ? dn.entryDate : dn.approvalHistory[i-1].timestamp;
                 list.push({ 
@@ -50,7 +50,6 @@ export function UserAuditReport() {
                 } as any);
             });
 
-            // GP Assignment
             if (dn.gpAssignedDate) {
                 list.push({ 
                     id: dn.id + '-gpa', type: 'Demand Note', action: 'Assigned GP Concern', 
@@ -60,7 +59,6 @@ export function UserAuditReport() {
                 } as any);
             }
 
-            // Vendor Assignment
             if (dn.vendorAssignmentDate) {
                 list.push({ 
                     id: dn.id + '-va', type: 'Demand Note', action: 'Assigned Vendors', 
@@ -125,13 +123,13 @@ export function UserAuditReport() {
 
     const getLagColor = (minutes?: number) => {
         if (minutes === undefined) return 'text-muted-foreground';
-        if (minutes < 120) return 'text-green-600 font-bold'; // < 2hrs
-        if (minutes < 1440) return 'text-orange-500 font-semibold'; // < 24hrs
-        return 'text-destructive font-black'; // > 24hrs
+        if (minutes < 120) return 'text-green-600 font-bold';
+        if (minutes < 1440) return 'text-orange-500 font-semibold';
+        return 'text-destructive font-black';
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><UserCheck className="h-4 w-4" /> Filter by User</Label>
