@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -361,10 +362,8 @@ export function ComparativeStatementTable() {
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
-            // Strict Approver Access: Admin/Managers see all, Approvers see only their relevant lists
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
-                // Restricted Visibility: Must have created it, be current approver, or have previously approved
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
                     cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) {

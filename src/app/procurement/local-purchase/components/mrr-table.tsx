@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -266,7 +267,7 @@ function FinalizeMrrDialog({
 };
 
 export function MRRTable() {
-    const { mrrs, employees, orgSettings, demandNotes, isLoading } = useProcurement();
+    const { mrrs, employees, orgSettings, demandNotes, purchaseOrders, comparativeStatements, isLoading } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -282,6 +283,11 @@ export function MRRTable() {
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
+    const handleCopy = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast({ title: `${label} Copied`, description: `${text} is ready to paste.` });
+    };
 
     const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -370,7 +376,9 @@ export function MRRTable() {
                         <TableHeader>
                             <TableRow className="bg-muted/50">
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                                <TableHead className="font-bold">MRR Details</TableHead>
+                                <TableHead className="font-bold">MRR Number</TableHead>
+                                <TableHead className="font-bold">PO Number</TableHead>
+                                <TableHead className="font-bold">CS & DN Refs</TableHead>
                                 <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
                                 <TableHead className="font-bold text-right">Amount</TableHead>
@@ -380,9 +388,13 @@ export function MRRTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={9} className="text-center py-10">Loading records...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
                                 filteredMrrs.map(mrr => {
+                                    const po = purchaseOrders?.find(p => p.poNumber === mrr.poId || p.id === mrr.poId);
+                                    const cs = comparativeStatements?.find(c => c.id === po?.csId);
+                                    const dn = demandNotes?.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
+
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
                                     const isWaitingForApproval = currentUserEmployee && mrr.currentApproverId === currentUserEmployee.id && mrr.approvalStatus > 2;
                                     const isApprovable = approvableItems.some(i => i.id === mrr.id);
@@ -391,17 +403,48 @@ export function MRRTable() {
                                     return (
                                         <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) ? 'bg-orange-500/5' : '')}>
                                             <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
-                                            <TableCell><div className="flex flex-col"><span className="font-bold">{mrr.mrrNumber}</span><span className="text-[10px] text-muted-foreground">PO: {mrr.poId}</span></div></TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1 group/mrr">
+                                                    <span className="font-bold text-xs">{mrr.mrrNumber}</span>
+                                                    <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/mrr:opacity-100 transition-opacity" onClick={() => handleCopy(mrr.mrrNumber, 'MRR')}>
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1 group/po">
+                                                    <Badge variant="outline" className="text-[10px] bg-blue-50/50 border-blue-200 text-blue-700">{po?.poNumber || mrr.poId}</Badge>
+                                                    <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/po:opacity-100 transition-opacity" onClick={() => handleCopy(po?.poNumber || mrr.poId, 'PO')}>
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1">
+                                                    {cs && (
+                                                        <div className="flex items-center gap-1 group/cs">
+                                                            <Badge variant="outline" className="text-[9px] h-4 bg-amber-50/50 border-amber-200 text-amber-700">CS: {cs.csNumber}</Badge>
+                                                            <Button variant="ghost" size="icon" className="h-3 w-3 opacity-0 group-hover/cs:opacity-100 transition-opacity" onClick={() => handleCopy(cs.csNumber, 'CS')}>
+                                                                <Copy className="h-2.5 w-2.5" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {dn && (
+                                                        <div className="flex items-center gap-1 group/dn">
+                                                            <Badge variant="outline" className="text-[9px] h-4 bg-emerald-50/50 border-emerald-200 text-emerald-700">DN: {dn.demandNoteNumber}</Badge>
+                                                            <Button variant="ghost" size="icon" className="h-3 w-3 opacity-0 group-hover/dn:opacity-100 transition-opacity" onClick={() => handleCopy(dn.demandNoteNumber, 'DN')}>
+                                                                <Copy className="h-2.5 w-2.5" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell><span className="text-xs">{employees?.find(e => e.id === mrr.createdBy)?.fullName}</span></TableCell>
                                             <TableCell><span className="text-xs truncate max-w-[150px]" title={mrr.supplierName}>{mrr.supplierName}</span></TableCell>
                                             <TableCell className="text-right font-mono font-bold text-primary">{mrr.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-1 items-start py-1 text-[10px]">
                                                     <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap text-[9px] h-4">{getMRRStatusText(mrr)}</Badge>
-                                                    <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
-                                                        <span>{new Date(mrr.createdAt).toLocaleDateString()}</span>
-                                                        <span>{new Date(mrr.createdAt).toLocaleTimeString()}</span>
-                                                    </div>
                                                     {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Finalize Required</Badge>}
                                                     {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Approve Report</Badge>}
                                                 </div>
@@ -429,7 +472,7 @@ export function MRRTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No reports found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={9} className="h-32 text-center text-muted-foreground">No reports found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -35,7 +36,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { MRREntryForm } from './mrr-entry-form';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
@@ -429,7 +429,7 @@ export function PurchaseOrderTable() {
         {isGuideOpen && <POUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
 
         <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-            <DialogContent className="sm:max-w-md animate-dialog-in">
+            <DialogContent className="sm:max-md animate-dialog-in">
                 <DialogHeader><DialogTitle>PO Audit Flow: {selectedPoForStatus?.poNumber}</DialogTitle></DialogHeader>
                 <div className="py-4 space-y-4">
                     {selectedPoForStatus?.approvalFlow?.steps.map((step, index) => {
