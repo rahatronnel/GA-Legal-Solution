@@ -51,7 +51,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-black tracking-tight text-white">PO Master Operational Guide</DialogTitle>
-                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard operating procedures for formal vendor commitment & legal documentation.</DialogDescription>
+                            <DialogDescription className="text-primary-foreground/80 font-medium">Standard operating procedures for formal vendor commitment &amp; legal documentation.</DialogDescription>
                         </div>
                     </div>
                 </div>
@@ -224,7 +224,7 @@ function POApprovalWizard({
                     {step < 3 ? (
                         <Button onClick={() => setStep(prev => prev + 1)}>Next Review Step <ChevronRight className="ml-2 h-4 w-4" /></Button>
                     ) : (
-                        <Button variant="destructive" onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve & Sign PO</Button>
+                        <Button variant="destructive" onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve &amp; Sign PO</Button>
                     )}
                 </DialogFooter>
             </DialogContent>

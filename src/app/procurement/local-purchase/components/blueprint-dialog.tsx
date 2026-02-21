@@ -20,7 +20,7 @@ import {
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
     Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
-    History, Layers, UserPlus, Tag
+    History, Layers, UserPlus, Tag, Bell, Lock, Eye
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -123,7 +123,7 @@ export function BlueprintDialog({
                             </div>
                             <div className="space-y-1">
                                 <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">Operational Blueprint Master</h1>
-                                <p className="text-sm font-bold text-primary-foreground/60 uppercase tracking-[0.3em]">End-to-End Local Purchase Lifecycle & Logic Matrix</p>
+                                <p className="text-sm font-bold text-primary-foreground/60 uppercase tracking-[0.3em]">End-to-End Local Purchase Lifecycle &amp; Logic Matrix</p>
                             </div>
                         </div>
                         <div className="flex gap-4">
@@ -142,10 +142,10 @@ export function BlueprintDialog({
                         <div className="px-8 bg-background border-b shrink-0">
                             <TabsList className="h-16 w-full justify-start bg-transparent gap-8 p-0">
                                 <TabsTrigger value="lifecycle" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><GitCommitHorizontal className="h-4 w-4"/> Full Lifecycle</TabsTrigger>
+                                <TabsTrigger value="access" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><Lock className="h-4 w-4"/> Access Matrix</TabsTrigger>
+                                <TabsTrigger value="notifications" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><Bell className="h-4 w-4"/> Notification Engine</TabsTrigger>
                                 <TabsTrigger value="requisition" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><FileText className="h-4 w-4"/> DN Logic</TabsTrigger>
-                                <TabsTrigger value="sourcing" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><Users className="h-4 w-4"/> Sourcing Matrix</TabsTrigger>
-                                <TabsTrigger value="analysis" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><BarChart2 className="h-4 w-4"/> CS thresholds</TabsTrigger>
-                                <TabsTrigger value="execution" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><ShoppingCart className="h-4 w-4"/> PO & Compliance</TabsTrigger>
+                                <TabsTrigger value="execution" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2"><ShoppingCart className="h-4 w-4"/> PO &amp; Compliance</TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -195,6 +195,87 @@ export function BlueprintDialog({
                                     </section>
                                 </TabsContent>
 
+                                <TabsContent value="access" className="mt-0">
+                                    <BlueprintSection icon={Lock} title="Organizational Access Matrix" colorClass="bg-slate-800 border-slate-900">
+                                        <Card className="border-primary/10 shadow-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader className="bg-slate-100">
+                                                    <TableRow>
+                                                        <TableHead className="font-black uppercase text-[10px]">Tab / Menu</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Administrative Access</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Operational Access</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Restrictive Filter</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    <TableRow>
+                                                        <TableCell className="font-bold text-xs"><div className="flex items-center gap-2"><FileText className="h-3 w-3" /> Demand Notes</div></TableCell>
+                                                        <TableCell><Badge variant="outline">Superadmin</Badge></TableCell>
+                                                        <TableCell><p className="text-[10px]">All Personnel (Creators, Approvers, GP)</p></TableCell>
+                                                        <TableCell><p className="text-[10px] italic">Creators see only their own notes.</p></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell className="font-bold text-xs"><div className="flex items-center gap-2"><Briefcase className="h-3 w-3" /> GP Desk</div></TableCell>
+                                                        <TableCell><Badge variant="outline">Superadmin</Badge> <Badge variant="outline" className="ml-1">GP Officer</Badge></TableCell>
+                                                        <TableCell><p className="text-[10px]">GP Concern Officers</p></TableCell>
+                                                        <TableCell><p className="text-[10px] italic">Concerns see only their assigned tasks.</p></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell className="font-bold text-xs"><div className="flex items-center gap-2"><BarChart2 className="h-3 w-3" /> CS Analysis</div></TableCell>
+                                                        <TableCell><Badge variant="outline">Superadmin</Badge> <Badge variant="outline" className="ml-1">Managers</Badge></TableCell>
+                                                        <TableCell><p className="text-[10px]">Dept Heads, Technical Advisors</p></TableCell>
+                                                        <TableCell><p className="text-[10px] italic font-bold text-primary">Restricted to personal signature history.</p></TableCell>
+                                                    </TableRow>
+                                                    <TableRow>
+                                                        <TableCell className="font-bold text-xs"><div className="flex items-center gap-2"><Lock className="h-3 w-3" /> System Settings</div></TableCell>
+                                                        <TableCell><Badge className="bg-red-600 text-white border-none">Superadmin Only</Badge></TableCell>
+                                                        <TableCell><p className="text-[10px] opacity-30">—</p></TableCell>
+                                                        <TableCell><p className="text-[10px] italic text-destructive font-black">Zero operational visibility.</p></TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </Card>
+                                    </BlueprintSection>
+                                </TabsContent>
+
+                                <TabsContent value="notifications" className="mt-0">
+                                    <BlueprintSection icon={Bell} title="The Proactive Notification Engine" colorClass="bg-red-600 border-red-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <Card className="bg-white border-red-100">
+                                                <CardHeader className="bg-red-50 border-b border-red-100"><CardTitle className="text-sm font-black uppercase text-red-900 flex items-center gap-2"><Zap className="h-4 w-4" /> Trigger Logic (The "Bell")</CardTitle></CardHeader>
+                                                <CardContent className="pt-6 space-y-4">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="h-6 w-6 rounded bg-red-600 text-white flex items-center justify-center shrink-0"><Check className="h-3 w-3" /></div>
+                                                        <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-tight">Step 1: Status Change</p><p className="text-[10px] text-muted-foreground">The moment a record moves from "Pending" to "Approved" (or vice versa), the system re-calculates the target recipient.</p></div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="h-6 w-6 rounded bg-red-600 text-white flex items-center justify-center shrink-0"><Check className="h-3 w-3" /></div>
+                                                        <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-tight">Step 2: ID Targeting</p><p className="text-[10px] text-muted-foreground">The notification is locked specifically to the `currentApproverId` or `gpConcernOfficerId` strings in the database.</p></div>
+                                                    </div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="h-6 w-6 rounded bg-red-600 text-white flex items-center justify-center shrink-0"><Check className="h-3 w-3" /></div>
+                                                        <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-tight">Step 3: Pulse Indicator</p><p className="text-[10px] text-muted-foreground">A red status dot appears on the top-right of the bell icon, and the bell initiates a subtle 2-second ringing animation.</p></div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                            <Card className="bg-white border-red-100">
+                                                <CardHeader className="bg-red-50 border-b border-red-100"><CardTitle className="text-sm font-black uppercase text-red-900 flex items-center gap-2"><History className="h-4 w-4" /> Target Recipients by Scenario</CardTitle></CardHeader>
+                                                <CardContent className="p-0">
+                                                    <Table>
+                                                        <TableBody>
+                                                            <TableRow className="border-red-50 hover:bg-red-50/30"><TableCell className="font-bold text-[10px] uppercase">DN Pending Approval</TableCell><TableCell className="text-[10px] font-bold text-red-700">Next Approver in Chain</TableCell></TableRow>
+                                                            <TableRow className="border-red-50 hover:bg-red-50/30"><TableCell className="font-bold text-[10px] uppercase">DN Final Approved</TableCell><TableCell className="text-[10px] font-bold text-red-700">GP Officer (Assignment Task)</TableCell></TableRow>
+                                                            <TableRow className="border-red-50 hover:bg-red-50/30"><TableCell className="font-bold text-[10px] uppercase">GP Desk Assigned</TableCell><TableCell className="text-[10px] font-bold text-red-700">Assigned GP Concern Officer</TableCell></TableRow>
+                                                            <TableRow className="border-red-50 hover:bg-red-50/30"><TableCell className="font-bold text-[10px] uppercase">CS Prepared</TableCell><TableCell className="text-[10px] font-bold text-red-700">GP Concern (Awarding Task)</TableCell></TableRow>
+                                                            <TableRow className="border-red-50 hover:bg-red-50/30"><TableCell className="font-bold text-[10px] uppercase">CS Awarded</TableCell><TableCell className="text-[10px] font-bold text-red-700">CS Approval Signature Chain</TableCell></TableRow>
+                                                        </TableBody>
+                                                    </Table>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </BlueprintSection>
+                                </TabsContent>
+
                                 <TabsContent value="requisition" className="mt-0">
                                     <BlueprintSection icon={FileText} title="Demand Note (DN) Generation" colorClass="bg-blue-600 border-blue-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -211,83 +292,8 @@ export function BlueprintDialog({
                                     </BlueprintSection>
                                 </TabsContent>
 
-                                <TabsContent value="sourcing" className="mt-0">
-                                    <BlueprintSection icon={Users} title="GP Desk & Sourcing Intelligence" colorClass="bg-emerald-600 border-emerald-800">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <LogicCard icon={UserPlus} title="Personnel Lockdown" description="The GP Officer must assign a specific 'Concern Officer'. This creates non-repudiable accountability for the vendor sourcing phase." />
-                                            <LogicCard icon={Search} title="Blind Quotation Policy" description="Quotation data is collected independently. Concern officers must upload physical or digital bids before initiating the Comparative Statement." />
-                                        </div>
-                                        <div className="p-8 border-2 border-dashed rounded-3xl bg-emerald-50/30 flex flex-col md:flex-row gap-8 items-center">
-                                            <div className="flex-1 space-y-4">
-                                                <h4 className="text-xl font-black text-emerald-900 uppercase italic tracking-tighter">The Vendor Sourcing Workflow</h4>
-                                                <ul className="space-y-3">
-                                                    <li className="flex items-center gap-3 text-sm font-bold"><div className="h-6 w-6 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px]">01</div> Assign Primary Concern Officer</li>
-                                                    <li className="flex items-center gap-3 text-sm font-bold"><div className="h-6 w-6 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px]">02</div> Multilateral Vendor Selection</li>
-                                                    <li className="flex items-center gap-3 text-sm font-bold"><div className="h-6 w-6 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px]">03</div> Quotation Collection & Digital Archiving</li>
-                                                    <li className="flex items-center gap-3 text-sm font-bold"><div className="h-6 w-6 rounded bg-emerald-600 text-white flex items-center justify-center text-[10px]">04</div> Trigger Comparative Statement (CS) Analysis</li>
-                                                </ul>
-                                            </div>
-                                            <div className="w-full md:w-1/3 bg-emerald-600 p-6 rounded-2xl text-white shadow-2xl space-y-4">
-                                                <div className="flex items-center gap-2"><Tag className="h-5 w-5" /> <span className="font-black uppercase text-xs tracking-widest">GP Manager Alert</span></div>
-                                                <p className="text-[10px] leading-relaxed font-medium">The GP Manager has a specialized dashboard view to monitor 'Response Lag' at each sourcing step, ensuring procurement never stalls.</p>
-                                            </div>
-                                        </div>
-                                    </BlueprintSection>
-                                </TabsContent>
-
-                                <TabsContent value="analysis" className="mt-0">
-                                    <BlueprintSection icon={BarChart2} title="Comparative Analysis & Approval Matrix" colorClass="bg-amber-600 border-amber-800">
-                                        <div className="space-y-8">
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                <LogicCard icon={TrendingUp} title="Best Offer Algorithm" description="System automatically compares total landed costs (Price + VAT + Tax - Discount) and flags the most economical bid with a green visual beacon." />
-                                                <LogicCard icon={Gavel} title="Decision Freeze" description="Once a vendor is awarded, the CS data is frozen. Any changes require a full audit reset, protecting the integrity of the selection process." />
-                                                <LogicCard icon={ListOrdered} title="Sequential Signing" description="Approvals must happen in strict sequence. The system notifies the next person only after the current level is signed and timestamped." />
-                                            </div>
-
-                                            <Card className="bg-amber-50 border-amber-200">
-                                                <CardHeader className="border-b border-amber-200 bg-amber-100/50">
-                                                    <CardTitle className="text-lg font-black uppercase flex items-center gap-2 text-amber-900"><ShieldCheck className="h-5 w-5" /> Dynamic Threshold Logic (Live System Settings)</CardTitle>
-                                                </CardHeader>
-                                                <CardContent className="p-0 overflow-hidden">
-                                                    <Table>
-                                                        <TableHeader className="bg-amber-200/30">
-                                                            <TableRow>
-                                                                <TableHead className="font-black text-amber-900 uppercase text-[10px]">Investment Range</TableHead>
-                                                                <TableHead className="font-black text-amber-900 uppercase text-[10px]">Required Signature Chain</TableHead>
-                                                                <TableHead className="text-right font-black text-amber-900 uppercase text-[10px]">Authority Level</TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            <TableRow className="border-amber-100 hover:bg-amber-50/50">
-                                                                <TableCell className="font-bold text-xs">Up to $10,000</TableCell>
-                                                                <TableCell className="text-xs">Purchase Manager</TableCell>
-                                                                <TableCell className="text-right"><Badge variant="outline" className="text-[10px] font-black border-amber-300 text-amber-700">TIER 1</Badge></TableCell>
-                                                            </TableRow>
-                                                            <TableRow className="border-amber-100 hover:bg-amber-50/50">
-                                                                <TableCell className="font-bold text-xs">$10,001 - $100,000</TableCell>
-                                                                <TableCell className="text-xs">Purchase Mgr + Purchase Dept. TA</TableCell>
-                                                                <TableCell className="text-right"><Badge variant="outline" className="text-[10px] font-black border-amber-300 text-amber-700">TIER 2</Badge></TableCell>
-                                                            </TableRow>
-                                                            <TableRow className="border-amber-100 hover:bg-amber-50/50">
-                                                                <TableCell className="font-bold text-xs">$100,001 - $1,000,000</TableCell>
-                                                                <TableCell className="text-xs">Purch. Mgr + Purch. TA + Req. Dept. TA + Specialized Mgr</TableCell>
-                                                                <TableCell className="text-right"><Badge variant="outline" className="text-[10px] font-black border-amber-300 text-amber-700">TIER 3</Badge></TableCell>
-                                                            </TableRow>
-                                                            <TableRow className="border-amber-100 bg-amber-500/5 hover:bg-amber-100">
-                                                                <TableCell className="font-black text-xs text-amber-900">Above $1,000,000</TableCell>
-                                                                <TableCell className="text-xs font-bold text-amber-900">Full Executive Chain (Tier 3 + VFM + Accounts + GM + MD/FD)</TableCell>
-                                                                <TableCell className="text-right"><Badge className="bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 shadow-lg">TIER 4 (CRITICAL)</Badge></TableCell>
-                                                            </TableRow>
-                                                        </TableBody>
-                                                    </Table>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    </BlueprintSection>
-                                </TabsContent>
-
                                 <TabsContent value="execution" className="mt-0">
-                                    <BlueprintSection icon={ClipboardCheck} title="Contract Execution & Receipt Compliance" colorClass="bg-purple-600 border-purple-800">
+                                    <BlueprintSection icon={ClipboardCheck} title="Contract Execution &amp; Receipt Compliance" colorClass="bg-purple-600 border-purple-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-6">
                                                 <h4 className="font-black uppercase tracking-tight text-lg flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-purple-600"/> Purchase Order (PO) Standard</h4>
@@ -353,7 +359,7 @@ export function BlueprintDialog({
                             <div className="flex -space-x-3">
                                 {[1,2,3,4].map(i => <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-primary text-[10px] font-black flex items-center justify-center text-white shadow-md shadow-primary/20">YK</div>)}
                             </div>
-                            <p className="text-xs font-bold text-muted-foreground italic">Authorized for presentation to Client & Management Auditors.</p>
+                            <p className="text-xs font-bold text-muted-foreground italic">Authorized for presentation to Client &amp; Management Auditors.</p>
                         </div>
                         <Button onClick={() => onOpenChange(false)} className="px-12 font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20">Exit Blueprint View</Button>
                     </div>
