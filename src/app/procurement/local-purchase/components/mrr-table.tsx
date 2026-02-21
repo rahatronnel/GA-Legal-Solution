@@ -153,7 +153,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
             </DialogContent>
         </Dialog>
     );
-}
+};
 
 function FinalizeMrrDialog({
     mrr,
@@ -221,18 +221,18 @@ function FinalizeMrrDialog({
                 <div className="py-4 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label className="flex justify-between font-bold text-xs uppercase">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase tracking-widest text-muted-foreground">Bill / Invoice <Label htmlFor="up-bill" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
                             <input id="up-bill" type="file" multiple className="hidden" onChange={handleFileChange('bill')} />
                             <div className="space-y-1">{billDocs.map(f => <div key={f.id} className="text-xs p-1 bg-muted rounded flex justify-between"><span>{f.name}</span><X className="h-3 w-3 cursor-pointer" onClick={()=>setBillDocs(p=>p.filter(x=>x.id!==f.id))}/></div>)}</div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex justify-between font-bold text-xs uppercase">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
+                            <Label className="flex justify-between font-bold text-xs uppercase tracking-widest text-muted-foreground">Challan <Label htmlFor="up-challan" className="text-primary hover:underline cursor-pointer"><Upload className="h-3 w-3 inline"/></Label></Label>
                             <input id="up-challan" type="file" multiple className="hidden" onChange={handleFileChange('challan')} />
                             <div className="space-y-1">{challanDocs.map(f => <div key={f.id} className="text-xs p-1 bg-muted rounded flex justify-between"><span>{f.name}</span><X className="h-3 w-3 cursor-pointer" onClick={()=>setChallanDocs(p=>p.filter(x=>x.id!==f.id))}/></div>)}</div>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label className="font-bold text-xs uppercase">Receiver Confirmant</Label>
+                        <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Receiver Confirmant</Label>
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
                             <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between animate-scale-in">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 animate-scale-in">

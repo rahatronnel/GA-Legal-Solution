@@ -360,17 +360,13 @@ export function ComparativeStatementTable() {
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
-            // Strict Approver Access: Admin/Managers see all, Approvers see their list
+            // Strict Approver Access: Admin/Managers see all, Approvers see only their relevant lists
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
-                const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
-                // Visible if they created it, are current approver (pending), or are in history (approved)
+                // Restricted Visibility: Must have created it, be current approver, or have previously approved
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
-                    cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id) ||
-                    cs.vendorSelectorId === currentUserEmployee.id ||
-                    dn?.createdBy === currentUserEmployee.id ||
-                    dn?.gpConcernOfficerId === currentUserEmployee.id) {
+                    cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) {
                     isVisible = true;
                 }
             }
@@ -412,33 +408,6 @@ export function ComparativeStatementTable() {
         toast({ title: 'Processed' });
     };
 
-    const handleSaveCs = (dataWithQuotes: any) => {
-        if (!firestore || !csRef) return;
-        const { newQuotations, ...csData } = dataWithQuotes;
-        
-        addDocumentNonBlocking(csRef, csData);
-
-        // Update DemandNote if new quotations were uploaded in the CS form
-        if (newQuotations && Object.keys(newQuotations).length > 0) {
-            const dn = demandNotes.find(d => d.id === csData.demandNoteId);
-            if (dn) {
-                const updatedQuotations = [...(dn.quotations || [])];
-                Object.entries(newQuotations).forEach(([vendorId, quote]: [string, any]) => {
-                    const existingIdx = updatedQuotations.findIndex(q => q.vendorId === vendorId);
-                    if (existingIdx !== -1) {
-                        updatedQuotations[existingIdx] = { vendorId, ...quote };
-                    } else {
-                        updatedQuotations.push({ vendorId, ...quote });
-                    }
-                });
-                const dnRef = doc(firestore, 'demandNotes', dn.id);
-                setDocumentNonBlocking(dnRef, { quotations: updatedQuotations, gpStatus: 'Assigned' }, { merge: true });
-            }
-        }
-        
-        toast({ title: 'Success', description: 'Comparative Statement saved successfully.' });
-    };
-
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -464,7 +433,6 @@ export function ComparativeStatementTable() {
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead className="font-bold">CS Number</TableHead>
                                 <TableHead className="font-bold">Demand Note</TableHead>
-                                <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Awarded Vendor</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
                                 <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
@@ -472,12 +440,11 @@ export function ComparativeStatementTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading statements...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading statements...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
-                                    const concern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
                                     
                                     const needsVendorSelection = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const needsApproval = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
@@ -489,8 +456,7 @@ export function ComparativeStatementTable() {
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
                                             <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell><div className="flex items-center gap-1 font-medium"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><div className="flex items-center gap-1 font-medium"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><div className="flex flex-col"><span className="text-xs font-bold">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
+                                            <TableCell><span>{dn?.demandNoteNumber || 'N/A'}</span></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-bold text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -511,7 +477,7 @@ export function ComparativeStatementTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria or access rights.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria or access rights.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
@@ -523,7 +489,7 @@ export function ComparativeStatementTable() {
             {isGuideOpen && <CSUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-lg animate-dialog-in">
+                <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader><DialogTitle>Approval Flow: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {

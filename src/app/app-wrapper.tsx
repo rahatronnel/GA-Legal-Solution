@@ -30,7 +30,7 @@ import {
 import dynamic from 'next/dynamic';
 import { ChangePasswordDialog } from '@/components/change-password-dialog';
 import LoginPage from './login/page';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, where, limit } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { OrganizationSettings } from './settings/page';
@@ -57,16 +57,11 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/mrrs/[id]': dynamic(() => import('./procurement/local-purchase/mrrs/[id]/page'), { ssr: false }),
 };
 
-const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: OrganizationSettings, employees: Employee[] }) => {    
+const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings, currentUserEmployee: Employee | null }) => {    
     const auth = useAuth();
     const { user } = useUser();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
-    const currentUserEmployee = useMemo(() => {
-        if (!user || !employees) return null;
-        return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
-    }, [user, employees]);
-
     const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
     const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
 
@@ -213,8 +208,14 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
-  const { data: employees, isLoading: isLoadingEmployees } = useCollection<Employee>(employeesRef);
+  // Optimized Fetching: Retrieve ONLY the current user's record instead of the full database.
+  const userEmployeeQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.email) return null;
+    return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
+  }, [firestore, user?.email]);
+  
+  const { data: userEmployeeData, isLoading: isLoadingUserEmployee } = useCollection<Employee>(userEmployeeQuery);
+  const currentUserEmployee = userEmployeeData?.[0] || null;
 
   useEffect(() => {
     if (orgSettings?.favicon) {
@@ -229,15 +230,17 @@ export function AppWrapper() {
     }
   }, [orgSettings]);
 
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
-  // CRITICAL HANDSHAKE: Eradicate module visibility flicker by gating Dashboard revealing until settings AND personnel are strictly available.
-  const isHydratingData = isLoadingSettings || isLoadingEmployees || !orgSettings || !employees || !orgSettings.moduleVisibility;
+  // CRITICAL HANDSHAKE: Eradicate module visibility flicker by gating Dashboard revealing until settings strictly available.
+  // We bypass employee check for superadmin to speed up their login.
+  const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
 
   if (isUserLoading || (user && isHydratingData)) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
         <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Establishing Secure Organizational Handshake...</p>
+        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Accelerating Organizational Handshake...</p>
       </div>
     );
   }
@@ -271,5 +274,5 @@ export function AppWrapper() {
     );
   }
 
-  return <ModuleDashboard orgSettings={orgSettings!} employees={employees || []} />;
+  return <ModuleDashboard orgSettings={orgSettings!} currentUserEmployee={currentUserEmployee} />;
 }
