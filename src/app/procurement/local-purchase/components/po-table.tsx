@@ -17,7 +17,7 @@ import {
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
     ListOrdered, ShieldCheck, ShoppingCart, TrendingUp, DollarSign, 
-    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck, Package
+    FileText, Gavel, BarChart2, Briefcase, ClipboardCheck, Package, Truck
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -368,17 +368,17 @@ export function PurchaseOrderTable() {
                                         {po.netPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col gap-1 items-start py-1">
-                                            <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap">{getPOStatusText(po)}</Badge>
+                                        <div className="flex flex-col gap-1 items-start py-1 text-[10px]">
+                                            <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap text-[9px] h-4">{getPOStatusText(po)}</Badge>
                                             {po.isSentToVendor && po.sentToVendorDate && (
                                                 <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
                                                     <span>{new Date(po.sentToVendorDate).toLocaleDateString()}</span>
                                                     <span>{new Date(po.sentToVendorDate).toLocaleTimeString()}</span>
                                                 </div>
                                             )}
-                                            {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white text-[10px]">⚠️ Signing Required</Badge>}
-                                            {canSend && <Badge className="bg-blue-500 animate-pulse text-white text-[10px]">⚠️ Dispatch Needed</Badge>}
-                                            {canMrr && <Badge className="bg-green-600 animate-pulse text-white text-[10px]">⚠️ Receipt Ready</Badge>}
+                                            {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white text-[9px] h-4">⚠️ Signing Required</Badge>}
+                                            {canSend && <Badge className="bg-blue-500 animate-pulse text-white text-[9px] h-4">⚠️ Dispatch Needed</Badge>}
+                                            {canMrr && <Badge className="bg-green-600 animate-pulse text-white text-[9px] h-4">⚠️ Receipt Ready</Badge>}
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -388,7 +388,7 @@ export function PurchaseOrderTable() {
                                             {canMrr && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => { setSelectedPoForMrr(po); setIsMrrFormOpen(true); }}><PackageCheck className="h-4 w-4" /></Button>}
                                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedPoForStatus(po); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/purchase-orders/${po.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                            {po.approvalStatus === 1 && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="h-4 w-4"/></Button>}
+                                            {po.approvalStatus === 1 && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/purchase-orders/${po.id}/print`, '_blank')}><Printer className="mr-2 h-4 w-4"/></Button>}
                                         </div>
                                     </TableCell>
                                 </TableRow>

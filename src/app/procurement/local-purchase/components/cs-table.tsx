@@ -30,6 +30,17 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from '@/components/ui/checkbox';
 import type { OrganizationSettings } from '@/app/settings/page';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';

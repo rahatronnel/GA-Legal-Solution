@@ -121,7 +121,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier.
+                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier of the asset's condition.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -390,14 +390,14 @@ export function MRRTable() {
                                             <TableCell><span className="text-xs truncate max-w-[150px]" title={mrr.supplierName}>{mrr.supplierName}</span></TableCell>
                                             <TableCell className="text-right font-mono font-bold text-primary">{mrr.totalAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                             <TableCell>
-                                                <div className="flex flex-col gap-1 items-start py-1">
-                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap">{getMRRStatusText(mrr)}</Badge>
+                                                <div className="flex flex-col gap-1 items-start py-1 text-[10px]">
+                                                    <Badge variant={mrr.approvalStatus === 1 ? 'default' : 'secondary'} className="whitespace-nowrap text-[9px] h-4">{getMRRStatusText(mrr)}</Badge>
                                                     <span className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1 italic border-l-2 border-primary/20 ml-1">
                                                         <span>{new Date(mrr.createdAt).toLocaleDateString()}</span>
                                                         <span>{new Date(mrr.createdAt).toLocaleTimeString()}</span>
                                                     </span>
-                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[10px]">⚠️ Finalize Required</Badge>}
-                                                    {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[10px]">⚠️ Approve Report</Badge>}
+                                                    {isWaitingForFinalize && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Finalize Required</Badge>}
+                                                    {isWaitingForApproval && <Badge className="bg-orange-500 text-white animate-pulse text-[9px] h-4">⚠️ Approve Report</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
