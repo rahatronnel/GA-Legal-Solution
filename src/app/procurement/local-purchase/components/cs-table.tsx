@@ -44,6 +44,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import type { ComparativeStatement } from './cs-entry-form';
 
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
@@ -416,22 +417,22 @@ export function ComparativeStatementTable() {
                     </div>
                     <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Comprehensive Guide</Button>
                 </div>
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden shadow-sm">
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                                <TableHead>CS Number</TableHead>
-                                <TableHead>Demand Note</TableHead>
-                                <TableHead>GP Concern</TableHead>
-                                <TableHead>Awarded Vendor</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="w-[140px] text-right">Actions</TableHead>
+                                <TableHead className="font-bold">CS Number</TableHead>
+                                <TableHead className="font-bold">Demand Note</TableHead>
+                                <TableHead className="font-bold">GP Concern</TableHead>
+                                <TableHead className="font-bold">Awarded Vendor</TableHead>
+                                <TableHead className="font-bold">Status</TableHead>
+                                <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading statements...</TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
@@ -447,15 +448,15 @@ export function ComparativeStatementTable() {
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
                                             <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
-                                            <TableCell><div className="flex items-center gap-1"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><div className="flex items-center gap-1"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
-                                            <TableCell><div className="flex flex-col"><span className="text-xs font-medium">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
+                                            <TableCell><div className="flex items-center gap-1 font-medium"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
+                                            <TableCell><div className="flex items-center gap-1 font-medium"><span>{dn?.demandNoteNumber || 'N/A'}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(dn?.demandNoteNumber || ''); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip></div></TableCell>
+                                            <TableCell><div className="flex flex-col"><span className="text-xs font-bold">{concern?.fullName || 'Unassigned'}</span>{dn?.gpAssignedDate && <span className="text-[9px] text-muted-foreground">{new Date(dn.gpAssignedDate).toLocaleString()}</span>}</div></TableCell>
+                                            <TableCell><div className="flex flex-col"><span className="text-xs font-bold text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Select Awarded Vendor</Badge>}
-                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Statement</Badge>}
+                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[10px]">⚠️ Award Vendor</Badge>}
+                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[10px]">⚠️ Approve Audit</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -470,7 +471,7 @@ export function ComparativeStatementTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center">No statements found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>

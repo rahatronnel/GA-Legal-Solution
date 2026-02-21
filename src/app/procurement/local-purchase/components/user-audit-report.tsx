@@ -16,6 +16,7 @@ import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fn
 import { UserCheck, Clock, Search, Filter, Building, LayoutGrid, X } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 type ActivityItem = {
@@ -235,49 +236,51 @@ export function UserAuditReport() {
                 </CardHeader>
                 <CardContent className="p-0 flex-grow overflow-hidden min-h-0">
                     <ScrollArea className="h-full">
-                        <Table>
-                            <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
-                                <TableRow>
-                                    <TableHead className="font-bold">Personnel</TableHead>
-                                    <TableHead className="font-bold">Module</TableHead>
-                                    <TableHead className="font-bold">Operation</TableHead>
-                                    <TableHead className="font-bold">Reference</TableHead>
-                                    <TableHead className="font-bold">Execution Time</TableHead>
-                                    <TableHead className="text-right font-bold">Response Lag</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredActivities.map((act) => {
-                                    const emp = employees.find(e => e.id === act.userId);
-                                    return (
-                                        <TableRow key={act.id} className="hover:bg-muted/30 transition-colors group">
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar className="h-8 w-8 border-2 group-hover:border-primary transition-colors">
-                                                        <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0) || '?'}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-black">{emp?.fullName || 'System'}</span>
-                                                        <span className="text-[9px] text-muted-foreground uppercase">{emp?.userIdCode}</span>
+                        <div className="pb-24">
+                            <Table>
+                                <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
+                                    <TableRow>
+                                        <TableHead className="font-bold">Personnel</TableHead>
+                                        <TableHead className="font-bold">Module</TableHead>
+                                        <TableHead className="font-bold">Operation</TableHead>
+                                        <TableHead className="font-bold">Reference</TableHead>
+                                        <TableHead className="font-bold">Execution Time</TableHead>
+                                        <TableHead className="text-right font-bold">Response Lag</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredActivities.map((act) => {
+                                        const emp = employees.find(e => e.id === act.userId);
+                                        return (
+                                            <TableRow key={act.id} className="hover:bg-muted/30 transition-colors group">
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="h-8 w-8 border-2 group-hover:border-primary transition-colors">
+                                                            <AvatarFallback className="text-[10px] font-black">{emp?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-black">{emp?.fullName || 'System'}</span>
+                                                            <span className="text-[9px] text-muted-foreground uppercase">{emp?.userIdCode}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell><Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter">{act.type}</Badge></TableCell>
-                                            <TableCell className="text-xs font-bold text-foreground/80">{act.action}</TableCell>
-                                            <TableCell className="text-xs font-mono font-bold text-primary">{act.reference}</TableCell>
-                                            <TableCell className="text-[10px] font-medium">{format(parseISO(act.timestamp), 'PP p')}</TableCell>
-                                            <TableCell className={cn("text-right text-xs", getLagColor(act.lagMinutes))}>
-                                                <div className="flex flex-col items-end">
-                                                    <span className="font-black">{formatLag(act.lagMinutes)}</span>
-                                                    {act.shouldHaveDoneAt && <span className="text-[8px] opacity-50 italic">Pending since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                                {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground font-bold italic">No audit data matches the current filters.</TableCell></TableRow>}
-                            </TableBody>
-                        </Table>
+                                                </TableCell>
+                                                <TableCell><Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter">{act.type}</Badge></TableCell>
+                                                <TableCell className="text-xs font-bold text-foreground/80">{act.action}</TableCell>
+                                                <TableCell className="text-xs font-mono font-bold text-primary">{act.reference}</TableCell>
+                                                <TableCell className="text-[10px] font-medium">{format(parseISO(act.timestamp), 'PP p')}</TableCell>
+                                                <TableCell className={cn("text-right text-xs", getLagColor(act.lagMinutes))}>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="font-black">{formatLag(act.lagMinutes)}</span>
+                                                        {act.shouldHaveDoneAt && <span className="text-[8px] opacity-50 italic">Pending since: {format(parseISO(act.shouldHaveDoneAt), 'p')}</span>}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                    {filteredActivities.length === 0 && <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground font-bold italic">No audit data matches the current filters.</TableCell></TableRow>}
+                                </TableBody>
+                            </Table>
+                        </div>
                         <ScrollBar orientation="vertical" />
                     </ScrollArea>
                 </CardContent>
