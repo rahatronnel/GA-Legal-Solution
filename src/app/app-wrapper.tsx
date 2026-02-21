@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -209,7 +208,7 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  // High-Performance Querying: Target only the user's email with limit(1)
+  // Instantaneous Performance: Target current profile with a limit query
   const userEmployeeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email || user.email === 'superadmin@galsolution.com') return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
@@ -232,7 +231,7 @@ export function AppWrapper() {
   }, [orgSettings]);
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  // Strict Gating: reveal dashboard only when mandatory data is locked
+  // Fast-Gate: Instant revealing when mandatory handshake is locked
   const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
 
   if (isUserLoading || (user && isHydratingData)) {

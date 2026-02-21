@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -9,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
     Search, CheckCircle2, Clock, User, Building, FileText, 
-    ShoppingCart, ChevronRight, Package, Timer, Send, History 
+    ShoppingCart, ChevronRight, Package, Timer, Send, History as HistoryIcon,
+    BadgeCheck
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -386,7 +386,7 @@ export function WorkflowTracker() {
                         </ScrollArea>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                            <History className="h-24 w-24 mb-4" />
+                            <HistoryIcon className="h-24 w-24 mb-4" />
                             <h3 className="text-xl font-semibold">No Requisition Selected</h3>
                             <p className="text-sm max-w-[300px]">Choose a Demand Note from the left panel to track its full audit trail.</p>
                         </div>
@@ -395,24 +395,4 @@ export function WorkflowTracker() {
             </Card>
         </div>
     );
-}
-
-function BadgeCheck({ className }: { className?: string }) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-            <path d="m9 12 2 2 4-4" />
-        </svg>
-    )
 }

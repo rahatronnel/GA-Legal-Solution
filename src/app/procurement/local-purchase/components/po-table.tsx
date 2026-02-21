@@ -26,7 +26,7 @@ import { collection, doc } from 'firebase/firestore';
 import type { PurchaseOrder } from './po-entry-form';
 import { PurchaseOrderForm } from './po-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -202,8 +202,10 @@ function POApprovalWizard({
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <h3 className="font-bold flex items-center gap-2"><Info className="h-5 w-5 text-blue-500" /> Step 1: Vendor Audit</h3>
                             <Card className="bg-muted/30 p-4 border-primary/10">
-                                <p className="font-bold text-lg">{vendor?.vendorName}</p>
-                                <p className="text-sm text-muted-foreground">{vendor?.officeAddress}</p>
+                                <CardContent className="p-0">
+                                    <p className="font-bold text-lg">{vendor?.vendorName}</p>
+                                    <p className="text-sm text-muted-foreground">{vendor?.officeAddress}</p>
+                                </CardContent>
                             </Card>
                         </div>
                     )}

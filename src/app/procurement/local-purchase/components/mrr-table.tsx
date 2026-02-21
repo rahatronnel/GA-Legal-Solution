@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -351,7 +350,7 @@ export function MRRTable() {
             approvalFlow: { steps },
             approvalStatus: 3, 
             currentApproverId: steps[0].approverId,
-            requesterConfirmedAt: '', // Reset/Init for Requester Confirmation
+            requesterConfirmedAt: '', 
             requesterConfirmedBy: '',
         }, { merge: true });
         setIsFinalizeOpen(false);
@@ -510,6 +509,8 @@ export function MRRTable() {
 
             <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={demandNotes || []} />
             
+            {isGuideOpen && <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
+
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader><DialogTitle>MRR Approval Flow</DialogTitle></DialogHeader>
