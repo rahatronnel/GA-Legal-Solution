@@ -12,7 +12,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, ListOrdered, ShieldCheck, UserCheck, Tag } from 'lucide-react';
+import { 
+    PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, 
+    XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
+    Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
+    ListOrdered 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useDoc } from '@/firebase';
@@ -131,7 +136,7 @@ const POApprovalWizard = ({
                 <div className="py-6 min-h-[300px]">
                     {step === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <h3 className="font-bold flex items-center gap-2"><Building className="h-5 w-5" /> Step 1: Vendor Audit</h3>
+                            <h3 className="font-bold flex items-center gap-2"><Info className="h-5 w-5" /> Step 1: Vendor Audit</h3>
                             <Card className="bg-muted/30 p-4">
                                 <p className="font-bold">{vendor?.vendorName}</p>
                                 <p className="text-sm text-muted-foreground">{vendor?.officeAddress}</p>
@@ -141,7 +146,7 @@ const POApprovalWizard = ({
 
                     {step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <h3 className="font-bold flex items-center gap-2"><DollarSign className="h-5 w-5" /> Step 2: Financials</h3>
+                            <h3 className="font-bold flex items-center gap-2"><Info className="h-5 w-5" /> Step 2: Financials</h3>
                             <div className="flex justify-between text-xl font-black"><span>Total Amount:</span><span className="text-primary">{formatCurrency(po.netPayableAmount)}</span></div>
                         </div>
                     )}
@@ -271,6 +276,7 @@ export function PurchaseOrderTable() {
                             <TableHead>PO Number</TableHead>
                             <TableHead>Demand Note</TableHead>
                             <TableHead>Vendor</TableHead>
+                            <TableHead>Amount</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -290,9 +296,18 @@ export function PurchaseOrderTable() {
                                     <TableCell><div className="flex items-center gap-1"><span>{po.poNumber}</span><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50" onClick={() => { navigator.clipboard.writeText(po.poNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></div></TableCell>
                                     <TableCell>{dn?.demandNoteNumber || 'N/A'}</TableCell>
                                     <TableCell>{vendors.find(v => v.id === po.vendorId)?.vendorName}</TableCell>
+                                    <TableCell className="font-bold">
+                                        {po.netPayableAmount?.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-col gap-1 items-start">
                                             <Badge variant={po.approvalStatus === 1 ? 'default' : 'secondary'}>{getPOStatusText(po)}</Badge>
+                                            {po.isSentToVendor && po.sentToVendorDate && (
+                                                <div className="text-[10px] text-muted-foreground leading-tight flex flex-col font-medium pl-1">
+                                                    <span>{new Date(po.sentToVendorDate).toLocaleDateString()}</span>
+                                                    <span>{new Date(po.sentToVendorDate).toLocaleTimeString()}</span>
+                                                </div>
+                                            )}
                                             {isWaitingForApproval && <Badge className="bg-orange-500 animate-pulse text-white text-[10px]">⚠️ Signing Required</Badge>}
                                             {canSend && <Badge className="bg-blue-500 animate-pulse text-white text-[10px]">⚠️ Dispatch Needed</Badge>}
                                             {canMrr && <Badge className="bg-green-600 animate-pulse text-white text-[10px]">⚠️ Receipt Ready</Badge>}
@@ -310,7 +325,7 @@ export function PurchaseOrderTable() {
                                     </TableCell>
                                 </TableRow>
                             )
-                        }) : <TableRow><TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No records matching search.</TableCell></TableRow>}
+                        }) : <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">No records matching search.</TableCell></TableRow>}
                     </TableBody>
                 </Table>
             </div>

@@ -34,8 +34,8 @@ export function getCSStatusText(cs: ComparativeStatement): string {
 }
 
 export function getPOStatusText(po: PurchaseOrder): string {
-    if (po.isSentToVendor && po.sentToVendorDate) {
-        return `Sent to Vendor (${new Date(po.sentToVendorDate).toLocaleString()})`;
+    if (po.isSentToVendor) {
+        return 'Sent to Vendor';
     }
     const statusCode = po.approvalStatus;
     if(statusCode === undefined) return 'Unknown';
