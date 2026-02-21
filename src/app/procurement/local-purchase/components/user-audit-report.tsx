@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -164,7 +165,7 @@ export function UserAuditReport() {
                             <SelectTrigger className="bg-background"><SelectValue placeholder="All Departments" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Departments</SelectItem>
-                                {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                                {(departments || []).map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -174,7 +175,7 @@ export function UserAuditReport() {
                             <SelectTrigger className="bg-background"><SelectValue placeholder="All Sections" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Sections</SelectItem>
-                                {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                {(sections || []).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -187,7 +188,7 @@ export function UserAuditReport() {
                             <SelectTrigger className="bg-background"><SelectValue placeholder="All Personnel" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Personnel</SelectItem>
-                                {employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
+                                {(employees || []).map(e => <SelectItem key={e.id} value={e.id}>{e.fullName} ({e.userIdCode})</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

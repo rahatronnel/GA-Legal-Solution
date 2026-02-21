@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -195,7 +196,7 @@ export function PurchaseOrderTable() {
   const filteredPOs = useMemo(() => {
     const safePOs = Array.isArray(purchaseOrders) ? purchaseOrders : [];
     return safePOs.filter(po => {
-        const dn = demandNotes?.find(d => d.id === po.demandNoteId);
+        const dn = demandNotes?.find(note => note.id === po.demandNoteId);
         const lowerTerm = searchTerm.toLowerCase();
         const termMatch = !searchTerm || po.poNumber.toLowerCase().includes(lowerTerm) || dn?.demandNoteNumber.toLowerCase().includes(lowerTerm);
         const vendorMatch = vendorFilter === 'all' || po.vendorId === vendorFilter;
