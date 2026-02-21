@@ -31,7 +31,7 @@ export default function MRRPrintPage() {
 
     useEffect(() => {
         if (!isLoading && mrr && orgSettings) {
-            // Instant print handshake
+            // High-Performance Handshake: Trigger system print immediately after hydration
             const timer = setTimeout(() => {
                 window.print();
             }, 100); 

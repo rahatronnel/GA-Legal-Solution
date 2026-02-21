@@ -43,7 +43,7 @@ export default function POPrintPage() {
 
     useEffect(() => {
         if (!isLoading && po && demandNote && vendor && orgSettings) {
-            // Instant print handshake
+            // High-Performance Handshake: Trigger system print immediately after hydration
             const timer = setTimeout(() => {
                 window.print();
             }, 100); 

@@ -37,7 +37,7 @@ export function UserAuditReport() {
         // Aggregate All Histories
         demandNotes.forEach(dn => {
             // Creation
-            list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy });
+            list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy } as any);
             
             // Approvals
             dn.approvalHistory?.forEach((h: any, i: number) => {
@@ -47,7 +47,7 @@ export function UserAuditReport() {
                     timestamp: h.timestamp, reference: dn.demandNoteNumber, userId: h.approverId,
                     shouldHaveDoneAt: prevActionTime,
                     lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prevActionTime))
-                });
+                } as any);
             });
 
             // GP Assignment
@@ -57,7 +57,7 @@ export function UserAuditReport() {
                     timestamp: dn.gpAssignedDate, reference: dn.demandNoteNumber, userId: dn.gpAssignedBy,
                     shouldHaveDoneAt: dn.entryDate,
                     lagMinutes: differenceInMinutes(parseISO(dn.gpAssignedDate), parseISO(dn.entryDate))
-                });
+                } as any);
             }
 
             // Vendor Assignment
@@ -67,37 +67,37 @@ export function UserAuditReport() {
                     timestamp: dn.vendorAssignmentDate, reference: dn.demandNoteNumber, userId: dn.gpConcernOfficerId,
                     shouldHaveDoneAt: dn.gpAssignedDate,
                     lagMinutes: dn.gpAssignedDate ? differenceInMinutes(parseISO(dn.vendorAssignmentDate), parseISO(dn.gpAssignedDate)) : undefined
-                });
+                } as any);
             }
         });
 
         comparativeStatements.forEach(cs => {
             const dn = demandNotes.find(d => d.id === cs.demandNoteId);
-            list.push({ id: cs.id + '-c', type: 'CS', action: 'Prepared CS', timestamp: cs.csDate, reference: cs.csNumber, userId: cs.createdBy, shouldHaveDoneAt: dn?.vendorAssignmentDate, lagMinutes: dn?.vendorAssignmentDate ? differenceInMinutes(parseISO(cs.csDate), parseISO(dn.vendorAssignmentDate)) : undefined });
+            list.push({ id: cs.id + '-c', type: 'CS', action: 'Prepared CS', timestamp: cs.csDate, reference: cs.csNumber, userId: cs.createdBy, shouldHaveDoneAt: dn?.vendorAssignmentDate, lagMinutes: dn?.vendorAssignmentDate ? differenceInMinutes(parseISO(cs.csDate), parseISO(dn.vendorAssignmentDate)) : undefined } as any);
             
             if (cs.vendorSelectionDate) {
-                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId, shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) });
+                list.push({ id: cs.id + '-vs', type: 'CS', action: 'Awarded Vendor', timestamp: cs.vendorSelectionDate, reference: cs.csNumber, userId: cs.vendorSelectorId, shouldHaveDoneAt: cs.csDate, lagMinutes: differenceInMinutes(parseISO(cs.vendorSelectionDate), parseISO(cs.csDate)) } as any);
             }
 
             cs.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? cs.vendorSelectionDate : cs.approvalHistory[i-1].timestamp;
-                list.push({ id: cs.id + '-a-' + i, type: 'CS', action: `Approved CS Step ${i+1}`, timestamp: h.timestamp, reference: cs.csNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: prev ? differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) : undefined });
+                list.push({ id: cs.id + '-a-' + i, type: 'CS', action: `Approved CS Step ${i+1}`, timestamp: h.timestamp, reference: cs.csNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: prev ? differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) : undefined } as any);
             });
         });
 
         purchaseOrders.forEach(po => {
-            list.push({ id: po.id + '-c', type: 'PO', action: 'Drafted PO', timestamp: po.createdAt, reference: po.poNumber, userId: po.createdBy });
+            list.push({ id: po.id + '-c', type: 'PO', action: 'Drafted PO', timestamp: po.createdAt, reference: po.poNumber, userId: po.createdBy } as any);
             po.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
-                list.push({ id: po.id + '-a-' + i, type: 'PO', action: `Approved PO Step ${i+1}`, timestamp: h.timestamp, reference: po.poNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
+                list.push({ id: po.id + '-a-' + i, type: 'PO', action: `Approved PO Step ${i+1}`, timestamp: h.timestamp, reference: po.poNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) } as any);
             });
         });
 
         mrrs.forEach(mrr => {
-            list.push({ id: mrr.id + '-c', type: 'MRR', action: 'Recorded Receipt', timestamp: mrr.createdAt, reference: mrr.mrrNumber, userId: mrr.createdBy });
+            list.push({ id: mrr.id + '-c', type: 'MRR', action: 'Recorded Receipt', timestamp: mrr.createdAt, reference: mrr.mrrNumber, userId: mrr.createdBy } as any);
             mrr.approvalHistory?.forEach((h: any, i: number) => {
                 const prev = i === 0 ? mrr.createdAt : mrr.approvalHistory[i-1].timestamp;
-                list.push({ id: mrr.id + '-a-' + i, type: 'MRR', action: `Approved MRR Step ${i+1}`, timestamp: h.timestamp, reference: mrr.mrrNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
+                list.push({ id: mrr.id + '-a-' + i, type: 'MRR', action: `Approved MRR Step ${i+1}`, timestamp: h.timestamp, reference: mrr.mrrNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) } as any);
             });
         });
 
