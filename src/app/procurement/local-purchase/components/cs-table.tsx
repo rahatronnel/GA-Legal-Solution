@@ -300,7 +300,7 @@ const VendorSelectionDialog: React.FC<{
                 </div>
 
                 <DialogFooter className="flex justify-between w-full border-t pt-4">
-                    <Button variant="outline" onClick={handleBack} disabled={step === 1}>
+                    <Button variant="outline" onClick={() => handleBack} disabled={step === 1}>
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     <div className="flex gap-2">

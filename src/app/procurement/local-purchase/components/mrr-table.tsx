@@ -16,12 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
-    Search, Eye, Trash2, Copy, FileText, PackageCheck, Calendar, 
-    Truck, CheckCircle2, AlertCircle, User, Hash, Clock, FilePlus, 
-    UserCheck, Upload, X, HelpCircle, Info, ListOrdered, 
-    ShieldCheck, Box, Tag, ChevronsUpDown, Hourglass, MoreHorizontal, Printer, Check,
-    Package, BarChart2, TrendingUp, DollarSign, Gavel, ClipboardCheck, ChevronRight,
-    ShoppingCart
+    Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, 
+    UserPlus, Copy, HelpCircle, Info, Tag, ShieldCheck, ListOrdered,
+    Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X,
+    Package, BarChart2, TrendingUp, DollarSign, Gavel, Truck, ChevronRight,
+    ShoppingCart, Box
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,6 +40,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
