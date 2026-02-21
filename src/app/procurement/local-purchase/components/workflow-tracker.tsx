@@ -146,7 +146,7 @@ export function WorkflowTracker() {
 
             // CS Approvals
             cs.approvalHistory?.forEach((h: any, idx: number) => {
-                const prev = i === 0 ? cs.vendorSelectionDate : cs.approvalHistory[i-1].timestamp;
+                const prev = idx === 0 ? cs.vendorSelectionDate : cs.approvalHistory[idx - 1].timestamp;
                 events.push({
                     id: `cs-appr-${idx}`,
                     title: cs.approvalFlow?.steps[h.level]?.stepName || 'CS Approval',
@@ -173,7 +173,6 @@ export function WorkflowTracker() {
 
             // PO Approvals
             po.approvalHistory?.forEach((h: any, i: number) => {
-                const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
                 events.push({
                     id: `po-appr-${i}`,
                     title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval',
