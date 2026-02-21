@@ -234,7 +234,12 @@ function FinalizeMrrDialog({
                     <div className="space-y-2">
                         <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Receiver Confirmant</Label>
                         <Popover open={openSearch} onOpenChange={setOpenSearch}>
-                            <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between animate-scale-in">{selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}<ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" /></Button></PopoverTrigger>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between animate-scale-in">
+                                    {selectedEmployee ? selectedEmployee.fullName : "Select verifyer..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 animate-scale-in">
                                 <Command>
                                     <CommandInput placeholder="Search..." />
