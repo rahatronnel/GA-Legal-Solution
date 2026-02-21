@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -89,7 +90,7 @@ interface POFormProps {
 }
 
 export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps) {
-  const { vendors, demandNotes, orgSettings, employees } = useProcurement();
+  const { vendors, demandNotes, orgSettings, employees, deliveryPlaces } = useProcurement();
   const { user } = useUser();
   const [poData, setPoData] = useState<Partial<PurchaseOrder>>({});
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | undefined>();
@@ -103,6 +104,11 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
     if (!cs || !vendors) return null;
     return vendors.find(v => v.id === cs.selectedVendorId);
   }, [cs, vendors]);
+
+  const deliveryOffice = useMemo(() => {
+    if (!demandNote || !deliveryPlaces) return null;
+    return deliveryPlaces.find(p => p.id === demandNote.deliveryPlace);
+  }, [demandNote, deliveryPlaces]);
 
   const contactPerson = useMemo(() => {
     if (!demandNote || !employees) return null;
@@ -254,10 +260,11 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
                 </CardContent>
               </Card>
               <Card className="bg-muted/20 border-primary/10">
-                <CardHeader className="py-2 border-b"><CardTitle className="text-sm flex items-center gap-2 uppercase tracking-wider"><MapPin className="h-4 w-4" /> Delivery Location</CardTitle></CardHeader>
+                <CardHeader className="py-2 border-b"><CardTitle className="text-sm flex items-center gap-2 uppercase tracking-wider"><MapPin className="h-4 w-4" /> Delivery Office & Address</CardTitle></CardHeader>
                 <CardContent className="text-sm pt-3">
-                    <p className="font-semibold text-base">{demandNote?.deliveryPlace || ''}</p>
-                    <p className="text-muted-foreground italic text-xs mt-1">As specified in the original demand note.</p>
+                    <p className="font-bold text-base">{deliveryOffice?.name || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">{deliveryOffice?.address || 'No address defined in master data.'}</p>
+                    <p className="text-[10px] text-primary/60 italic mt-2 border-t pt-1">Sourced from demand note requisition details.</p>
                 </CardContent>
               </Card>
           </div>

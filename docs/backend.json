@@ -195,9 +195,10 @@
       "description": "Defines an office or delivery location for procurement.",
       "properties": {
         "name": { "type": "string", "description": "The name of the location." },
-        "code": { "type": "string", "description": "The unique code for the location." }
+        "code": { "type": "string", "description": "The unique code for the location." },
+        "address": { "type": "string", "description": "The physical address of the office." }
       },
-      "required": ["name", "code"]
+      "required": ["name", "code", "address"]
     },
     "Route": {
       "title": "Route", "type": "object", "description": "Defines a route between two locations.",

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -295,7 +296,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
 
     return (
          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-6xl h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-6xl h-[90vh] flex flex-col animate-dialog-in">
                 <DialogHeader>
                     <DialogTitle>Comparative Statement for DN: {demandNote.demandNoteNumber}</DialogTitle>
                     <DialogDescription>Enter quotation details and upload vendor bids for micro-level comparison.</DialogDescription>
@@ -313,9 +314,9 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                     <Label className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> CS Date</Label>
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant={"outline"} className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4"/>{csDate ? format(csDate, "PPP") : <span>Pick a date</span>}</Button>
+                                            <Button variant={"outline"} className="w-full justify-start text-left font-normal animate-scale-in"><CalendarIcon className="mr-2 h-4 w-4"/>{csDate ? format(csDate, "PPP") : <span>Pick a date</span>}</Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={csDate} onSelect={handleDateChange} initialFocus/></PopoverContent>
+                                        <PopoverContent className="w-auto p-0 animate-scale-in"><Calendar mode="single" selected={csDate} onSelect={handleDateChange} initialFocus/></PopoverContent>
                                     </Popover>
                                 </div>
                                 <div className="space-y-2">

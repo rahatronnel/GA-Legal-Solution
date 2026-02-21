@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -83,9 +84,10 @@ export const POPrintLayout: React.FC<POPrintLayoutProps> = ({
                         <div className="flex-1 p-2 border-r-2 border-black font-bold bg-gray-50 text-center">Date</div>
                         <div className="flex-1 p-2 text-center">{po.poDate}</div>
                     </div>
-                    <div className="p-2 border-b-2 border-black font-bold bg-gray-100 text-center uppercase tracking-widest text-[10px]">Delivery Address</div>
-                    <div className="p-4 min-h-[60px] text-sm text-center font-semibold">
-                        {deliveryLocation?.name || demandNote?.deliveryPlace || 'As per instruction'}
+                    <div className="p-2 border-b-2 border-black font-bold bg-gray-100 text-center uppercase tracking-widest text-[10px]">Shipping Address (Office)</div>
+                    <div className="p-4 min-h-[100px] flex flex-col justify-center text-center">
+                        <p className="font-bold text-base">{deliveryLocation?.name || 'N/A'}</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight mt-1 italic">{deliveryLocation?.address || 'No specific office address provided.'}</p>
                     </div>
                 </div>
             </div>
