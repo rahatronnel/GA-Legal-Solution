@@ -42,7 +42,6 @@ export function UserAuditReport() {
         if (isLoading) return [];
         const list: ActivityItem[] = [];
 
-        // Aggregate All Histories
         demandNotes.forEach(dn => {
             list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy });
             

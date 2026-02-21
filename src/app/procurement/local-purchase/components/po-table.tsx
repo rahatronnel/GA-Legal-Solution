@@ -12,36 +12,24 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { 
     PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, 
     XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, 
     Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle, 
     ListOrdered, ShieldCheck 
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
-import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useDoc } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { PurchaseOrder } from './po-entry-form';
 import { PurchaseOrderForm } from './po-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Checkbox } from '@/components/ui/checkbox';
-import type { OrganizationSettings } from '@/app/settings/page';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -63,7 +51,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 <DialogDescription>Essential instructions for managing vendor commitments.</DialogDescription>
             </DialogHeader>
             <ScrollArea className="flex-1 min-h-0">
-                <div className="space-y-6 p-6">
+                <div className="space-y-6 p-6 pb-24">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Data Origin</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -83,7 +71,7 @@ const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Management Oversight</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                            Visibility is restricted to GP personnel and the assigned approvers in the dynamic chain. All signatures are timestamped.
+                            Visibility is restricted to GP personnel and the assigned approvers in the chain. All signatures are timestamped.
                         </p>
                     </section>
                 </div>

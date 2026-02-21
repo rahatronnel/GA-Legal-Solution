@@ -29,8 +29,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
@@ -43,10 +43,12 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import type { ComparativeStatement } from './cs-entry-form';
 
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
             <div className="bg-primary p-6 text-primary-foreground shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -60,8 +62,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </div>
 
             <ScrollArea className="flex-1 min-h-0">
-                <div className="p-6 space-y-8 pb-12">
-                    {/* Process Flow Graph */}
+                <div className="p-6 space-y-8 pb-24">
                     <section className="space-y-4">
                         <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                             <TrendingUp className="h-4 w-4" /> Visual Lifecycle Flow
@@ -99,7 +100,6 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
 
                     <Separator />
 
-                    {/* Module Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
                             <CardContent className="pt-6 space-y-2">

@@ -4,7 +4,7 @@
 import React, { useMemo, Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs'; // Using alias
+import { Tabs as ShadTabs, TabsContent as ShadTabsContent, TabsList as ShadTabsList, TabsTrigger as ShadTabsTrigger } from "@/components/ui/tabs";
 import { ModuleHeader } from '@/app/components/module-header';
 import { DemandNoteApprovalSettings } from './components/demand-note-approval-settings';
 import { DemandNoteTable } from './components/demand-note-table';
@@ -35,7 +35,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { UserAuditReport } from './components/user-audit-report';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Tabs as ShadTabs, TabsContent as ShadTabsContent, TabsList as ShadTabsList, TabsTrigger as ShadTabsTrigger } from "@/components/ui/tabs";
 
 function LocalPurchaseContent() {
   const { user } = useUser();
@@ -211,10 +210,10 @@ function LocalPurchaseContent() {
         <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
                 <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
-                    <DialogHeader>
+                    <div>
                         <DialogTitle className="text-2xl font-black text-primary">Fleet & Procurement Workflow Tracker</DialogTitle>
                         <DialogDescription>Comprehensive audit trail and lifecycle visibility for every requisition.</DialogDescription>
-                    </DialogHeader>
+                    </div>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
                 <div className="flex-grow min-h-0">
@@ -228,10 +227,10 @@ function LocalPurchaseContent() {
         <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in">
             <div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0">
                 <div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0">
-                    <DialogHeader>
+                    <div>
                         <DialogTitle className="text-2xl font-black text-primary">User Activity Audit & Response Metrics</DialogTitle>
                         <DialogDescription>Analyze organizational efficiency and user performance lag times with precision.</DialogDescription>
-                    </DialogHeader>
+                    </div>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
                 </div>
                 <div className="flex-grow min-h-0">
