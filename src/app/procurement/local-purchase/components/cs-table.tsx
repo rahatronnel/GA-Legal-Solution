@@ -17,7 +17,8 @@ import {
     Search, Eye, Trash2, Check, Printer, X, Info, CheckCircle, 
     Hourglass, MoreHorizontal, Hand, FilePlus, Copy, DollarSign, 
     FileText, AlertTriangle, ChevronRight, ChevronLeft, HelpCircle,
-    ListOrdered, ShieldCheck, UserCheck, Tag, BarChart2
+    ListOrdered, ShieldCheck, UserCheck, Tag, BarChart2, TrendingUp,
+    Wallet, Gavel, GitCommitHorizontal, MapPin
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -48,51 +49,112 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
-            <DialogHeader>
-                <div className="flex items-center gap-2 text-primary">
-                    <HelpCircle className="h-6 w-6" />
-                    <DialogTitle className="text-xl">Comparative Statement (CS) Guide</DialogTitle>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+            <div className="bg-primary p-6 text-primary-foreground shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <BarChart2 className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                        <DialogTitle className="text-2xl font-black tracking-tight">CS Master Operational Guide</DialogTitle>
+                        <DialogDescription className="text-primary-foreground/80 font-medium">Internal standards for high-fidelity procurement analysis & vendor awarding.</DialogDescription>
+                    </div>
                 </div>
-                <DialogDescription>Internal guidelines for vendor quotation analysis and contract awarding.</DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
-                <div className="space-y-6 p-4">
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            The Comparative Statement is designed to perform a high-fidelity "Apples-to-Apples" comparison between multiple vendor bids for a specific Demand Note.
-                        </p>
+            </div>
+
+            <ScrollArea className="flex-grow">
+                <div className="p-6 space-y-8 pb-12">
+                    {/* Process Flow Graph */}
+                    <section className="space-y-4">
+                        <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" /> Visual Lifecycle Flow
+                        </h4>
+                        <div className="relative p-6 border-2 border-dashed rounded-2xl bg-muted/30 overflow-hidden">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><FileText className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">DN<br/>Approved</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><MapPin className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">GP Sourcing<br/>(Vendors)</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group scale-125">
+                                    <div className="h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-2xl ring-4 ring-primary/20 group-hover:rotate-12 transition-transform"><BarChart2 className="h-6 w-6" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight text-primary">CS Analysis<br/>(You are here)</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Gavel className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Contract<br/>Awarded</span>
+                                </div>
+                                <ChevronRight className="hidden md:block h-4 w-4 text-muted-foreground animate-pulse" />
+                                <div className="flex flex-col items-center gap-2 group">
+                                    <div className="h-10 w-10 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><ShieldCheck className="h-5 w-5" /></div>
+                                    <span className="text-[10px] font-black text-center uppercase leading-tight">Management<br/>Approval</span>
+                                </div>
+                            </div>
+                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/10 -translate-y-1/2 hidden md:block" />
+                        </div>
                     </section>
+
                     <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><Tag className="h-4 w-4"/> Quotation Entry</h4>
-                        <p className="text-sm text-muted-foreground">
-                            GP Concern Officers input the detailed breakdown from each vendor, including unit prices, specific discounts, VAT/TAX percentages, and commercial terms (Payment & Delivery).
-                        </p>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> Awarding Strategy</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Once data is entered, the status moves to <Badge variant="outline">Pending Vendor Selection</Badge>. The authorized officer must then click the <Hand className="h-3 w-3 inline mx-1"/> button to "Award" the contract to the most competitive supplier.
-                        </p>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Dynamic Approval Thresholds</h4>
-                        <p className="text-sm text-muted-foreground">The internal approval chain is automatically calculated based on the lowest bid amount:</p>
-                        <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-                            <li><strong>Up to $10k:</strong> Purchase Manager approval.</li>
-                            <li><strong>$10k - $100k:</strong> Purchase Manager + Technical Advisor.</li>
-                            <li><strong>Above $1M:</strong> Full Management Chain + MD/FD Final sign-off.</li>
-                        </ul>
-                    </section>
+
+                    {/* Module Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-blue-600"><Info className="h-4 w-4"/> The "Apples-to-Apples" Logic</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    The CS module eliminates guesswork. It presents quotes from different vendors side-by-side so you can compare not just price, but <strong>quality, lead time, and commercial terms</strong> instantly.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-emerald-600"><DollarSign className="h-4 w-4"/> Dynamic Financial Audit</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Input unit prices, and the system automatically calculates discounts, VAT, and Tax. It highlights the <strong>"Best Offer"</strong> (lowest total cost) with a green badge automatically.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-amber-600"><Gavel className="h-4 w-4"/> Awarding & Commitment</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    After analysis, click the <Hand className="h-3 w-3 inline mx-1"/> <strong>Award</strong> button. This selects the official supplier and initiates the internal multi-stage signature workflow.
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+                            <CardContent className="pt-6 space-y-2">
+                                <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Intelligent Approval Matrix</h5>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    The system builds the signature chain based on the <strong>Awarded Amount</strong>. Large investments are automatically routed to the MD/FD for final authorization.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
+                        <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><ListOrdered className="h-4 w-4" /> Threshold Intelligence Table</h5>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">UP TO $10K</p><p className="text-[9px] text-muted-foreground italic">Purchase Manager</p></div>
+                            <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">$10K - $100K</p><p className="text-[9px] text-muted-foreground italic">+ Tech Advisor</p></div>
+                            <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">ABOVE $1M</p><p className="text-[9px] text-muted-foreground italic">+ Full Executive Chain</p></div>
+                        </div>
+                    </div>
                 </div>
                 <ScrollBar orientation="vertical" />
             </ScrollArea>
-            <DialogFooter className="border-t pt-4">
-                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            
+            <DialogFooter className="p-4 border-t shrink-0">
+                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest">Understood, Let's Analyze</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -355,7 +417,7 @@ export function ComparativeStatementTable() {
                             </div>
                         )}
                     </div>
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> User Guide</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Comprehensive Guide</Button>
                 </div>
                 <div className="border rounded-lg">
                     <Table>
