@@ -40,7 +40,7 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 import { getCSStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
-function CSUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
@@ -151,7 +151,7 @@ function CSUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </DialogContent>
         </Dialog>
     );
-}
+};
 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
@@ -304,8 +304,8 @@ const VendorSelectionDialog: React.FC<{
                                 Next Step <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <Button variant="destructive" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20">
-                                Confirm Award & Start Approval
+                            <Button variant="destructive" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20 font-bold">
+                                <Check className="mr-2 h-4 w-4" /> Confirm Award & Start Approval
                             </Button>
                         )}
                     </div>

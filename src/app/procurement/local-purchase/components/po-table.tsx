@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import { MRREntryForm } from './mrr-entry-form';
 import { getPOStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
-function POUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+const POUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
@@ -147,7 +147,7 @@ function POUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
             </DialogContent>
         </Dialog>
     );
-}
+};
 
 function POApprovalWizard({
     po,
@@ -222,7 +222,7 @@ function POApprovalWizard({
                     {step < 3 ? (
                         <Button onClick={() => setStep(prev => prev + 1)}>Next Review Step <ChevronRight className="ml-2 h-4 w-4" /></Button>
                     ) : (
-                        <Button onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve & Sign PO</Button>
+                        <Button variant="destructive" onClick={() => onApprove(po.id)} className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20 font-bold">Approve & Sign PO</Button>
                     )}
                 </DialogFooter>
             </DialogContent>

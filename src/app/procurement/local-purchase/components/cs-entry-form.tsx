@@ -11,7 +11,7 @@ import { CalendarIcon, ChevronsRight, ChevronsLeft, Hash, Info, User, Tag, MapPi
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { cn, imageToDataUrl } from '@/lib/utils';
+import { cn, imageToDataUrl, FIRESTORE_MAX_FILE_SIZE } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useProcurement } from './procurement-provider';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
@@ -158,6 +158,16 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
     const handleQuotationUpload = async (e: React.ChangeEvent<HTMLInputElement>, vendorId: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            
+            if (file.size > FIRESTORE_MAX_FILE_SIZE) {
+                toast({
+                    variant: "destructive",
+                    title: "File Too Large",
+                    description: `This file exceeds the organizational limit (${Math.round(FIRESTORE_MAX_FILE_SIZE / 1024)}KB). Please compress or reduce the number of pages.`
+                });
+                return;
+            }
+
             try {
                 const dataUrl = await imageToDataUrl(file);
                 setNewQuotations(prev => ({
@@ -336,7 +346,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-md hover:bg-primary/90 transition-colors">
                                             <Upload className="h-3 w-3" /> {currentQuotation ? 'Replace Quote' : 'Upload Quote'}
                                         </div>
-                                        <Input id={`cs-up-${currentVendor.id}`} type="file" className="hidden" onChange={(e) => handleQuotationUpload(e, currentVendor.id)} />
+                                        <Input id={`cs-up-${currentVendor.id}`} type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => handleQuotationUpload(e, currentVendor.id)} />
                                     </Label>
                                 </div>
                              </div>

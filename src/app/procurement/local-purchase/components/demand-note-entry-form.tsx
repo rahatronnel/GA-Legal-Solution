@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -19,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, PlusCircle, Trash2, File as FileIcon, X, Hash, Building, Tag, MapPin, User, Phone, DollarSign, ListOrdered, Info } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { cn, imageToDataUrl } from '@/lib/utils';
+import { cn, imageToDataUrl, FIRESTORE_MAX_FILE_SIZE } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
 import { useUser } from '@/firebase';
@@ -142,7 +141,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
             setDate(demandNote.date ? parseISO(demandNote.date) : new Date());
         } else {
             const loggedInEmployee = user && employees.length > 0 
-                ? employees.find(e => e.email === user.email)
+                ? employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email)
                 : null;
             
             const today = new Date();
@@ -155,7 +154,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                 contactPersonName: loggedInEmployee?.fullName || '',
                 contactPersonNumber: loggedInEmployee?.mobileNumber || '',
                 departmentId: loggedInEmployee?.departmentId || '',
-                sectionId: loggedInEmployee?.departmentId || '',
+                sectionId: loggedInEmployee?.sectionId || '',
             });
             setItems([]);
             setDocuments({ attachments: [] });
@@ -199,6 +198,16 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
+            
+            if (file.size > FIRESTORE_MAX_FILE_SIZE) {
+                toast({
+                    variant: "destructive",
+                    title: "File Too Large",
+                    description: `This file exceeds the organizational limit (${Math.round(FIRESTORE_MAX_FILE_SIZE / 1024)}KB). Please compress or reduce the number of pages.`
+                });
+                return;
+            }
+
             try {
               const dataUrl = await imageToDataUrl(file);
               setDocuments(prev => ({ attachments: [...prev.attachments, { id: Date.now().toString(), name: file.name, file: dataUrl }] }));

@@ -43,7 +43,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 
-function MRRUserGuide({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-3xl h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
