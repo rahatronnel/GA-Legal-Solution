@@ -20,7 +20,7 @@ import {
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
     Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
-    History, Layers, UserPlus
+    History, Layers, UserPlus, Tag
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -190,7 +190,7 @@ export function BlueprintDialog({
                                                     <div className="text-center"><p className="text-xs font-black uppercase tracking-tighter">Receipt</p><p className="text-[10px] text-muted-foreground leading-tight">Inventory<br/>Entry (MRR)</p></div>
                                                 </div>
                                             </div>
-                                            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-slate-800 -translate-y-1/2 opacity-10 hidden md:block" />
+                                            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-amber-500 to-slate-800 -translate-y-1/2 opacity-10 hidden md:block" />
                                         </div>
                                     </section>
                                 </TabsContent>

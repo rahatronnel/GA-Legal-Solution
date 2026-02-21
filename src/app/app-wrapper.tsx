@@ -123,21 +123,21 @@ const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: Organization
                 </div>
             </header>
 
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 animate-in fade-in zoom-in duration-700">
                  <h1 className="text-5xl font-extrabold tracking-tight text-white">YKK ERP Solution</h1>
-                 <p className="text-muted-foreground mt-2">Select a module to begin your journey.</p>
+                 <p className="text-muted-foreground mt-2 font-bold uppercase tracking-widest text-xs">Certified Organizational Operating System</p>
             </div>
-            <div className="w-full max-w-5xl space-y-8">
+            <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {showProcurement && majorModules.map((majorMod) => (
-                    <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20">
+                    <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20 backdrop-blur-md">
                         <CardHeader>
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/10 rounded-lg">
                                     <majorMod.icon className="h-8 w-8 text-primary" />
                                 </div>
                                 <div>
-                                    <CardTitle className="text-2xl">{majorMod.name}</CardTitle>
-                                    <CardDescription>{majorMod.description}</CardDescription>
+                                    <CardTitle className="text-2xl font-black uppercase tracking-tight">{majorMod.name}</CardTitle>
+                                    <CardDescription className="font-medium">{majorMod.description}</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -145,9 +145,9 @@ const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: Organization
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                 {majorMod.subModules.map((subMod) => (
                                     <Link href={subMod.href} key={subMod.href}>
-                                        <Card className="h-full flex flex-col items-center justify-center text-center p-6 transition-all hover:shadow-lg hover:scale-105 hover:bg-primary/5">
-                                            <subMod.icon className="h-12 w-12 text-primary mb-3" />
-                                            <p className="font-semibold text-base">{subMod.name}</p>
+                                        <Card className="h-full flex flex-col items-center justify-center text-center p-6 transition-all hover:shadow-2xl hover:scale-105 hover:bg-primary/10 hover:border-primary/40 group">
+                                            <subMod.icon className="h-12 w-12 text-primary mb-3 group-hover:animate-bounce" />
+                                            <p className="font-bold text-base uppercase tracking-tighter">{subMod.name}</p>
                                         </Card>
                                     </Link>
                                 ))}
@@ -160,11 +160,11 @@ const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: Organization
                   <>
                     <div className="relative py-4">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
+                            <span className="w-full border-t border-white/10" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-background px-3 text-sm text-muted-foreground">
-                                Core Modules
+                            <span className="bg-background px-4 py-1 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                                Core Operating Modules
                             </span>
                         </div>
                     </div>
@@ -172,9 +172,9 @@ const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: Organization
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                         {coreModules.map((mod) => (
                             <Link href={mod.href} key={mod.href}>
-                                <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-lg hover:scale-110">
-                                    <mod.icon className="h-12 w-12 text-primary mb-3" />
-                                    <p className="font-semibold text-sm">{mod.name}</p>
+                                <Card className="h-full flex flex-col items-center justify-center text-center p-4 transition-all hover:shadow-xl hover:scale-110 hover:bg-white/5 group">
+                                    <mod.icon className="h-10 w-10 text-primary/70 mb-3 group-hover:text-primary transition-colors" />
+                                    <p className="font-bold text-xs uppercase tracking-tighter">{mod.name}</p>
                                 </Card>
                             </Link>
                         ))}
@@ -182,21 +182,21 @@ const ModuleDashboard = ({ orgSettings, employees }: { orgSettings: Organization
                   </>
                 )}
             </div>
-             <footer className="absolute bottom-4 text-xs text-muted-foreground">
-                © 2024 YKK ERP Solution
+             <footer className="absolute bottom-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+                © 2024 YKK ERP Solution • Secure Environment
             </footer>
 
             <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
                <AlertDialogContent className="animate-dialog-in">
                    <AlertDialogHeader>
-                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                   <AlertDialogTitle>Terminate Session?</AlertDialogTitle>
                    <AlertDialogDescription>
-                       You will be logged out of your session.
+                       You are about to log out of the YKK ERP secure session.
                    </AlertDialogDescription>
                    </AlertDialogHeader>
                    <AlertDialogFooter>
                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                   <AlertDialogAction onClick={() => { auth.signOut(); setIsLogoutDialogOpen(false); }} className="bg-destructive hover:bg-destructive/90">Logout</AlertDialogAction>
+                   <AlertDialogAction onClick={() => { auth.signOut(); setIsLogoutDialogOpen(false); }} className="bg-destructive hover:bg-destructive/90">Confirm Logout</AlertDialogAction>
                    </AlertDialogFooter>
                </AlertDialogContent>
             </AlertDialog>
