@@ -4,10 +4,21 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogDescription, 
+    DialogFooter 
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, UserPlus, Copy } from 'lucide-react';
+import { 
+    Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, 
+    UserPlus, Copy, HelpCircle, Info, Tag, ShieldCheck, ListOrdered,
+    Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X
+} from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
@@ -21,11 +32,67 @@ import { Label } from '@/components/ui/label';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronsUpDown, Check, X } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ComparativeStatementForm } from './cs-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import { Separator } from '@/components/ui/separator';
+
+const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
+            <DialogHeader>
+                <div className="flex items-center gap-2 text-primary">
+                    <HelpCircle className="h-6 w-6" />
+                    <DialogTitle className="text-xl">GP Desk Operational Guide</DialogTitle>
+                </div>
+                <DialogDescription>Internal workflow for General Purchase (GP) task management and vendor sourcing.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
+                <div className="space-y-6 p-4">
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            The General Purchase (GP) Desk is the operational hub where approved requisitions are transformed into actual vendor commitments. It manages the lifecycle between Demand Note approval and Comparative Statement generation.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserPlus className="h-4 w-4"/> Stage 1: Concern Assignment</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Once a Demand Note is approved, the <strong>GP Officer</strong> must assign a specific <strong>GP Concern Officer</strong>. This individual becomes the "Owner" of the procurement process for that specific requisition.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Users className="h-4 w-4"/> Stage 2: Vendor Sourcing</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            The assigned Concern Officer identifies suitable vendors and clicks the <Users className="h-3 w-3 inline mx-1"/> icon to "Assign Vendors". This creates a structured tracking record for expected quotations.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><Tag className="h-4 w-4"/> Stage 3: Quotation Collection</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            Concern Officers collect physical or digital bids from the assigned vendors. These quotations are then uploaded to the system via the Demand Note details page to ensure audit transparency.
+                        </p>
+                    </section>
+                    <Separator />
+                    <section className="space-y-2">
+                        <h4 className="font-bold flex items-center gap-2 text-primary"><FilePlus className="h-4 w-4"/> Stage 4: CS Initiation</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                            After quotations are finalized, the Concern Officer clicks the <FilePlus className="h-3 w-3 inline mx-1"/> icon to initiate the <strong>Comparative Statement (CS)</strong>. This triggers the financial analysis phase.
+                        </p>
+                    </section>
+                </div>
+                <ScrollBar orientation="vertical" />
+            </ScrollArea>
+            <DialogFooter className="border-t pt-4">
+                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+);
 
 const MultiSelectPopover: React.FC<{
     items: Vendor[];
@@ -57,7 +124,7 @@ const MultiSelectPopover: React.FC<{
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 animate-scale-in">
                 <Command>
                     <CommandInput placeholder="Search vendors..." />
                      <ScrollArea className="h-48">
@@ -103,6 +170,7 @@ export default function GPDeskTable() {
 
     const [isCsFormOpen, setIsCsFormOpen] = useState(false);
     const [currentNoteForCs, setCurrentNoteForCs] = useState<DemandNote | null>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
@@ -269,8 +337,8 @@ export default function GPDeskTable() {
                             />
                         </div>
                         <Select value={assignedToFilter} onValueChange={setAssignedToFilter} disabled={roleData.isGPConcern && !roleData.isSuperAdmin && !roleData.isGPOfficer && !roleData.isManager}>
-                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
-                            <SelectContent>
+                            <SelectTrigger className="w-[200px] animate-scale-in"><SelectValue placeholder="Filter by GP Concern..." /></SelectTrigger>
+                            <SelectContent className="animate-scale-in">
                                 <SelectItem value="all">All Concern Officers</SelectItem>
                                 {gpConcernOfficers.map(officer => (
                                     <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
@@ -278,25 +346,28 @@ export default function GPDeskTable() {
                             </SelectContent>
                         </Select>
                         <Select value={vendorAssignmentFilter} onValueChange={setVendorAssignmentFilter}>
-                            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Filter by Vendor Status..." /></SelectTrigger>
-                            <SelectContent>
+                            <SelectTrigger className="w-[200px] animate-scale-in"><SelectValue placeholder="Filter by Vendor Status..." /></SelectTrigger>
+                            <SelectContent className="animate-scale-in">
                                 <SelectItem value="all">All Vendor Statuses</SelectItem>
                                 <SelectItem value="assigned">Assigned</SelectItem>
                                 <SelectItem value="not_assigned">Not Assigned</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 animate-scale-in" onClick={() => setIsGuideOpen(true)}>
+                        <HelpCircle className="mr-2 h-4 w-4" /> User Guide
+                    </Button>
                 </div>
-                <div className="border rounded-lg">
+                <div className="border rounded-lg overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Demand Note #</TableHead>
-                                <TableHead>Department</TableHead>
-                                <TableHead>GP Concern</TableHead>
-                                <TableHead>Vendor Assignment</TableHead>
-                                <TableHead>CS Prepared</TableHead>
-                                <TableHead className="w-[160px] text-right">Actions</TableHead>
+                            <TableRow className="bg-muted/50">
+                                <TableHead className="font-bold">Demand Note #</TableHead>
+                                <TableHead className="font-bold">Department</TableHead>
+                                <TableHead className="font-bold">GP Concern</TableHead>
+                                <TableHead className="font-bold">Vendor Assignment</TableHead>
+                                <TableHead className="font-bold">CS Prepared</TableHead>
+                                <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -320,14 +391,14 @@ export default function GPDeskTable() {
                                 <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (needsVendorAssignment || needsCsCreation || isWaitingForAssignment) && 'bg-orange-500/5')}>
                                     <TableCell>
                                         <div className="flex items-center gap-1">
-                                            <span>{item.demandNoteNumber}</span>
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                            <span className="font-medium">{item.demandNoteNumber}</span>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip>
                                         </div>
                                     </TableCell>
                                     <TableCell>{getDepartmentName(item.departmentId)}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className={item.gpConcernOfficerId ? '' : 'text-muted-foreground italic'}>
+                                            <span className={item.gpConcernOfficerId ? 'text-sm font-medium' : 'text-muted-foreground italic'}>
                                                 {item.gpConcernOfficerId ? getEmployeeName(item.gpConcernOfficerId) : 'Unassigned'}
                                             </span>
                                             {item.gpAssignedDate && (
@@ -357,36 +428,36 @@ export default function GPDeskTable() {
                                                 <span className="text-[10px] text-muted-foreground">{new Date(cs.csDate).toLocaleString()}</span>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-col gap-1">
                                                 <Badge variant="secondary">No</Badge>
-                                                {isWaitingForAssignment && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>}
-                                                {needsVendorAssignment && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Vendors</Badge>}
-                                                {needsCsCreation && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Prepare CS</Badge>}
+                                                {isWaitingForAssignment && <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap text-[9px] h-4">⚠️ Assign Concern</Badge>}
+                                                {needsVendorAssignment && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[9px] h-4">⚠️ Assign Vendors</Badge>}
+                                                {needsCsCreation && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[9px] h-4">⚠️ Prepare CS</Badge>}
                                             </div>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
                                             {isGPManager && !item.gpConcernOfficerId && (
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleOpenAssignConcern(item)}><UserPlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Concern Officer</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500 animate-pulse" onClick={() => handleOpenAssignConcern(item)}><UserPlus className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Assign Concern Officer</TooltipContent></Tooltip>
                                             )}
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserConcern}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Assign Vendors</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssignVendors(item)} disabled={!isCurrentUserConcern}><Users className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Assign Vendors</TooltipContent></Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCreateCs(item)} disabled={!!cs || !item.quotations || item.quotations.length === 0 || !isCurrentUserConcern}><FilePlus className="h-4 w-4" /></Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent>{cs ? 'CS already created' : 'Create CS'}</TooltipContent>
+                                                <TooltipContent className="animate-scale-in">{cs ? 'CS already created' : 'Create CS'}</TooltipContent>
                                             </Tooltip>
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Print</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/demand-notes/${item.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent className="animate-scale-in">View Requisition</TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(item, 'demand-note')}><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Print DN</TooltipContent></Tooltip>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    No approved demand notes found.
+                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                                    No approved demand notes currently awaiting GP Desk processing.
                                 </TableCell>
                             </TableRow>
                         )}
@@ -396,7 +467,7 @@ export default function GPDeskTable() {
             </div>
 
             <Dialog open={isAssignConcernOpen} onOpenChange={setIsAssignConcernOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md animate-dialog-in">
                     <DialogHeader>
                         <DialogTitle>Assign GP Concern Officer</DialogTitle>
                         <DialogDescription>Select the officer responsible for processing the quotations for DN: {currentNote?.demandNoteNumber}.</DialogDescription>
@@ -405,8 +476,8 @@ export default function GPDeskTable() {
                         <div className="space-y-2">
                             <Label>Select Officer</Label>
                             <Select value={selectedConcernId} onValueChange={setSelectedConcernId}>
-                                <SelectTrigger><SelectValue placeholder="Choose an officer..." /></SelectTrigger>
-                                <SelectContent>
+                                <SelectTrigger className="animate-scale-in"><SelectValue placeholder="Choose an officer..." /></SelectTrigger>
+                                <SelectContent className="animate-scale-in">
                                     {gpConcernOfficers.map(officer => (
                                         <SelectItem key={officer.id} value={officer.id}>{officer.fullName}</SelectItem>
                                     ))}
@@ -422,7 +493,7 @@ export default function GPDeskTable() {
             </Dialog>
 
             <Dialog open={isAssignVendorOpen} onOpenChange={setIsAssignVendorOpen}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-2xl animate-dialog-in">
                     <DialogHeader>
                         <DialogTitle>Assign Vendors for {currentNote?.demandNoteNumber}</DialogTitle>
                         <DialogDescription>
@@ -453,6 +524,8 @@ export default function GPDeskTable() {
                     onSave={handleSaveCs}
                 />
             )}
+
+            <GPDeskUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
         </TooltipProvider>
     );
