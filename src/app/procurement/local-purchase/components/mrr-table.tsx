@@ -38,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { UploadedFile } from './po-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
