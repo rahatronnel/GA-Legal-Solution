@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Search, Eye, Printer, Check, X, Filter, XCircle, Copy, Send, PackageCheck, HelpCircle, Info, CheckCircle, Hourglass, MoreHorizontal, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
-import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser, useDoc } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { PurchaseOrder } from './po-entry-form';
 import { PurchaseOrderForm } from './po-entry-form';
