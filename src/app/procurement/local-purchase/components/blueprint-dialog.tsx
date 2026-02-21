@@ -22,7 +22,7 @@ import {
     Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
-    FileSignature, Fingerprint, Timer
+    FileSignature, Fingerprint, Timer, Truck
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';

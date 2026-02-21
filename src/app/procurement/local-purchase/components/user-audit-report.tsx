@@ -156,7 +156,6 @@ export function UserAuditReport() {
 
     return (
         <div className="space-y-4 flex flex-col h-full min-h-0 p-2">
-            {/* ULTRA COMPACT FILTER BAR */}
             <div className="flex flex-wrap items-end gap-3 p-3 border rounded-xl bg-background shadow-sm shrink-0">
                 <div className="flex-1 min-w-[120px] max-w-[180px]">
                     <Label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Quick Search</Label>
@@ -253,7 +252,6 @@ export function UserAuditReport() {
                 </Button>
             </div>
 
-            {/* PERFORMANCE CARDS - COMPACT */}
             <div className="flex gap-4 shrink-0 px-1">
                 <div className="flex-1 p-2 border rounded-lg bg-primary/5 flex items-center justify-between">
                     <span className="text-[9px] font-black uppercase text-muted-foreground">Activities</span>
@@ -273,7 +271,6 @@ export function UserAuditReport() {
                 </div>
             </div>
 
-            {/* MAIN DATA GRID - EXPANSIVE */}
             <Card className="flex-grow min-h-0 flex flex-col border-none shadow-none overflow-hidden bg-background">
                 <div className="flex-grow overflow-hidden min-h-0">
                     <ScrollArea className="h-full">
