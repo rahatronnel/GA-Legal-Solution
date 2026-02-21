@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, Suspense } from 'react';
+import React, { useMemo, Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,14 +27,22 @@ import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
 import { 
     FileText, Briefcase, BarChart2, ClipboardCheck, Package, Activity, 
-    Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin 
+    Database, Settings, Users, Tag, ListOrdered, Layers, Hash, MapPin,
+    History, UserCheck, ShieldCheck, Info, HelpCircle, X
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { UserAuditReport } from './components/user-audit-report';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function LocalPurchaseContent() {
   const { user } = useUser();
   const { orgSettings, employees, demandNotes, comparativeStatements, purchaseOrders, mrrs } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const [isTrackerOpen, setIsTrackerOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
 
   const activeTab = searchParams.get('tab') || 'demand-notes';
 
@@ -65,41 +73,20 @@ function LocalPurchaseContent() {
       settings.manufacturingDeptManagerId === currentEmp.id ||
       settings.specializedDeptManagerId === currentEmp.id;
 
-    let csApproverCheck = false;
-    const csRoles = settings.csApprovalRoles;
-    if (csRoles) {
-        const roleIds = [
-            csRoles.purchaseManagerId, csRoles.purchaseDeptTaId, csRoles.viceFactoryManagerId,
-            csRoles.accountsManagerId, csRoles.gmSalesDeptId, csRoles.gmAdministrationId,
-        ];
-        if (roleIds.includes(currentEmp.id)) csApproverCheck = true;
-    }
-    if (!csApproverCheck && settings.departmentHeads?.some(dh => dh.technicalAdvisorId === currentEmp.id)) csApproverCheck = true;
-    if (!csApproverCheck && settings.specializedDeptTaId === currentEmp.id) csApproverCheck = true;
-
-    const isInvolvedInDn = (demandNotes || []).some(dn => dn.currentApproverId === currentEmp.id || dn.approvalHistory?.some(h => h.approverId === currentEmp.id));
-    const isInvolvedInCs = (comparativeStatements || []).some(cs => cs.currentApproverId === currentEmp.id || cs.approvalHistory?.some(h => h.approverId === currentEmp.id));
-    const isInvolvedInPo = (purchaseOrders || []).some(po => po.currentApproverId === currentEmp.id || po.approvalHistory?.some(h => h.approverId === currentEmp.id));
-    const isInvolvedInMrr = (mrrs || []).some(mrr => mrr.currentApproverId === currentEmp.id || mrr.approvalHistory?.some(h => h.approverId === currentEmp.id));
-
-    const isCurrentApprover = isInvolvedInDn || isInvolvedInCs || isInvolvedInPo || isInvolvedInMrr;
-
     return {
       isSuperAdmin: superAdminCheck,
       isGPOfficer: GPO,
       isGPConcern: GPC,
       isManager: managerCheck,
-      isCsApprover: csApproverCheck,
-      isCurrentApprover: isCurrentApprover
     };
-  }, [orgSettings, employees, user, demandNotes, comparativeStatements, purchaseOrders, mrrs]);
+  }, [orgSettings, employees, user]);
 
-  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover } = roleData;
+  const { isSuperAdmin, isGPOfficer, isGPConcern, isManager } = roleData;
 
   const tabsList = useMemo(() => {
     const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
-    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isCsApprover || isCurrentApprover;
+    const canViewCsAndPo = isSuperAdmin || isGPOfficer || isManager || isGPConcern;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
     if (canViewCsAndPo) {
@@ -108,35 +95,52 @@ function LocalPurchaseContent() {
         list.push({ id: 'mrr', label: 'MRR', icon: Package });
     }
     
-    list.push({ id: 'tracker', label: 'Workflow Tracker', icon: Activity });
-
     if (isSuperAdmin) {
       list.push({ id: 'master-data', label: 'Master Data', icon: Database });
       list.push({ id: 'settings', label: 'Settings', icon: Settings });
     }
     return list;
-  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager, isCsApprover, isCurrentApprover]);
-
-  const userRoleText = useMemo(() => {
-    if (isSuperAdmin) return "Superadmin";
-    if (isGPOfficer) return "GP Officer";
-    if (isGPConcern) return "GP Concern Officer";
-    if (isCsApprover) return "CS Approver";
-    if (isManager) return "Manager";
-    return "Employee";
-  }, [isSuperAdmin, isGPOfficer, isGPConcern, isCsApprover, isManager]);
+  }, [isSuperAdmin, isGPOfficer, isGPConcern, isManager]);
 
   const gridColsCount = tabsList.length;
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       <ModuleHeader />
-      <div className="flex justify-between items-center">
+      
+      <div className="flex justify-between items-center bg-muted/20 p-4 rounded-2xl border">
         <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold">Local Purchase Module</h1>
-            <Badge variant="outline" className="px-4 py-1 text-sm">Role: {userRoleText}</Badge>
+            <div>
+                <h1 className="text-3xl font-black tracking-tight">Local Purchase</h1>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Supply Chain Command</p>
+            </div>
+            <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20">
+                {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : 'Manager'))}
+            </Badge>
         </div>
-        <NotificationCenter />
+        <div className="flex items-center gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10" onClick={() => setIsTrackerOpen(true)}>
+                        <History className="h-5 w-5 text-primary" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="animate-scale-in">Workflow Tracker</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10" onClick={() => setIsAuditOpen(true)}>
+                        <UserCheck className="h-5 w-5 text-primary" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="animate-scale-in">User Audit & Response Report</TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="vertical" className="h-8 mx-2" />
+            <NotificationCenter />
+        </div>
       </div>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -144,53 +148,31 @@ function LocalPurchaseContent() {
           {tabsList.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2 py-3 transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg">
                 <tab.icon className="h-4 w-4" />
-                <span className="hidden md:inline">{tab.label}</span>
+                <span className="hidden lg:inline font-bold text-xs uppercase tracking-tight">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <TabsContent value="demand-notes">
-          <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Requisition Overview</CardTitle>
-                <CardDescription>Track and analyze all local purchase demand notes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <DemandNoteTable />
-            </CardContent>
+        <TabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <Card className="border-none shadow-none bg-transparent">
+            <DemandNoteTable />
           </Card>
         </TabsContent>
 
-        <TabsContent value="gp-desk">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" /> General Purchase Desk</CardTitle></CardHeader>
-            <CardContent><GPDeskTable /></CardContent>
-          </Card>
+        <TabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <GPDeskTable />
         </TabsContent>
 
-        <TabsContent value="cs">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><BarChart2 className="h-5 w-5" /> Comparative Statements</CardTitle></CardHeader>
-            <CardContent><ComparativeStatementTable /></CardContent>
-          </Card>
+        <TabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <ComparativeStatementTable />
         </TabsContent>
 
-        <TabsContent value="po">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5" /> Purchase Orders</CardTitle></CardHeader>
-            <CardContent><PurchaseOrderTable /></CardContent>
-          </Card>
+        <TabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <PurchaseOrderTable />
         </TabsContent>
 
-        <TabsContent value="mrr">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Material Receiving Reports</CardTitle></CardHeader>
-            <CardContent><MRRTable /></CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="tracker">
-            <WorkflowTracker />
+        <TabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <MRRTable />
         </TabsContent>
 
         {isSuperAdmin && (
@@ -200,24 +182,24 @@ function LocalPurchaseContent() {
                 <MasterDataProvider>
                   <Tabs defaultValue="vendors" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto bg-muted/30 p-1 rounded-lg">
-                      <TabsTrigger value="vendors" className="flex items-center gap-1 text-xs"><Users className="h-3 w-3"/> Vendors</TabsTrigger>
-                      <TabsTrigger value="v-cat" className="flex items-center gap-1 text-xs"><Tag className="h-3 w-3"/> V-Cat</TabsTrigger>
-                      <TabsTrigger value="v-nature" className="flex items-center gap-1 text-xs"><Briefcase className="h-3 w-3"/> V-Nature</TabsTrigger>
-                      <TabsTrigger value="bill-items" className="flex items-center gap-1 text-xs"><Package className="h-3 w-3"/> B-Items</TabsTrigger>
-                      <TabsTrigger value="i-cat" className="flex items-center gap-1 text-xs"><Layers className="h-3 w-3"/> I-Cat</TabsTrigger>
-                      <TabsTrigger value="codes" className="flex items-center gap-1 text-xs"><Hash className="h-3 w-3"/> Codes</TabsTrigger>
-                      <TabsTrigger value="types" className="flex items-center gap-1 text-xs"><FileText className="h-3 w-3"/> DN-Types</TabsTrigger>
-                      <TabsTrigger value="places" className="flex items-center gap-1 text-xs"><MapPin className="h-3 w-3"/> Offices</TabsTrigger>
+                      <TabsTrigger value="vendors" className="text-xs">Vendors</TabsTrigger>
+                      <TabsTrigger value="v-cat" className="text-xs">V-Cat</TabsTrigger>
+                      <TabsTrigger value="v-nature" className="text-xs">V-Nature</TabsTrigger>
+                      <TabsTrigger value="bill-items" className="text-xs">B-Items</TabsTrigger>
+                      <TabsTrigger value="i-cat" className="text-xs">I-Cat</TabsTrigger>
+                      <TabsTrigger value="codes" className="text-xs">Codes</TabsTrigger>
+                      <TabsTrigger value="types" className="text-xs">DN-Types</TabsTrigger>
+                      <TabsTrigger value="places" className="text-xs">Offices</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="vendors" className="mt-4"><Card><CardHeader><CardTitle>Vendors</CardTitle></CardHeader><CardContent><VendorTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="v-cat" className="mt-4"><Card><CardHeader><CardTitle>Vendor Categories</CardTitle></CardHeader><CardContent><VendorCategoryTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="v-nature" className="mt-4"><Card><CardHeader><CardTitle>Nature of Business</CardTitle></CardHeader><CardContent><VendorNatureOfBusinessTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="bill-items" className="mt-4"><Card><CardHeader><CardTitle>Bill Item Master</CardTitle></CardHeader><CardContent><BillItemMasterTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="i-cat" className="mt-4"><Card><CardHeader><CardTitle>Bill Item Categories</CardTitle></CardHeader><CardContent><BillItemCategoryTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="codes" className="mt-4"><Card><CardHeader><CardTitle>Process Codes</CardTitle></CardHeader><CardContent><ProcessCodeTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="types" className="mt-4"><Card><CardHeader><CardTitle>Demand Types</CardTitle></CardHeader><CardContent><DemandTypeTable /></CardContent></Card></TabsContent>
-                    <TabsContent value="places" className="mt-4"><Card><CardHeader><CardTitle>Delivery Places</CardTitle></CardHeader><CardContent><DeliveryPlaceTable /></CardContent></Card></TabsContent>
+                    <TabsContent value="vendors" className="mt-4"><VendorTable /></TabsContent>
+                    <TabsContent value="v-cat" className="mt-4"><VendorCategoryTable /></TabsContent>
+                    <TabsContent value="v-nature" className="mt-4"><VendorNatureOfBusinessTable /></TabsContent>
+                    <TabsContent value="bill-items" className="mt-4"><BillItemMasterTable /></TabsContent>
+                    <TabsContent value="i-cat" className="mt-4"><BillItemCategoryTable /></TabsContent>
+                    <TabsContent value="codes" className="mt-4"><ProcessCodeTable /></TabsContent>
+                    <TabsContent value="types" className="mt-4"><DemandTypeTable /></TabsContent>
+                    <TabsContent value="places" className="mt-4"><DeliveryPlaceTable /></TabsContent>
                   </Tabs>
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
@@ -228,13 +210,49 @@ function LocalPurchaseContent() {
           </>
         )}
       </Tabs>
+
+      {/* --- Global Analysis Dialogs --- */}
+      
+      <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}>
+        <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
+            <div className="p-6 flex-grow overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-black">Fleet & Procurement Workflow Tracker</DialogTitle>
+                        <DialogDescription>Full audit trail and lifecycle visibility for every requisition.</DialogDescription>
+                    </DialogHeader>
+                    <Button variant="ghost" size="icon" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button>
+                </div>
+                <div className="h-full pb-12">
+                    <WorkflowTracker />
+                </div>
+            </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}>
+        <DialogContent className="sm:max-w-[85vw] h-[85vh] flex flex-col p-0">
+            <div className="p-6 flex-grow overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-black">User Activity Audit & Response Metrics</DialogTitle>
+                        <DialogDescription>Analyze organizational efficiency and individual user performance lag times.</DialogDescription>
+                    </DialogHeader>
+                    <Button variant="ghost" size="icon" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button>
+                </div>
+                <UserAuditReport />
+            </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
+    </TooltipProvider>
   );
 }
 
 export default function LocalPurchasePage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium text-muted-foreground">Initializing Module...</p></div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><p className="animate-pulse font-medium text-muted-foreground text-xl font-black uppercase tracking-widest">Handshaking Database...</p></div>}>
       <LocalPurchaseContent />
     </Suspense>
   );

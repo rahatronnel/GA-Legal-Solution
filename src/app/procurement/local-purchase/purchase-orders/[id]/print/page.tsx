@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
@@ -19,7 +18,6 @@ export default function POPrintPage() {
     const firestore = useFirestore();
     const { id } = params;
 
-    // Targeted fetching for near-instant response
     const poRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'purchaseOrders', id as string) : null, [firestore, id]);
     const { data: po, isLoading: l1 } = useDoc<PurchaseOrder>(poRef);
 
@@ -45,9 +43,10 @@ export default function POPrintPage() {
 
     useEffect(() => {
         if (!isLoading && po && demandNote && vendor && orgSettings) {
+            // Instant print handshake
             const timer = setTimeout(() => {
                 window.print();
-            }, 100); // 100ms ultra-fast trigger
+            }, 100); 
             return () => clearTimeout(timer);
         }
     }, [isLoading, po, demandNote, vendor, orgSettings]);
@@ -55,13 +54,16 @@ export default function POPrintPage() {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
-                <p className="font-bold text-sm text-muted-foreground animate-pulse italic">Synchronizing document for print...</p>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Syncing high-fidelity PO for physical output...</p>
+                </div>
             </div>
         );
     }
 
     if (!po) notFound();
-    if (!orgSettings) return <div className="p-8 text-center">Settings not available.</div>;
+    if (!orgSettings) return <div className="p-8 text-center font-bold">Settings handshake failed. Check database availability.</div>;
 
     return (
         <div className="bg-white min-h-screen">

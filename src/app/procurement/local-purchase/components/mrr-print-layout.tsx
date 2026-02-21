@@ -1,9 +1,7 @@
-
 "use client";
 
 import React from 'react';
 import type { OrganizationSettings } from '@/app/settings/page';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { MRR } from './mrr-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Designation } from '@/app/user-management/components/designation-table';
@@ -96,7 +94,7 @@ export const MRRPrintLayout: React.FC<MRRPrintLayoutProps> = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {mrr.items.map((item, idx) => (
+                        {(mrr.items || []).map((item, idx) => (
                             <tr key={idx}>
                                 <td className="border-2 border-black p-2 text-center font-bold">{idx + 1}</td>
                                 <td className="border-2 border-black p-2">{mrr.invoiceNumber}</td>
