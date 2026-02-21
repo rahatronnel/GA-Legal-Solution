@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { 
     Bell, Check, Clock, ExternalLink, 
-    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck 
+    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -175,7 +175,6 @@ export function NotificationCenter() {
         mrrs.forEach(mrr => {
             const relatedDN = demandNotes.find(dn => dn.demandNoteNumber === mrr.demandNoteNumber);
             
-            // New Notification: Requester Confirmation
             if (relatedDN && relatedDN.createdBy === uid && !mrr.requesterConfirmedAt) {
                 list.push({
                     id: mrr.id + '-confirm-receipt', type: 'MRR', title: mrr.mrrNumber,
