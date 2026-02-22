@@ -15,9 +15,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
-    Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2, 
+    Search, Eye, Printer, Users, FilePlus, Hand, 
     UserPlus, Copy, HelpCircle, Info, Tag, ShieldCheck, ListOrdered,
-    Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X
+    Briefcase, CheckCircle2, ChevronsUpDown, Check, X
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,7 +38,8 @@ import { ComparativeStatementForm } from './cs-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import { Separator } from '@/components/ui/separator';
 
-const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
+const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+  return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
             <DialogHeader>
@@ -92,7 +93,8 @@ const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChan
             </DialogFooter>
         </DialogContent>
     </Dialog>
-);
+  );
+};
 
 const MultiSelectPopover: React.FC<{
     items: Vendor[];
@@ -247,7 +249,23 @@ export function GPDeskTable() {
                 (vendorAssignmentFilter === 'not_assigned' && (!item.quotations || item.quotations.length === 0));
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
-        }).sort((a, b) => new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime());
+        }).sort((a, b) => {
+            // HIGH-FIDELITY PRIORITY SORTING
+            // Stage 1: Unassigned DNs (Waiting for Officer) must appear first
+            const aIsUnassigned = !a.gpConcernOfficerId;
+            const bIsUnassigned = !b.gpConcernOfficerId;
+
+            if (aIsUnassigned && !bIsUnassigned) return -1;
+            if (!aIsUnassigned && bIsUnassigned) return 1;
+
+            // Stage 2: If both are unassigned, sort by Requisition Date (oldest first to ensure FIFO integrity)
+            if (aIsUnassigned && bIsUnassigned) {
+                return new Date(a.entryDate || 0).getTime() - new Date(b.entryDate || 0).getTime();
+            }
+
+            // Stage 3: If both are assigned, sort by latest GP Assignment Date (newest at top)
+            return new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime();
+        });
     }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, roleData, currentUserEmployee, sections]);
 
 
