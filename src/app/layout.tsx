@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -17,8 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  // Check if we are on a dedicated print page to avoid hiding content during print
-  const isPrintPage = pathname?.includes('/print');
+  // Check if we are on a dedicated print page (standard or full-set bundle) to avoid hiding content during print
+  // Using 'print' as a general keyword to match '/print' and '/full-print'
+  const isPrintPage = pathname?.includes('print');
 
   return (
     <html lang="en" suppressHydrationWarning>
