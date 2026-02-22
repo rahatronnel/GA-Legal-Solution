@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -16,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export function PaymentNoteTable() {
     const { paymentNotes, mrrs, employees, isLoading, orgSettings } = useProcurement();
@@ -103,7 +103,7 @@ export function PaymentNoteTable() {
                                 <TableHead className="font-bold">Type / Mode</TableHead>
                                 <TableHead className="font-bold text-right">Amount (BDT)</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
+                                <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -134,6 +134,7 @@ export function PaymentNoteTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/payment-notes/${pn.id}`}><Eye className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent className="animate-scale-in">View Details</TooltipContent></Tooltip>
                                                     {isWaitingForApproval && (
                                                         <>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => handleApproval(pn.id, 1)}><Check className="h-4 w-4"/></Button>

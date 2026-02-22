@@ -55,6 +55,7 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/comparative-statements/[id]': dynamic(() => import('./procurement/local-purchase/comparative-statements/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/purchase-orders/[id]': dynamic(() => import('./procurement/local-purchase/purchase-orders/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/mrrs/[id]': dynamic(() => import('./procurement/local-purchase/mrrs/[id]/page'), { ssr: false }),
+    '/procurement/local-purchase/payment-notes/[id]': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/page'), { ssr: false }),
 };
 
 const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings, currentUserEmployee: Employee | null }) => {    
