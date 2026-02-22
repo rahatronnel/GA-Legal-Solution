@@ -85,20 +85,20 @@ const ProcessStep = ({ icon: Icon, label, status, sub }: { icon: any, label: str
 
 const FlowNode = ({ icon: Icon, title, status, color }: any) => (
     <div className="flex flex-col items-center gap-2 group w-32 shrink-0">
-        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all group-hover:scale-110", color)}>
+        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]", color)}>
             <Icon className="h-7 w-7" />
         </div>
-        <div className="text-center">
-            <p className="text-[9px] font-black uppercase leading-tight tracking-tighter">{title}</p>
-            <p className="text-[7px] font-bold opacity-60 italic whitespace-nowrap">{status}</p>
+        <div className="text-center px-1">
+            <p className="text-[11px] font-black uppercase leading-tight tracking-tighter text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{title}</p>
+            <p className="text-[8px] font-bold text-white/70 italic whitespace-nowrap mt-0.5">{status}</p>
         </div>
     </div>
 );
 
 const FlowDiamond = ({ label, color }: any) => (
     <div className="flex flex-col items-center justify-center w-24 shrink-0 px-2 relative">
-        <div className={cn("h-12 w-12 rotate-45 border-2 flex items-center justify-center shadow-md", color)}>
-            <div className="-rotate-45 text-[8px] font-black uppercase text-center leading-none px-1">
+        <div className={cn("h-12 w-12 rotate-45 border-2 flex items-center justify-center shadow-lg transition-all group-hover:scale-110", color)}>
+            <div className="-rotate-45 text-[9px] font-black uppercase text-center leading-none px-1 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
                 {label}
             </div>
         </div>
@@ -106,8 +106,8 @@ const FlowDiamond = ({ label, color }: any) => (
 );
 
 const FlowArrow = () => (
-    <div className="flex items-center justify-center w-12 shrink-0 opacity-30">
-        <ArrowRight className="h-6 w-6" />
+    <div className="flex items-center justify-center w-12 shrink-0">
+        <ArrowRight className="h-6 w-6 text-white/40 animate-pulse" />
     </div>
 );
 
@@ -289,11 +289,11 @@ export function BlueprintDialog({
                                             <div className="flex items-center gap-4 relative">
                                                 <div className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse shrink-0"><Play className="h-8 w-8 ml-1" /></div>
                                                 <FlowArrow />
-                                                <FlowNode icon={FileText} title="DN Entry" status="Intent Capture" color="bg-blue-500/20 border-blue-500 text-blue-400" />
+                                                <FlowNode icon={FileText} title="DN Entry" status="Intent Capture" color="bg-blue-600/40 border-blue-400" />
                                                 <FlowArrow />
-                                                <FlowDiamond label="Internal Approval?" color="bg-blue-900/40 border-blue-400 text-blue-200" />
+                                                <FlowDiamond label="Internal Approval?" color="bg-blue-900/60 border-blue-400" />
                                                 <FlowArrow />
-                                                <FlowNode icon={CheckCircle} title="Requisition Locked" status="Baseline Set" color="bg-blue-500 text-white border-blue-600" />
+                                                <FlowNode icon={CheckCircle} title="Requisition Locked" status="Baseline Set" color="bg-blue-500 text-white border-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
                                             </div>
 
                                             {/* CONNECTOR DOWN */}
@@ -301,13 +301,13 @@ export function BlueprintDialog({
 
                                             {/* ROW 2: SOURCING */}
                                             <div className="flex items-center gap-4">
-                                                <FlowNode icon={UserPlus} title="GP Assign" status="GPO Logic" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowNode icon={UserPlus} title="GP Assign" status="GPO Logic" color="bg-emerald-600/40 border-emerald-400" />
                                                 <FlowArrow />
-                                                <FlowNode icon={Briefcase} title="GP Concern" status="Execution Ownership" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowNode icon={Briefcase} title="GP Concern" status="Execution Ownership" color="bg-emerald-600/40 border-emerald-400" />
                                                 <FlowArrow />
-                                                <FlowNode icon={Users} title="Vendor Pool" status="3+ Bids Mandatory" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowNode icon={Users} title="Vendor Pool" status="3+ Bids Mandatory" color="bg-emerald-600/40 border-emerald-400" />
                                                 <FlowArrow />
-                                                <FlowNode icon={FilePlus} title="Bids Collected" status="Quotation Vault" color="bg-emerald-500 text-white border-emerald-600" />
+                                                <FlowNode icon={FilePlus} title="Bids Collected" status="Quotation Vault" color="bg-emerald-500 text-white border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
                                             </div>
 
                                             {/* CONNECTOR DOWN */}
@@ -315,13 +315,13 @@ export function BlueprintDialog({
 
                                             {/* ROW 3: ANALYSIS */}
                                             <div className="flex items-center gap-4">
-                                                <FlowNode icon={BarChart2} title="CS Analysis" status="Price Audit" color="bg-amber-500/20 border-amber-500 text-amber-400" />
+                                                <FlowNode icon={BarChart2} title="CS Analysis" status="Price Audit" color="bg-amber-600/40 border-amber-400" />
                                                 <FlowArrow />
-                                                <FlowDiamond label="Award Selection?" color="bg-amber-900/40 border-amber-400 text-amber-200" />
+                                                <FlowDiamond label="Award Selection?" color="bg-amber-900/60 border-amber-400" />
                                                 <FlowArrow />
                                                 <FlowNode icon={Gavel} title="Vendor Awarded" status="Selection Logged" color="bg-amber-500 text-white border-amber-600" />
                                                 <FlowArrow />
-                                                <FlowNode icon={ShieldCheck} title="Board Sign-off" status="Executive Audit" color="bg-amber-500 text-white border-amber-600" />
+                                                <FlowNode icon={ShieldCheck} title="Board Sign-off" status="Executive Audit" color="bg-amber-500 text-white border-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
                                             </div>
 
                                             {/* CONNECTOR DOWN */}
@@ -329,11 +329,11 @@ export function BlueprintDialog({
 
                                             {/* ROW 4: COMMITMENT */}
                                             <div className="flex items-center gap-4">
-                                                <FlowNode icon={ShoppingCart} title="PO Entry" status="Draft Creation" color="bg-purple-500/20 border-purple-500 text-purple-400" />
+                                                <FlowNode icon={ShoppingCart} title="PO Entry" status="Draft Creation" color="bg-purple-600/40 border-purple-400" />
                                                 <FlowArrow />
-                                                <FlowDiamond label="Evidence OK?" color="bg-purple-900/40 border-purple-400 text-purple-200" />
+                                                <FlowDiamond label="Evidence OK?" color="bg-purple-900/60 border-purple-400" />
                                                 <FlowArrow />
-                                                <FlowNode icon={Send} title="PO Dispatched" status="Vendor Handover" color="bg-purple-500 text-white border-purple-600" />
+                                                <FlowNode icon={Send} title="PO Dispatched" status="Vendor Handover" color="bg-purple-500 text-white border-purple-600 shadow-[0_0_15px_rgba(139,92,246,0.5)]" />
                                             </div>
 
                                             {/* CONNECTOR DOWN */}
@@ -341,13 +341,13 @@ export function BlueprintDialog({
 
                                             {/* ROW 5: LOGISTICS & CLOSING */}
                                             <div className="flex items-center gap-4">
-                                                <FlowNode icon={Truck} title="Gate Entry" status="Goods Arrival" color="bg-slate-500/20 border-slate-500 text-slate-400" />
+                                                <FlowNode icon={Truck} title="Gate Entry" status="Goods Arrival" color="bg-slate-600/40 border-slate-400" />
                                                 <FlowArrow />
                                                 <FlowNode icon={Package} title="MRR Finalized" status="3-Way Match" color="bg-emerald-800 text-white border-emerald-950" />
                                                 <FlowArrow />
-                                                <FlowDiamond label="Quality Pass?" color="bg-emerald-950/40 border-emerald-500 text-emerald-200" />
+                                                <FlowDiamond label="Quality Pass?" color="bg-emerald-950/60 border-emerald-500" />
                                                 <FlowArrow />
-                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Flow Closed" color="bg-green-600 text-white border-green-700 shadow-[0_0_20px_rgba(22,163,74,0.4)]" />
+                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Flow Closed" color="bg-green-600 text-white border-green-700 shadow-[0_0_20px_rgba(22,163,74,0.6)]" />
                                             </div>
 
                                             {/* DECORATIVE DIAMOND END */}
@@ -530,7 +530,7 @@ export function BlueprintDialog({
                                                 <h5 className="font-black text-xs uppercase text-emerald-900 flex items-center gap-2"><ShieldCheck className="h-4 w-4"/> Evidence Collection</h5>
                                                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                                                     MRR finalization requires mandatory scans of:
-                                                    <br/>- **Vendor Invoice**
+                                                    <br/>- **Vendor Bill/Invoice**
                                                     <br/>- **Delivery Challan**
                                                 </p>
                                             </div>
