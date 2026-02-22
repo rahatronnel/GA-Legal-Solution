@@ -40,22 +40,22 @@ export default function PNPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l7 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = isAuthLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7;
+    const isGlobalLoading = isAuthLoading || !firestore || l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     useEffect(() => {
-        if (!isLoading && pn && orgSettings) {
+        if (!isGlobalLoading && pn && orgSettings) {
             const timer = setTimeout(() => {
                 window.print();
             }, 500); 
             return () => clearTimeout(timer);
         }
-    }, [isLoading, pn, orgSettings]);
+    }, [isGlobalLoading, pn, orgSettings]);
 
-    if (isLoading) {
+    if (isGlobalLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
                 <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="mt-4 font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Establishing Secure Financial Handshake...</p>
+                <p className="mt-4 font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Syncing high-fidelity financial data...</p>
             </div>
         );
     }
@@ -64,13 +64,14 @@ export default function PNPrintPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
                 <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Session</p>
-                <p className="text-sm text-muted-foreground">Please ensure you are logged in to access financial documents.</p>
+                <p className="text-sm text-muted-foreground">Please log in to access financial documents.</p>
             </div>
         );
     }
 
-    if (!pn) notFound();
-    if (!orgSettings) return <div className="p-8 text-center font-bold">Settings handshake failed.</div>;
+    if (!pn) {
+        return <div className="p-12 text-center font-bold text-destructive">Payment Note Record Not Found.</div>;
+    }
 
     return (
         <div className="bg-white min-h-screen">
@@ -81,7 +82,7 @@ export default function PNPrintPage() {
                 vendor={vendor || undefined}
                 employees={employees || []}
                 designations={designations || []}
-                orgSettings={orgSettings}
+                orgSettings={orgSettings || ({} as OrganizationSettings)}
             />
         </div>
     );

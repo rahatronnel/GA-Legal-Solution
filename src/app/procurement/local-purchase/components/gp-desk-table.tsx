@@ -150,7 +150,7 @@ const MultiSelectPopover: React.FC<{
     );
 };
 
-export default function GPDeskTable() {
+export function GPDeskTable() {
     const { demandNotes, sections, employees, vendors, comparativeStatements, isLoading, orgSettings } = useProcurement();
     const { user } = useUser();
     const { handlePrint } = usePrint();

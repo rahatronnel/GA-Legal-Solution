@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, Suspense, useState } from 'react';
@@ -10,7 +9,7 @@ import { DemandNoteApprovalSettings } from './components/demand-note-approval-se
 import { DemandNoteTable } from './components/demand-note-table';
 import { useUser } from "@/firebase";
 import { useProcurement } from './components/procurement-provider';
-import GPDeskTable from './components/gp-desk-table';
+import { GPDeskTable } from './components/gp-desk-table';
 import { VendorTable } from '@/app/billflow/components/vendor-table';
 import { VendorCategoryTable } from '@/app/billflow/components/vendor-category-table';
 import { VendorNatureOfBusinessTable } from '@/app/billflow/components/vendor-nature-of-business-table';
@@ -124,11 +123,11 @@ function LocalPurchaseContent() {
     <div className="space-y-6">
       <ModuleHeader />
       
-      <div className="flex justify-between items-center bg-muted/20 p-4 rounded-2xl border">
+      <div className="flex justify-between items-center bg-muted/20 p-4 rounded-2xl border border-primary/10 shadow-sm">
         <div className="flex items-center gap-4">
             <div>
                 <h1 className="text-3xl font-black tracking-tight text-foreground">Local Purchase</h1>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Supply Chain Command</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">Supply Chain Command</p>
             </div>
             <Badge variant="outline" className="px-4 py-1 text-sm bg-background/50 border-primary/20 font-black uppercase">
                 {isSuperAdmin ? 'Superadmin' : (isGPOfficer ? 'GP Officer' : (isGPConcern ? 'Concern' : (isManager ? 'Manager' : (isCSApproverRole ? 'Approver' : 'User'))))}
@@ -177,28 +176,28 @@ function LocalPurchaseContent() {
           ))}
         </ShadTabsList>
 
-        <ShadTabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <DemandNoteTable />
         </ShadTabsContent>
-        <ShadTabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="gp-desk" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <GPDeskTable />
         </ShadTabsContent>
-        <ShadTabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="cs" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <ComparativeStatementTable />
         </ShadTabsContent>
-        <ShadTabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="po" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <PurchaseOrderTable />
         </ShadTabsContent>
-        <ShadTabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <MRRTable />
         </ShadTabsContent>
-        <ShadTabsContent value="pn" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <ShadTabsContent value="pn" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
           <PaymentNoteTable />
         </ShadTabsContent>
 
         {isSuperAdmin && (
           <>
-            <ShadTabsContent value="master-data" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ShadTabsContent value="master-data" className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
                <LegacyBillFlowProvider>
                 <MasterDataProvider>
                   <ShadTabs defaultValue="vendors" className="w-full">
@@ -225,7 +224,7 @@ function LocalPurchaseContent() {
                 </MasterDataProvider>
               </LegacyBillFlowProvider>
             </ShadTabsContent>
-            <ShadTabsContent value="settings" className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <ShadTabsContent value="settings" className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <DemandNoteApprovalSettings />
             </ShadTabsContent>
           </>

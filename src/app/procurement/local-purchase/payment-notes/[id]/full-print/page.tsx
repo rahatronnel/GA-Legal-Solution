@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { PaymentBundlePrintLayout } from '../../../components/payment-bundle-print-layout';
 import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
@@ -20,27 +20,37 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { ProcessCode } from '../../../components/process-code-table';
 import type { DemandType } from '../../../components/demand-type-table';
 
+/**
+ * PNFullPrintPage - The High-Fidelity 9-Stage Bundle Compiler.
+ * This page aggregates data from 5 modules and all evidentiary scans into one print stream.
+ */
 export default function PNFullPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
     const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
+    // Stage 1: Payment Note
     const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
     const { data: pn, isLoading: l1 } = useDoc<PaymentNote>(pnRef);
 
+    // Stage 2: Physical Receipt (MRR)
     const mrrRef = useMemoFirebase(() => (firestore && pn) ? doc(firestore, 'mrrs', pn.mrrId) : null, [firestore, pn]);
     const { data: mrr, isLoading: l2 } = useDoc<MRR>(mrrRef);
 
+    // Stage 3: Legal Commitment (PO)
     const poRef = useMemoFirebase(() => (firestore && mrr) ? doc(firestore, 'purchaseOrders', mrr.poId) : null, [firestore, mrr]);
     const { data: po, isLoading: l3 } = useDoc<PurchaseOrder>(poRef);
 
+    // Stage 4: Sourcing Analysis (CS)
     const csRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'comparativeStatements', po.csId) : null, [firestore, po]);
     const { data: cs, isLoading: l4 } = useDoc<ComparativeStatement>(csRef);
 
+    // Stage 5: Intent Origin (DN)
     const dnRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'demandNotes', po.demandNoteId) : null, [firestore, po]);
     const { data: dn, isLoading: l5 } = useDoc<DemandNote>(dnRef);
 
+    // Master Registries for Profile Matching
     const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
     const { data: vendors, isLoading: l6 } = useCollection<Vendor>(vendorsRef);
 
@@ -68,24 +78,26 @@ export default function PNFullPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l14 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = isAuthLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
+    // Secure Hydration Guard: We wait for ALL data and the database service itself to be ready.
+    const isGlobalLoading = isAuthLoading || !firestore || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
 
     useEffect(() => {
-        if (!isLoading && pn && mrr && po && cs && dn && orgSettings) {
+        if (!isGlobalLoading && pn && mrr && po && cs && dn && orgSettings) {
+            // High-Performance Handshake: Trigger print after final hydration
             const timer = setTimeout(() => {
                 window.print();
             }, 1500); 
             return () => clearTimeout(timer);
         }
-    }, [isLoading, pn, mrr, po, cs, dn, orgSettings]);
+    }, [isGlobalLoading, pn, mrr, po, cs, dn, orgSettings]);
 
-    if (isLoading) {
+    if (isGlobalLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
                 <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse text-center">
-                    Compiling Organizational Full-Set Bundle...<br/>
-                    <span className="text-[10px] font-bold opacity-50">Fetching 9 Lifecycle Stages & Multi-Vendor Evidence</span>
+                    Establishing Secure Data Handshake...<br/>
+                    <span className="text-[10px] font-bold opacity-50">Compiling 9-Stage Organizational Full-Set Bundle</span>
                 </p>
             </div>
         );
@@ -95,13 +107,30 @@ export default function PNFullPrintPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
                 <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Request</p>
-                <p className="text-sm text-muted-foreground">Please ensure you are logged in to the main YKK ERP Dashboard.</p>
+                <p className="text-sm text-muted-foreground">Please ensure you are logged in to the YKK ERP Solution.</p>
             </div>
         );
     }
 
-    if (!pn || !mrr || !po || !cs || !dn) notFound();
-    if (!orgSettings) return <div className="p-8 text-center font-bold">Settings handshake failed.</div>;
+    // Diagnostic Check: If data is truly missing, we provide a detailed organizational warning instead of a generic 404.
+    if (!pn || !mrr || !po || !cs || !dn) {
+        return (
+            <div className="p-12 text-center space-y-4">
+                <h2 className="text-2xl font-bold text-destructive">Bundle Compilation Incomplete</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                    The system could not retrieve the full record set. Please verify that the 
+                    MRR, Purchase Order, and CS are all final-approved and correctly linked.
+                </p>
+                <div className="grid grid-cols-5 gap-2 text-[10px] font-black uppercase opacity-50">
+                    <span className={pn ? "text-green-600" : ""}>PN: {pn ? "OK" : "ERR"}</span>
+                    <span className={mrr ? "text-green-600" : ""}>MRR: {mrr ? "OK" : "ERR"}</span>
+                    <span className={po ? "text-green-600" : ""}>PO: {po ? "OK" : "ERR"}</span>
+                    <span className={cs ? "text-green-600" : ""}>CS: {cs ? "OK" : "ERR"}</span>
+                    <span className={dn ? "text-green-600" : ""}>DN: {dn ? "OK" : "ERR"}</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white min-h-screen">
