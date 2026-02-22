@@ -15,7 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, 
     CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, 
-    ShieldCheck, UserCheck, CheckCircle2, PackageCheck
+    ShieldCheck, UserCheck, CheckCircle2, PackageCheck, History, ArrowRight,
+    FileText, Briefcase, BarChart2, ShoppingCart, Package, Wallet, Timer
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
@@ -97,11 +98,169 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
     </Dialog>
 );
 
+const DNStatusTrackerDialog = ({ 
+    dn, 
+    isOpen, 
+    onOpenChange,
+    employees,
+    comparativeStatements,
+    purchaseOrders,
+    mrrs,
+    paymentNotes
+}: { 
+    dn: DemandNote | null, 
+    isOpen: boolean, 
+    onOpenChange: (open: boolean) => void,
+    employees: any[],
+    comparativeStatements: any[],
+    purchaseOrders: any[],
+    mrrs: any[],
+    paymentNotes: any[]
+}) => {
+    if (!dn) return null;
+
+    const cs = comparativeStatements.find(c => c.demandNoteId === dn.id);
+    const po = purchaseOrders.find(p => p.demandNoteId === dn.id);
+    const mrr = mrrs.find(m => m.poId === po?.id || m.demandNoteNumber === dn.demandNoteNumber);
+    const pn = paymentNotes.find(p => p.mrrId === mrr?.id);
+
+    const getEmployeeName = (id?: string) => employees.find(e => e.id === id)?.fullName || 'N/A';
+
+    const events = useMemo(() => {
+        const list: any[] = [];
+        
+        // 1. DN Creation
+        list.push({ title: 'Demand Note Issued', date: dn.entryDate, by: getEmployeeName(dn.createdBy), type: 'DN', status: 'done' });
+        
+        // 2. DN Approvals
+        dn.approvalHistory?.forEach((h: any) => {
+            list.push({ title: dn.approvalFlow?.steps[h.level]?.stepName || 'DN Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'DN', status: h.status === 'Approved' ? 'done' : 'fail' });
+        });
+
+        // 3. GP Assignment
+        if (dn.gpAssignedDate) {
+            list.push({ title: 'GP Concern Assigned', date: dn.gpAssignedDate, by: getEmployeeName(dn.gpAssignedBy), type: 'GP', status: 'done' });
+        }
+
+        // 4. CS Step
+        if (cs) {
+            list.push({ title: 'CS Prepared', date: cs.csDate, by: getEmployeeName(cs.createdBy), type: 'CS', status: 'done' });
+            if (cs.vendorSelectionDate) {
+                list.push({ title: 'Vendor Awarded', date: cs.vendorSelectionDate, by: getEmployeeName(cs.vendorSelectorId), type: 'CS', status: 'done' });
+            }
+            cs.approvalHistory?.forEach((h: any) => {
+                list.push({ title: cs.approvalFlow?.steps[h.level]?.stepName || 'CS Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'CS', status: h.status === 'Approved' ? 'done' : 'fail' });
+            });
+        }
+
+        // 5. PO Step
+        if (po) {
+            list.push({ title: 'Purchase Order Issued', date: po.createdAt, by: getEmployeeName(po.createdBy), type: 'PO', status: 'done' });
+            po.approvalHistory?.forEach((h: any) => {
+                list.push({ title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'PO', status: h.status === 'Approved' ? 'done' : 'fail' });
+            });
+            if (po.isSentToVendor && po.sentToVendorDate) {
+                list.push({ title: 'PO Dispatched to Vendor', date: po.sentToVendorDate, by: 'GP Desk', type: 'PO', status: 'done' });
+            }
+        }
+
+        // 6. MRR Step
+        if (mrr) {
+            list.push({ title: 'Materials Received (MRR)', date: mrr.createdAt, by: getEmployeeName(mrr.createdBy), type: 'MRR', status: 'done' });
+            mrr.approvalHistory?.forEach((h: any) => {
+                list.push({ title: mrr.approvalFlow?.steps[h.level]?.stepName || 'MRR Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'MRR', status: h.status === 'Approved' ? 'done' : 'fail' });
+            });
+            if (mrr.requesterConfirmedAt) {
+                list.push({ title: 'Requester Confirmed Receipt', date: mrr.requesterConfirmedAt, by: getEmployeeName(mrr.requesterConfirmedBy), type: 'MRR', status: 'done' });
+            }
+        }
+
+        // 7. PN Step
+        if (pn) {
+            list.push({ title: 'Payment Note Initiated', date: pn.createdAt, by: getEmployeeName(pn.createdBy), type: 'PN', status: 'done' });
+            pn.approvalHistory?.forEach((h: any) => {
+                list.push({ title: 'PN Audit Sign-off', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'PN', status: h.status === 'Approved' ? 'done' : 'fail' });
+            });
+        }
+
+        return list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [dn, cs, po, mrr, pn, employees]);
+
+    const macroStatus = useMemo(() => {
+        if (pn?.approvalStatus === 1) return { label: 'Payment Authorized', color: 'bg-green-600', icon: CheckCircle2 };
+        if (pn) return { label: 'In Treasury Audit (PN)', color: 'bg-orange-500', icon: Wallet };
+        if (mrr?.approvalStatus === 1) return { label: 'Awaiting Payment Initiation', color: 'bg-blue-600', icon: DollarSign };
+        if (mrr) return { label: 'In Quality Audit (MRR)', color: 'bg-orange-500', icon: Package };
+        if (po?.isSentToVendor) return { label: 'Awaiting Goods Arrival', color: 'bg-blue-500', icon: Truck };
+        if (po?.approvalStatus === 1) return { label: 'Awaiting PO Dispatch', color: 'bg-orange-500', icon: Send };
+        if (po) return { label: 'In PO Authorization', color: 'bg-orange-500', icon: ShoppingCart };
+        if (cs?.approvalStatus === 1) return { label: 'Awaiting PO Creation', color: 'bg-blue-600', icon: FilePlus };
+        if (cs?.approvalStatus === 3) return { label: 'In Financial Audit (CS)', color: 'bg-orange-500', icon: BarChart2 };
+        if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-orange-500', icon: Hand };
+        if (dn.gpConcernOfficerId) return { label: 'In Vendor Sourcing (GP)', color: 'bg-blue-500', icon: Briefcase };
+        if (dn.approvalStatus === 1) return { label: 'Awaiting GP Assignment', color: 'bg-blue-600', icon: UserPlus };
+        if (dn.approvalStatus === 0) return { label: 'Requisition Rejected', color: 'bg-destructive', icon: XCircle };
+        return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
+    }, [dn, cs, po, mrr, pn]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-xl animate-dialog-in max-h-[90vh] flex flex-col p-0 overflow-hidden">
+                <div className={cn("p-6 text-white shrink-0 relative overflow-hidden", macroStatus.color)}>
+                    <div className="relative z-10 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
+                                <macroStatus.icon className="h-8 w-8" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">DN Lifecycle Tracker</h2>
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
+                            </div>
+                        </div>
+                        <Badge className="bg-white/20 text-white border-none font-black text-xs px-3">{macroStatus.label}</Badge>
+                    </div>
+                    <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
+                </div>
+
+                <ScrollArea className="flex-1 p-6">
+                    <div className="space-y-8 relative before:absolute before:left-4 before:top-0 before:h-full before:w-0.5 before:bg-muted">
+                        {events.map((event, i) => (
+                            <div key={i} className="relative pl-10 group">
+                                <div className={cn(
+                                    "absolute left-0 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
+                                    event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
+                                )}>
+                                    {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-black uppercase tracking-tight">{event.title}</h4>
+                                        <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{new Date(event.date).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <p className="text-muted-foreground font-medium flex items-center gap-1"><User className="h-3 w-3" /> {event.by}</p>
+                                        <p className="text-muted-foreground italic">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+
+                <DialogFooter className="p-4 border-t bg-muted/30">
+                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export function DemandNoteTable() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { demandNotes, employees, sections, comparativeStatements, purchaseOrders, mrrs, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
@@ -110,6 +269,8 @@ export function DemandNoteTable() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
+    const [isTrackerOpen, setIsTrackerOpen] = useState(false);
+    const [selectedDnForTracker, setSelectedDnForTracker] = useState<DemandNote | null>(null);
     const [currentItem, setCurrentItem] = useState<Partial<DemandNote> | null>(null);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
     
@@ -451,6 +612,7 @@ export function DemandNoteTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => { setSelectedDnForTracker(item); setIsTrackerOpen(true); }}><History className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Status Track</TooltipContent></Tooltip>
                                                     {canConfirmMRR && (
                                                         <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 animate-pulse" onClick={() => handleConfirmMRR(item.mrrId!)}><PackageCheck className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Confirm MRR Receipt</TooltipContent></Tooltip>
                                                     )}
@@ -474,6 +636,17 @@ export function DemandNoteTable() {
             <DemandNoteEntryForm isOpen={isFormOpen} setIsOpen={setIsFormOpen} onSave={handleSave} demandNote={currentItem} />
             <DemandNoteUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
             
+            <DNStatusTrackerDialog 
+                isOpen={isTrackerOpen} 
+                onOpenChange={setIsTrackerOpen} 
+                dn={selectedDnForTracker}
+                employees={employees}
+                comparativeStatements={comparativeStatements}
+                purchaseOrders={purchaseOrders}
+                mrrs={mrrs}
+                paymentNotes={paymentNotes}
+            />
+
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent className="animate-dialog-in">
                     <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><div className="text-sm text-muted-foreground">This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</div></DialogHeader>
