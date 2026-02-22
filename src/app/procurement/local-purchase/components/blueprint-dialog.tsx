@@ -23,7 +23,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
     FileSignature, Fingerprint, Timer, Truck, BellRing, MousePointerClick,
-    MailCheck, Siren
+    MailCheck, Siren, Database
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -134,26 +134,155 @@ export function BlueprintDialog({
                             <div className="max-w-7xl mx-auto space-y-12 pb-32">
                                 
                                 <TabsContent value="overview" className="mt-0 space-y-12">
-                                    <BlueprintSection icon={GitCommitHorizontal} title="High-Fidelity Subway Map" colorClass="bg-slate-800 border-slate-900">
+                                    <BlueprintSection icon={GitCommitHorizontal} title="The High-Fidelity Lifecycle subway" colorClass="bg-slate-800 border-slate-900">
                                         <div className="relative p-12 border-4 border-dashed rounded-[3rem] bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-700">
                                             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
-                                                <ProcessStep icon={FileText} label="Requisition" status="DN DRAFT" sub="User Need" />
-                                                <ProcessStep icon={Briefcase} label="Sourcing" status="GP ASSIGN" sub="Vendor Bidding" />
-                                                <ProcessStep icon={BarChart2} label="Analysis" status="CS AUDIT" sub="Price Audit" />
-                                                <ProcessStep icon={ShoppingCart} label="Commitment" status="PO DISPATCH" sub="Legal Contract" />
-                                                <ProcessStep icon={Package} label="Acceptance" status="MRR LOG" sub="Physical Entry" />
+                                                <ProcessStep icon={FileText} label="Requisition" status="DN DRAFT" sub="Intent" />
+                                                <ProcessStep icon={Briefcase} label="Sourcing" status="GP ASSIGN" sub="Market" />
+                                                <ProcessStep icon={BarChart2} label="Analysis" status="CS AUDIT" sub="Price" />
+                                                <ProcessStep icon={ShoppingCart} label="Commitment" status="PO LOCK" sub="Legal" />
+                                                <ProcessStep icon={Package} label="Receiving" status="MRR LOG" sub="Asset" />
                                             </div>
                                             <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 opacity-10 hidden md:block" />
                                         </div>
-                                        <Card className="bg-slate-50 border-slate-200">
-                                            <CardContent className="pt-6">
-                                                <h4 className="font-black uppercase text-sm mb-2 flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500"/> The Lifecycle Objective</h4>
-                                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                                    The system enforces a **strict linear dependency**. No Purchase Order can be issued without an approved Comparative Statement, and no Comparative Statement can exist without an approved Demand Note. This ensures that every dollar spent is traceable back to a documented organizational need and a vetted competitive bid.
-                                                </p>
-                                            </CardContent>
-                                        </Card>
                                     </BlueprintSection>
+
+                                    {/* Phase I: Requisition Integrity */}
+                                    <BlueprintSection icon={FileText} title="Phase I: Requisition Integrity (Demand Note)" colorClass="bg-blue-600 border-blue-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-blue-900">Micro-Process Execution Standard</h5>
+                                                <ul className="space-y-3">
+                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground"><strong>Temporal Identity:</strong> Every DN is stamped with a unique, non-colliding ID based on timestamp and department code.</p></li>
+                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground"><strong>Department Hard-Lock:</strong> Requisitions are cryptographically bound to the creator's section, preventing data injection from outside units.</p></li>
+                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground"><strong>Budget Safeguard:</strong> The Budget Head and Year are mandatory fields, ensuring that no procurement starts without a financial reference.</p></li>
+                                                </ul>
+                                            </div>
+                                            <Card className="bg-blue-50 border-blue-200">
+                                                <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-blue-800">Architecture Trigger: Dynamic Routing</CardTitle></CardHeader>
+                                                <CardContent>
+                                                    <p className="text-[10px] leading-relaxed italic text-blue-700">
+                                                        The system executes a "Deep Scan" of the line items. If a "Special Category" part is detected, the standard 2-step signature chain is instantly expanded to a 4-step chain including the Specialized Manager and Managing Director.
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* Phase II: Sourcing Engine */}
+                                    <BlueprintSection icon={Briefcase} title="Phase II: The Sourcing Engine (GP Desk)" colorClass="bg-emerald-600 border-emerald-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-emerald-900">Task Handover Protocol</h5>
+                                                <div className="relative pl-8 space-y-6 before:absolute before:left-3 before:top-0 before:h-full before:w-0.5 before:bg-emerald-200">
+                                                    <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-emerald-600 border-4 border-white shadow-sm"/><p className="text-xs font-bold">Officer Assignment</p><p className="text-[10px] text-muted-foreground">GPO monitors pending DNs and selects a Concern Officer based on category expertise.</p></div>
+                                                    <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-white border-4 border-emerald-600 shadow-sm"/><p className="text-xs font-bold">Vendor Pool Locking</p><p className="text-[10px] text-muted-foreground">Concern identifies and assigns 3+ vendors. This creates the baseline for the Comparative Statement analysis.</p></div>
+                                                    <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-white border-4 border-emerald-600 shadow-sm"/><p className="text-xs font-bold">Bid Vaulting</p><p className="text-[10px] text-muted-foreground">Physical bids are scanned and uploaded. Each file is hashed and linked to the vendor ID for audit permanence.</p></div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-emerald-50 p-6 rounded-2xl border-2 border-emerald-100 flex flex-col justify-center text-center space-y-3">
+                                                <Users className="h-12 w-12 text-emerald-600 mx-auto" />
+                                                <p className="text-sm font-black uppercase tracking-tighter">Market rate integrity</p>
+                                                <p className="text-[10px] text-muted-foreground leading-relaxed">The system prevents single-vendor bias by requiring explicit bid documentation before the CS phase can be initialized.</p>
+                                            </div>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* Phase III: Analytical Audit */}
+                                    <BlueprintSection icon={BarChart2} title="Phase III: Analytical Auditing (CS Analysis)" colorClass="bg-amber-600 border-amber-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="md:col-span-2 space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-amber-900">Real-Time Financial Formulas</h5>
+                                                <div className="p-4 bg-background border rounded-xl font-mono text-[10px] shadow-inner space-y-1">
+                                                    <p className="text-amber-600">// Calculation Logic for every Vendor [V]</p>
+                                                    <p>Let TotalCost[V] = Σ(Item[i].Qty * Item[i].UnitPrice[V]);</p>
+                                                    <p>Let NetAmount[V] = TotalCost[V] - Discount[V] + VAT[V] + Tax[V];</p>
+                                                    <p className="text-emerald-600">IF (NetAmount[V] == MIN(all NetAmounts)) SET Flag("Best Offer");</p>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">The Comparative Statement acts as a legal justification for spending. It highlights the lowest bidder automatically but provides a "Technical Superiority" override for management decision-making.</p>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-amber-900">Authority Matrix</h5>
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded"><span className="text-[10px] font-bold">Under $10K</span><Badge className="text-[8px] h-4">Manager</Badge></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded"><span className="text-[10px] font-bold">$10K - $100K</span><Badge className="text-[8px] h-4 bg-orange-500">Tech Advisor</Badge></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200"><span className="text-[10px] font-black">Above $1M</span><Badge className="text-[8px] h-4" variant="destructive">Full Board</Badge></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* Phase IV: Legal Commitment */}
+                                    <BlueprintSection icon={ShoppingCart} title="Phase IV: Legal Commitment (Purchase Order)" colorClass="bg-purple-600 border-purple-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-purple-900">Document Immutability</h5>
+                                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                                    A PO is the definitive contract between YKK and the Vendor. Once the "Dispatch" flag is set, the document is locked for editing. Any changes require a formal cancellation and a new requisition cycle.
+                                                </p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="p-3 bg-purple-50 rounded-lg text-center"><Gavel className="h-4 w-4 text-purple-600 mx-auto mb-1"/><p className="text-[9px] font-bold">Legal Terms</p></div>
+                                                    <div className="p-3 bg-purple-50 rounded-lg text-center"><Send className="h-4 w-4 text-purple-600 mx-auto mb-1"/><p className="text-[9px] font-bold">Lead Timing</p></div>
+                                                </div>
+                                            </div>
+                                            <Card className="border-none shadow-xl bg-slate-900 text-white">
+                                                <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-slate-400">Security Trigger: Evidence Compliance</CardTitle></CardHeader>
+                                                <CardContent>
+                                                    <p className="text-[10px] leading-relaxed italic text-slate-300">
+                                                        System blocks MRR intake if the PO record is missing the signed "PO Acknowledgement" or "Mushok (VAT)" scans. This enforces a "Paperwork First" policy for all logistics teams.
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* Phase V: Intake & Closing */}
+                                    <BlueprintSection icon={Package} title="Phase V: intake & Organizational Exit (MRR)" colorClass="bg-emerald-800 border-emerald-900">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black uppercase text-emerald-100">5.1 Physical Intake</p>
+                                                <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-emerald-100"><p className="text-xs leading-relaxed">Goods entry is logged with container IDs and conditions. Discrepancies in quantity are flagged instantly against the PO baseline.</p></div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black uppercase text-emerald-100">5.2 Multi-Stage Audit</p>
+                                                <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-emerald-100"><p className="text-xs leading-relaxed">The MRR report itself is vetted by GP Concern and the Requisitioning Department Manager before accounting entry.</p></div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black uppercase text-amber-400 font-black">5.3 Final Organizational Exit</p>
+                                                <div className="p-4 bg-amber-400/10 rounded-xl border border-amber-400/30 text-amber-400"><p className="text-xs font-bold leading-relaxed">The original Requester confirms the goods. Without this confirmant timestamp, the process remains "Open" in the system audit logs.</p></div>
+                                            </div>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* ARCHITECTURE SECTION */}
+                                    <Separator className="opacity-10" />
+                                    <div className="space-y-6">
+                                        <h3 className="text-2xl font-black uppercase tracking-tight flex items-center gap-3 text-muted-foreground">
+                                            <Database className="h-6 w-6" /> System Architecture & Security Standards
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <div className="p-4 border rounded-xl bg-background shadow-sm space-y-2">
+                                                <Zap className="h-5 w-5 text-amber-500" />
+                                                <p className="text-[10px] font-black uppercase">Real-Time Sync</p>
+                                                <p className="text-[9px] text-muted-foreground leading-tight">Leveraging Firestore's reactive document streaming for sub-second updates across all terminals.</p>
+                                            </div>
+                                            <div className="p-4 border rounded-xl bg-background shadow-sm space-y-2">
+                                                <Lock className="h-5 w-5 text-blue-500" />
+                                                <p className="text-[10px] font-black uppercase">Row-Level Security</p>
+                                                <p className="text-[9px] text-muted-foreground leading-tight">Authentication tokens are validated per request against organizational department structures.</p>
+                                            </div>
+                                            <div className="p-4 border rounded-xl bg-background shadow-sm space-y-2">
+                                                <HistoryIcon className="h-5 w-5 text-emerald-500" />
+                                                <p className="text-[10px] font-black uppercase">Audit Immutable Logs</p>
+                                                <p className="text-[9px] text-muted-foreground leading-tight">Document state transitions are captured in non-destructive history arrays with UID and Timestamp.</p>
+                                            </div>
+                                            <div className="p-4 border rounded-xl bg-background shadow-sm space-y-2">
+                                                <Layers className="h-5 w-5 text-purple-500" />
+                                                <p className="text-[10px] font-black uppercase">Asset Virtualization</p>
+                                                <p className="text-[9px] text-muted-foreground leading-tight">Physical documents are virtualized as high-fidelity Base64 objects within the organizational vault.</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </TabsContent>
 
                                 <TabsContent value="dn" className="mt-0 space-y-8">
@@ -306,7 +435,7 @@ export function BlueprintDialog({
                                         </div>
                                         <div className="relative p-12 border-4 border-dashed rounded-[3rem] bg-background shadow-2xl overflow-hidden mt-8">
                                             <div className="flex flex-col md:flex-row justify-around items-center gap-8 relative z-10">
-                                                <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg"><Truck className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Gate Entry</p></div>
+                                                <div className="flex col items-center"><div className="h-16 w-16 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg"><Truck className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Gate Entry</p></div>
                                                 <ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
                                                 <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg"><Search className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Quality Check</p></div>
                                                 <ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
