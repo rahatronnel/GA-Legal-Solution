@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -23,7 +24,7 @@ import {
     Briefcase, ClipboardCheck, CheckCircle2, ChevronsUpDown, Check, X,
     Package, BarChart2, TrendingUp, DollarSign, Gavel, Truck, ChevronRight,
     ShoppingCart, Box, UserCheck, Upload, Hourglass, MoreHorizontal,
-    PackageCheck, AlertTriangle
+    PackageCheck, AlertTriangle, Wallet
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,6 +46,7 @@ import type { Employee } from '@/app/user-management/components/employee-entry-f
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import { MRREntryForm } from './mrr-entry-form';
+import { PaymentNoteForm } from './pn-entry-form';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -278,11 +280,12 @@ function FinalizeMrrDialog({
 };
 
 export function MRRTable() {
-    const { mrrs, employees, orgSettings, demandNotes, purchaseOrders, comparativeStatements, isLoading } = useProcurement();
+    const { mrrs, employees, orgSettings, demandNotes, purchaseOrders, comparativeStatements, paymentNotes, isLoading } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
     const mrrColRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
+    const pnColRef = useMemoFirebase(() => firestore ? collection(firestore, 'paymentNotes') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -297,6 +300,9 @@ export function MRRTable() {
     const [pendingPoForMrr, setPendingPoForMrr] = useState<PurchaseOrder | null>(null);
     const [isMrrFormOpen, setIsMrrFormOpen] = useState(false);
     const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
+
+    const [isPnFormOpen, setIsPnFormOpen] = useState(false);
+    const [selectedMrrForPn, setSelectedMrrForPn] = useState<MRR | null>(null);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -396,6 +402,13 @@ export function MRRTable() {
         }
     };
 
+    const handleSavePn = (pnData: any) => {
+        if (!pnColRef) return;
+        addDocumentNonBlocking(pnColRef, pnData);
+        toast({ title: 'Success', description: 'Payment Note initiated.' });
+        setIsPnFormOpen(false);
+    };
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -438,11 +451,14 @@ export function MRRTable() {
                                     const po = purchaseOrders?.find(p => p.poNumber === mrr.poId || p.id === mrr.poId);
                                     const cs = comparativeStatements?.find(c => c.id === po?.csId);
                                     const dn = demandNotes?.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
+                                    const pnExists = paymentNotes?.some(p => p.mrrId === mrr.id);
 
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
                                     const isWaitingForApproval = currentUserEmployee && mrr.currentApproverId === currentUserEmployee.id && mrr.approvalStatus > 2;
                                     const isApprovable = approvableItems.some(i => i.id === mrr.id);
                                     const isFinalApproved = mrr.approvalStatus === 1;
+                                    
+                                    const canInitiatePn = isFinalApproved && !pnExists && (isSuperAdmin || roleData.isGPOfficer || (currentUserEmployee && mrr.createdBy === currentUserEmployee.id));
 
                                     return (
                                         <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) ? 'bg-orange-500/5' : '')}>
@@ -497,6 +513,9 @@ export function MRRTable() {
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     {isWaitingForFinalize && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 animate-pulse" onClick={() => { setSelectedMrrForFinal(mrr); setIsFinalizeOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
+                                                    {canInitiatePn && (
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-600 animate-pulse" onClick={() => { setSelectedMrrForPn(mrr); setIsPnFormOpen(true); }}><Wallet className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Initiate Payment Note</TooltipContent></Tooltip>
+                                                    )}
                                                     {isFinalApproved && (
                                                         <TooltipProvider>
                                                             <Tooltip>
@@ -580,6 +599,10 @@ export function MRRTable() {
 
             {isMrrFormOpen && (
                 <MRREntryForm isOpen={isMrrFormOpen} setIsOpen={setIsMrrFormOpen} po={selectedPoForMrr} onSave={(d) => { mrrRef && addDocumentNonBlocking(mrrRef, d); toast({ title: 'MRR Logged' }); }} />
+            )}
+
+            {isPnFormOpen && (
+                <PaymentNoteForm isOpen={isPnFormOpen} setIsOpen={setIsPnFormOpen} mrr={selectedMrrForPn} onSave={handleSavePn} />
             )}
         </TooltipProvider>
     );

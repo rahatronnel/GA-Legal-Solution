@@ -22,6 +22,7 @@ import type { Designation } from '@/app/user-management/components/designation-t
 import type { PurchaseOrder } from './po-entry-form';
 import type { MRR } from './mrr-entry-form';
 import type { Department } from '@/app/user-management/components/department-table';
+import type { PaymentNote } from './pn-entry-form';
 
 const ProcurementContext = createContext<{
     employees: Employee[];
@@ -41,6 +42,7 @@ const ProcurementContext = createContext<{
     designations: Designation[];
     purchaseOrders: PurchaseOrder[];
     mrrs: MRR[];
+    paymentNotes: PaymentNote[];
     isLoading: boolean;
 } | undefined>(undefined);
 
@@ -64,8 +66,9 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
     const { data: purchaseOrders, isLoading: l15 } = useCollection<PurchaseOrder>(useMemoFirebase(() => firestore ? collection(firestore, 'purchaseOrders') : null, [firestore]));
     const { data: mrrs, isLoading: l16 } = useCollection<MRR>(useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]));
     const { data: departments, isLoading: l17 } = useCollection<Department>(useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]));
+    const { data: paymentNotes, isLoading: l18 } = useCollection<PaymentNote>(useMemoFirebase(() => firestore ? collection(firestore, 'paymentNotes') : null, [firestore]));
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15 || l16 || l17;
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14 || l15 || l16 || l17 || l18;
 
     const value = useMemo(() => ({
         employees: employees || [],
@@ -85,8 +88,9 @@ export function ProcurementProvider({ children }: { children: React.ReactNode })
         designations: designations || [],
         purchaseOrders: purchaseOrders || [],
         mrrs: mrrs || [],
+        paymentNotes: paymentNotes || [],
         isLoading,
-    }), [employees, sections, departments, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, deliveryPlaces, designations, purchaseOrders, mrrs, isLoading]);
+    }), [employees, sections, departments, orgSettings, billItemMasters, billItemCategories, demandNotes, processCodes, demandTypes, vendors, vendorCategories, vendorNatureOfBusiness, comparativeStatements, deliveryPlaces, designations, purchaseOrders, mrrs, paymentNotes, isLoading]);
 
     return <ProcurementContext.Provider value={value}>{children}</ProcurementContext.Provider>;
 }
@@ -113,6 +117,7 @@ export function useProcurement() {
                 designations: [],
                 purchaseOrders: [],
                 mrrs: [],
+                paymentNotes: [],
                 isLoading: true
             }
         }

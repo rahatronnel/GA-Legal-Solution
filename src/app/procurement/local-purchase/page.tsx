@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense, useState } from 'react';
@@ -25,9 +26,10 @@ import { Badge } from '@/components/ui/badge';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
+import { PaymentNoteTable } from './components/pn-table';
 import { 
     FileText, Briefcase, BarChart2, ClipboardCheck, Package, 
-    Database, Settings, History, UserCheck, X, Workflow
+    Database, Settings, History, UserCheck, X, Workflow, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -79,7 +81,6 @@ function LocalPurchaseContent() {
         dh => dh.headId === currentEmp.id || dh.technicalAdvisorId === currentEmp.id
     );
 
-    // CRITICAL: Grant access to tabs if user is in any CS approval role defined in settings.
     const csRoles = settings.csApprovalRoles;
     const isCSApproverRoleCheck = csRoles && Object.values(csRoles).includes(currentEmp.id);
 
@@ -99,7 +100,6 @@ function LocalPurchaseContent() {
     const list = [{ id: 'demand-notes', label: 'Demand Notes', icon: FileText }];
     const showGPDesk = isSuperAdmin || isGPOfficer || isGPConcern;
     
-    // Explicit tab visibility for all configured approver roles.
     const canViewExecutionTabs = isSuperAdmin || isGPOfficer || isManager || isGPConcern || isAnyDeptHead || isCSApproverRole;
 
     if (showGPDesk) list.push({ id: 'gp-desk', label: 'GP Desk', icon: Briefcase });
@@ -107,6 +107,7 @@ function LocalPurchaseContent() {
         list.push({ id: 'cs', label: 'CS', icon: BarChart2 });
         list.push({ id: 'po', label: 'PO', icon: ClipboardCheck });
         list.push({ id: 'mrr', label: 'MRR', icon: Package });
+        list.push({ id: 'pn', label: 'PN', icon: Wallet });
     }
     
     if (isSuperAdmin) {
@@ -190,6 +191,9 @@ function LocalPurchaseContent() {
         </ShadTabsContent>
         <ShadTabsContent value="mrr" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           <MRRTable />
+        </ShadTabsContent>
+        <ShadTabsContent value="pn" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <PaymentNoteTable />
         </ShadTabsContent>
 
         {isSuperAdmin && (

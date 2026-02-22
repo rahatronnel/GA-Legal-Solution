@@ -775,6 +775,26 @@
         "approvalHistory": { "type": "array", "items": { "type": "object" } }
       },
       "required": ["mrrNumber", "receivingDate", "poId", "supplierName"]
+    },
+    "PaymentNote": {
+      "title": "Payment Note",
+      "type": "object",
+      "description": "An official payment request derived from an approved MRR.",
+      "properties": {
+        "pnNumber": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "mrrId": { "type": "string" },
+        "amount": { "type": "number" },
+        "amountInWords": { "type": "string" },
+        "paymentType": { "type": "string", "enum": ["Credit", "LC", "Sales Contract", "Advance", "Rest"] },
+        "paymentMode": { "type": "string", "enum": ["AC Payee", "TT", "Pay-Order", "FDD"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "approvalStatus": { "type": "number" },
+        "currentApproverId": { "type": "string" },
+        "approvalHistory": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["pnNumber", "date", "amount", "paymentType", "paymentMode"]
     }
   },
   "auth": {
@@ -817,6 +837,7 @@
     "/demandTypes/{demandTypeId}": { "schema": { "$ref": "#/entities/DemandType" }, "description": "Stores master data for demand types." },
     "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." },
     "/purchaseOrders/{poId}": { "schema": { "$ref": "#/entities/PurchaseOrder" }, "description": "Stores all created purchase orders." },
-    "/mrrs/{mrrId}": { "schema": { "$ref": "#/entities/MRR" }, "description": "Stores all Material Receiving Reports." }
+    "/mrrs/{mrrId}": { "schema": { "$ref": "#/entities/MRR" }, "description": "Stores all Material Receiving Reports." },
+    "/paymentNotes/{pnId}": { "schema": { "$ref": "#/entities/PaymentNote" }, "description": "Stores all payment notes for finance processing." }
   }
 }
