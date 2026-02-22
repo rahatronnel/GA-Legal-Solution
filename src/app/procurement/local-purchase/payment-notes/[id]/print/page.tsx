@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { PNPrintLayout } from '../../../components/pn-print-layout';
-import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import type { PaymentNote } from '../../../components/pn-entry-form';
 import type { MRR } from '../../../components/mrr-entry-form';
@@ -17,6 +16,7 @@ import type { OrganizationSettings } from '@/app/settings/page';
 export default function PNPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
+    const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
     const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
@@ -40,7 +40,7 @@ export default function PNPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l7 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7;
+    const isLoading = isAuthLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     useEffect(() => {
         if (!isLoading && pn && orgSettings) {
@@ -56,6 +56,15 @@ export default function PNPrintPage() {
             <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
                 <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 <p className="mt-4 font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Establishing Secure Financial Handshake...</p>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
+                <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Session</p>
+                <p className="text-sm text-muted-foreground">Please ensure you are logged in to access financial documents.</p>
             </div>
         );
     }

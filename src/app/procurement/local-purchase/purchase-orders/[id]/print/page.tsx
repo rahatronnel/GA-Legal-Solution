@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { POPrintLayout } from '../../../components/po-print-layout';
-import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import type { PurchaseOrder } from '../../../components/po-entry-form';
 import type { DemandNote } from '../../../components/demand-note-entry-form';
@@ -16,6 +16,7 @@ import type { OrganizationSettings } from '@/app/settings/page';
 export default function POPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
+    const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
     const poRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'purchaseOrders', id as string) : null, [firestore, id]);
@@ -39,7 +40,7 @@ export default function POPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l7 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7;
+    const isLoading = isAuthLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     useEffect(() => {
         if (!isLoading && po && demandNote && vendor && orgSettings) {
@@ -58,6 +59,15 @@ export default function POPrintPage() {
                     <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Syncing high-fidelity PO for physical output...</p>
                 </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
+                <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Session</p>
+                <p className="text-sm text-muted-foreground">Please log in to generate official contracts.</p>
             </div>
         );
     }

@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { PaymentBundlePrintLayout } from '../../../components/payment-bundle-print-layout';
-import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import type { PaymentNote } from '../../../components/pn-entry-form';
 import type { MRR } from '../../../components/mrr-entry-form';
@@ -24,6 +23,7 @@ import type { DemandType } from '../../../components/demand-type-table';
 export default function PNFullPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
+    const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
     const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
@@ -68,13 +68,13 @@ export default function PNFullPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l14 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
+    const isLoading = isAuthLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
 
     useEffect(() => {
         if (!isLoading && pn && mrr && po && cs && dn && orgSettings) {
             const timer = setTimeout(() => {
                 window.print();
-            }, 1500); // Increased delay for multi-page complex image heavy rendering
+            }, 1500); 
             return () => clearTimeout(timer);
         }
     }, [isLoading, pn, mrr, po, cs, dn, orgSettings]);
@@ -87,6 +87,15 @@ export default function PNFullPrintPage() {
                     Compiling Organizational Full-Set Bundle...<br/>
                     <span className="text-[10px] font-bold opacity-50">Fetching 9 Lifecycle Stages & Multi-Vendor Evidence</span>
                 </p>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
+                <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Request</p>
+                <p className="text-sm text-muted-foreground">Please ensure you are logged in to the main YKK ERP Dashboard.</p>
             </div>
         );
     }

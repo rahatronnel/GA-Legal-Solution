@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { MRRPrintLayout } from '../../../components/mrr-print-layout';
-import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import type { MRR } from '../../../components/mrr-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
@@ -13,6 +13,7 @@ import type { OrganizationSettings } from '@/app/settings/page';
 export default function MRRPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
+    const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
     const mrrRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'mrrs', id as string) : null, [firestore, id]);
@@ -27,7 +28,7 @@ export default function MRRPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l4 } = useDoc<OrganizationSettings>(settingsRef);
 
-    const isLoading = l1 || l2 || l3 || l4;
+    const isLoading = isAuthLoading || l1 || l2 || l3 || l4;
 
     useEffect(() => {
         if (!isLoading && mrr && orgSettings) {
@@ -46,6 +47,15 @@ export default function MRRPrintPage() {
                     <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Syncing high-fidelity MRR for physical output...</p>
                 </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black p-8 text-center">
+                <p className="font-black text-xs uppercase tracking-widest text-destructive mb-2">Unauthorized Session</p>
+                <p className="text-sm text-muted-foreground">Please log in to verify your organizational identity.</p>
             </div>
         );
     }
