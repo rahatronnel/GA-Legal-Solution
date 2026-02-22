@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
     Search, CheckCircle2, Clock, User, Building, FileText, 
     ShoppingCart, ChevronRight, Package, Timer, Send, History as HistoryIcon,
-    BadgeCheck
+    BadgeCheck, Wallet
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,12 +29,12 @@ type TimelineEvent = {
         designation: string;
         image?: string;
     };
-    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr' | 'sending' | 'confirmation';
+    type: 'creation' | 'approval' | 'assignment' | 'award' | 'po' | 'mrr' | 'sending' | 'confirmation' | 'pn';
     status: 'completed' | 'pending' | 'rejected';
 };
 
 export function WorkflowTracker() {
-    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, sections, designations, vendors, isLoading } = useProcurement();
+    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, employees, sections, designations, vendors, isLoading } = useProcurement();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDnId, setSelectedDnId] = useState<string | null>(null);
 
@@ -66,6 +66,7 @@ export function WorkflowTracker() {
         const cs = comparativeStatements.find(c => c.demandNoteId === dn.id);
         const po = purchaseOrders.find(p => p.demandNoteId === dn.id);
         const mrr = mrrs.find(m => m.poId === po?.id || m.demandNoteNumber === dn.demandNoteNumber);
+        const pn = paymentNotes.find(p => p.mrrId === mrr?.id);
         
         const events: TimelineEvent[] = [];
 
@@ -224,8 +225,33 @@ export function WorkflowTracker() {
             }
         }
 
+        // 9. PN Process (User-wise Track)
+        if (pn) {
+            events.push({
+                id: 'pn-initiation',
+                title: 'Payment Note Initiated',
+                description: `Official financial settlement process initiated for ${mrr?.mrrNumber}.`,
+                timestamp: pn.createdAt,
+                user: getEmployeeInfo(pn.createdBy),
+                type: 'pn',
+                status: 'completed'
+            });
+
+            pn.approvalHistory?.forEach((h: any, i: number) => {
+                events.push({
+                    id: `pn-appr-${i}`,
+                    title: 'PN Treasury Audit Sign-off',
+                    description: `Financial instruction authorized for treasury disbursement.`,
+                    timestamp: h.timestamp,
+                    user: getEmployeeInfo(h.approverId),
+                    type: 'approval',
+                    status: h.status === 'Approved' ? 'completed' : 'rejected'
+                });
+            });
+        }
+
         return events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    }, [selectedDnId, demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, sections, vendors]);
+    }, [selectedDnId, demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, employees, sections, vendors]);
 
     const totalCycleTimeText = useMemo(() => {
         if (timeline.length < 2) return null;
@@ -342,6 +368,7 @@ export function WorkflowTracker() {
                                                 {event.type === 'sending' && <Send className="h-4 w-4" />}
                                                 {event.type === 'mrr' && <Package className="h-4 w-4" />}
                                                 {event.type === 'confirmation' && <BadgeCheck className="h-4 w-4" />}
+                                                {event.type === 'pn' && <Wallet className="h-4 w-4" />}
                                             </div>
 
                                             <div className="ml-14 flex-grow bg-background border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
