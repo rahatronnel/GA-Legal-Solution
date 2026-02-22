@@ -54,8 +54,12 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/demand-notes/[id]': dynamic(() => import('./procurement/local-purchase/demand-notes/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/comparative-statements/[id]': dynamic(() => import('./procurement/local-purchase/comparative-statements/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/purchase-orders/[id]': dynamic(() => import('./procurement/local-purchase/purchase-orders/[id]/page'), { ssr: false }),
+    '/procurement/local-purchase/purchase-orders/[id]/print': dynamic(() => import('./procurement/local-purchase/purchase-orders/[id]/print/page'), { ssr: false }),
     '/procurement/local-purchase/mrrs/[id]': dynamic(() => import('./procurement/local-purchase/mrrs/[id]/page'), { ssr: false }),
+    '/procurement/local-purchase/mrrs/[id]/print': dynamic(() => import('./procurement/local-purchase/mrrs/[id]/print/page'), { ssr: false }),
     '/procurement/local-purchase/payment-notes/[id]': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/page'), { ssr: false }),
+    '/procurement/local-purchase/payment-notes/[id]/print': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/print/page'), { ssr: false }),
+    '/procurement/local-purchase/payment-notes/[id]/full-print': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/full-print/page'), { ssr: false }),
 };
 
 const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings, currentUserEmployee: Employee | null }) => {    
@@ -186,13 +190,13 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                <AlertDialogContent className="animate-dialog-in">
                    <AlertDialogHeader>
                    <AlertDialogTitle>Terminate Session?</AlertDialogTitle>
-                   <AlertDialogDescription>
-                       You are about to log out of the YKK ERP secure session.
-                   </AlertDialogDescription>
+                   <AlertDialogAction onClick={() => { auth.signOut(); setIsLogoutDialogOpen(false); }} className="bg-destructive hover:bg-destructive/90">Confirm Logout</AlertDialogAction>
                    </AlertDialogHeader>
                    <AlertDialogFooter>
                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                   <AlertDialogAction onClick={() => { auth.signOut(); setIsLogoutDialogOpen(false); }} className="bg-destructive hover:bg-destructive/90">Confirm Logout</AlertDialogAction>
+                   <AlertDialogDescription>
+                       You are about to log out of the YKK ERP secure session.
+                   </AlertDialogDescription>
                    </AlertDialogFooter>
                </AlertDialogContent>
             </AlertDialog>
