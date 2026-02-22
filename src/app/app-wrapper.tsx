@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Settings, Users } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw } from 'lucide-react';
 import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
@@ -62,7 +63,7 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/payment-notes/[id]/full-print': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/full-print/page'), { ssr: false }),
 };
 
-const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings, currentUserEmployee: Employee | null }) => {    
+const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings | null, currentUserEmployee: Employee | null }) => {    
     const auth = useAuth();
     const { user } = useUser();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
@@ -208,6 +209,8 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
 export function AppWrapper() {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname() || '/';
+  const [handshakeTimeout, setHandshakeTimeout] = useState(false);
+  const [emergencyBypass, setEmergencyBypass] = useState(false);
 
   const firestore = useFirestore();
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
@@ -223,6 +226,14 @@ export function AppWrapper() {
   const currentUserEmployee = userEmployeeData?.[0] || null;
 
   useEffect(() => {
+    // Latency Monitor: Show emergency bypass if handshake takes more than 10s
+    const timer = setTimeout(() => {
+        if (!user && isUserLoading) setHandshakeTimeout(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [user, isUserLoading]);
+
+  useEffect(() => {
     if (orgSettings?.favicon) {
       const link: HTMLLinkElement = document.querySelector("link[rel~='icon']") || document.createElement('link');
       link.rel = 'icon';
@@ -236,19 +247,39 @@ export function AppWrapper() {
   }, [orgSettings]);
 
   const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  // Fast-Gate: Instant revealing when mandatory handshake is locked
-  const isHydratingData = isLoadingSettings || (!isSuperAdmin && isLoadingUserEmployee) || !orgSettings || !orgSettings.moduleVisibility;
+  
+  // Resilient Hydration Guard: We only block for the initial identity check (isUserLoading)
+  // After Auth is known, we let the user through to Login or Dashboard (using fallbacks for settings)
+  const isSyncingInitialIdentity = isUserLoading && !emergencyBypass;
 
-  if (isUserLoading || (user && isHydratingData)) {
+  if (isSyncingInitialIdentity) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-4">
-        <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse tracking-tighter">Establishing Secure Organizational Handshake...</p>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-6 p-8">
+        <div className="relative">
+            <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <ShieldCheck className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
+        </div>
+        <div className="text-center space-y-2">
+            <p className="font-black text-xs uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Establishing Secure Organizational Handshake...</p>
+            <p className="text-[10px] text-muted-foreground/60 italic">Cloud Synchronizing Environment Registry</p>
+        </div>
+
+        {handshakeTimeout && (
+            <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-xs space-y-4">
+                <div className="p-3 rounded-lg border bg-orange-500/5 text-orange-600 border-orange-500/20 flex gap-3 items-center">
+                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                    <p className="text-[10px] font-bold leading-tight">Handshake latency detected. Please verify your internet connection or Firebase credentials.</p>
+                </div>
+                <Button variant="outline" size="sm" className="w-full font-black uppercase tracking-widest text-[10px]" onClick={() => setEmergencyBypass(true)}>
+                    <RefreshCw className="mr-2 h-3 w-3" /> Emergency Manual Handshake
+                </Button>
+            </div>
+        )}
       </div>
     );
   }
 
-  if (!user) {
+  if (!user && !emergencyBypass) {
     return <LoginPage />;
   }
 
@@ -277,5 +308,5 @@ export function AppWrapper() {
     );
   }
 
-  return <ModuleDashboard orgSettings={orgSettings!} currentUserEmployee={currentUserEmployee} />;
+  return <ModuleDashboard orgSettings={orgSettings || null} currentUserEmployee={currentUserEmployee} />;
 }
