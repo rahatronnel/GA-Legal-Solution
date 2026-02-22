@@ -94,6 +94,23 @@ export function NotificationCenter() {
                     ...r 
                 });
             }
+
+            // 13. DN Fully Authorized -> Assign GP Concern (GP Officer Task)
+            const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
+            if (dn.approvalStatus === 1 && !dn.gpConcernOfficerId && isGPOfficer) {
+                const lastAppr = dn.approvalHistory?.[dn.approvalHistory.length - 1]?.timestamp || dn.entryDate;
+                const r = calculateReminders(lastAppr);
+                list.push({ 
+                    id: dn.id + '-assign-gp', 
+                    type: 'GP Desk', 
+                    title: dn.demandNoteNumber, 
+                    description: 'Demand Note fully authorized by management. Please assign a GP Concern Officer to begin sourcing.', 
+                    link: `/procurement/local-purchase?tab=gp-desk`, 
+                    status: 'GP Assignment Required', 
+                    createdAt: lastAppr, 
+                    ...r 
+                });
+            }
         });
 
         comparativeStatements.forEach(cs => {
