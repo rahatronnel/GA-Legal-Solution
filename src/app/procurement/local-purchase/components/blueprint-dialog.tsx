@@ -23,7 +23,8 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
     FileSignature, Fingerprint, Timer, Truck, BellRing, MousePointerClick,
-    MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus
+    MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
+    Wallet, FileStack, Landmark
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -135,7 +136,7 @@ export function BlueprintDialog({
                             </div>
                         </div>
                         <div className="text-right">
-                            <Badge variant="secondary" className="bg-white/20 text-white border-none font-black text-xs px-4 py-1">ORG-LP-V4.0</Badge>
+                            <Badge variant="secondary" className="bg-white/20 text-white border-none font-black text-xs px-4 py-1">ORG-LP-V5.0</Badge>
                             <p className="text-[10px] mt-1 font-bold opacity-50 uppercase tracking-widest text-white">YKK Certified Protocol</p>
                         </div>
                     </div>
@@ -153,6 +154,7 @@ export function BlueprintDialog({
                                 <TabsTrigger value="cs" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><BarChart2 className="h-4 w-4"/> 3. CS Analysis</TabsTrigger>
                                 <TabsTrigger value="po" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><ShoppingCart className="h-4 w-4"/> 4. Purchase Order</TabsTrigger>
                                 <TabsTrigger value="mrr" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><Package className="h-4 w-4"/> 5. MRR Receipt</TabsTrigger>
+                                <TabsTrigger value="pn" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><Wallet className="h-4 w-4"/> 6. Payment Note</TabsTrigger>
                                 <TabsTrigger value="notifications" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><BellRing className="h-4 w-4"/> Action Center Flow</TabsTrigger>
                                 <TabsTrigger value="access" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><Lock className="h-4 w-4"/> Security Matrix</TabsTrigger>
                             </TabsList>
@@ -164,14 +166,15 @@ export function BlueprintDialog({
                                 <TabsContent value="overview" className="mt-0 space-y-12">
                                     <BlueprintSection icon={GitCommitHorizontal} title="The High-Fidelity Lifecycle subway" colorClass="bg-slate-800 border-slate-900">
                                         <div className="relative p-12 border-4 border-dashed rounded-[3rem] bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-700">
-                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
+                                            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 relative z-10">
                                                 <ProcessStep icon={FileText} label="Requisition" status="DN DRAFT" sub="Intent" />
                                                 <ProcessStep icon={Briefcase} label="Sourcing" status="GP ASSIGN" sub="Market" />
                                                 <ProcessStep icon={BarChart2} label="Analysis" status="CS AUDIT" sub="Price" />
                                                 <ProcessStep icon={ShoppingCart} label="Commitment" status="PO LOCK" sub="Legal" />
                                                 <ProcessStep icon={Package} label="Receiving" status="MRR LOG" sub="Asset" />
+                                                <ProcessStep icon={Wallet} label="Settlement" status="PN SIGN" sub="Treasury" />
                                             </div>
-                                            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-emerald-500 -translate-y-1/2 opacity-10 hidden md:block" />
+                                            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-amber-500 via-emerald-500 via-purple-500 to-orange-500 -translate-y-1/2 opacity-10 hidden md:block" />
                                         </div>
                                     </BlueprintSection>
 
@@ -264,8 +267,8 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase V: Intake & Closing */}
-                                    <BlueprintSection icon={Package} title="Phase V: intake & Organizational Exit (MRR)" colorClass="bg-emerald-800 border-emerald-900">
+                                    {/* Phase V: Intake & Organizational Exit */}
+                                    <BlueprintSection icon={Package} title="Phase V: intake & Logistics Verification (MRR)" colorClass="bg-emerald-800 border-emerald-900">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="space-y-2">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.1 Physical Intake</p>
@@ -288,9 +291,34 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* NEW GRAPHICAL FLOW DIAGRAM */}
+                                    {/* Phase VI: Financial Settlement */}
+                                    <BlueprintSection icon={Wallet} title="Phase VI: Financial Settlement (Payment Note)" colorClass="bg-orange-600 border-orange-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <h5 className="font-black text-xs uppercase tracking-widest text-orange-900">The Treasury Handshake</h5>
+                                                <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                                                    The Payment Note (PN) is the final financial instruction. It aggregates all preceding logic into a single BDT commitment. Once signed by the Purchase Manager, it becomes an authorized disbursement order.
+                                                </p>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div className="p-2 bg-orange-50 rounded-lg text-center border border-orange-100 shadow-sm"><CheckCircle2 className="h-4 w-4 text-orange-600 mx-auto mb-1"/><p className="text-[8px] font-black uppercase">Final Audit</p></div>
+                                                    <div className="p-2 bg-orange-50 rounded-lg text-center border border-orange-100 shadow-sm"><FileStack className="h-4 w-4 text-orange-600 mx-auto mb-1"/><p className="text-[8px] font-black uppercase">9-Stage Bundle</p></div>
+                                                    <div className="p-2 bg-orange-50 rounded-lg text-center border border-orange-100 shadow-sm"><Landmark className="h-4 w-4 text-orange-600 mx-auto mb-1"/><p className="text-[8px] font-black uppercase">Treasury Ready</p></div>
+                                                </div>
+                                            </div>
+                                            <Card className="border-none shadow-xl bg-orange-950 text-white">
+                                                <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-orange-400">Security Trigger: Purchase Manager Exclusive</CardTitle></CardHeader>
+                                                <CardContent>
+                                                    <p className="text-[10px] leading-relaxed italic text-orange-200 font-bold">
+                                                        Authority for Payment Note approval is hard-coded to the Purchase Manager role. This ensures a single point of failure prevention where the person preparing the PO cannot authorize the final payment without senior oversight.
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* INTERACTIVE FLOW MATRIX */}
                                     <BlueprintSection icon={Workflow} title="Interactive Organizational Flow Matrix" colorClass="bg-red-900 border-red-950">
-                                        <div className="p-10 border-4 border-slate-800 rounded-[3rem] bg-[#1a1c2c] shadow-inner relative overflow-x-auto min-h-[600px] flex flex-col items-center justify-center gap-12">
+                                        <div className="p-10 border-4 border-slate-800 rounded-[3rem] bg-[#1a1c2c] shadow-inner relative overflow-x-auto min-h-[700px] flex flex-col items-center justify-center gap-12">
                                             {/* ROW 1: REQUISITION */}
                                             <div className="flex items-center gap-4 relative">
                                                 <div className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.6)] animate-pulse shrink-0"><Play className="h-8 w-8 ml-1" /></div>
@@ -302,7 +330,6 @@ export function BlueprintDialog({
                                                 <FlowNode icon={CheckCircle} title="Requisition Locked" status="Baseline Set" color="bg-blue-500 text-white border-white shadow-[0_0_20px_rgba(59,130,246,0.8)]" />
                                             </div>
 
-                                            {/* CONNECTOR DOWN */}
                                             <div className="h-12 w-1 bg-gradient-to-b from-blue-500 to-emerald-500 opacity-40 shadow-[0_0_10px_rgba(255,255,255,0.1)]" />
 
                                             {/* ROW 2: SOURCING */}
@@ -316,7 +343,6 @@ export function BlueprintDialog({
                                                 <FlowNode icon={FilePlus} title="Bids Collected" status="Quotation Vault" color="bg-emerald-500 text-white border-white shadow-[0_0_20px_rgba(16,185,129,0.8)]" />
                                             </div>
 
-                                            {/* CONNECTOR DOWN */}
                                             <div className="h-12 w-1 bg-gradient-to-b from-emerald-500 to-amber-500 opacity-40" />
 
                                             {/* ROW 3: ANALYSIS */}
@@ -330,7 +356,6 @@ export function BlueprintDialog({
                                                 <FlowNode icon={ShieldCheck} title="Board Sign-off" status="Executive Audit" color="bg-amber-500 text-white border-white shadow-[0_0_20px_rgba(245,158,11,0.8)]" />
                                             </div>
 
-                                            {/* CONNECTOR DOWN */}
                                             <div className="h-12 w-1 bg-gradient-to-b from-amber-500 to-purple-500 opacity-40" />
 
                                             {/* ROW 4: COMMITMENT */}
@@ -342,7 +367,6 @@ export function BlueprintDialog({
                                                 <FlowNode icon={Send} title="PO Dispatched" status="Vendor Handover" color="bg-purple-500 text-white border-white shadow-[0_0_20px_rgba(139,92,246,0.8)]" />
                                             </div>
 
-                                            {/* CONNECTOR DOWN */}
                                             <div className="h-12 w-1 bg-gradient-to-b from-purple-500 to-emerald-800 opacity-40" />
 
                                             {/* ROW 5: LOGISTICS & CLOSING */}
@@ -353,10 +377,22 @@ export function BlueprintDialog({
                                                 <FlowArrow />
                                                 <FlowDiamond label="Quality Pass?" color="bg-emerald-950 border-emerald-500" />
                                                 <FlowArrow />
-                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Flow Closed" color="bg-green-600 text-white border-white shadow-[0_0_30px_rgba(22,163,74,0.8)]" />
+                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Logistics Locked" color="bg-green-600 text-white border-white" />
                                             </div>
 
-                                            {/* DECORATIVE DIAMOND END */}
+                                            <div className="h-12 w-1 bg-gradient-to-b from-green-600 to-orange-500 opacity-40" />
+
+                                            {/* ROW 6: SETTLEMENT */}
+                                            <div className="flex items-center gap-4">
+                                                <FlowNode icon={Wallet} title="PN Entry" status="Financial Intent" color="bg-orange-600/60 border-orange-400" />
+                                                <FlowArrow />
+                                                <FlowDiamond label="Mgr Sign-off?" color="bg-orange-950 border-orange-500" />
+                                                <FlowArrow />
+                                                <FlowNode icon={ShieldCheck} title="Authorized" status="Payment Order Set" color="bg-orange-500 text-white border-white shadow-[0_0_30px_rgba(249,115,22,0.8)]" />
+                                                <FlowArrow />
+                                                <FlowNode icon={FileStack} title="9-Stage Bundle" status="Audit Permanent" color="bg-orange-500 text-white border-white shadow-[0_0_30px_rgba(249,115,22,0.8)]" />
+                                            </div>
+
                                             <div className="absolute right-10 top-1/2 -translate-y-1/2 h-24 w-8 bg-red-600 rotate-45 opacity-10 hidden lg:block" />
                                             <div className="absolute left-10 top-1/2 -translate-y-1/2 h-24 w-8 bg-blue-600 -rotate-45 opacity-10 hidden lg:block" />
                                         </div>
@@ -553,6 +589,32 @@ export function BlueprintDialog({
                                     </BlueprintSection>
                                 </TabsContent>
 
+                                <TabsContent value="pn" className="mt-0 space-y-8">
+                                    <BlueprintSection icon={Wallet} title="Menu Detail: Payment Note (PN)" colorClass="bg-orange-600 border-orange-800">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <Card className="border-none shadow-2xl overflow-hidden bg-background">
+                                                <CardHeader className="bg-orange-500 text-white"><CardTitle className="text-sm font-black uppercase">The Financial Payload</CardTitle></CardHeader>
+                                                <CardContent className="pt-6 space-y-4">
+                                                    <ul className="space-y-3">
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Automated Calculation:</strong> BDT Amount and formal words are inherited directly from the MRR value.</p></li>
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>9-Stage Audit Bundle:</strong> A single 🖨️ click generates the entire evidentiary trail for Accounts.</p></li>
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Purchase Manager Signature:</strong> A hard-lock sign-off required for organizational disbursement.</p></li>
+                                                    </ul>
+                                                </CardContent>
+                                            </Card>
+                                            <div className="space-y-4 p-6 border-4 border-double rounded-3xl bg-orange-50/20 border-orange-200">
+                                                <h4 className="font-black text-orange-900 uppercase text-xs tracking-widest flex items-center gap-2"><DollarSign className="h-4 w-4"/> Treasury Dispatch Protocol</h4>
+                                                <p className="text-[10px] text-muted-foreground font-bold leading-relaxed italic">
+                                                    The Payment Note serves as the ultimate instruction to the Finance Department. It confirms that the requisition was valid, the sourcing was competitive, the contract was signed, and the goods were physically received in good condition.
+                                                </p>
+                                                <div className="p-3 bg-white border rounded shadow-inner text-center font-mono text-[10px] font-black text-orange-700">
+                                                    STATUS: TREASURY_AUTHORIZED_V1
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </BlueprintSection>
+                                </TabsContent>
+
                                 <TabsContent value="notifications" className="mt-0 space-y-8">
                                     <BlueprintSection icon={BellRing} title="Menu Detail: Action Center & Alert Engine" colorClass="bg-red-600 border-red-800">
                                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -593,19 +655,19 @@ export function BlueprintDialog({
                                                                 <TableCell className="text-[10px] italic font-bold">Financial Audit Sign-off</TableCell>
                                                             </TableRow>
                                                             <TableRow className="h-12 hover:bg-muted/10 transition-colors">
-                                                                <TableCell className="text-xs font-bold">CS Final Approved</TableCell>
-                                                                <TableCell><Badge variant="outline" className="font-black text-[9px]">Concern / GP Officer</Badge></TableCell>
-                                                                <TableCell className="text-[10px] italic font-bold">Prepare Official PO</TableCell>
+                                                                <TableCell className="text-xs font-bold">MRR Final Approved</TableCell>
+                                                                <TableCell><Badge variant="outline" className="font-black text-[9px] bg-orange-100 text-orange-700">GP Concern</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic font-bold">Initiate Payment Note (PN)</TableCell>
                                                             </TableRow>
                                                             <TableRow className="h-12 bg-red-50/20 hover:bg-red-50/40 transition-colors">
-                                                                <TableCell className="text-xs font-bold">PO Fully Approved</TableCell>
-                                                                <TableCell><Badge variant="outline" className="font-black text-[9px]">Concern / GP Officer</Badge></TableCell>
-                                                                <TableCell className="text-[10px] italic font-bold">Dispatch (Send) to Vendor</TableCell>
+                                                                <TableCell className="text-xs font-bold">PN Created</TableCell>
+                                                                <TableCell><Badge variant="outline" className="font-black text-[9px] bg-purple-100 text-purple-700">Purchase Manager</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic font-bold">Final Financial Authorization</TableCell>
                                                             </TableRow>
                                                             <TableRow className="h-12 hover:bg-muted/10 transition-colors">
-                                                                <TableCell className="text-xs font-bold">Physical Receipt (MRR)</TableCell>
-                                                                <TableCell><Badge variant="outline" className="bg-green-100 text-green-700 font-black text-[9px]">Original Requester</Badge></TableCell>
-                                                                <TableCell className="text-[10px] italic font-bold">Quality & Qty Confirmation</TableCell>
+                                                                <TableCell className="text-xs font-bold">PN Fully Approved</TableCell>
+                                                                <TableCell><Badge variant="outline" className="font-black text-[9px] bg-green-100 text-green-700">GP Concern</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic font-bold">Print Full-Set Bundle</TableCell>
                                                             </TableRow>
                                                         </TableBody>
                                                     </Table>
@@ -687,10 +749,10 @@ export function BlueprintDialog({
                                                         <TableCell><p className="text-[10px] italic font-bold">Concerns see only their assigned tasks.</p></TableCell>
                                                     </TableRow>
                                                     <TableRow>
-                                                        <TableCell className="font-black text-xs"><div className="flex items-center gap-2"><BarChart2 className="h-3 w-3" /> CS Analysis</div></TableCell>
+                                                        <TableCell className="font-black text-xs"><div className="flex items-center gap-2"><Wallet className="h-3 w-3" /> Payment Notes</div></TableCell>
                                                         <TableCell><Badge variant="outline" className="font-black text-[9px]">Superadmin</Badge> <Badge variant="outline" className="ml-1 font-black text-[9px]">Managers</Badge></TableCell>
-                                                        <TableCell><p className="text-[10px] font-medium">Dept Heads, Technical Advisors</p></TableCell>
-                                                        <TableCell><p className="text-[10px] italic font-black text-primary">Restricted to personal signature history.</p></TableCell>
+                                                        <TableCell><p className="text-[10px] font-medium">Purchase Manager, GP Concerns</p></TableCell>
+                                                        <TableCell><p className="text-[10px] italic font-black text-primary">Concerns restricted to personal drafts.</p></TableCell>
                                                     </TableRow>
                                                     <TableRow>
                                                         <TableCell className="font-black text-xs"><div className="flex items-center gap-2"><Lock className="h-3 w-3" /> System Settings</div></TableCell>
