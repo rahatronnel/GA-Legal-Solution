@@ -125,6 +125,16 @@ export function PaymentNoteTable() {
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleApproval(pn.id, 0)}><X className="h-4 w-4"/></Button>
                                                         </>
                                                     )}
+                                                    {pn.approvalStatus === 1 && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/print`, '_blank')}>
+                                                                    <Printer className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>Print Payment Note</TooltipContent>
+                                                        </Tooltip>
+                                                    )}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedPnForStatus(pn); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => pnColRef && deleteDocumentNonBlocking(doc(pnColRef, pn.id))}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>

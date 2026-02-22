@@ -1,0 +1,69 @@
+
+'use client';
+
+import React, { useEffect } from 'react';
+import { useParams, notFound } from 'next/navigation';
+import { PNPrintLayout } from '../../../components/pn-print-layout';
+import { useDoc, useMemoFirebase, useFirestore, useCollection } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
+import type { PaymentNote } from '../../../components/pn-entry-form';
+import type { MRR } from '../../../components/mrr-entry-form';
+import type { PurchaseOrder } from '../../../components/po-entry-form';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import type { OrganizationSettings } from '@/app/settings/page';
+
+export default function PNPrintPage() {
+    const params = useParams();
+    const firestore = useFirestore();
+    const { id } = params;
+
+    const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
+    const { data: pn, isLoading: l1 } = useDoc<PaymentNote>(pnRef);
+
+    const mrrRef = useMemoFirebase(() => (firestore && pn) ? doc(firestore, 'mrrs', pn.mrrId) : null, [firestore, pn]);
+    const { data: mrr, isLoading: l2 } = useDoc<MRR>(mrrRef);
+
+    const poRef = useMemoFirebase(() => (firestore && mrr) ? doc(firestore, 'purchaseOrders', mrr.poId) : null, [firestore, mrr]);
+    const { data: po, isLoading: l3 } = useDoc<PurchaseOrder>(poRef);
+
+    const vendorRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'vendors', po.vendorId) : null, [firestore, po]);
+    const { data: vendor, isLoading: l4 } = useDoc<Vendor>(vendorRef);
+
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings, isLoading: l5 } = useDoc<OrganizationSettings>(settingsRef);
+
+    const isLoading = l1 || l2 || l3 || l4 || l5;
+
+    useEffect(() => {
+        if (!isLoading && pn && orgSettings) {
+            const timer = setTimeout(() => {
+                window.print();
+            }, 500); 
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading, pn, orgSettings]);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-black">
+                <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="mt-4 font-black text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Establishing Secure Financial Handshake...</p>
+            </div>
+        );
+    }
+
+    if (!pn) notFound();
+    if (!orgSettings) return <div className="p-8 text-center font-bold">Settings handshake failed.</div>;
+
+    return (
+        <div className="bg-white min-h-screen">
+            <PNPrintLayout 
+                pn={pn}
+                mrr={mrr || undefined}
+                po={po || undefined}
+                vendor={vendor || undefined}
+                orgSettings={orgSettings}
+            />
+        </div>
+    );
+}
