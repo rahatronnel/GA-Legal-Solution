@@ -4,7 +4,7 @@
 import React, { useMemo, useState } from 'react';
 import { 
     Bell, Check, Clock, ExternalLink, 
-    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info, AlertTriangle, Wallet, BellRing 
+    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info, AlertTriangle, Wallet, BellRing, Briefcase, UserPlus 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 type Task = {
     id: string;
-    type: 'Demand Note' | 'Comparative Statement' | 'Purchase Order' | 'MRR' | 'Payment Note';
+    type: 'Demand Note' | 'Comparative Statement' | 'Purchase Order' | 'MRR' | 'Payment Note' | 'GP Desk';
     title: string;
     description: string;
     link: string;
@@ -68,9 +68,30 @@ export function NotificationCenter() {
         };
 
         demandNotes.forEach(dn => {
+            // 1. Approval Notification
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
                 const r = calculateReminders(dn.entryDate);
                 list.push({ id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber, description: 'Awaiting your internal approval signature.', link: `/procurement/local-purchase/demand-notes/${dn.id}`, status: 'Pending Approval', createdAt: dn.entryDate, ...r });
+            }
+
+            // 2. GP Concern Assignment Notification (The Fix)
+            // Trigger if: DN is final approved AND I am the assigned concern AND CS is not yet prepared
+            const csPrepared = comparativeStatements.some(c => c.demandNoteId === dn.id);
+            if (dn.approvalStatus === 1 && dn.gpConcernOfficerId === uid && !csPrepared) {
+                const r = calculateReminders(dn.gpAssignedDate || dn.entryDate);
+                const needsVendor = !dn.quotations || dn.quotations.length === 0;
+                list.push({ 
+                    id: dn.id + '-gp-task', 
+                    type: 'GP Desk', 
+                    title: dn.demandNoteNumber, 
+                    description: needsVendor 
+                        ? 'Procurement task assigned. Please identify vendors and collect quotations.' 
+                        : 'Quotations collected. Please prepare the Comparative Statement (CS) for analysis.', 
+                    link: `/procurement/local-purchase?tab=gp-desk`, 
+                    status: 'Procurement Action Required', 
+                    createdAt: dn.gpAssignedDate || dn.entryDate, 
+                    ...r 
+                });
             }
         });
 
