@@ -29,8 +29,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useProcurement } from '../../components/procurement-provider';
-import { getPNStatusText } from '../../lib/status-helper';
+import { getPNStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
