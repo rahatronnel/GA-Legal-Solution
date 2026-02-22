@@ -16,7 +16,8 @@ import {
     PlusCircle, Trash2, Search, Eye, Printer, Filter, XCircle, Check, X, Info, 
     CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, 
     ShieldCheck, UserCheck, CheckCircle2, PackageCheck, History, ArrowRight,
-    FileText, Briefcase, BarChart2, ShoppingCart, Package, Wallet, Timer
+    FileText, Briefcase, BarChart2, ShoppingCart, Package, Wallet, Timer,
+    UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
