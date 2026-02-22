@@ -14,7 +14,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, ShadTabsContent as TabsContent, ShadTabsList as TabsList, ShadTabsTrigger as TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
     Workflow, FileText, Users, BarChart2, ShoppingCart, Package, 
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
@@ -23,7 +23,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
     FileSignature, Fingerprint, Timer, Truck, BellRing, MousePointerClick,
-    MailCheck, Siren, Database, ArrowRight, Play, CheckCircle
+    MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -537,7 +537,7 @@ export function BlueprintDialog({
                                         </div>
                                         <div className="relative p-12 border-4 border-dashed rounded-[3rem] bg-background shadow-2xl overflow-hidden mt-8">
                                             <div className="flex flex-col md:flex-row justify-around items-center gap-8 relative z-10">
-                                                <div className="flex col items-center"><div className="h-16 w-16 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg"><Truck className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Gate Entry</p></div>
+                                                <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg"><Truck className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Gate Entry</p></div>
                                                 <ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
                                                 <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg"><Search className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Quality Check</p></div>
                                                 <ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
