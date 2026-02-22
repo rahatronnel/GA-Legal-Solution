@@ -23,7 +23,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, 
     Truck, BellRing, MousePointerClick,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
-    Wallet, FileStack, Landmark, Timer, Briefcase
+    Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -107,6 +107,19 @@ const FlowDiamond = ({ label, color }: any) => (
 const FlowArrow = () => (
     <div className="flex items-center justify-center w-12 shrink-0">
         <ArrowRight className="h-6 w-6 text-white/40 animate-pulse" />
+    </div>
+);
+
+const OrganogramNode = ({ label, sub, colorClass }: { label: string, sub: string, colorClass: string }) => (
+    <div className={cn("p-2 border rounded-lg text-center shadow-sm w-[110px] shrink-0 transition-transform hover:scale-105", colorClass)}>
+        <p className="text-[8px] font-black uppercase leading-none truncate">{label}</p>
+        <p className="text-[7px] font-bold opacity-70 mt-1 truncate">{sub}</p>
+    </div>
+);
+
+const OrganogramConnector = ({ vertical = false }: { vertical?: boolean }) => (
+    <div className={cn("flex items-center justify-center opacity-30", vertical ? "h-4 w-full" : "w-4 h-full")}>
+        {vertical ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
     </div>
 );
 
@@ -512,6 +525,72 @@ export function BlueprintDialog({
                                                     </p>
                                                 </CardContent>
                                             </Card>
+                                        </div>
+
+                                        {/* NEW: GRAPHICAL EXECUTIVE CHAIN ORGANOGRAM */}
+                                        <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-slate-50 border-amber-200">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="p-2 bg-amber-600 rounded-lg shadow-lg">
+                                                    <ShieldCheck className="h-5 w-5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-black uppercase tracking-tighter text-amber-900 leading-none">Executive Signature Matrix (Above $1M)</h4>
+                                                    <p className="text-[9px] font-bold text-amber-700/60 uppercase tracking-widest mt-1">Hierarchical Governance Model</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-center gap-4 relative overflow-x-auto pb-4">
+                                                {/* TIER 1: PURCHASE AUDIT */}
+                                                <div className="flex items-center gap-4">
+                                                    <OrganogramNode label="Purchase Manager" sub="Audit Origin" colorClass="bg-white border-amber-400 text-amber-900" />
+                                                    <OrganogramConnector />
+                                                    <OrganogramNode label="Purchase TA" sub="Technical Audit" colorClass="bg-white border-amber-400 text-amber-900" />
+                                                </div>
+                                                
+                                                <OrganogramConnector vertical />
+
+                                                {/* TIER 2: DEPARTMENTAL ALIGNMENT */}
+                                                <div className="flex items-center gap-4">
+                                                    <OrganogramNode label="Requester Dept. TA" sub="Dept. Verification" colorClass="bg-white border-amber-500 text-amber-900 shadow-md" />
+                                                    <OrganogramConnector />
+                                                    <OrganogramNode label="Specialized Mgr" sub="Subject Specialist" colorClass="bg-white border-amber-500 text-amber-900 shadow-md" />
+                                                </div>
+
+                                                <OrganogramConnector vertical />
+
+                                                {/* TIER 3: FACTORY & ACCOUNTS CONTROL */}
+                                                <div className="flex items-center gap-4">
+                                                    <OrganogramNode label="Vice Factory Mgr" sub="Operations Check" colorClass="bg-amber-100 border-amber-600 text-amber-900 shadow-md" />
+                                                    <OrganogramConnector />
+                                                    <OrganogramNode label="Accounts Manager" sub="Budget Audit" colorClass="bg-amber-100 border-amber-600 text-amber-900 shadow-md" />
+                                                </div>
+
+                                                <OrganogramConnector vertical />
+
+                                                {/* TIER 4: COMMERCIAL & ADMIN */}
+                                                <div className="flex items-center gap-4">
+                                                    <OrganogramNode label="GM Sales Dept" sub="Commercial Logic" colorClass="bg-amber-200 border-amber-700 text-amber-950 shadow-lg" />
+                                                    <OrganogramConnector />
+                                                    <OrganogramNode label="GM Administration" sub="Admin Alignment" colorClass="bg-amber-200 border-amber-700 text-amber-950 shadow-lg" />
+                                                </div>
+
+                                                <OrganogramConnector vertical />
+
+                                                {/* TIER 5: FINAL AUTHORITY */}
+                                                <div className="flex flex-col items-center">
+                                                    <div className="p-4 border-4 border-destructive rounded-2xl bg-white shadow-[0_0_20px_rgba(220,38,38,0.2)] animate-pulse">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-destructive rounded-full">
+                                                                <Gavel className="h-6 w-6 text-white" />
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <p className="text-xs font-black uppercase text-destructive tracking-widest">Managing Director</p>
+                                                                <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Final Execution Gate</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </BlueprintSection>
                                 </TabsContent>
