@@ -124,6 +124,39 @@ const OrganogramConnector = ({ vertical = false }: { vertical?: boolean }) => (
     </div>
 );
 
+const NotificationCircuit = ({ trigger, receiver, icon: Icon, color }: any) => (
+    <div className="flex items-center gap-4 group animate-in fade-in slide-in-from-left-4 duration-700">
+        <div className={cn("w-1/3 p-3 rounded-xl border-2 flex flex-col items-center justify-center text-center gap-1 shadow-lg transition-transform hover:scale-105", color)}>
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm shadow-inner">
+                <Icon className="h-5 w-5 text-white" />
+            </div>
+            <p className="text-[9px] font-black uppercase text-white leading-tight tracking-tighter mt-1">{trigger}</p>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center relative h-12">
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted-foreground/20 to-transparent" />
+            </div>
+            <div className="relative z-10 flex gap-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping [animation-delay:0s]" />
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping [animation-delay:0.2s]" />
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping [animation-delay:0.4s]" />
+            </div>
+        </div>
+
+        <div className="w-1/3 p-3 rounded-xl border-2 border-dashed border-primary/20 flex flex-col items-center justify-center text-center gap-1 bg-white shadow-sm hover:border-primary transition-colors">
+            <div className="relative">
+                <BellRing className="h-5 w-5 text-primary animate-bell-ring" />
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+            </div>
+            <p className="text-[9px] font-black uppercase leading-tight tracking-tighter mt-1 text-primary">{receiver}</p>
+        </div>
+    </div>
+);
+
 export function BlueprintDialog({ 
     isOpen, 
     onOpenChange 
@@ -805,32 +838,55 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="notifications" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={BellRing} title="Menu Detail: Action Center & Alert Engine" colorClass="bg-red-600 border-red-800">
-                                        <Card className="border-none shadow-xl bg-background overflow-hidden">
-                                            <CardHeader className="bg-red-50 border-b py-2">
-                                                <CardTitle className="text-[10px] font-black uppercase text-red-900 flex items-center gap-2">
-                                                    <Siren className="h-3 w-3" /> Routing Matrix
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="p-0">
-                                                <Table>
-                                                    <TableHeader className="bg-muted/30">
-                                                        <TableRow className="h-8">
-                                                            <TableHead className="text-[9px] font-black uppercase">Trigger</TableHead>
-                                                            <TableHead className="text-[9px] font-black uppercase">Notified Personnel</TableHead>
-                                                            <TableHead className="text-[9px] font-black uppercase">Action</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        <TableRow className="h-10 text-[10px] font-bold"><TableCell>DN Issued</TableCell><TableCell>Next Approver</TableCell><TableCell className="italic">Sign-off</TableCell></TableRow>
-                                                        <TableRow className="h-10 text-[10px] font-bold bg-red-50/20"><TableCell>DN Approved</TableCell><TableCell>GP Officer</TableCell><TableCell className="italic">Assign Concern</TableCell></TableRow>
-                                                        <TableRow className="h-10 text-[10px] font-bold"><TableCell>Concern Assigned</TableCell><TableCell>Concern Officer</TableCell><TableCell className="italic">Source Bids</TableCell></TableRow>
-                                                        <TableRow className="h-10 text-[10px] font-bold bg-red-50/20"><TableCell>MRR Approved</TableCell><TableCell>GP Concern</TableCell><TableCell className="italic">Initiate PN</TableCell></TableRow>
-                                                        <TableRow className="h-10 text-[10px] font-bold"><TableCell>PN Created</TableCell><TableCell>Purchase Manager</TableCell><TableCell className="italic">Authorization</TableCell></TableRow>
-                                                    </TableBody>
-                                                </Table>
-                                            </CardContent>
-                                        </Card>
+                                    <BlueprintSection icon={BellRing} title="Graphical Alert Propagation Map" colorClass="bg-red-600 border-red-800">
+                                        <div className="space-y-6 p-6 border-4 border-dashed rounded-[3rem] bg-slate-50 border-red-200 shadow-inner relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-10 opacity-5">
+                                                <Siren className="h-64 w-64 text-red-600 animate-pulse" />
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 gap-8 relative z-10">
+                                                <NotificationCircuit 
+                                                    trigger="REQUISITION ISSUED (DN)" 
+                                                    receiver="NEXT LEVEL APPROVER" 
+                                                    icon={FileText} 
+                                                    color="bg-blue-600 border-blue-800" 
+                                                />
+                                                <NotificationCircuit 
+                                                    trigger="DN FULLY AUTHORIZED" 
+                                                    receiver="GENERAL PURCHASE OFFICER" 
+                                                    icon={ShieldCheck} 
+                                                    color="bg-emerald-600 border-emerald-800" 
+                                                />
+                                                <NotificationCircuit 
+                                                    trigger="CONCERN TASK ASSIGNED" 
+                                                    receiver="GP CONCERN OFFICER" 
+                                                    icon={UserPlus} 
+                                                    color="bg-purple-600 border-purple-800" 
+                                                />
+                                                <NotificationCircuit 
+                                                    trigger="GOODS ARRIVAL (MRR)" 
+                                                    receiver="ORIGINAL REQUISITIONER" 
+                                                    icon={Package} 
+                                                    color="bg-orange-600 border-orange-800" 
+                                                />
+                                                <NotificationCircuit 
+                                                    trigger="INTAKE VERIFIED" 
+                                                    receiver="PURCHASE MANAGER (PN AUDIT)" 
+                                                    icon={Wallet} 
+                                                    color="bg-slate-800 border-slate-900" 
+                                                />
+                                            </div>
+
+                                            <div className="mt-8 p-4 bg-red-100 rounded-2xl border-2 border-red-200 text-center relative z-10">
+                                                <div className="flex items-center justify-center gap-3 mb-2">
+                                                    <Timer className="h-5 w-5 text-red-600 animate-spin-slow" />
+                                                    <h5 className="text-xs font-black uppercase text-red-900 tracking-widest">Recursive Temporal Pulse</h5>
+                                                </div>
+                                                <p className="text-[10px] text-red-800/70 font-bold leading-relaxed px-12">
+                                                    "If a notification remains unacknowledged, the system triggers a recursive signal every [X] hours, incrementing the badge count until operational sign-off is achieved."
+                                                </p>
+                                            </div>
+                                        </div>
                                     </BlueprintSection>
                                 </TabsContent>
 
@@ -849,7 +905,7 @@ export function BlueprintDialog({
                                                 <TableBody>
                                                     <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Demand Notes</TableCell><TableCell>Superadmin</TableCell><TableCell>All Personnel</TableCell><TableCell className="italic font-bold">Self-Only Filter</TableCell></TableRow>
                                                     <TableRow className="text-[10px] font-medium"><TableCell className="font-black">GP Desk</TableCell><TableCell>GPO</TableCell><TableCell>GP Concerns</TableCell><TableCell className="italic font-bold">Assigned-Only</TableCell></TableRow>
-                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell className="text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
+                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell>text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
                                                 </TableBody>
                                             </Table>
                                         </Card>
