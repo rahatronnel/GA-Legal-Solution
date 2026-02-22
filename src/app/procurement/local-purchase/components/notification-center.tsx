@@ -52,6 +52,8 @@ export function NotificationCenter() {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
+    const getEmployeeName = (id?: string) => employees.find(e => e.id === id)?.fullName || 'Personnel';
+
     const tasks = useMemo((): Task[] => {
         if (!currentUserEmployee || isLoading) return [];
         
@@ -171,15 +173,63 @@ export function NotificationCenter() {
         });
 
         mrrs.forEach(mrr => {
+            const isMyMrr = mrr.createdBy === uid;
+
             // 9. MRR Approval (Approver Task)
             if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
                 const r = calculateReminders(mrr.createdAt);
                 list.push({ id: mrr.id, type: 'MRR', title: mrr.mrrNumber, description: 'Awaiting your report approval.', link: `/procurement/local-purchase/mrrs/${mrr.id}`, status: 'Pending Approval', createdAt: mrr.createdAt, ...r });
             }
+
+            // 10. MRR Progress Updates for Concern (Iterative Feedback)
+            if (isMyMrr && mrr.approvalHistory && mrr.approvalHistory.length > 0) {
+                const history = mrr.approvalHistory;
+                const lastIdx = history.length - 1;
+                const lastAppr = history[lastIdx];
+                const r = calculateReminders(lastAppr.timestamp);
+
+                if (mrr.approvalStatus === 1) {
+                    // Final Approval
+                    list.push({ 
+                        id: mrr.id + '-mrr-final', 
+                        type: 'MRR', 
+                        title: mrr.mrrNumber, 
+                        description: 'Material Receiving Report has received FINAL AUTHORIZATION. Audit complete. Please proceed to initiate Payment Note.', 
+                        link: `/procurement/local-purchase?tab=pn`, 
+                        status: 'Ready for Settlement', 
+                        createdAt: lastAppr.timestamp, 
+                        ...r 
+                    });
+                } else if (lastAppr.status === 'Approved') {
+                    // Iterative Level Approval
+                    list.push({ 
+                        id: mrr.id + '-mrr-lv-' + history.length, 
+                        type: 'MRR', 
+                        title: mrr.mrrNumber, 
+                        description: `Approval progress: Stage ${history.length} sign-off received from ${getEmployeeName(lastAppr.approverId)}. Move to next stage.`, 
+                        link: `/procurement/local-purchase/mrrs/${mrr.id}`, 
+                        status: 'Approval Progress', 
+                        createdAt: lastAppr.timestamp, 
+                        ...r 
+                    });
+                } else if (lastAppr.status === 'Rejected') {
+                    // Rejection Alert
+                    list.push({ 
+                        id: mrr.id + '-mrr-rej', 
+                        type: 'MRR', 
+                        title: mrr.mrrNumber, 
+                        description: `MRR was REJECTED by ${getEmployeeName(lastAppr.approverId)}. Please review the remarks and re-submit.`, 
+                        link: `/procurement/local-purchase/mrrs/${mrr.id}`, 
+                        status: 'Rejected', 
+                        createdAt: lastAppr.timestamp, 
+                        ...r 
+                    });
+                }
+            }
         });
 
         paymentNotes.forEach(pn => {
-            // 10. PN Approval (Approver Task)
+            // 11. PN Approval (Approver Task)
             if (pn.approvalStatus === 2 && pn.currentApproverId === uid) {
                 const r = calculateReminders(pn.createdAt);
                 list.push({ id: pn.id + '-pn-appr', type: 'Payment Note', title: pn.pnNumber, description: 'New Payment Note awaiting your financial authorization.', link: `/procurement/local-purchase?tab=pn`, status: 'Audit Required', createdAt: pn.createdAt, ...r });
