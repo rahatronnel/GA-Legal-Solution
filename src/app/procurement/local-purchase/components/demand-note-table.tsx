@@ -143,7 +143,12 @@ const DNStatusTrackerDialog = ({
             list.push({ title: 'GP Concern Assigned', date: dn.gpAssignedDate, by: getEmployeeName(dn.gpAssignedBy), type: 'GP', status: 'done' });
         }
 
-        // 4. CS Step
+        // 4. Vendor Assignment
+        if (dn.vendorAssignmentDate) {
+            list.push({ title: 'Vendor Sourcing Started', date: dn.vendorAssignmentDate, by: getEmployeeName(dn.gpConcernOfficerId), type: 'GP', status: 'done' });
+        }
+
+        // 5. CS Step
         if (cs) {
             list.push({ title: 'CS Prepared', date: cs.csDate, by: getEmployeeName(cs.createdBy), type: 'CS', status: 'done' });
             if (cs.vendorSelectionDate) {
@@ -154,10 +159,10 @@ const DNStatusTrackerDialog = ({
             });
         }
 
-        // 5. PO Step
+        // 6. PO Step
         if (po) {
             list.push({ title: 'Purchase Order Issued', date: po.createdAt, by: getEmployeeName(po.createdBy), type: 'PO', status: 'done' });
-            po.approvalHistory?.forEach((h: any) => {
+            po.approvalHistory?.forEach((h: any, i: number) => {
                 list.push({ title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'PO', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
             if (po.isSentToVendor && po.sentToVendorDate) {
@@ -165,10 +170,10 @@ const DNStatusTrackerDialog = ({
             }
         }
 
-        // 6. MRR Step
+        // 7. MRR Step
         if (mrr) {
             list.push({ title: 'Materials Received (MRR)', date: mrr.createdAt, by: getEmployeeName(mrr.createdBy), type: 'MRR', status: 'done' });
-            mrr.approvalHistory?.forEach((h: any) => {
+            mrr.approvalHistory?.forEach((h: any, i: number) => {
                 list.push({ title: mrr.approvalFlow?.steps[h.level]?.stepName || 'MRR Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'MRR', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
             if (mrr.requesterConfirmedAt) {
@@ -176,7 +181,7 @@ const DNStatusTrackerDialog = ({
             }
         }
 
-        // 7. PN Step
+        // 8. PN Step
         if (pn) {
             list.push({ title: 'Payment Note Initiated', date: pn.createdAt, by: getEmployeeName(pn.createdBy), type: 'PN', status: 'done' });
             pn.approvalHistory?.forEach((h: any) => {
@@ -200,14 +205,14 @@ const DNStatusTrackerDialog = ({
         if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-orange-500', icon: Hand };
         if (dn.gpConcernOfficerId) return { label: 'In Vendor Sourcing (GP)', color: 'bg-blue-500', icon: Briefcase };
         if (dn.approvalStatus === 1) return { label: 'Awaiting GP Assignment', color: 'bg-blue-600', icon: UserPlus };
-        if (dn.approvalStatus === 0) return { label: 'Requisition Rejected', color: 'bg-destructive', icon: XCircle };
+        if (dn.approvalStatus === 0) return { label: 'Requisition Rejected', color: 'bg-destructive', icon: XCircleIcon };
         return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl animate-dialog-in max-h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
-                <div className={cn("p-6 text-white shrink-0 relative overflow-hidden", macroStatus.color)}>
+            <DialogContent className="sm:max-w-xl animate-dialog-in h-[85vh] max-h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl">
+                <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
@@ -223,33 +228,35 @@ const DNStatusTrackerDialog = ({
                     <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
                 </div>
 
-                <ScrollArea className="flex-1 p-6 bg-background">
-                    <div className="space-y-8 relative before:absolute before:left-4 before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
-                        {events.map((event, i) => (
-                            <div key={i} className="relative pl-10 group">
-                                <div className={cn(
-                                    "absolute left-0 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
-                                    event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
-                                )}>
-                                    {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-black uppercase tracking-tight">{event.title}</h4>
-                                        <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{new Date(event.date).toLocaleDateString()}</span>
+                <div className="flex-1 min-h-0 bg-background relative">
+                    <ScrollArea className="h-full w-full">
+                        <div className="p-6 space-y-8 relative before:absolute before:left-[2.5rem] before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
+                            {events.map((event, i) => (
+                                <div key={i} className="relative pl-14 group">
+                                    <div className={cn(
+                                        "absolute left-6 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
+                                        event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
+                                    )}>
+                                        {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                     </div>
-                                    <div className="flex items-center justify-between text-[11px]">
-                                        <p className="text-muted-foreground font-medium flex items-center gap-1"><User className="h-3 w-3" /> {event.by}</p>
-                                        <p className="text-muted-foreground italic">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-black uppercase tracking-tight">{event.title}</h4>
+                                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{new Date(event.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                            <p className="text-muted-foreground font-medium flex items-center gap-1"><User className="h-3 w-3" /> {event.by}</p>
+                                            <p className="text-muted-foreground italic">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                    <ScrollBar orientation="vertical" />
-                </ScrollArea>
+                            ))}
+                        </div>
+                        <ScrollBar orientation="vertical" />
+                    </ScrollArea>
+                </div>
 
-                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0">
+                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                     <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
                 </DialogFooter>
             </DialogContent>
