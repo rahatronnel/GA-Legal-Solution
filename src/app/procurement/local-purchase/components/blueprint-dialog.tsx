@@ -22,7 +22,8 @@ import {
     Send, Factory, UserCheck, ClipboardCheck, Zap, TrendingUp, Search,
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
-    FileSignature, Fingerprint, Timer, Truck
+    FileSignature, Fingerprint, Timer, Truck, BellRing, MousePointerClick,
+    MailCheck, Siren
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -124,6 +125,7 @@ export function BlueprintDialog({
                                 <TabsTrigger value="cs" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><BarChart2 className="h-4 w-4"/> 3. CS Analysis</TabsTrigger>
                                 <TabsTrigger value="po" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><ShoppingCart className="h-4 w-4"/> 4. Purchase Order</TabsTrigger>
                                 <TabsTrigger value="mrr" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><Package className="h-4 w-4"/> 5. MRR Receipt</TabsTrigger>
+                                <TabsTrigger value="notifications" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><BellRing className="h-4 w-4"/> Action Center Flow</TabsTrigger>
                                 <TabsTrigger value="access" className="data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none h-full px-4 font-black uppercase text-xs tracking-widest gap-2 shrink-0"><Lock className="h-4 w-4"/> Security Matrix</TabsTrigger>
                             </TabsList>
                         </div>
@@ -309,6 +311,114 @@ export function BlueprintDialog({
                                                 <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg"><Search className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">Quality Check</p></div>
                                                 <ChevronRight className="h-8 w-8 text-muted-foreground/30 animate-pulse" />
                                                 <div className="flex flex-col items-center"><div className="h-16 w-16 rounded-full bg-primary text-white flex items-center justify-center shadow-lg"><UserCheck className="h-8 w-8" /></div><p className="mt-2 text-[10px] font-black uppercase">User Confirm</p></div>
+                                            </div>
+                                        </div>
+                                    </BlueprintSection>
+                                </TabsContent>
+
+                                <TabsContent value="notifications" className="mt-0 space-y-8">
+                                    <BlueprintSection icon={BellRing} title="Menu Detail: Action Center & Alert Engine" colorClass="bg-red-600 border-red-800">
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                            <Card className="lg:col-span-2 border-none shadow-xl bg-background overflow-hidden">
+                                                <CardHeader className="bg-red-50 border-b">
+                                                    <CardTitle className="text-sm font-black uppercase text-red-900 flex items-center gap-2">
+                                                        <Siren className="h-4 w-4" /> Real-Time Handover Routing
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="p-0">
+                                                    <Table>
+                                                        <TableHeader className="bg-muted/30">
+                                                            <TableRow>
+                                                                <TableHead className="text-[10px] font-black uppercase">Lifecycle Trigger</TableHead>
+                                                                <TableHead className="text-[10px] font-black uppercase">Notified Personnel</TableHead>
+                                                                <TableHead className="text-[10px] font-black uppercase">Action Required</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            <TableRow className="h-12">
+                                                                <TableCell className="text-xs font-bold">DN Created / Level Approved</TableCell>
+                                                                <TableCell><Badge variant="outline">Next Level Approver</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Internal Signature</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12 bg-red-50/20">
+                                                                <TableCell className="text-xs font-bold">DN Final Approval</TableCell>
+                                                                <TableCell><Badge variant="outline" className="bg-red-100 text-red-700">GP Officer</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Assign Concern Officer</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12">
+                                                                <TableCell className="text-xs font-bold">GP Concern Assigned</TableCell>
+                                                                <TableCell><Badge variant="outline">Concern Officer</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Assign Vendors / Collect Bids</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12 bg-red-50/20">
+                                                                <TableCell className="text-xs font-bold">CS Prepared / Awarded</TableCell>
+                                                                <TableCell><Badge variant="outline">CS Signature Chain</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Financial Audit Sign-off</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12">
+                                                                <TableCell className="text-xs font-bold">CS Final Approved</TableCell>
+                                                                <TableCell><Badge variant="outline">Concern / GP Officer</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Prepare Official PO</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12 bg-red-50/20">
+                                                                <TableCell className="text-xs font-bold">PO Fully Approved</TableCell>
+                                                                <TableCell><Badge variant="outline">Concern / GP Officer</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Dispatch (Send) to Vendor</TableCell>
+                                                            </TableRow>
+                                                            <TableRow className="h-12">
+                                                                <TableCell className="text-xs font-bold">Physical Receipt (MRR)</TableCell>
+                                                                <TableCell><Badge variant="outline" className="bg-green-100 text-green-700">Original Requester</Badge></TableCell>
+                                                                <TableCell className="text-[10px] italic">Quality & Qty Confirmation</TableCell>
+                                                            </TableRow>
+                                                        </TableBody>
+                                                    </Table>
+                                                </CardContent>
+                                            </Card>
+
+                                            <div className="space-y-6">
+                                                <Card className="border-2 border-red-100 shadow-lg bg-red-50/30">
+                                                    <CardHeader className="pb-2">
+                                                        <CardTitle className="text-xs font-black uppercase text-red-900 flex items-center gap-2">
+                                                            <Timer className="h-4 w-4" /> Persistent Reminder Pulse
+                                                        </CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent className="space-y-4">
+                                                        <div className="p-3 bg-white rounded-xl border border-red-200 shadow-inner">
+                                                            <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Threshold Logic</p>
+                                                            <p className="text-xs font-bold text-red-700 leading-tight">
+                                                                System re-calculates urgency every [X] hours based on settings.
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 rounded-full bg-red-600 text-white flex items-center justify-center animate-pulse">
+                                                                <Siren className="h-5 w-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase leading-none">Status: Escalated</p>
+                                                                <Badge className="bg-red-600 text-[9px] mt-1">Urgent: Reminder #3</Badge>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                                                            Personnel will receive repeated alerts in the Action Center for each cycle that passes without an approval or "Acknowledgement".
+                                                        </p>
+                                                    </CardContent>
+                                                </Card>
+
+                                                <Card className="border-none shadow-md bg-slate-800 text-white">
+                                                    <CardHeader className="pb-2">
+                                                        <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Task Control Logic</CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent className="space-y-3">
+                                                        <div className="flex items-start gap-2">
+                                                            <MousePointerClick className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                                                            <p className="text-[10px] leading-tight"><span className="font-bold text-blue-300">Acknowledgement:</span> Personnel can acknowledge a task to stop the "New" indicator, but the task remains pending in their active queue.</p>
+                                                        </div>
+                                                        <div className="flex items-start gap-2">
+                                                            <MailCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                                            <p className="text-[10px] leading-tight"><span className="font-bold text-emerald-300">Auto-Clear:</span> Notifications are automatically purged from the personnel queue once the document moves to the next lifecycle stage.</p>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
                                             </div>
                                         </div>
                                     </BlueprintSection>
