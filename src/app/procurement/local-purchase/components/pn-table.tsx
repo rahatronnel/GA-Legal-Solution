@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 export function PaymentNoteTable() {
-    const { paymentNotes, mrrs, employees, isLoading, orgSettings } = useProcurement();
+    const { paymentNotes, mrrs, purchaseOrders, comparativeStatements, demandNotes, employees, isLoading, orgSettings } = useProcurement();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -32,6 +32,11 @@ export function PaymentNoteTable() {
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+
+    const handleCopy = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast({ title: `${label} Copied`, description: `${text} is ready to paste.` });
+    };
 
     const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
@@ -99,9 +104,10 @@ export function PaymentNoteTable() {
                         <TableHeader>
                             <TableRow className="bg-muted/50">
                                 <TableHead className="font-bold">PN Number</TableHead>
-                                <TableHead className="font-bold">MRR Reference</TableHead>
+                                <TableHead className="font-bold">MRR Ref</TableHead>
+                                <TableHead className="font-bold">CS &amp; DN Refs</TableHead>
+                                <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
-                                <TableHead className="font-bold">Type / Mode</TableHead>
                                 <TableHead className="font-bold text-right">Amount (BDT)</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
                                 <TableHead className="w-[180px] text-right font-bold">Actions</TableHead>
@@ -109,23 +115,59 @@ export function PaymentNoteTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading notes...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={8} className="text-center py-10">Loading notes...</TableCell></TableRow>
                             ) : filteredPNs.length > 0 ? (
                                 filteredPNs.map(pn => {
                                     const mrr = mrrs.find(m => m.id === pn.mrrId);
+                                    const po = purchaseOrders?.find(p => p.id === mrr?.poId || p.poNumber === mrr?.poId);
+                                    const cs = comparativeStatements?.find(c => c.id === po?.csId);
+                                    const dn = demandNotes?.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr?.demandNoteNumber);
+                                    const concern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
+
                                     const isWaitingForApproval = currentUserEmployee && pn.currentApproverId === currentUserEmployee.id && pn.approvalStatus !== 1 && pn.approvalStatus !== 0;
 
                                     return (
                                         <TableRow key={pn.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForApproval && 'bg-orange-500/5')}>
-                                            <TableCell className="font-bold text-xs">{pn.pnNumber}</TableCell>
-                                            <TableCell className="text-xs">{mrr?.mrrNumber}</TableCell>
-                                            <TableCell className="text-xs font-semibold">{mrr?.supplierName}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col gap-1">
-                                                    <Badge variant="outline" className="text-[9px] h-4">{pn.paymentType}</Badge>
-                                                    <Badge variant="outline" className="text-[9px] h-4 bg-blue-50/50">{pn.paymentMode}</Badge>
+                                            <TableCell className="font-bold text-xs">
+                                                <div className="flex items-center gap-1 group/pn">
+                                                    <span>{pn.pnNumber}</span>
+                                                    <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/pn:opacity-100 transition-opacity" onClick={() => handleCopy(pn.pnNumber, 'PN')}>
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
                                                 </div>
                                             </TableCell>
+                                            <TableCell className="text-xs">
+                                                <div className="flex items-center gap-1 group/mrr">
+                                                    <span>{mrr?.mrrNumber}</span>
+                                                    <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/mrr:opacity-100 transition-opacity" onClick={() => handleCopy(mrr?.mrrNumber || '', 'MRR')}>
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1">
+                                                    {cs && (
+                                                        <div className="flex items-center gap-1 group/cs">
+                                                            <Badge variant="outline" className="text-[9px] h-4 bg-amber-50/50 border-amber-200 text-amber-700">CS: {cs.csNumber}</Badge>
+                                                            <Button variant="ghost" size="icon" className="h-3 w-3 opacity-0 group-hover/cs:opacity-100 transition-opacity" onClick={() => handleCopy(cs.csNumber, 'CS')}>
+                                                                <Copy className="h-2.5 w-2.5" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {dn && (
+                                                        <div className="flex items-center gap-1 group/dn">
+                                                            <Badge variant="outline" className="text-[9px] h-4 bg-emerald-50/50 border-emerald-200 text-emerald-700">DN: {dn.demandNoteNumber}</Badge>
+                                                            <Button variant="ghost" size="icon" className="h-3 w-3 opacity-0 group-hover/dn:opacity-100 transition-opacity" onClick={() => handleCopy(dn.demandNoteNumber, 'DN')}>
+                                                                <Copy className="h-2.5 w-2.5" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-[10px] font-bold text-primary truncate max-w-[120px]" title={concern?.fullName}>{concern?.fullName || 'Unassigned'}</span>
+                                            </TableCell>
+                                            <TableCell className="text-[10px] font-semibold truncate max-w-[150px]" title={mrr?.supplierName}>{mrr?.supplierName}</TableCell>
                                             <TableCell className="text-right font-mono font-bold text-primary">{pn.amount?.toLocaleString()}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-1 items-start">
@@ -169,7 +211,7 @@ export function PaymentNoteTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">No Payment Notes found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={8} className="h-32 text-center text-muted-foreground italic">No Payment Notes found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
