@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -296,7 +297,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
 
     return (
          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-6xl h-[90vh] flex flex-col animate-dialog-in">
+            <DialogContent className="sm:max-w-6xl h-[80vh] flex flex-col animate-dialog-in">
                 <DialogHeader>
                     <DialogTitle>Comparative Statement for DN: {demandNote.demandNoteNumber}</DialogTitle>
                     <DialogDescription>Enter quotation details and upload vendor bids for micro-level comparison.</DialogDescription>

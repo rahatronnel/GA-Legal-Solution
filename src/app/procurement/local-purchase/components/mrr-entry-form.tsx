@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -191,7 +192,7 @@ export function MRREntryForm({ isOpen, setIsOpen, onSave, po }: MRRFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col animate-dialog-in">
+      <DialogContent className="sm:max-w-5xl h-[80vh] flex flex-col animate-dialog-in">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">

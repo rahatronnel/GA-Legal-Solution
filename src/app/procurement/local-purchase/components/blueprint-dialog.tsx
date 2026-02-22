@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -166,7 +167,7 @@ export function BlueprintDialog({
 }) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[98vw] h-[95vh] flex flex-col p-0 overflow-hidden animate-dialog-in border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[98vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in border-none shadow-2xl">
                 {/* CONDENSED HEADER */}
                 <div className="bg-primary p-3 text-primary-foreground shrink-0 relative overflow-hidden">
                     <div className="relative z-10 flex justify-between items-center">

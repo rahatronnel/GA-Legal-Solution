@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -49,7 +50,7 @@ import { Separator } from '@/components/ui/separator';
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
             <DialogHeader className="p-6 bg-primary text-primary-foreground shrink-0">
                 <div className="flex items-center gap-2">
                     <HelpCircle className="h-6 w-6 text-white" />
@@ -211,7 +212,7 @@ const DNStatusTrackerDialog = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl animate-dialog-in h-[85vh] max-h-[85vh] flex flex-col p-0 overflow-hidden shadow-2xl">
+            <DialogContent className="sm:max-w-xl animate-dialog-in h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl">
                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-3">
@@ -309,7 +310,7 @@ export function DemandNoteTable() {
             settings.specializedDeptManagerId === currentUserEmployee.id;
         
         const anyDeptHeadCheck = settings.departmentHeads?.some(
-            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
+            dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
         );
 
         return {

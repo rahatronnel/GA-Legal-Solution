@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -297,7 +298,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
                  <DialogHeader>
                     <DialogTitle>{isEditing ? 'Edit Demand Note' : 'Create Demand Note'}</DialogTitle>
                     <DialogDescription>Fill in the details for the requisition.</DialogDescription>

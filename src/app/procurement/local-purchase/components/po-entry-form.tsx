@@ -223,7 +223,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary"><ClipboardCheck className="h-6 w-6" /></div>
@@ -291,7 +291,7 @@ export function PurchaseOrderForm({ isOpen, setIsOpen, onSave, cs }: POFormProps
           </div>
 
           <div className="flex justify-end">
-             <div className="w-full max-w-sm space-y-2 text-sm p-4 bg-muted/30 rounded-lg border">
+             <div className="w-full max-sm:w-full max-w-sm space-y-2 text-sm p-4 bg-muted/30 rounded-lg border">
                 <div className="flex justify-between font-medium"><span className="text-muted-foreground font-medium flex items-center gap-2"><DollarSign className="h-3 w-3" /> Subtotal Amount:</span><span>{formatCurrency(poData.totalAmount)}</span></div>
                 <div className="flex justify-between font-medium text-red-500"><span>Applied Discount:</span><span>- {formatCurrency(poData.discountAmount)}</span></div>
                 <div className="flex justify-between font-medium"><span className="text-muted-foreground">VAT Amount:</span><span>+ {formatCurrency(poData.vatAmount)}</span></div>

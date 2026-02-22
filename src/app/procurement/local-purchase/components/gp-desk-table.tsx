@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -41,7 +42,7 @@ import { Separator } from '@/components/ui/separator';
 const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
+        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in">
             <DialogHeader>
                 <div className="flex items-center gap-2 text-primary">
                     <HelpCircle className="h-6 w-6" />
@@ -260,7 +261,7 @@ export function GPDeskTable() {
 
             // Stage 2: If both are unassigned, sort by Requisition Date (oldest first to ensure FIFO integrity)
             if (aIsUnassigned && bIsUnassigned) {
-                return new Date(a.entryDate || 0).getTime() - new Date(b.entryDate || 0).getTime();
+                return new Date(a.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime();
             }
 
             // Stage 3: If both are assigned, sort by latest GP Assignment Date (newest at top)
