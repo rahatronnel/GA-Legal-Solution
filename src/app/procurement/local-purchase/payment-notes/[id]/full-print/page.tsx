@@ -83,10 +83,10 @@ export default function PNFullPrintPage() {
 
     useEffect(() => {
         if (!isGlobalLoading && pn && mrr && po && cs && dn && orgSettings) {
-            // High-Performance Handshake: Trigger print after final hydration
+            // High-Performance Handshake: We wait 5 seconds to allow multi-page PDF rendering to complete
             const timer = setTimeout(() => {
                 window.print();
-            }, 1500); 
+            }, 5000); 
             return () => clearTimeout(timer);
         }
     }, [isGlobalLoading, pn, mrr, po, cs, dn, orgSettings]);

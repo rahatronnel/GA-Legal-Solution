@@ -1,7 +1,6 @@
-
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { OrganizationSettings } from '@/app/settings/page';
 import type { PaymentNote } from './pn-entry-form';
@@ -35,11 +34,86 @@ const BundlePageWrapper: React.FC<{ children: React.ReactNode; title: string }> 
 );
 
 /**
+ * PdfMultiPageRenderer - Decomposes a multi-page PDF into individual A4 pages for the print bundle.
+ */
+const PdfMultiPageRenderer: React.FC<{ file: string; label: string; orgSettings: OrganizationSettings }> = ({ file, label, orgSettings }) => {
+    const [pages, setPages] = useState<string[]>([]);
+
+    useEffect(() => {
+        const renderPdf = async () => {
+            if (typeof window === 'undefined') return;
+            try {
+                // High-Fidelity PDF decompose using CDN worker for zero-config stability
+                const pdfjsLib = await import('pdfjs-dist');
+                pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+                
+                const loadingTask = pdfjsLib.getDocument(file);
+                const pdf = await loadingTask.promise;
+                const pageImages: string[] = [];
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // High-density rendering for legibility
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    if (context) {
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        await page.render({ canvasContext: context, viewport }).promise;
+                        pageImages.push(canvas.toDataURL('image/jpeg', 0.8));
+                    }
+                }
+                setPages(pageImages);
+            } catch (err) {
+                console.error("Critical PDF Rendering Failure:", err);
+            }
+        };
+        renderPdf();
+    }, [file]);
+
+    return (
+        <>
+            {pages.map((imgData, index) => (
+                <div key={index} className="page-break bg-white p-8 w-[21cm] h-[29.7cm] flex flex-col border-2 border-black mx-auto overflow-hidden">
+                    <div className="border-b-2 border-black pb-4 mb-6 flex justify-between items-center shrink-0">
+                        <div>
+                            <h1 className="text-xl font-black uppercase tracking-tighter">{orgSettings.name}</h1>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Secure Evidence Vault</p>
+                        </div>
+                        <div className="text-right">
+                            <h2 className="text-lg font-black uppercase text-primary italic underline underline-offset-4">{label} - Page {index + 1}</h2>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-grow flex items-center justify-center relative bg-gray-50/50 border-4 border-dashed border-gray-200 rounded-2xl overflow-hidden p-4">
+                        <img 
+                            src={imgData} 
+                            alt={`${label} page ${index + 1}`} 
+                            className="max-w-full max-h-full object-contain shadow-2xl" 
+                        />
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-black/10 text-center shrink-0">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em]">YKK ERP Solution • Organizational Full-Set Bundle</p>
+                    </div>
+                </div>
+            ))}
+        </>
+    );
+};
+
+/**
  * UploadedDocumentPage - Renders evidentiary scans (Images/PDFs) within A4 boundaries.
  */
 const UploadedDocumentPage: React.FC<{ file: { name: string; file: string }; label: string; orgSettings: OrganizationSettings }> = ({ file, label, orgSettings }) => {
     const isPdf = file.file.startsWith('data:application/pdf');
     const isImage = file.file.startsWith('data:image/');
+
+    // High-Fidelity Branching: Multi-page PDFs are decomposed into individual sheets
+    if (isPdf) {
+        return <PdfMultiPageRenderer file={file.file} label={label} orgSettings={orgSettings} />;
+    }
 
     return (
         <div className="page-break bg-white p-8 w-[21cm] h-[29.7cm] flex flex-col border-2 border-black mx-auto overflow-hidden">
@@ -54,9 +128,9 @@ const UploadedDocumentPage: React.FC<{ file: { name: string; file: string }; lab
                 </div>
             </div>
             
-            <div className="flex-grow flex items-center justify-center relative bg-gray-50/50 border-4 border-dashed border-gray-200 rounded-2xl overflow-hidden">
-                {isImage ? (
-                    <div className="relative w-full h-full p-4">
+            <div className="flex-grow flex items-center justify-center relative bg-gray-50/50 border-4 border-dashed border-gray-200 rounded-2xl overflow-hidden p-4">
+                {isImage && (
+                    <div className="relative w-full h-full">
                         <Image 
                             src={file.file} 
                             alt={label} 
@@ -64,27 +138,6 @@ const UploadedDocumentPage: React.FC<{ file: { name: string; file: string }; lab
                             className="object-contain" 
                             unoptimized 
                         />
-                    </div>
-                ) : isPdf ? (
-                    <object 
-                        data={file.file} 
-                        type="application/pdf" 
-                        width="100%" 
-                        height="100%"
-                        className="rounded-xl overflow-hidden"
-                    >
-                        <div className="p-12 text-center space-y-4">
-                            <p className="text-xl font-black uppercase tracking-tighter">PDF Container</p>
-                            <p className="text-sm text-muted-foreground italic leading-relaxed">
-                                The file <span className="font-bold text-foreground">"{file.name}"</span> is a binary PDF. 
-                                <br/>If it does not appear in your print dialogue, please print it individually from the record profile.
-                            </p>
-                        </div>
-                    </object>
-                ) : (
-                    <div className="text-center p-12 space-y-2">
-                        <p className="text-lg font-black uppercase">Unrecognized Payload</p>
-                        <p className="text-xs text-muted-foreground italic">File type not supported for direct print injection.</p>
                     </div>
                 )}
             </div>
@@ -175,7 +228,7 @@ export const PaymentBundlePrintLayout: React.FC<PaymentBundlePrintLayoutProps> =
                 />
             </BundlePageWrapper>
 
-            {/* 9. Vendor Quotations (Crucial: These are the files the user specifically asked for) */}
+            {/* 9. Vendor Quotations - Multi-page PDFs will be joined as individual sheets */}
             {(dn.quotations || []).map((q, i) => {
                 const v = vendors.find(v => v.id === q.vendorId);
                 if (!q.fileDataUrl) return null;
