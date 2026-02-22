@@ -24,7 +24,7 @@ import {
     Truck, BellRing, MousePointerClick,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
     Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown, Activity,
-    Scale, FileSearch, ShieldAlert, Cpu
+    Scale, FileSearch, ShieldAlert, Cpu, FileSignature, ClipboardCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
