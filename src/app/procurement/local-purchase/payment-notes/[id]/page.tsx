@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, Printer, Clock, Check, X, Building, CheckCircle, Hourglass, 
     MoreHorizontal, Hash, DollarSign, Wallet, FileText, Briefcase, Calendar, Info, 
-    ShoppingCart, Package, BarChart2, CheckCircle2
+    ShoppingCart, Package, BarChart2, CheckCircle2, Tag
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -279,5 +279,6 @@ export default function PaymentNoteProfilePage() {
                 </TabsContent>
             </Tabs>
         </div>
+      </TooltipProvider>
     );
 }
