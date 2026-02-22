@@ -229,10 +229,32 @@ export function NotificationCenter() {
         });
 
         paymentNotes.forEach(pn => {
+            const mrr = mrrs.find(m => m.id === pn.mrrId);
+            const po = purchaseOrders.find(p => p.id === mrr?.poId || p.poNumber === mrr?.poId);
+            const dn = demandNotes.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr?.demandNoteNumber);
+            
+            const isMyPn = pn.createdBy === uid || dn?.gpConcernOfficerId === uid;
+
             // 11. PN Approval (Approver Task)
             if (pn.approvalStatus === 2 && pn.currentApproverId === uid) {
                 const r = calculateReminders(pn.createdAt);
                 list.push({ id: pn.id + '-pn-appr', type: 'Payment Note', title: pn.pnNumber, description: 'New Payment Note awaiting your financial authorization.', link: `/procurement/local-purchase?tab=pn`, status: 'Audit Required', createdAt: pn.createdAt, ...r });
+            }
+
+            // 12. PN Approved (Concern/Creator Alert)
+            if (pn.approvalStatus === 1 && isMyPn) {
+                const lastAppr = pn.approvalHistory?.[pn.approvalHistory.length - 1]?.timestamp || pn.createdAt;
+                const r = calculateReminders(lastAppr);
+                list.push({ 
+                    id: pn.id + '-pn-final', 
+                    type: 'Payment Note', 
+                    title: pn.pnNumber, 
+                    description: 'Payment Note has been FINAL AUTHORIZED for treasury disbursement. Procurement cycle complete.', 
+                    link: `/procurement/local-purchase?tab=pn`, 
+                    status: 'Settlement Authorized', 
+                    createdAt: lastAppr, 
+                    ...r 
+                });
             }
         });
 
