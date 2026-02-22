@@ -162,24 +162,26 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             
+            // Pro-active integrity check: Validate size before conversion
             if (file.size > FIRESTORE_MAX_FILE_SIZE) {
                 toast({
                     variant: "destructive",
-                    title: "File Too Large",
-                    description: `This file exceeds the limit (~750KB). Please optimize the document.`
+                    title: "Document Too Large",
+                    description: `This file exceeds the limit (~750KB). Please compress the PDF or Image before uploading.`
                 });
                 return;
             }
 
             try {
+                // imageToDataUrl now applies aggressive compression for JPG/PNG
                 const dataUrl = await imageToDataUrl(file);
                 setNewQuotations(prev => ({
                     ...prev,
                     [vendorId]: { fileName: file.name, fileDataUrl: dataUrl }
                 }));
-                toast({ title: "Quotation Linked", description: `${file.name} is ready for processing.` });
+                toast({ title: "Quotation Processed", description: `${file.name} optimized and linked.` });
             } catch (err) {
-                toast({ variant: 'destructive', title: 'Upload error' });
+                toast({ variant: 'destructive', title: 'Optimization error', description: 'Could not process the selected file.' });
             }
         }
     };
@@ -221,7 +223,6 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
             return;
         }
     
-        // Informed Synchronization: Update Demand Note quotations with new files
         const updatedQuotations = (demandNote.quotations || []).map(q => {
             if (newQuotations[q.vendorId]) {
                 return { ...q, ...newQuotations[q.vendorId] };
@@ -409,7 +410,7 @@ export function ComparativeStatementForm({ isOpen, setIsOpen, onSave, demandNote
                                      </div>
 
                                       <div className="p-4 border rounded-lg bg-muted/50 space-y-2 text-sm">
-                                        <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><Clock className="h-4 w-4" /> Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
+                                        <div className="flex justify-between font-medium"><span className="text-muted-foreground font-medium flex items-center gap-2"><Clock className="h-4 w-4" /> Subtotal:</span><span>{currentVendorTotals?.itemTotal.toFixed(2)}</span></div>
                                         <div className="flex justify-between font-medium text-red-500"><span className="flex items-center gap-2"><Tag className="h-4 w-4" /> Discount:</span><span>- {currentVendorTotals?.discount.toFixed(2)}</span></div>
                                         <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> VAT Amount:</span><span>+ {currentVendorTotals?.vatAmount.toFixed(2)}</span></div>
                                         <div className="flex justify-between font-medium"><span className="text-muted-foreground flex items-center gap-2"><DollarSign className="h-4 w-4" /> Tax Amount:</span><span>+ {currentVendorTotals?.taxAmount.toFixed(2)}</span></div>

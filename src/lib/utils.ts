@@ -9,8 +9,9 @@ export function cn(...inputs: ClassValue[]) {
  * Hard Limit for Firestore Document size is 1MB. 
  * Since we store files as Base64, we must limit the raw file size.
  * Base64 adds ~33% overhead.
+ * Target: 100KB - 120KB for high-efficiency storage.
  */
-export const FIRESTORE_MAX_FILE_SIZE = 750000; // ~730KB raw limit
+export const FIRESTORE_MAX_FILE_SIZE = 750000; // ~730KB raw hard limit
 
 export const imageToDataUrl = (
   file: File,
@@ -18,6 +19,7 @@ export const imageToDataUrl = (
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     // If it's not an image (e.g. PDF), we just read it as is.
+    // Note: Browser-side PDF compression is complex and usually requires heavy libraries.
     if (!file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -26,7 +28,7 @@ export const imageToDataUrl = (
       return;
     }
 
-    // For images, we attempt high-fidelity compression to save space
+    // For images (scans/photos), we apply AGGRESSIVE organizational compression
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -41,9 +43,9 @@ export const imageToDataUrl = (
         let { width, height } = img;
         const ratio = width / height;
 
-        // Organizational High-Res Standard
-        const MAX_WIDTH = 1600;
-        const MAX_HEIGHT = 1600;
+        // Optimized Geometry for Document Legibility vs Size
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
 
         if (width > height) {
           if (width > MAX_WIDTH) {
@@ -61,8 +63,8 @@ export const imageToDataUrl = (
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress at 0.6 quality to balance clarity and document size
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        // Compress at 0.5 quality to target the 100-120kb range for standard document scans
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
         resolve(dataUrl);
       };
       img.onerror = reject;

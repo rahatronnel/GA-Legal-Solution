@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -38,7 +37,7 @@ import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { useProcurement } from '../../components/procurement-provider';
 import type { Designation } from '@/app/user-management/components/designation-table';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
-import { imageToDataUrl } from '@/lib/utils';
+import { imageToDataUrl, FIRESTORE_MAX_FILE_SIZE } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -95,16 +94,28 @@ const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; is
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, vendorId: string) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            
+            // Validate size before optimization
+            if (file.size > FIRESTORE_MAX_FILE_SIZE) {
+                toast({
+                    variant: "destructive",
+                    title: "Document Too Large",
+                    description: `This file exceeds the organizational limit. Please compress the PDF or Image before uploading.`
+                });
+                return;
+            }
+
             try {
+                // imageToDataUrl now applies aggressive compression for JPG/PNG
                 const dataUrl = await imageToDataUrl(file);
                 setQuotations(prev => 
                     prev.map(q => 
                         q.vendorId === vendorId ? { ...q, fileName: file.name, fileDataUrl: dataUrl } : q
                     )
                 );
-                toast({ title: "File Ready", description: `${file.name} is ready to be saved.` });
+                toast({ title: "Optimization Complete", description: `${file.name} is processed and ready to save.` });
             } catch (err) {
-                toast({ variant: 'destructive', title: 'Upload failed' });
+                toast({ variant: 'destructive', title: 'Upload failed', description: 'Could not process the selected document.' });
             }
         }
     };
@@ -123,7 +134,7 @@ const QuotationManager: React.FC<{ demandNote: DemandNote; vendors: Vendor[]; is
             <CardHeader>
                 <div>
                     <CardTitle>Vendor Quotations</CardTitle>
-                    <div className="text-sm text-muted-foreground">Upload and manage quotations from assigned vendors.</div>
+                    <div className="text-sm text-muted-foreground">Upload and manage quotations from assigned vendors. (Recommended size: &lt; 150KB)</div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
