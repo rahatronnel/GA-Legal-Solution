@@ -68,14 +68,13 @@ export function NotificationCenter() {
         };
 
         demandNotes.forEach(dn => {
-            // 1. Approval Notification
+            // 1. Approval Notification (Approver Task)
             if (dn.currentApproverId === uid && dn.approvalStatus !== 1 && dn.approvalStatus !== 0) {
                 const r = calculateReminders(dn.entryDate);
                 list.push({ id: dn.id, type: 'Demand Note', title: dn.demandNoteNumber, description: 'Awaiting your internal approval signature.', link: `/procurement/local-purchase/demand-notes/${dn.id}`, status: 'Pending Approval', createdAt: dn.entryDate, ...r });
             }
 
-            // 2. GP Concern Assignment Notification (The Fix)
-            // Trigger if: DN is final approved AND I am the assigned concern AND CS is not yet prepared
+            // 2. GP Concern Assignment Notification (Concern Task)
             const csPrepared = comparativeStatements.some(c => c.demandNoteId === dn.id);
             if (dn.approvalStatus === 1 && dn.gpConcernOfficerId === uid && !csPrepared) {
                 const r = calculateReminders(dn.gpAssignedDate || dn.entryDate);
@@ -97,23 +96,82 @@ export function NotificationCenter() {
 
         comparativeStatements.forEach(cs => {
             const relatedDN = demandNotes.find(d => d.id === cs.demandNoteId);
+            const poExists = purchaseOrders.some(p => p.csId === cs.id);
+            const isMyTask = cs.createdBy === uid || relatedDN?.gpConcernOfficerId === uid;
+
+            // 3. CS Award Selection (Concern Task)
             if (cs.approvalStatus === 2 && (cs.vendorSelectorId === uid || relatedDN?.gpConcernOfficerId === uid)) {
                 const r = calculateReminders(cs.csDate);
                 list.push({ id: cs.id + '-award', type: 'Comparative Statement', title: cs.csNumber, description: 'CS Prepared. Please select the awarded vendor.', link: `/procurement/local-purchase/comparative-statements/${cs.id}`, status: 'Award Selection Required', createdAt: cs.csDate, ...r });
-            } else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
+            } 
+            // 4. CS Approval (Approver Task)
+            else if (cs.currentApproverId === uid && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2) {
                 const r = calculateReminders(cs.vendorSelectionDate || cs.csDate);
                 list.push({ id: cs.id + '-appr', type: 'Comparative Statement', title: cs.csNumber, description: 'Awaiting your analysis approval signature.', link: `/procurement/local-purchase/comparative-statements/${cs.id}`, status: 'Pending Approval', createdAt: cs.vendorSelectionDate || cs.csDate, ...r });
+            }
+            
+            // 5. CS Final Approved -> Create PO (Concern Task)
+            if (cs.approvalStatus === 1 && !poExists && isMyTask) {
+                const lastAppr = cs.approvalHistory?.[cs.approvalHistory.length - 1]?.timestamp || cs.vendorSelectionDate || cs.csDate;
+                const r = calculateReminders(lastAppr);
+                list.push({ 
+                    id: cs.id + '-create-po', 
+                    type: 'Comparative Statement', 
+                    title: cs.csNumber, 
+                    description: 'Comparative Statement final-approved. Please prepare the formal Purchase Order (PO).', 
+                    link: `/procurement/local-purchase?tab=po`, 
+                    status: 'PO Initiation Required', 
+                    createdAt: lastAppr, 
+                    ...r 
+                });
             }
         });
 
         purchaseOrders.forEach(po => {
+            const relatedDN = demandNotes.find(d => d.id === po.demandNoteId);
+            const mrrExists = mrrs.some(m => m.poId === po.id);
+            const isMyTask = po.createdBy === uid || relatedDN?.gpConcernOfficerId === uid;
+
+            // 6. PO Approval (Approver Task)
             if (po.currentApproverId === uid && po.approvalStatus !== 1 && po.approvalStatus !== 0) {
                 const r = calculateReminders(po.createdAt);
                 list.push({ id: po.id, type: 'Purchase Order', title: po.poNumber, description: 'Formal commitment awaiting your signature.', link: `/procurement/local-purchase/purchase-orders/${po.id}`, status: 'Pending Approval', createdAt: po.createdAt, ...r });
             }
+
+            // 7. PO Final Approved -> Dispatch PO (Concern Task)
+            if (po.approvalStatus === 1 && !po.isSentToVendor && isMyTask) {
+                const lastAppr = po.approvalHistory?.[po.approvalHistory.length - 1]?.timestamp;
+                const r = calculateReminders(lastAppr || po.createdAt);
+                list.push({ 
+                    id: po.id + '-dispatch', 
+                    type: 'Purchase Order', 
+                    title: po.poNumber, 
+                    description: 'PO authorized by management. Please formally dispatch the order to the vendor.', 
+                    link: `/procurement/local-purchase/purchase-orders/${po.id}`, 
+                    status: 'Dispatch Required', 
+                    createdAt: lastAppr || po.createdAt, 
+                    ...r 
+                });
+            }
+
+            // 8. PO Dispatched -> Prepare MRR (Concern Task)
+            if (po.isSentToVendor && !mrrExists && isMyTask) {
+                const r = calculateReminders(po.sentToVendorDate || po.createdAt);
+                list.push({ 
+                    id: po.id + '-prepare-mrr', 
+                    type: 'MRR', 
+                    title: po.poNumber, 
+                    description: 'PO dispatched. Monitor shipment arrival and prepare the Material Receiving Report (MRR).', 
+                    link: `/procurement/local-purchase?tab=mrr`, 
+                    status: 'Receipt Documentation Pending', 
+                    createdAt: po.sentToVendorDate || po.createdAt, 
+                    ...r 
+                });
+            }
         });
 
         mrrs.forEach(mrr => {
+            // 9. MRR Approval (Approver Task)
             if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
                 const r = calculateReminders(mrr.createdAt);
                 list.push({ id: mrr.id, type: 'MRR', title: mrr.mrrNumber, description: 'Awaiting your report approval.', link: `/procurement/local-purchase/mrrs/${mrr.id}`, status: 'Pending Approval', createdAt: mrr.createdAt, ...r });
@@ -121,6 +179,7 @@ export function NotificationCenter() {
         });
 
         paymentNotes.forEach(pn => {
+            // 10. PN Approval (Approver Task)
             if (pn.approvalStatus === 2 && pn.currentApproverId === uid) {
                 const r = calculateReminders(pn.createdAt);
                 list.push({ id: pn.id + '-pn-appr', type: 'Payment Note', title: pn.pnNumber, description: 'New Payment Note awaiting your financial authorization.', link: `/procurement/local-purchase?tab=pn`, status: 'Audit Required', createdAt: pn.createdAt, ...r });
