@@ -1,4 +1,3 @@
-
 // This file pulls the Firebase configuration from environment variables.
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
