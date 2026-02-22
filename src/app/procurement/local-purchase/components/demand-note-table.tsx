@@ -17,7 +17,7 @@ import {
     CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, 
     ShieldCheck, UserCheck, CheckCircle2, PackageCheck, History, ArrowRight,
     FileText, Briefcase, BarChart2, ShoppingCart, Package, Wallet, Timer,
-    UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User
+    UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User, XCircle as XCircleIcon
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
@@ -49,16 +49,16 @@ import { Separator } from '@/components/ui/separator';
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in">
-            <DialogHeader>
-                <div className="flex items-center gap-2 text-primary">
-                    <HelpCircle className="h-6 w-6" />
-                    <DialogTitle className="text-xl">Demand Note (DN) User Guide</DialogTitle>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+            <DialogHeader className="p-6 bg-primary text-primary-foreground shrink-0">
+                <div className="flex items-center gap-2">
+                    <HelpCircle className="h-6 w-6 text-white" />
+                    <DialogTitle className="text-xl text-white font-black uppercase tracking-tight">DN Operational Guide</DialogTitle>
                 </div>
-                <DialogDescription>Internal guidelines for material and service requisitions.</DialogDescription>
+                <DialogDescription className="text-white/70">Internal guidelines for material and service requisitions.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
-                <div className="space-y-6 p-4">
+            <ScrollArea className="flex-grow">
+                <div className="p-6 space-y-6">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -92,8 +92,8 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                 </div>
                 <ScrollBar orientation="vertical" />
             </ScrollArea>
-            <DialogFooter className="border-t pt-4">
-                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            <DialogFooter className="p-4 border-t shrink-0">
+                <Button onClick={() => onOpenChange(false)} className="w-full">Dismiss Guide</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -206,15 +206,15 @@ const DNStatusTrackerDialog = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl animate-dialog-in max-h-[90vh] flex flex-col p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-xl animate-dialog-in max-h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden", macroStatus.color)}>
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
-                                <macroStatus.icon className="h-8 w-8" />
+                                <macroStatus.icon className="h-8 w-8 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">DN Lifecycle Tracker</h2>
+                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Lifecycle Tracker</h2>
                                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
                             </div>
                         </div>
@@ -223,8 +223,8 @@ const DNStatusTrackerDialog = ({
                     <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
                 </div>
 
-                <ScrollArea className="flex-1 p-6">
-                    <div className="space-y-8 relative before:absolute before:left-4 before:top-0 before:h-full before:w-0.5 before:bg-muted">
+                <ScrollArea className="flex-1 p-6 bg-background">
+                    <div className="space-y-8 relative before:absolute before:left-4 before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
                         {events.map((event, i) => (
                             <div key={i} className="relative pl-10 group">
                                 <div className={cn(
@@ -249,7 +249,7 @@ const DNStatusTrackerDialog = ({
                     <ScrollBar orientation="vertical" />
                 </ScrollArea>
 
-                <DialogFooter className="p-4 border-t bg-muted/30">
+                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0">
                     <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
                 </DialogFooter>
             </DialogContent>
