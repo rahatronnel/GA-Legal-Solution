@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Download, Printer, Clock, Check, X, 
     Building, CheckCircle, Hourglass, MoreHorizontal, Hash, Truck, 
-    Package, Box, MapPin, Tag, Archive, CheckCircle2 
+    Package, Box, MapPin, Tag, Archive, CheckCircle2, ShoppingCart, BarChart2, Briefcase, Info, DollarSign, Calendar
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -31,10 +32,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useProcurement } from '../../components/procurement-provider';
 import { getMRRStatusText, getNextApprovalStatusCode } from '../../lib/status-helper';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
-        <div className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</div>
+        <div className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Icon className="h-4 w-4" />{label}</div>
         <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
     </div>
 );
@@ -71,12 +74,24 @@ export default function MRRProfilePage() {
     const router = useRouter();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { mrrs, employees, isLoading } = useProcurement();
+    const { mrrs, employees, demandNotes, purchaseOrders, comparativeStatements, vendors, sections, isLoading } = useProcurement();
 
     const mrr = useMemo(() => {
         if (isLoading || !mrrs) return undefined;
         return mrrs.find((m: any) => m.id === params.id) || null;
     }, [params.id, mrrs, isLoading]);
+
+    const relatedData = useMemo(() => {
+        if (!mrr) return null;
+        const po = purchaseOrders?.find(p => p.id === mrr.poId || p.poNumber === mrr.poId);
+        const dn = demandNotes?.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
+        const cs = comparativeStatements?.find(c => c.id === po?.csId);
+        const concern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
+        const dept = sections?.find(s => s.id === dn?.departmentId);
+        const vendor = vendors?.find(v => v.id === po?.vendorId);
+
+        return { po, dn, cs, concern, dept, vendor };
+    }, [mrr, purchaseOrders, demandNotes, comparativeStatements, employees, sections, vendors]);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
 
@@ -126,6 +141,9 @@ export default function MRRProfilePage() {
     const canApprove = currentUserEmployee && mrr.currentApproverId === currentUserEmployee.id;
     const receiver = employees.find(e => e.id === mrr.receiverConfirmantId);
     const isFinalApproved = mrr.approvalStatus === 1;
+
+    const formatCurrency = (amount: number | undefined) => 
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
 
     return (
         <div className="space-y-6">
@@ -179,6 +197,7 @@ export default function MRRProfilePage() {
             <Tabs defaultValue="overview">
                 <TabsList className="animate-scale-in">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="chain">Procurement Chain</TabsTrigger>
                     <TabsTrigger value="documents">Bill & Challan</TabsTrigger>
                     <TabsTrigger value="history">Approval Flow</TabsTrigger>
                 </TabsList>
@@ -203,6 +222,88 @@ export default function MRRProfilePage() {
                     <CardContent><Table><TableHeader><TableRow><TableHead>Particulars</TableHead><TableHead>Description</TableHead><TableHead className="text-center">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
                     <TableBody>{mrr.items.map((item: any, i: number) => (<TableRow key={i}><TableCell className="font-bold">{item.particulars}</TableCell><TableCell className="italic text-xs">{item.description}</TableCell><TableCell className="text-center">{item.receivedQty} {item.unit}</TableCell><TableCell className="text-right font-mono">{item.unitPrice.toLocaleString()}</TableCell><TableCell className="text-right font-bold">{item.amount.toLocaleString()}</TableCell></TableRow>))}</TableBody>
                     </Table></CardContent></Card>
+                </TabsContent>
+
+                <TabsContent value="chain" className="space-y-6 mt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Demand Note Section */}
+                        <Card className="border-l-4 border-l-blue-500 shadow-sm animate-scale-in">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-blue-600">
+                                    <FileText className="h-4 w-4" /> 1. Requisition (DN)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InfoItem icon={Hash} label="DN Number" value={relatedData?.dn?.demandNoteNumber} />
+                                    <InfoItem icon={Calendar} label="DN Date" value={relatedData?.dn?.date} />
+                                    <InfoItem icon={Building} label="Dept." value={relatedData?.dept?.name} />
+                                    <InfoItem icon={User} label="Requester" value={employees.find(e => e.id === relatedData?.dn?.createdBy)?.fullName} />
+                                </div>
+                                <Separator className="opacity-50" />
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase font-black text-muted-foreground">Original Requisition Purpose</Label>
+                                    <p className="text-xs text-muted-foreground leading-relaxed italic">"{relatedData?.dn?.purpose || 'No purpose recorded.'}"</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Comparative Statement Section */}
+                        <Card className="border-l-4 border-l-amber-500 shadow-sm animate-scale-in">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-amber-600">
+                                    <BarChart2 className="h-4 w-4" /> 2. Sourcing (CS)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <InfoItem icon={Hash} label="CS Number" value={relatedData?.cs?.csNumber} />
+                                    <InfoItem icon={Calendar} label="CS Date" value={relatedData?.cs?.csDate ? new Date(relatedData.cs.csDate).toLocaleDateString() : 'N/A'} />
+                                    <InfoItem icon={DollarSign} label="Approved Amt" value={formatCurrency(relatedData?.cs?.approvalAmount)} />
+                                    <InfoItem icon={Tag} label="Basis" value={relatedData?.cs?.approvalAmountBasis} />
+                                </div>
+                                <Separator className="opacity-50" />
+                                <div className="flex items-center gap-3 bg-amber-50/50 p-2 rounded border border-amber-100">
+                                    <Avatar className="h-8 w-8 border border-amber-200">
+                                        <AvatarFallback className="text-[10px] bg-amber-100 text-amber-700">GP</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase text-amber-800">GP Concern Officer</p>
+                                        <p className="text-xs font-bold">{relatedData?.concern?.fullName || 'System'}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Purchase Order Section */}
+                        <Card className="border-l-4 border-l-purple-500 shadow-sm animate-scale-in md:col-span-2">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-purple-600">
+                                    <ShoppingCart className="h-4 w-4" /> 3. Formal Contract (PO)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                                <div className="space-y-4 border-r pr-6 border-dashed">
+                                    <InfoItem icon={Hash} label="PO Number" value={relatedData?.po?.poNumber} />
+                                    <InfoItem icon={Calendar} label="PO Date" value={relatedData?.po?.poDate} />
+                                    <InfoItem icon={User} label="Supplier" value={relatedData?.vendor?.vendorName} />
+                                </div>
+                                <div className="space-y-4 border-r pr-6 border-dashed">
+                                    <div className="flex justify-between text-sm font-medium"><span className="text-muted-foreground">Subtotal:</span><span>{formatCurrency(relatedData?.po?.totalAmount)}</span></div>
+                                    <div className="flex justify-between text-sm font-medium text-red-500"><span>Discount:</span><span>-{formatCurrency(relatedData?.po?.discountAmount)}</span></div>
+                                    <div className="flex justify-between text-sm font-medium"><span>VAT/Tax:</span><span>+{formatCurrency((relatedData?.po?.vatAmount || 0) + (relatedData?.po?.taxAmount || 0))}</span></div>
+                                    <Separator />
+                                    <div className="flex justify-between text-lg font-black"><span className="text-primary">Net Billed:</span><span className="text-primary">{formatCurrency(relatedData?.po?.netPayableAmount)}</span></div>
+                                </div>
+                                <div className="space-y-3 bg-muted/20 p-3 rounded-lg">
+                                    <h5 className="text-[10px] font-black uppercase tracking-tighter flex items-center gap-2"><Info className="h-3 w-3" /> Quick Stats</h5>
+                                    <div className="flex justify-between text-[11px] font-bold"><span className="text-muted-foreground">PO Status:</span><Badge variant="outline" className="h-4 text-[9px]">{relatedData?.po?.status}</Badge></div>
+                                    <div className="flex justify-between text-[11px] font-bold"><span className="text-muted-foreground">Dispatched:</span><span className={relatedData?.po?.isSentToVendor ? 'text-green-600' : 'text-orange-500'}>{relatedData?.po?.isSentToVendor ? 'Yes' : 'Pending'}</span></div>
+                                    <div className="flex justify-between text-[11px] font-bold"><span className="text-muted-foreground">Confirmed:</span><span>{relatedData?.po?.confirmedBySupplier ? 'Yes' : 'No'}</span></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="documents" className="space-y-6 mt-6">
