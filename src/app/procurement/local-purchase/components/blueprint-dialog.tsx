@@ -269,19 +269,19 @@ export function BlueprintDialog({
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="space-y-2">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.1 Physical Intake</p>
-                                                <div className="p-4 bg-black/40 rounded-xl border border-white/20 text-white shadow-2xl">
+                                                <div className="p-4 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                     <p className="text-xs leading-relaxed font-bold">Goods entry is logged with container IDs and conditions. Discrepancies in quantity are flagged instantly against the PO baseline.</p>
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.2 Multi-Stage Audit</p>
-                                                <div className="p-4 bg-black/40 rounded-xl border border-white/20 text-white shadow-2xl">
+                                                <div className="p-4 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                     <p className="text-xs leading-relaxed font-bold">The MRR report itself is vetted by GP Concern and the Requisitioning Department Manager before accounting entry.</p>
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-[11px] font-black uppercase text-amber-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
-                                                <div className="p-4 bg-amber-400/20 rounded-xl border border-amber-400/40 text-amber-100 shadow-2xl">
+                                                <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
+                                                <div className="p-4 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
                                                     <p className="text-xs font-black leading-relaxed">The original Requester confirms the goods. Without this confirmant timestamp, the process remains "Open" in the system audit logs.</p>
                                                 </div>
                                             </div>
