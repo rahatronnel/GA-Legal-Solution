@@ -38,40 +38,57 @@ import { BlueprintDialog } from './components/blueprint-dialog';
 import { cn } from '@/lib/utils';
 
 /**
- * InfographicNavNode - A circular node mimicking the requested zig-zag design.
+ * InfographicNavNode - A circular node with alternating label positions matching the user's choice image.
  */
 const InfographicNavNode = ({ 
-    id, label, icon: Icon, color, isActive, onClick 
+    id, label, icon: Icon, color, isActive, onClick, position 
 }: { 
-    id: string, label: string, icon: any, color: string, isActive: boolean, onClick: () => void 
+    id: string, label: string, icon: any, color: string, isActive: boolean, onClick: () => void, position: 'top' | 'bottom'
 }) => (
-    <div className="flex flex-col items-center gap-3 group relative z-20">
+    <div className={cn(
+        "flex flex-col items-center group relative z-20 transition-all duration-500 flex-1",
+        position === 'top' ? "justify-start" : "justify-end"
+    )} style={{ height: '100%' }}>
+        
+        {position === 'bottom' && (
+            <div className={cn(
+                "text-center w-full px-2 transition-all duration-500 mb-6",
+                isActive ? "opacity-100 scale-110" : "opacity-40"
+            )}>
+                <p className={cn("text-[9px] font-black uppercase tracking-widest", isActive ? color.replace('bg-', 'text-') : "text-muted-foreground")}>DATASET {id}</p>
+                <p className="text-[11px] font-black uppercase tracking-tighter text-foreground leading-tight">{label}</p>
+            </div>
+        )}
+
         <button
             onClick={onClick}
             className={cn(
-                "h-20 w-20 rounded-full border-4 flex items-center justify-center transition-all duration-500 shadow-xl",
-                isActive ? "scale-125 border-white bg-primary text-primary-foreground shadow-[0_0_30px_rgba(0,0,0,0.3)] ring-8 ring-primary/10" : "border-background bg-white text-muted-foreground hover:scale-110",
+                "h-24 w-24 rounded-full border-[8px] flex items-center justify-center transition-all duration-500 shadow-2xl relative",
+                isActive 
+                    ? "scale-110 border-white bg-primary text-primary-foreground shadow-[0_0_50px_rgba(0,0,0,0.3)] ring-[15px] ring-primary/5" 
+                    : "border-background bg-white text-muted-foreground hover:scale-105",
                 !isActive && color.replace('bg-', 'border-')
             )}
         >
-            <Icon className={cn("h-8 w-8", isActive ? "text-white" : color.replace('bg-', 'text-'))} />
+            <Icon className={cn("h-10 w-10", isActive ? "text-white" : color.replace('bg-', 'text-'))} />
+            {/* Visual glow element */}
+            {isActive && <div className={cn("absolute inset-0 rounded-full blur-xl opacity-30", color)} />}
         </button>
-        <div className="text-center">
-            <p className={cn(
-                "text-[10px] font-black uppercase tracking-widest leading-none",
-                isActive ? "text-primary" : "text-muted-foreground"
-            )}>INFODATA {id}</p>
-            <p className={cn(
-                "text-xs font-bold mt-1 max-w-[100px] leading-tight",
-                isActive ? "text-primary" : "text-muted-foreground/70"
-            )}>{label}</p>
-        </div>
+
+        {position === 'top' && (
+            <div className={cn(
+                "text-center w-full px-2 transition-all duration-500 mt-6",
+                isActive ? "opacity-100 scale-110" : "opacity-40"
+            )}>
+                <p className={cn("text-[9px] font-black uppercase tracking-widest", isActive ? color.replace('bg-', 'text-') : "text-muted-foreground")}>DATASET {id}</p>
+                <p className="text-[11px] font-black uppercase tracking-tighter text-foreground leading-tight">{label}</p>
+            </div>
+        )}
     </div>
 );
 
 function LocalPurchaseContent() {
   const { user } = useUser();
-  const { employees } = useProcurement();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -94,7 +111,7 @@ function LocalPurchaseContent() {
     <div className="space-y-8 pb-20">
       <ModuleHeader />
       
-      {/* PERSISTENT TOP UTILITY BAR & HIGHLIGHTED NOTIFICATION HUB */}
+      {/* PERSISTENT TOP COMMAND PANEL */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 bg-background border-4 border-double border-primary/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-cyan-500 via-yellow-500 via-green-500 via-orange-500 to-purple-500 opacity-20" />
         
@@ -113,7 +130,7 @@ function LocalPurchaseContent() {
             <div className="flex bg-muted/30 p-1.5 rounded-full border border-primary/5 shadow-inner gap-1">
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-blue-500 hover:text-white transition-all active:scale-95" onClick={() => setIsBlueprintOpen(true)}><Workflow className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Operational Blueprint Master</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-emerald-500 hover:text-white transition-all active:scale-95" onClick={() => setIsTrackerOpen(true)}><History className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Organizational Workflow Tracker</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-orange-500 hover:text-white transition-all active:scale-95" onClick={() => setIsAuditOpen(true)}><Activity className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Personnel Performance & Activity Analytics</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-orange-500 hover:text-white transition-all active:scale-95" onClick={() => setIsAuditOpen(true)}><Activity className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Personnel Performance Analytics</TooltipContent></Tooltip>
                 <Separator orientation="vertical" className="h-8 mx-1 opacity-20" />
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all active:scale-95" onClick={() => handleTabChange('master-data')}><Database className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Master Data Registry</TooltipContent></Tooltip>
                 {isSuperAdmin && <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all active:scale-95" onClick={() => handleTabChange('settings')}><Settings className="h-5 w-5" /></Button></TooltipTrigger><TooltipContent>Organizational Flow Settings</TooltipContent></Tooltip>}
@@ -129,37 +146,48 @@ function LocalPurchaseContent() {
         </div>
       </div>
 
-      {/* VISUAL ZIG-ZAG INFOGRAPHIC NAVIGATION */}
-      <div className="relative py-12 px-4 max-w-4xl mx-auto flex flex-col items-center">
-          {/* SVG Connection Lines - Mirroring the diagonal zig-zag pattern */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-20" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-              {/* Path: 01 (Red) -> 02 (Cyan) -> 03 (Yellow) -> 04 (Green) -> 05 (Orange) -> 06 (Purple) */}
-              {/* Note locations: 01(200,500), 02(200,300), 03(200,100), 04(600,500), 05(600,300), 06(600,100) */}
-              
-              {/* Vertical Left Line (01-02-03) */}
-              <line x1="200" y1="500" x2="200" y2="100" stroke="currentColor" strokeWidth="12" strokeLinecap="round" className="text-muted-foreground" />
-              {/* Vertical Right Line (04-05-06) */}
-              <line x1="600" y1="500" x2="600" y2="100" stroke="currentColor" strokeWidth="12" strokeLinecap="round" className="text-muted-foreground" />
-              
-              {/* Cross Diagonals (The Zig-Zag) */}
-              <line x1="200" y1="500" x2="600" y2="300" stroke="#f97316" strokeWidth="16" strokeLinecap="round" opacity="0.4" />
-              <line x1="600" y1="500" x2="200" y2="300" stroke="#06b6d4" strokeWidth="16" strokeLinecap="round" opacity="0.4" />
-              <line x1="200" y1="300" x2="600" y2="100" stroke="#a855f7" strokeWidth="16" strokeLinecap="round" opacity="0.4" />
-              <line x1="600" y1="300" x2="200" y2="100" stroke="#eab308" strokeWidth="16" strokeLinecap="round" opacity="0.4" />
+      {/* HORIZONTAL WAVY PIPELINE NAVIGATION */}
+      <div className="relative py-12 px-4 w-full max-w-6xl mx-auto h-[450px] flex flex-col justify-center">
+          {/* SVG Wavy Connection Line */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 1000 400" preserveAspectRatio="none">
+              {/* Main Process Path */}
+              <path 
+                  d="M 0 300 L 100 300 C 180 300 180 100 260 100 C 340 100 340 300 420 300 C 500 300 500 100 580 100 C 660 100 660 300 740 300 C 820 300 820 100 900 100 L 1000 100" 
+                  stroke="currentColor" 
+                  strokeWidth="12" 
+                  fill="transparent" 
+                  className="text-muted-foreground/10"
+                  strokeLinecap="round"
+              />
+              {/* Highlight Pulse Path */}
+              <path 
+                  d="M 0 300 L 100 300 C 180 300 180 100 260 100 C 340 100 340 300 420 300 C 500 300 500 100 580 100 C 660 100 660 300 740 300 C 820 300 820 100 900 100 L 1000 100" 
+                  stroke="url(#pipelineGradient)" 
+                  strokeWidth="4" 
+                  fill="transparent" 
+                  strokeDasharray="20 40"
+                  className="animate-[progress_15s_linear_infinite]"
+              />
+              <defs>
+                  <linearGradient id="pipelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style={{stopColor:'#ef4444', stopOpacity:1}} />
+                      <stop offset="20%" style={{stopColor:'#06b6d4', stopOpacity:1}} />
+                      <stop offset="40%" style={{stopColor:'#eab308', stopOpacity:1}} />
+                      <stop offset="60%" style={{stopColor:'#22c55e', stopOpacity:1}} />
+                      <stop offset="80%" style={{stopColor:'#f97316', stopOpacity:1}} />
+                      <stop offset="100%" style={{stopColor:'#a855f7', stopOpacity:1}} />
+                  </linearGradient>
+              </defs>
           </svg>
 
-          <div className="grid grid-cols-2 gap-x-48 gap-y-24 relative z-10 w-full max-w-2xl">
-              {/* Row 1 (Top) - Analysis & Settlement */}
-              <InfographicNavNode id="03" label="Comparative Statement" icon={BarChart2} color="bg-yellow-500" isActive={activeTab === 'cs'} onClick={() => handleTabChange('cs')} />
-              <InfographicNavNode id="06" label="PN Settlement" icon={Wallet} color="bg-purple-500" isActive={activeTab === 'pn'} onClick={() => handleTabChange('pn')} />
-              
-              {/* Row 2 (Middle) - Sourcing & Logistics */}
-              <InfographicNavNode id="02" label="GP Desk Sourcing" icon={Briefcase} color="bg-cyan-500" isActive={activeTab === 'gp-desk'} onClick={() => handleTabChange('gp-desk')} />
-              <InfographicNavNode id="05" label="MRR Receipt" icon={Package} color="bg-orange-500" isActive={activeTab === 'mrr'} onClick={() => handleTabChange('mrr')} />
-              
-              {/* Row 3 (Bottom) - Requisition & Commitment */}
-              <InfographicNavNode id="01" label="Demand Notes" icon={FileText} color="bg-red-500" isActive={activeTab === 'demand-notes'} onClick={() => handleTabChange('demand-notes')} />
-              <InfographicNavNode id="04" label="Purchase Order" icon={ShoppingCart} color="bg-green-500" isActive={activeTab === 'po'} onClick={() => handleTabChange('po')} />
+          {/* Nodes Container */}
+          <div className="flex justify-between items-center h-full relative z-10 w-full">
+              <InfographicNavNode id="01" label="Demand Notes" icon={FileText} color="bg-red-500" isActive={activeTab === 'demand-notes'} onClick={() => handleTabChange('demand-notes')} position="bottom" />
+              <InfographicNavNode id="02" label="GP Desk Sourcing" icon={Briefcase} color="bg-cyan-500" isActive={activeTab === 'gp-desk'} onClick={() => handleTabChange('gp-desk')} position="top" />
+              <InfographicNavNode id="03" label="Comparative Statement" icon={BarChart2} color="bg-yellow-500" isActive={activeTab === 'cs'} onClick={() => handleTabChange('cs')} position="bottom" />
+              <InfographicNavNode id="04" label="Purchase Order" icon={ShoppingCart} color="bg-green-500" isActive={activeTab === 'po'} onClick={() => handleTabChange('po')} position="top" />
+              <InfographicNavNode id="05" label="MRR Receipt" icon={Package} color="bg-orange-500" isActive={activeTab === 'mrr'} onClick={() => handleTabChange('mrr')} position="bottom" />
+              <InfographicNavNode id="06" label="PN Settlement" icon={Wallet} color="bg-purple-500" isActive={activeTab === 'pn'} onClick={() => handleTabChange('pn')} position="top" />
           </div>
       </div>
 
