@@ -14,7 +14,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, ShadTabsContent as TabsContent, ShadTabsList as TabsList, ShadTabsTrigger as TabsTrigger } from "@/components/ui/tabs";
 import { 
     Workflow, FileText, Users, BarChart2, ShoppingCart, Package, 
     ChevronRight, ShieldCheck, DollarSign, AlertTriangle, Gavel, 
@@ -23,7 +23,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, Eye, 
     Briefcase, Check, Milestone, UserCog, Box, Undo2, Scale, 
     FileSignature, Fingerprint, Timer, Truck, BellRing, MousePointerClick,
-    MailCheck, Siren, Database
+    MailCheck, Siren, Database, ArrowRight, Play, CheckCircle
 } from 'lucide-react';
 import { useProcurement } from './procurement-provider';
 import { cn } from '@/lib/utils';
@@ -80,6 +80,34 @@ const ProcessStep = ({ icon: Icon, label, status, sub }: { icon: any, label: str
             <p className="text-[9px] font-bold text-primary">{status}</p>
             <p className="text-[8px] text-muted-foreground italic leading-none">{sub}</p>
         </div>
+    </div>
+);
+
+const FlowNode = ({ icon: Icon, title, status, color }: any) => (
+    <div className="flex flex-col items-center gap-2 group w-32 shrink-0">
+        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all group-hover:scale-110", color)}>
+            <Icon className="h-7 w-7" />
+        </div>
+        <div className="text-center">
+            <p className="text-[9px] font-black uppercase leading-tight tracking-tighter">{title}</p>
+            <p className="text-[7px] font-bold opacity-60 italic whitespace-nowrap">{status}</p>
+        </div>
+    </div>
+);
+
+const FlowDiamond = ({ label, color }: any) => (
+    <div className="flex flex-col items-center justify-center w-24 shrink-0 px-2 relative">
+        <div className={cn("h-12 w-12 rotate-45 border-2 flex items-center justify-center shadow-md", color)}>
+            <div className="-rotate-45 text-[8px] font-black uppercase text-center leading-none px-1">
+                {label}
+            </div>
+        </div>
+    </div>
+);
+
+const FlowArrow = () => (
+    <div className="flex items-center justify-center w-12 shrink-0 opacity-30">
+        <ArrowRight className="h-6 w-6" />
     </div>
 );
 
@@ -251,6 +279,80 @@ export function BlueprintDialog({
                                                 <p className="text-[10px] font-black uppercase text-amber-400 font-black">5.3 Final Organizational Exit</p>
                                                 <div className="p-4 bg-amber-400/10 rounded-xl border border-amber-400/30 text-amber-400"><p className="text-xs font-bold leading-relaxed">The original Requester confirms the goods. Without this confirmant timestamp, the process remains "Open" in the system audit logs.</p></div>
                                             </div>
+                                        </div>
+                                    </BlueprintSection>
+
+                                    {/* NEW GRAPHICAL FLOW DIAGRAM */}
+                                    <BlueprintSection icon={Workflow} title="Interactive Organizational Flow Matrix" colorClass="bg-red-900 border-red-950">
+                                        <div className="p-10 border-4 border-slate-800 rounded-[3rem] bg-[#1a1c2c] shadow-inner relative overflow-x-auto min-h-[600px] flex flex-col items-center justify-center gap-12">
+                                            {/* ROW 1: REQUISITION */}
+                                            <div className="flex items-center gap-4 relative">
+                                                <div className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse shrink-0"><Play className="h-8 w-8 ml-1" /></div>
+                                                <FlowArrow />
+                                                <FlowNode icon={FileText} title="DN Entry" status="Intent Capture" color="bg-blue-500/20 border-blue-500 text-blue-400" />
+                                                <FlowArrow />
+                                                <FlowDiamond label="Internal Approval?" color="bg-blue-900/40 border-blue-400 text-blue-200" />
+                                                <FlowArrow />
+                                                <FlowNode icon={CheckCircle} title="Requisition Locked" status="Baseline Set" color="bg-blue-500 text-white border-blue-600" />
+                                            </div>
+
+                                            {/* CONNECTOR DOWN */}
+                                            <div className="h-12 w-0.5 bg-gradient-to-b from-blue-500 to-emerald-500 opacity-20" />
+
+                                            {/* ROW 2: SOURCING */}
+                                            <div className="flex items-center gap-4">
+                                                <FlowNode icon={UserPlus} title="GP Assign" status="GPO Logic" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowArrow />
+                                                <FlowNode icon={Briefcase} title="GP Concern" status="Execution Ownership" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowArrow />
+                                                <FlowNode icon={Users} title="Vendor Pool" status="3+ Bids Mandatory" color="bg-emerald-500/20 border-emerald-500 text-emerald-400" />
+                                                <FlowArrow />
+                                                <FlowNode icon={FilePlus} title="Bids Collected" status="Quotation Vault" color="bg-emerald-500 text-white border-emerald-600" />
+                                            </div>
+
+                                            {/* CONNECTOR DOWN */}
+                                            <div className="h-12 w-0.5 bg-gradient-to-b from-emerald-500 to-amber-500 opacity-20" />
+
+                                            {/* ROW 3: ANALYSIS */}
+                                            <div className="flex items-center gap-4">
+                                                <FlowNode icon={BarChart2} title="CS Analysis" status="Price Audit" color="bg-amber-500/20 border-amber-500 text-amber-400" />
+                                                <FlowArrow />
+                                                <FlowDiamond label="Award Selection?" color="bg-amber-900/40 border-amber-400 text-amber-200" />
+                                                <FlowArrow />
+                                                <FlowNode icon={Gavel} title="Vendor Awarded" status="Selection Logged" color="bg-amber-500 text-white border-amber-600" />
+                                                <FlowArrow />
+                                                <FlowNode icon={ShieldCheck} title="Board Sign-off" status="Executive Audit" color="bg-amber-500 text-white border-amber-600" />
+                                            </div>
+
+                                            {/* CONNECTOR DOWN */}
+                                            <div className="h-12 w-0.5 bg-gradient-to-b from-amber-500 to-purple-500 opacity-20" />
+
+                                            {/* ROW 4: COMMITMENT */}
+                                            <div className="flex items-center gap-4">
+                                                <FlowNode icon={ShoppingCart} title="PO Entry" status="Draft Creation" color="bg-purple-500/20 border-purple-500 text-purple-400" />
+                                                <FlowArrow />
+                                                <FlowDiamond label="Evidence OK?" color="bg-purple-900/40 border-purple-400 text-purple-200" />
+                                                <FlowArrow />
+                                                <FlowNode icon={Send} title="PO Dispatched" status="Vendor Handover" color="bg-purple-500 text-white border-purple-600" />
+                                            </div>
+
+                                            {/* CONNECTOR DOWN */}
+                                            <div className="h-12 w-0.5 bg-gradient-to-b from-purple-500 to-emerald-800 opacity-20" />
+
+                                            {/* ROW 5: LOGISTICS & CLOSING */}
+                                            <div className="flex items-center gap-4">
+                                                <FlowNode icon={Truck} title="Gate Entry" status="Goods Arrival" color="bg-slate-500/20 border-slate-500 text-slate-400" />
+                                                <FlowArrow />
+                                                <FlowNode icon={Package} title="MRR Finalized" status="3-Way Match" color="bg-emerald-800 text-white border-emerald-950" />
+                                                <FlowArrow />
+                                                <FlowDiamond label="Quality Pass?" color="bg-emerald-950/40 border-emerald-500 text-emerald-200" />
+                                                <FlowArrow />
+                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Flow Closed" color="bg-green-600 text-white border-green-700 shadow-[0_0_20px_rgba(22,163,74,0.4)]" />
+                                            </div>
+
+                                            {/* DECORATIVE DIAMOND END */}
+                                            <div className="absolute right-10 top-1/2 -translate-y-1/2 h-24 w-8 bg-red-600 rotate-45 opacity-10 hidden lg:block" />
+                                            <div className="absolute left-10 top-1/2 -translate-y-1/2 h-24 w-8 bg-blue-600 -rotate-45 opacity-10 hidden lg:block" />
                                         </div>
                                     </BlueprintSection>
 
