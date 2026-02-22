@@ -905,7 +905,7 @@ export function BlueprintDialog({
                                                 <TableBody>
                                                     <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Demand Notes</TableCell><TableCell>Superadmin</TableCell><TableCell>All Personnel</TableCell><TableCell className="italic font-bold">Self-Only Filter</TableCell></TableRow>
                                                     <TableRow className="text-[10px] font-medium"><TableCell className="font-black">GP Desk</TableCell><TableCell>GPO</TableCell><TableCell>GP Concerns</TableCell><TableCell className="italic font-bold">Assigned-Only</TableCell></TableRow>
-                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell>text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
+                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell className="text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
                                                 </TableBody>
                                             </Table>
                                         </Card>
