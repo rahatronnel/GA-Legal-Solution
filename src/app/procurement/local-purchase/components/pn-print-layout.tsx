@@ -2,11 +2,14 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import type { OrganizationSettings } from '@/app/settings/page';
 import type { PaymentNote } from './pn-entry-form';
 import type { MRR } from './mrr-entry-form';
 import type { PurchaseOrder } from './po-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Designation } from '@/app/user-management/components/designation-table';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -15,6 +18,8 @@ interface PNPrintLayoutProps {
   mrr?: MRR;
   po?: PurchaseOrder;
   vendor?: Vendor;
+  employees: Employee[];
+  designations: Designation[];
   orgSettings: OrganizationSettings;
 }
 
@@ -23,8 +28,39 @@ export const PNPrintLayout: React.FC<PNPrintLayoutProps> = ({
     mrr,
     po,
     vendor,
+    employees,
+    designations,
     orgSettings 
 }) => {
+    // Helper to find employee and designation info
+    const getEmployeeDetails = (empId?: string) => {
+        const emp = employees.find(e => e.id === empId);
+        const des = designations.find(d => d.id === emp?.designationId);
+        return { emp, des };
+    };
+
+    const preparer = getEmployeeDetails(pn.createdBy);
+    
+    // Find the Purchase Manager approval from history
+    const checkerHistory = pn.approvalHistory?.find(h => h.status === 'Approved');
+    const checker = getEmployeeDetails(checkerHistory?.approverId);
+
+    const formatDateTime = (ts?: string) => {
+        if (!ts) return '';
+        try {
+            return new Date(ts).toLocaleString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch {
+            return ts;
+        }
+    };
+
     return (
         <div className="p-8 bg-white text-black font-serif h-[29.7cm] w-[21cm] flex flex-col mx-auto overflow-hidden border-none shadow-none">
             {/* Header Section */}
@@ -121,22 +157,43 @@ export const PNPrintLayout: React.FC<PNPrintLayoutProps> = ({
                 <p>Sincerely Yours,</p>
             </div>
 
-            {/* Signatories - Pushed to bottom of A4 */}
-            <div className="mt-auto pt-4 flex justify-between items-end">
-                {[
-                    { label: 'Prepared By', sub: 'GP Concern' },
-                    { label: 'Checked By', sub: 'Purchase Manager' },
-                    { label: 'Verified By', sub: 'Dept. Head / TA' },
-                    { label: 'Authorized By', sub: 'Managing Director' }
-                ].map((sig, idx) => (
-                    <div key={idx} className="text-center w-[22%]">
-                        <div className="h-12 mb-1"></div>
-                        <div className="border-t border-black pt-1.5 flex flex-col gap-0.5">
-                            <span className="text-[10px] font-black uppercase tracking-tighter leading-none">{sig.label}</span>
-                            <span className="text-[8px] font-bold text-muted-foreground uppercase leading-none">{sig.sub}</span>
-                        </div>
+            {/* Signatories - Redefined for two pillars with full details */}
+            <div className="mt-auto pt-8 flex justify-around items-end">
+                {/* Prepared By Pillar */}
+                <div className="text-center w-[40%] flex flex-col items-center">
+                    <div className="h-16 flex items-center justify-center mb-1">
+                        {preparer.emp?.signature ? (
+                            <Image src={preparer.emp.signature} alt="Preparer Signature" width={120} height={50} className="object-contain" />
+                        ) : (
+                            <div className="h-12"></div>
+                        )}
                     </div>
-                ))}
+                    <div className="w-full border-t border-black pt-2 flex flex-col gap-0.5">
+                        <span className="text-[11px] font-black uppercase tracking-tight">{preparer.emp?.fullName || 'N/A'}</span>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase">{preparer.des?.name || 'GP Concern'}</span>
+                        <span className="text-[10px] font-black uppercase mt-1">Prepared By</span>
+                        <span className="text-[8px] font-bold text-muted-foreground">{formatDateTime(pn.createdAt)}</span>
+                    </div>
+                </div>
+
+                {/* Checked By Pillar */}
+                <div className="text-center w-[40%] flex flex-col items-center">
+                    <div className="h-16 flex items-center justify-center mb-1">
+                        {checker.emp?.signature ? (
+                            <Image src={checker.emp.signature} alt="Checker Signature" width={120} height={50} className="object-contain" />
+                        ) : (
+                            <div className="h-12"></div>
+                        )}
+                    </div>
+                    <div className="w-full border-t border-black pt-2 flex flex-col gap-0.5">
+                        <span className="text-[11px] font-black uppercase tracking-tight">{checker.emp?.fullName || (checkerHistory ? 'N/A' : 'Pending...')}</span>
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase">{checker.des?.name || 'Purchase Manager'}</span>
+                        <span className="text-[10px] font-black uppercase mt-1">Checked By</span>
+                        {checkerHistory && (
+                            <span className="text-[8px] font-bold text-muted-foreground">{formatDateTime(checkerHistory.timestamp)}</span>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

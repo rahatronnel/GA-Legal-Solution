@@ -10,6 +10,8 @@ import type { PaymentNote } from '../../../components/pn-entry-form';
 import type { MRR } from '../../../components/mrr-entry-form';
 import type { PurchaseOrder } from '../../../components/po-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Designation } from '@/app/user-management/components/designation-table';
 import type { OrganizationSettings } from '@/app/settings/page';
 
 export default function PNPrintPage() {
@@ -29,10 +31,16 @@ export default function PNPrintPage() {
     const vendorRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'vendors', po.vendorId) : null, [firestore, po]);
     const { data: vendor, isLoading: l4 } = useDoc<Vendor>(vendorRef);
 
-    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
-    const { data: orgSettings, isLoading: l5 } = useDoc<OrganizationSettings>(settingsRef);
+    const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
+    const { data: employees, isLoading: l5 } = useCollection<Employee>(employeesRef);
 
-    const isLoading = l1 || l2 || l3 || l4 || l5;
+    const designationsRef = useMemoFirebase(() => firestore ? collection(firestore, 'designations') : null, [firestore]);
+    const { data: designations, isLoading: l6 } = useCollection<Designation>(designationsRef);
+
+    const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
+    const { data: orgSettings, isLoading: l7 } = useDoc<OrganizationSettings>(settingsRef);
+
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7;
 
     useEffect(() => {
         if (!isLoading && pn && orgSettings) {
@@ -62,6 +70,8 @@ export default function PNPrintPage() {
                 mrr={mrr || undefined}
                 po={po || undefined}
                 vendor={vendor || undefined}
+                employees={employees || []}
+                designations={designations || []}
                 orgSettings={orgSettings}
             />
         </div>
