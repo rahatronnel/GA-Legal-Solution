@@ -23,7 +23,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, 
     Truck, BellRing, MousePointerClick,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
-    Wallet, FileStack, Landmark, Timer
+    Wallet, FileStack, Landmark, Timer, Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -291,7 +291,7 @@ export function BlueprintDialog({
                                     <BlueprintSection icon={Wallet} title="Phase VI: Financial Settlement (Payment Note)" colorClass="bg-orange-600 border-orange-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-4">
-                                                <h5 className="font-black text-xs uppercase tracking-widest text-orange-900">The Treasury Handshake</h5>
+                                                <h5 className="font-black text-orange-900 uppercase text-xs mb-3 tracking-widest flex items-center gap-2"><TrendingUp className="h-4 w-4"/> The Treasury Handshake</h5>
                                                 <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                                                     Payment Note (PN) is final financial instruction. It aggregates all preceding logic into a single BDT commitment.
                                                 </p>
