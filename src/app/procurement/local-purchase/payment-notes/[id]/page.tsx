@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -13,8 +14,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,8 +33,7 @@ import { useProcurement } from '../../components/procurement-provider';
 import { getPNStatusText } from '../../lib/status-helper';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import type { Employee } from '@/app/user-management/components/employee-entry-form';
-import type { Designation } from '@/app/user-management/components/designation-table';
+import { cn } from '@/lib/utils';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
