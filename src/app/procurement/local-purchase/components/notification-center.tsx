@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
 import { 
     Bell, Check, Clock, ExternalLink, 
-    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info, AlertTriangle 
+    FileText, ShoppingCart, Send, Package, Copy, ClipboardCheck, Info, AlertTriangle, Wallet, Printer 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 type Task = {
     id: string;
-    type: 'Demand Note' | 'Comparative Statement' | 'Purchase Order' | 'MRR';
+    type: 'Demand Note' | 'Comparative Statement' | 'Purchase Order' | 'MRR' | 'Payment Note';
     title: string;
     description: string;
     link: string;
@@ -33,7 +34,7 @@ export function NotificationCenter() {
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
-    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, employees, orgSettings, isLoading } = useProcurement();
+    const { demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, employees, orgSettings, isLoading } = useProcurement();
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     
@@ -205,6 +206,18 @@ export function NotificationCenter() {
                 });
             }
 
+            // NEW: MRR Approved -> Notify GP Concern to prepare PN
+            if (mrr.approvalStatus === 1 && !paymentNotes.some(pn => pn.mrrId === mrr.id) && mrr.createdBy === uid) {
+                const r = calculateReminders(mrr.createdAt);
+                list.push({
+                    id: mrr.id + '-pn-prep', type: 'Payment Note', title: mrr.mrrNumber,
+                    description: 'MRR Approved. Please initiate the Payment Note (PN).',
+                    link: `/procurement/local-purchase?tab=mrr`,
+                    status: 'PN Preparation Needed', createdAt: mrr.createdAt,
+                    ...r
+                });
+            }
+
             if (mrr.approvalStatus === 2 && mrr.createdBy === uid) {
                 const r = calculateReminders(mrr.createdAt);
                 list.push({
@@ -226,8 +239,35 @@ export function NotificationCenter() {
             }
         });
 
+        // 4. Payment Notes Lifecycle
+        paymentNotes.forEach(pn => {
+            // Stage 2: PN Created -> Notify Purchase Manager to approve
+            if (pn.approvalStatus === 2 && pn.currentApproverId === uid) {
+                const r = calculateReminders(pn.createdAt);
+                list.push({
+                    id: pn.id + '-pn-appr', type: 'Payment Note', title: pn.pnNumber,
+                    description: 'New Payment Note awaiting your financial authorization.',
+                    link: `/procurement/local-purchase?tab=pn`,
+                    status: 'Audit Required', createdAt: pn.createdAt,
+                    ...r
+                });
+            }
+
+            // Stage 3: PN Approved -> Notify GP Concern to print
+            if (pn.approvalStatus === 1 && pn.createdBy === uid) {
+                const r = calculateReminders(pn.createdAt);
+                list.push({
+                    id: pn.id + '-pn-print', type: 'Payment Note', title: pn.pnNumber,
+                    description: 'Authorized. You can now generate the official printout.',
+                    link: `/procurement/local-purchase?tab=pn`,
+                    status: 'Print Authorized', createdAt: pn.createdAt,
+                    ...r
+                });
+            }
+        });
+
         return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [currentUserEmployee, demandNotes, comparativeStatements, purchaseOrders, mrrs, isLoading, orgSettings, reminderThreshold]);
+    }, [currentUserEmployee, demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings, reminderThreshold]);
 
     const unacknowledgedTasks = useMemo(() => {
         if (!acknowledgedTasks) return tasks;
@@ -274,6 +314,7 @@ export function NotificationCenter() {
                                             {task.type === 'Comparative Statement' && <Info className="h-3 w-3" />}
                                             {task.type === 'Purchase Order' && <ShoppingCart className="h-3 w-3" />}
                                             {task.type === 'MRR' && <Package className="h-3 w-3" />}
+                                            {task.type === 'Payment Note' && <Wallet className="h-3 w-3" />}
                                         </div>
                                         <span className="text-[10px] font-bold uppercase tracking-widest">{task.type}</span>
                                         {task.reminderCount > 0 && (

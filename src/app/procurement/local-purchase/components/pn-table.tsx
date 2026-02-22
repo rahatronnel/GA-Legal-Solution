@@ -32,6 +32,15 @@ export function PaymentNoteTable() {
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
+    const roleData = useMemo(() => {
+        const settings = orgSettings?.procurementSettings;
+        if (!settings || !currentUserEmployee) return { isGPOfficer: false, isManager: false };
+        return {
+            isGPOfficer: settings.generalPurchaseOfficerId === currentUserEmployee.id,
+            isManager: settings.managingDirectorId === currentUserEmployee.id || settings.factoryDirectorId === currentUserEmployee.id
+        };
+    }, [orgSettings, currentUserEmployee]);
+
     const filteredPNs = useMemo(() => {
         const safeItems = Array.isArray(paymentNotes) ? paymentNotes : [];
         return safeItems.filter(pn => {
@@ -39,12 +48,18 @@ export function PaymentNoteTable() {
             const lowerTerm = searchTerm.toLowerCase();
             const termMatch = !searchTerm || pn.pnNumber.toLowerCase().includes(lowerTerm) || mrr?.mrrNumber.toLowerCase().includes(lowerTerm) || mrr?.supplierName.toLowerCase().includes(lowerTerm);
             
-            let isVisible = isSuperAdmin || pn.createdBy === currentUserEmployee?.id || pn.currentApproverId === currentUserEmployee?.id;
-            if (pn.approvalHistory?.some((h:any) => h.approverId === currentUserEmployee?.id)) isVisible = true;
+            // Access Logic: Admin, GPO, and Managers see everything. Concerns see their own.
+            let isVisible = isSuperAdmin || roleData.isGPOfficer || roleData.isManager;
+            
+            if (!isVisible && currentUserEmployee) {
+                if (pn.createdBy === currentUserEmployee.id || pn.currentApproverId === currentUserEmployee.id || pn.approvalHistory?.some((h:any) => h.approverId === currentUserEmployee.id)) {
+                    isVisible = true;
+                }
+            }
 
             return termMatch && isVisible;
         }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    }, [paymentNotes, mrrs, searchTerm, isSuperAdmin, currentUserEmployee]);
+    }, [paymentNotes, mrrs, searchTerm, isSuperAdmin, roleData, currentUserEmployee]);
 
     const handleApproval = (pnId: string, status: number) => {
         if (!firestore || !currentUserEmployee || !pnColRef) return;
