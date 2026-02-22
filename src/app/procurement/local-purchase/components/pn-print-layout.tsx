@@ -8,6 +8,7 @@ import type { MRR } from './mrr-entry-form';
 import type { PurchaseOrder } from './po-entry-form';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface PNPrintLayoutProps {
   pn: PaymentNote;
