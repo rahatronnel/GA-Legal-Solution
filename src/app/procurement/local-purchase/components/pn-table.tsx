@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Search, Eye, Printer, Trash2, Check, X, Info, Copy, Wallet, Clock, Hourglass, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { Search, Eye, Printer, Trash2, Check, X, Info, Copy, Wallet, Clock, Hourglass, CheckCircle, MoreHorizontal, FileStack } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -103,7 +104,7 @@ export function PaymentNoteTable() {
                                 <TableHead className="font-bold">Type / Mode</TableHead>
                                 <TableHead className="font-bold text-right">Amount (BDT)</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="w-[160px] text-right font-bold">Actions</TableHead>
+                                <TableHead className="w-[180px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -142,14 +143,24 @@ export function PaymentNoteTable() {
                                                         </>
                                                     )}
                                                     {pn.approvalStatus === 1 && (
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/print`, '_blank')}>
-                                                                    <Printer className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>Print Payment Note</TooltipContent>
-                                                        </Tooltip>
+                                                        <>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/print`, '_blank')}>
+                                                                        <Printer className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Print Payment Note</TooltipContent>
+                                                            </Tooltip>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/full-print`, '_blank')}>
+                                                                        <FileStack className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Print Full-Set Bundle (9 Stages)</TooltipContent>
+                                                            </Tooltip>
+                                                        </>
                                                     )}
                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedPnForStatus(pn); setIsStatusModalOpen(true); }}><Info className="h-4 w-4 text-blue-500"/></Button>
                                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => pnColRef && deleteDocumentNonBlocking(doc(pnColRef, pn.id))}><Trash2 className="h-4 w-4" /></Button>
