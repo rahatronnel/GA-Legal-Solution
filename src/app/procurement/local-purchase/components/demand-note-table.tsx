@@ -309,8 +309,9 @@ export function DemandNoteTable() {
             settings.manufacturingDeptManagerId === currentUserEmployee.id ||
             settings.specializedDeptManagerId === currentUserEmployee.id;
         
+        // Corrected anyDeptHeadCheck: Removed specific 'item' reference as this is a global role check
         const anyDeptHeadCheck = settings.departmentHeads?.some(
-            dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
+            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
         );
 
         return {
