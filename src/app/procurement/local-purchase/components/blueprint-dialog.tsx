@@ -23,7 +23,8 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, 
     Truck, BellRing, MousePointerClick,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
-    Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown
+    Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown, Activity,
+    Scale, FileSearch, ShieldAlert, Cpu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
@@ -457,6 +458,41 @@ export function BlueprintDialog({
                                                 path="SPEC MGR -> MD" 
                                             />
                                         </div>
+                                        
+                                        <div className="p-6 border-4 border-dashed rounded-[2rem] bg-blue-900/10 border-blue-500/30 space-y-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-600 rounded-lg shadow-xl"><HistoryIcon className="h-6 w-6 text-white animate-spin-slow" /></div>
+                                                <div>
+                                                    <h4 className="text-base font-black uppercase tracking-tighter text-blue-900 leading-none">Lifecycle Monitoring Hub (Status Track)</h4>
+                                                    <p className="text-[9px] font-bold text-blue-700/60 uppercase tracking-widest mt-1">Real-Time Procurement Diagnostic Engine</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                                                <div className="space-y-4">
+                                                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                                                        The **Status Track** button acts as a real-time organizational beacon. It performs a multi-stage depth lookup across all modules to tell the requester exactly where their requisition is at any second.
+                                                    </p>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-3 bg-white border-2 border-blue-500 rounded-xl shadow-lg animate-pulse"><Search className="h-6 w-6 text-blue-600" /></div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black uppercase text-blue-900">Deep Scan Engine</p>
+                                                            <p className="text-[9px] text-muted-foreground font-bold">DN -> GP -> CS -> PO -> MRR -> PN</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="relative p-4 bg-slate-900 rounded-2xl border-2 border-blue-400/30 overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-blue-500/5 animate-pulse" />
+                                                    <div className="relative z-10 space-y-2">
+                                                        <div className="flex items-center justify-between"><Badge className="bg-blue-500 text-[8px] h-4">STATUS: SCANNING</Badge><Cpu className="h-3 w-3 text-blue-400" /></div>
+                                                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-2/3 animate-[progress_2s_infinite]" /></div>
+                                                        <div className="text-[10px] font-mono text-blue-300">>> Cross-Referencing PN-Registry...</div>
+                                                        <div className="text-[10px] font-mono text-emerald-400">>> Match Found: PN-8821 (Treasury Ready)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="p-4 border-2 border-blue-100 rounded-2xl bg-blue-50/30">
                                             <h4 className="font-black text-blue-900 uppercase text-xs mb-3 tracking-widest flex items-center gap-2"><TrendingUp className="h-4 w-4"/> Asset Fingerprinting</h4>
                                             <p className="text-[10px] text-blue-800/70 leading-relaxed mb-4 font-bold">
@@ -527,7 +563,7 @@ export function BlueprintDialog({
                                             </Card>
                                         </div>
 
-                                        {/* NEW: GRAPHICAL EXECUTIVE CHAIN ORGANOGRAM */}
+                                        {/* GRAPHICAL EXECUTIVE CHAIN ORGANOGRAM */}
                                         <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-slate-50 border-amber-200">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="p-2 bg-amber-600 rounded-lg shadow-lg">
@@ -616,6 +652,21 @@ export function BlueprintDialog({
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-purple-50 border-purple-200">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2 bg-purple-600 rounded-lg shadow-lg"><FileSignature className="h-5 w-5 text-white" /></div>
+                                                <div>
+                                                    <h4 className="text-sm font-black uppercase tracking-tighter text-purple-900 leading-none">Contractual Signature Chain</h4>
+                                                    <p className="text-[9px] font-bold text-purple-700/60 uppercase tracking-widest mt-1">Formal PO Verification Logic</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-center items-center gap-4">
+                                                <OrganogramNode label="Purchase TA" sub="Commercial Audit" colorClass="bg-white border-purple-400" />
+                                                <OrganogramConnector />
+                                                <OrganogramNode label="Purchase Manager" sub="Final Authorization" colorClass="bg-purple-100 border-purple-600 shadow-md" />
+                                            </div>
+                                        </div>
                                     </BlueprintSection>
                                 </TabsContent>
 
@@ -644,6 +695,25 @@ export function BlueprintDialog({
                                                 </p>
                                             </div>
                                         </div>
+
+                                        <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-emerald-50 border-emerald-200">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2 bg-emerald-700 rounded-lg shadow-lg"><Scale className="h-5 w-5 text-white" /></div>
+                                                <div>
+                                                    <h4 className="text-sm font-black uppercase tracking-tighter text-emerald-900 leading-none">Logistics Verification Chain</h4>
+                                                    <p className="text-[9px] font-bold text-emerald-700/60 uppercase tracking-widest mt-1">Quality & Quantity Audit Protocol</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap justify-center items-center gap-4">
+                                                <OrganogramNode label="GP Concern" sub="Verification Origin" colorClass="bg-white border-emerald-400" />
+                                                <OrganogramConnector />
+                                                <OrganogramNode label="Dept. Manager" sub="Quality Acceptance" colorClass="bg-white border-emerald-500" />
+                                                <OrganogramConnector />
+                                                <OrganogramNode label="Purchase Manager" sub="Commercial Sync" colorClass="bg-emerald-100 border-emerald-600 shadow-md" />
+                                                <OrganogramConnector />
+                                                <OrganogramNode label="Purchase TA" sub="Compliance Close" colorClass="bg-emerald-800 text-white border-white shadow-xl" />
+                                            </div>
+                                        </div>
                                     </BlueprintSection>
                                 </TabsContent>
 
@@ -668,6 +738,67 @@ export function BlueprintDialog({
                                                 <div className="p-2 bg-white border rounded shadow-inner text-center font-mono text-[10px] font-black text-orange-700">
                                                     STATUS: TREASURY_READY
                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-orange-50 border-orange-200">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="p-2 bg-orange-600 rounded-lg shadow-lg"><Landmark className="h-5 w-5 text-white" /></div>
+                                                <div>
+                                                    <h4 className="text-sm font-black uppercase tracking-tighter text-orange-900 leading-none">Treasury Authorization Path</h4>
+                                                    <p className="text-[9px] font-bold text-orange-700/60 uppercase tracking-widest mt-1">Final Disbursement Governance</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-center items-center gap-4">
+                                                <OrganogramNode label="GP Concern" sub="Financial Preparer" colorClass="bg-white border-orange-400" />
+                                                <OrganogramConnector />
+                                                <OrganogramNode label="Purchase Manager" sub="Final Treasury Audit" colorClass="bg-orange-500 text-white border-white shadow-xl animate-pulse" />
+                                            </div>
+                                        </div>
+
+                                        {/* BROAD DETAIL: 9-STAGE BUNDLE MAP */}
+                                        <div className="space-y-6 p-8 border-4 border-slate-900 rounded-[3rem] bg-[#0f172a] text-white relative overflow-hidden shadow-2xl">
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-transparent to-orange-500 opacity-50" />
+                                            <div className="flex items-center justify-between relative z-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-orange-500/20 rounded-2xl border border-orange-500/40 backdrop-blur-xl">
+                                                        <FileSearch className="h-8 w-8 text-orange-400" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xl font-black uppercase tracking-tighter leading-none">The 9-Stage Organizational Full-Set Bundle</h4>
+                                                        <p className="text-[10px] font-bold text-orange-200/40 uppercase tracking-[0.3em] mt-2 italic">Legal Evidentiary Hierarchy for Treasury Payment</p>
+                                                    </div>
+                                                </div>
+                                                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/40 font-black px-4">SECURE BUNDLE V2.0</Badge>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10 pt-4">
+                                                {[
+                                                    { icon: Wallet, title: "1. Payment Note", sub: "The Financial Instruction", color: "border-orange-500 text-orange-400" },
+                                                    { icon: FileText, title: "2. Supplier Invoice", sub: "Vendor Bill Evidence", color: "border-slate-700" },
+                                                    { icon: Package, title: "3. MRR Report", sub: "Material Receiving Audit", color: "border-emerald-500 text-emerald-400" },
+                                                    { icon: ClipboardCheck, title: "4. Supplier Challan", sub: "Physical Delivery Proof", color: "border-slate-700" },
+                                                    { icon: ShieldAlert, title: "5. Mushok (VAT)", sub: "Tax Compliance Scan", color: "border-red-500 text-red-400" },
+                                                    { icon: ShoppingCart, title: "6. Purchase Order", sub: "The Binding Contract", color: "border-purple-500 text-purple-400" },
+                                                    { icon: BarChart2, title: "7. Comparative Statement", sub: "Sourcing Analysis", color: "border-amber-500 text-amber-400" },
+                                                    { icon: ListOrdered, title: "8. Demand Note", sub: "Original Intent Origin", color: "border-blue-500 text-blue-400" },
+                                                    { icon: FileSearch, title: "9. Vendor Quotations", sub: "Bid Registry Scans", color: "border-slate-700" }
+                                                ].map((stage, i) => (
+                                                    <div key={i} className={cn("p-4 rounded-2xl bg-white/5 border-2 transition-all hover:bg-white/10 hover:scale-[1.02] flex items-center gap-4 group", stage.color)}>
+                                                        <div className="p-2 rounded-xl bg-background/50 group-hover:rotate-12 transition-transform">
+                                                            <stage.icon className="h-6 w-6" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-black uppercase leading-none mb-1">{stage.title}</p>
+                                                            <p className="text-[9px] font-bold text-white/40 italic uppercase tracking-tighter">{stage.sub}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="p-4 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 text-center relative z-10">
+                                                <p className="text-[10px] font-bold text-white/60 italic leading-relaxed">
+                                                    "The system joins all internal approvals and physical document scans into a single high-fidelity print stream, unrolling multi-page PDFs for absolute audit compliance."
+                                                </p>
                                             </div>
                                         </div>
                                     </BlueprintSection>
