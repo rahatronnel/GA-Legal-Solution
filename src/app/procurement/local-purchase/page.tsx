@@ -5,7 +5,6 @@ import React, { useMemo, Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs as ShadTabs, TabsContent as ShadTabsContent, TabsList as ShadTabsList, TabsTrigger as ShadTabsTrigger } from "@/components/ui/tabs";
-import { ModuleHeader } from '@/app/components/module-header';
 import { DemandNoteApprovalSettings } from './components/demand-note-approval-settings';
 import { DemandNoteTable } from './components/demand-note-table';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from "@/firebase";
@@ -286,5 +285,3 @@ export default function LocalPurchasePage() {
     </Suspense>
   );
 }
-
-    

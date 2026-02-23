@@ -50,7 +50,7 @@ const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChan
                 </div>
                 <DialogDescription>Internal workflow for General Purchase (GP) task management and vendor sourcing.</DialogDescription>
             </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 h-[450px] border rounded-md">
+            <ScrollArea className="flex-grow pr-4 border rounded-md">
                 <div className="space-y-6 p-4">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
@@ -251,20 +251,17 @@ export function GPDeskTable() {
 
             return searchTermMatch && assignedToMatch && vendorAssignmentMatch;
         }).sort((a, b) => {
-            // HIGH-FIDELITY PRIORITY SORTING
-            // Stage 1: Unassigned DNs (Waiting for Officer) must appear first
+            // HIGH-FIDELITY PRIORITY SORTING: Unassigned DNs (Waiting for Officer) must appear first
             const aIsUnassigned = !a.gpConcernOfficerId;
             const bIsUnassigned = !b.gpConcernOfficerId;
 
             if (aIsUnassigned && !bIsUnassigned) return -1;
             if (!aIsUnassigned && bIsUnassigned) return 1;
 
-            // Stage 2: If both are unassigned, sort by Requisition Date (oldest first to ensure FIFO integrity)
             if (aIsUnassigned && bIsUnassigned) {
-                return new Date(a.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime();
+                return new Date(a.entryDate || 0).getTime() - new Date(b.entryDate || 0).getTime();
             }
 
-            // Stage 3: If both are assigned, sort by latest GP Assignment Date (newest at top)
             return new Date(b.gpAssignedDate || 0).getTime() - new Date(a.gpAssignedDate || 0).getTime();
         });
     }, [safeItems, searchTerm, assignedToFilter, vendorAssignmentFilter, roleData, currentUserEmployee, sections]);
