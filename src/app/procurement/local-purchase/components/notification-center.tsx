@@ -192,6 +192,21 @@ export function NotificationCenter() {
         mrrs.forEach(mrr => {
             const isMyMrr = mrr.createdBy === uid;
 
+            // 14. MRR Prepared -> Finalize MRR (Concern Task)
+            if (mrr.approvalStatus === 2 && isMyMrr) {
+                const r = calculateReminders(mrr.createdAt);
+                list.push({ 
+                    id: mrr.id + '-mrr-finalize', 
+                    type: 'MRR', 
+                    title: mrr.mrrNumber, 
+                    description: 'Material Receiving Report prepared. Please upload evidence (Bill/Challan) and finalize the report for approval.', 
+                    link: `/procurement/local-purchase?tab=mrr`, 
+                    status: 'Finalization Required', 
+                    createdAt: mrr.createdAt, 
+                    ...r 
+                });
+            }
+
             // 9. MRR Approval (Approver Task)
             if (mrr.currentApproverId === uid && mrr.approvalStatus > 2 && mrr.approvalStatus !== 1) {
                 const r = calculateReminders(mrr.createdAt);
