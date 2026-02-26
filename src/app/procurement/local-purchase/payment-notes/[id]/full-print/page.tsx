@@ -83,11 +83,47 @@ export default function PNFullPrintPage() {
 
     useEffect(() => {
         if (!isGlobalLoading && pn && mrr && po && cs && dn && orgSettings) {
-            // High-Performance Handshake: We wait 5 seconds to allow multi-page PDF rendering to complete
-            const timer = setTimeout(() => {
-                window.print();
-            }, 5000); 
-            return () => clearTimeout(timer);
+            const searchParams = new URLSearchParams(window.location.search);
+            const mode = searchParams.get('mode');
+
+            if (mode === 'download') {
+                const executeDownload = async () => {
+                    // High-Performance Handshake: Wait for PDF renderings to stabilize
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    
+                    const element = document.querySelector('.payment-bundle-container');
+                    if (element) {
+                        try {
+                            const html2pdf = (await import('html2pdf.js')).default;
+                            const opt = {
+                                margin: 0,
+                                filename: `YKK_FullSet_${pn.pnNumber}.pdf`,
+                                image: { type: 'jpeg', quality: 0.98 },
+                                html2canvas: { 
+                                    scale: 2, 
+                                    useCORS: true, 
+                                    logging: false,
+                                    letterRendering: true
+                                },
+                                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                            };
+                            
+                            // High-Fidelity Capture: Converts the entire subway of documents into one PDF file
+                            await html2pdf().from(element).set(opt).save();
+                        } catch (err) {
+                            console.error("Critical PDF Export Failure:", err);
+                        }
+                    }
+                };
+                executeDownload();
+            } else {
+                // Standard Print Path
+                const timer = setTimeout(() => {
+                    window.print();
+                }, 5000); 
+                return () => clearTimeout(timer);
+            }
         }
     }, [isGlobalLoading, pn, mrr, po, cs, dn, orgSettings]);
 

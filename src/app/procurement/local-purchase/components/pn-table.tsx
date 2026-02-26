@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Search, Eye, Printer, Trash2, Check, X, Info, Copy, Wallet, Clock, Hourglass, CheckCircle, MoreHorizontal, FileStack } from 'lucide-react';
+import { Search, Eye, Printer, Trash2, Check, X, Info, Copy, Wallet, Clock, Hourglass, CheckCircle, MoreHorizontal, FileStack, Download } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
@@ -110,7 +109,7 @@ export function PaymentNoteTable() {
                                 <TableHead className="font-bold">Supplier</TableHead>
                                 <TableHead className="font-bold text-right">Amount (BDT)</TableHead>
                                 <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="w-[180px] text-right font-bold">Actions</TableHead>
+                                <TableHead className="w-[220px] text-right font-bold">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -200,7 +199,15 @@ export function PaymentNoteTable() {
                                                                         <FileStack className="h-4 w-4" />
                                                                     </Button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent>Print Full-Set Bundle (9 Stages)</TooltipContent>
+                                                                <TooltipContent>Print Full-Set Bundle</TooltipContent>
+                                                            </Tooltip>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/full-print?mode=download`, '_blank')}>
+                                                                        <Download className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Download Full-Set PDF</TooltipContent>
                                                             </Tooltip>
                                                         </>
                                                     )}
