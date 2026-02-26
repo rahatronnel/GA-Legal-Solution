@@ -147,7 +147,6 @@ export function WorkflowTracker() {
 
             // CS Approvals
             cs.approvalHistory?.forEach((h: any, idx: number) => {
-                const prev = idx === 0 ? cs.vendorSelectionDate : cs.approvalHistory[idx - 1].timestamp;
                 events.push({
                     id: `cs-appr-${idx}`,
                     title: cs.approvalFlow?.steps[h.level]?.stepName || 'CS Approval',
@@ -230,7 +229,7 @@ export function WorkflowTracker() {
             events.push({
                 id: 'pn-initiation',
                 title: 'Payment Note Initiated',
-                description: `Official financial settlement process initiated for ${mrr?.mrrNumber}.`,
+                description: `Official financial settlement process initiated for MRR: ${mrr?.mrrNumber}. Tracking PN#: ${pn.pnNumber}`,
                 timestamp: pn.createdAt,
                 user: getEmployeeInfo(pn.createdBy),
                 type: 'pn',
@@ -241,7 +240,7 @@ export function WorkflowTracker() {
                 events.push({
                     id: `pn-appr-${i}`,
                     title: 'PN Treasury Audit Sign-off',
-                    description: `Financial instruction authorized for treasury disbursement.`,
+                    description: `Financial instruction authorized for treasury disbursement. PN# ${pn.pnNumber}`,
                     timestamp: h.timestamp,
                     user: getEmployeeInfo(h.approverId),
                     type: 'approval',
@@ -301,28 +300,34 @@ export function WorkflowTracker() {
                 <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
                     <ScrollArea className="h-full">
                         <div className="divide-y">
-                            {filteredNotes.map(dn => (
-                                <button
-                                    key={dn.id}
-                                    onClick={() => setSelectedDnId(dn.id)}
-                                    className={cn(
-                                        "w-full p-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group",
-                                        selectedDnId === dn.id && "bg-primary/5 border-r-4 border-primary"
-                                    )}
-                                >
-                                    <div className="space-y-1">
-                                        <p className="font-bold text-sm">{dn.demandNoteNumber}</p>
-                                        <p className="text-xs text-muted-foreground">{sections.find(s => s.id === dn.departmentId)?.name || 'N/A'}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] text-muted-foreground italic">{new Date(dn.entryDate).toLocaleDateString()}</span>
-                                            {purchaseOrders.some(p => p.demandNoteId === dn.id) && (
-                                                <Badge variant="outline" className="text-[9px] h-4 bg-green-50 text-green-700 border-green-200">PO Ready</Badge>
-                                            )}
+                            {filteredNotes.map(dn => {
+                                const po = purchaseOrders.find(p => p.demandNoteId === dn.id);
+                                const mrr = mrrs.find(m => m.poId === po?.id || m.demandNoteNumber === dn.demandNoteNumber);
+                                const pn = paymentNotes.find(p => p.mrrId === mrr?.id);
+                                
+                                return (
+                                    <button
+                                        key={dn.id}
+                                        onClick={() => setSelectedDnId(dn.id)}
+                                        className={cn(
+                                            "w-full p-4 text-left hover:bg-muted/50 transition-colors flex items-center justify-between group",
+                                            selectedDnId === dn.id && "bg-primary/5 border-r-4 border-primary"
+                                        )}
+                                    >
+                                        <div className="space-y-1">
+                                            <p className="font-bold text-sm">{dn.demandNoteNumber}</p>
+                                            <p className="text-xs text-muted-foreground">{sections.find(s => s.id === dn.departmentId)?.name || 'N/A'}</p>
+                                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                <span className="text-[10px] text-muted-foreground italic">{new Date(dn.entryDate).toLocaleDateString()}</span>
+                                                {po && <Badge variant="outline" className="text-[9px] h-4 bg-blue-50 text-blue-700 border-blue-200">PO</Badge>}
+                                                {mrr && <Badge variant="outline" className="text-[9px] h-4 bg-green-50 text-green-700 border-green-200">MRR</Badge>}
+                                                {pn && <Badge variant="outline" className="text-[9px] h-4 bg-orange-50 text-orange-700 border-orange-200">PN Ready</Badge>}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <ChevronRight className={cn("h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform", selectedDnId === dn.id && "text-primary")} />
-                                </button>
-                            ))}
+                                        <ChevronRight className={cn("h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform", selectedDnId === dn.id && "text-primary")} />
+                                    </button>
+                                );
+                            })}
                         </div>
                     </ScrollArea>
                 </CardContent>
@@ -403,11 +408,17 @@ export function WorkflowTracker() {
                                     );
                                 })}
                                 
-                                {selectedDn.approvalStatus === 1 && purchaseOrders.some(p => p.demandNoteId === selectedDnId && p.approvalStatus === 1) && (
+                                {selectedDn.approvalStatus === 1 && 
+                                 purchaseOrders.some(p => p.demandNoteId === selectedDnId && p.approvalStatus === 1) && 
+                                 paymentNotes.some(pn => {
+                                     const m = mrrs.find(mrr => mrr.id === pn.mrrId);
+                                     const p = purchaseOrders.find(po => po.id === m?.poId || po.poNumber === m?.poId);
+                                     return p?.demandNoteId === selectedDnId && pn.approvalStatus === 1;
+                                 }) && (
                                     <div className="relative flex items-center justify-center py-4">
                                         <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full border border-green-200 text-sm font-bold flex items-center gap-2">
                                             <CheckCircle2 className="h-4 w-4" />
-                                            Workflow Successfully Completed
+                                            Procurement Life-Cycle Successfully Concluded
                                         </div>
                                     </div>
                                 )}
