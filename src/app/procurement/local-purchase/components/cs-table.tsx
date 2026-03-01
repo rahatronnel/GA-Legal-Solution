@@ -17,7 +17,7 @@ import {
     ChevronRight, ChevronLeft, HelpCircle, ListOrdered, ShieldCheck, 
     UserCheck, Tag, BarChart2, TrendingUp, Wallet, Gavel, 
     GitCommitHorizontal, MapPin, Info, Hourglass, MoreHorizontal,
-    CheckCircle2, CheckCircle
+    CheckCircle2, CheckCircle, History, Cpu
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcurement } from './procurement-provider';
@@ -394,6 +394,7 @@ export function ComparativeStatementTable() {
             gsap.from(".cs-row-animate", {
                 x: -30,
                 opacity: 0,
+                filter: "blur(8px)",
                 stagger: 0.04,
                 duration: 0.6,
                 ease: "power3.out",
@@ -497,7 +498,7 @@ export function ComparativeStatementTable() {
 
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors cs-row-animate", isWaitingForMe && "bg-orange-500/5")}>
-                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, id])} disabled={!isApprovable} /></TableCell>
+                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell><div className="flex items-center gap-1 font-medium"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
                                             <TableCell><span>{dn?.demandNoteNumber || 'N/A'}</span></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-bold text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
