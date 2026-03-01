@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -23,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote } from './demand-note-entry-form';
+import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -213,13 +214,13 @@ const DNStatusTrackerDialog = ({
 
     const genieVariants = {
         initial: {
-            scaleX: 0.1,
-            scaleY: 0.05,
-            x: "-50%",
-            y: "100vh",
+            scaleX: 0.01,
+            scaleY: 0.01,
+            x: "40vw", // Origin from bottom right relative to center
+            y: "45vh", 
             opacity: 0,
-            borderRadius: "50%",
-            clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
+            borderRadius: "100%",
+            clipPath: "polygon(20% 0%, 80% 0%, 55% 100%, 45% 100%)", // High-warp wave funnel
         },
         open: {
             scaleX: 1,
@@ -228,22 +229,22 @@ const DNStatusTrackerDialog = ({
             y: "-50%",
             opacity: 1,
             borderRadius: "24px",
-            clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+            clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", // Perfect rectangle
             transition: {
-                duration: 0.5,
+                duration: 0.6,
                 ease: [0.22, 1, 0.36, 1],
             },
         },
         exit: {
-            scaleX: 0.1,
-            scaleY: 0.05,
-            x: "-50%",
-            y: "100vh",
+            scaleX: 0.01,
+            scaleY: 0.01,
+            x: "40vw",
+            y: "45vh",
             opacity: 0,
-            borderRadius: "50%",
-            clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
+            borderRadius: "100%",
+            clipPath: "polygon(20% 0%, 80% 0%, 55% 100%, 45% 100%)",
             transition: {
-                duration: 0.6,
+                duration: 0.5,
                 ease: [0.4, 0, 0.2, 1],
             },
         },
@@ -263,6 +264,7 @@ const DNStatusTrackerDialog = ({
                                 initial="initial"
                                 animate="open"
                                 exit="exit"
+                                style={{ transformOrigin: "bottom right" }}
                                 className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background"
                             >
                                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
