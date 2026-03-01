@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useRef } from 'react';
@@ -59,6 +60,9 @@ import { cn } from '@/lib/utils';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 
+/**
+ * CSUserGuide - High-Fidelity documentation portal.
+ */
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -70,7 +74,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-black tracking-tight text-white">CS Master Operational Guide</DialogTitle>
-                            <DialogDescription className="text-primary-foreground/80 font-medium">Internal standards for high-fidelity procurement analysis &amp; vendor awarding.</DialogDescription>
+                            <DialogDescription className="text-primary-foreground/80 font-medium">Internal standards for high-fidelity procurement analysis & vendor awarding.</DialogDescription>
                         </div>
                     </div>
                 </div>
@@ -135,7 +139,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
 
                             <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
                                 <CardContent className="pt-6 space-y-2">
-                                    <h5 className="font-bold flex items-center gap-2 text-amber-600"><Gavel className="h-4 w-4"/> Awarding &amp; Commitment</h5>
+                                    <h5 className="font-bold flex items-center gap-2 text-amber-600"><Gavel className="h-4 w-4"/> Awarding & Commitment</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                         After analysis, click the <Hand className="h-3 w-3 inline mx-1"/> <strong>Award</strong> button. This selects the official supplier and initiates the internal multi-stage signature workflow.
                                     </p>
@@ -324,7 +328,7 @@ const VendorSelectionDialog: React.FC<{
                             </Button>
                         ) : (
                             <Button variant="destructive" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 text-white border-none shadow-lg shadow-green-500/20 font-bold">
-                                <Check className="mr-2 h-4 w-4" /> Confirm Award &amp; Start Approval
+                                <Check className="mr-2 h-4 w-4" /> Confirm Award & Start Approval
                             </Button>
                         )}
                     </div>
