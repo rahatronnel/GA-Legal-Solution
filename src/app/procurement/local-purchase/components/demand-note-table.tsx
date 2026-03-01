@@ -17,7 +17,8 @@ import {
     CheckCircle, Hourglass, MoreHorizontal, Copy, HelpCircle, ListOrdered, 
     ShieldCheck, UserCheck, CheckCircle2, PackageCheck, History, ArrowRight,
     FileText, Briefcase, BarChart2, ShoppingCart, Package, Wallet, Timer,
-    UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User, XCircle as XCircleIcon
+    UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User, XCircle as XCircleIcon,
+    Cpu
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,6 +50,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from "framer-motion";
+import { PurchaseOrderForm } from './po-entry-form';
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -185,25 +187,28 @@ const DNStatusTrackerDialog = ({
         return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
+    // HIGH-FIDELITY MAC-STYLE GENIE TRANSITION
     const genieVariants = {
         initial: {
           opacity: 0,
           scale: 0.01,
-          x: "40vw",
+          x: "40vw", // Off-center towards bottom right
           y: "40vh",
           filter: "blur(10px)",
+          // Morph: Start as a pinched funnel at the bottom center-right
           clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
         },
         open: {
           opacity: 1,
           scale: 1,
-          x: "-50%",
+          x: "-50%", // Standard Radix Centering via transform
           y: "-50%",
           filter: "blur(0px)",
-          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)`,
+          // Morph: Expand to a full rectangle
+          clipPath: `polygon(0% 100%, 100% 100%, 100% 92%, 100% 80%, 100% 65%, 100% 48%, 100% 30%, 100% 15%, 100% 0%, 0% 0%, 0% 15%, 0% 30%, 0% 48%, 0% 65%, 0% 80%, 0% 92%)`,
           transition: {
             duration: 0.65,
-            ease: [0.19, 1, 0.22, 1],
+            ease: [0.19, 1, 0.22, 1], // macOS-style non-linear deceleration
           }
         },
         exit: {
@@ -212,10 +217,11 @@ const DNStatusTrackerDialog = ({
           x: "40vw",
           y: "40vh",
           filter: "blur(8px)",
+          // Morph: Siphon back into the dock funnel
           clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
           transition: {
             duration: 0.55,
-            ease: [0.32, 0, 0.67, 0],
+            ease: [0.32, 0, 0.67, 0], // Acceleration into the dock
           }
         }
     };
