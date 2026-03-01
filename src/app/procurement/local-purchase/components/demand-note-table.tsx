@@ -215,7 +215,8 @@ const DNStatusTrackerDialog = ({
         initial: {
             scaleX: 0.1,
             scaleY: 0.05,
-            y: 400,
+            x: "-50%",
+            y: "100vh",
             opacity: 0,
             borderRadius: "50%",
             clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
@@ -223,7 +224,8 @@ const DNStatusTrackerDialog = ({
         open: {
             scaleX: 1,
             scaleY: 1,
-            y: 0,
+            x: "-50%",
+            y: "-50%",
             opacity: 1,
             borderRadius: "24px",
             clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
@@ -235,7 +237,8 @@ const DNStatusTrackerDialog = ({
         exit: {
             scaleX: 0.1,
             scaleY: 0.05,
-            y: 400,
+            x: "-50%",
+            y: "100vh",
             opacity: 0,
             borderRadius: "50%",
             clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
@@ -260,7 +263,7 @@ const DNStatusTrackerDialog = ({
                                 initial="initial"
                                 animate="open"
                                 exit="exit"
-                                className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background"
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background"
                             >
                                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                                     <div className="relative z-10 flex justify-between items-center">
