@@ -21,6 +21,7 @@ import {
     UserPlus, DollarSign, Truck, Send, FilePlus, Hand, User, XCircle as XCircleIcon
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useProcurement } from './procurement-provider';
 import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -132,66 +133,39 @@ const DNStatusTrackerDialog = ({
 
     const events = useMemo(() => {
         const list: any[] = [];
-        
-        // 1. DN Creation
         list.push({ title: 'Demand Note Issued', date: dn.entryDate, by: getEmployeeName(dn.createdBy), type: 'DN', status: 'done' });
-        
-        // 2. DN Approvals
         dn.approvalHistory?.forEach((h: any) => {
             list.push({ title: dn.approvalFlow?.steps[h.level]?.stepName || 'DN Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'DN', status: h.status === 'Approved' ? 'done' : 'fail' });
         });
-
-        // 3. GP Assignment
-        if (dn.gpAssignedDate) {
-            list.push({ title: 'GP Concern Assigned', date: dn.gpAssignedDate, by: getEmployeeName(dn.gpAssignedBy), type: 'GP', status: 'done' });
-        }
-
-        // 4. Vendor Assignment
-        if (dn.vendorAssignmentDate) {
-            list.push({ title: 'Vendor Sourcing Started', date: dn.vendorAssignmentDate, by: getEmployeeName(dn.gpConcernOfficerId), type: 'GP', status: 'done' });
-        }
-
-        // 5. CS Step
+        if (dn.gpAssignedDate) list.push({ title: 'GP Concern Assigned', date: dn.gpAssignedDate, by: getEmployeeName(dn.gpAssignedBy), type: 'GP', status: 'done' });
+        if (dn.vendorAssignmentDate) list.push({ title: 'Vendor Sourcing Started', date: dn.vendorAssignmentDate, by: getEmployeeName(dn.gpConcernOfficerId), type: 'GP', status: 'done' });
         if (cs) {
             list.push({ title: 'CS Prepared', date: cs.csDate, by: getEmployeeName(cs.createdBy), type: 'CS', status: 'done' });
-            if (cs.vendorSelectionDate) {
-                list.push({ title: 'Vendor Awarded', date: cs.vendorSelectionDate, by: getEmployeeName(cs.vendorSelectorId), type: 'CS', status: 'done' });
-            }
+            if (cs.vendorSelectionDate) list.push({ title: 'Vendor Awarded', date: cs.vendorSelectionDate, by: getEmployeeName(cs.vendorSelectorId), type: 'CS', status: 'done' });
             cs.approvalHistory?.forEach((h: any) => {
                 list.push({ title: cs.approvalFlow?.steps[h.level]?.stepName || 'CS Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'CS', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
         }
-
-        // 6. PO Step
         if (po) {
             list.push({ title: 'Purchase Order Issued', date: po.createdAt, by: getEmployeeName(po.createdBy), type: 'PO', status: 'done' });
-            po.approvalHistory?.forEach((h: any, i: number) => {
+            po.approvalHistory?.forEach((h: any) => {
                 list.push({ title: po.approvalFlow?.steps[h.level]?.stepName || 'PO Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'PO', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
-            if (po.isSentToVendor && po.sentToVendorDate) {
-                list.push({ title: 'PO Dispatched to Vendor', date: po.sentToVendorDate, by: 'GP Desk', type: 'PO', status: 'done' });
-            }
+            if (po.isSentToVendor && po.sentToVendorDate) list.push({ title: 'PO Dispatched to Vendor', date: po.sentToVendorDate, by: 'GP Desk', type: 'PO', status: 'done' });
         }
-
-        // 7. MRR Step
         if (mrr) {
             list.push({ title: 'Materials Received (MRR)', date: mrr.createdAt, by: getEmployeeName(mrr.createdBy), type: 'MRR', status: 'done' });
-            mrr.approvalHistory?.forEach((h: any, i: number) => {
+            mrr.approvalHistory?.forEach((h: any) => {
                 list.push({ title: mrr.approvalFlow?.steps[h.level]?.stepName || 'MRR Approval', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'MRR', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
-            if (mrr.requesterConfirmedAt) {
-                list.push({ title: 'Requester Confirmed Receipt', date: mrr.requesterConfirmedAt, by: getEmployeeName(mrr.requesterConfirmedBy), type: 'MRR', status: 'done' });
-            }
+            if (mrr.requesterConfirmedAt) list.push({ title: 'Requester Confirmed Receipt', date: mrr.requesterConfirmedAt, by: getEmployeeName(mrr.requesterConfirmedBy), type: 'MRR', status: 'done' });
         }
-
-        // 8. PN Step
         if (pn) {
             list.push({ title: 'Payment Note Initiated', date: pn.createdAt, by: getEmployeeName(pn.createdBy), type: 'PN', status: 'done' });
             pn.approvalHistory?.forEach((h: any) => {
                 list.push({ title: 'PN Audit Sign-off', date: h.timestamp, by: getEmployeeName(h.approverId), type: 'PN', status: h.status === 'Approved' ? 'done' : 'fail' });
             });
         }
-
         return list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }, [dn, cs, po, mrr, pn, employees]);
 
@@ -214,40 +188,37 @@ const DNStatusTrackerDialog = ({
 
     const genieVariants = {
         initial: {
-            scaleX: 0.01,
-            scaleY: 0.01,
-            x: "40vw", // Origin from bottom right relative to center
-            y: "45vh", 
-            opacity: 0,
-            borderRadius: "100%",
-            clipPath: "polygon(20% 0%, 80% 0%, 55% 100%, 45% 100%)", // High-warp wave funnel
+          opacity: 0,
+          scale: 0.01,
+          x: "40vw",
+          y: "40vh",
+          filter: "blur(10px)",
+          clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
         },
         open: {
-            scaleX: 1,
-            scaleY: 1,
-            x: "-50%",
-            y: "-50%",
-            opacity: 1,
-            borderRadius: "24px",
-            clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)", // Perfect rectangle
-            transition: {
-                duration: 0.6,
-                ease: [0.22, 1, 0.36, 1],
-            },
+          opacity: 1,
+          scale: 1,
+          x: "-50%",
+          y: "-50%",
+          filter: "blur(0px)",
+          clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)`,
+          transition: {
+            duration: 0.65,
+            ease: [0.19, 1, 0.22, 1],
+          }
         },
         exit: {
-            scaleX: 0.01,
-            scaleY: 0.01,
-            x: "40vw",
-            y: "45vh",
-            opacity: 0,
-            borderRadius: "100%",
-            clipPath: "polygon(20% 0%, 80% 0%, 55% 100%, 45% 100%)",
-            transition: {
-                duration: 0.5,
-                ease: [0.4, 0, 0.2, 1],
-            },
-        },
+          opacity: 0,
+          scale: 0.01,
+          x: "40vw",
+          y: "40vh",
+          filter: "blur(8px)",
+          clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
+          transition: {
+            duration: 0.55,
+            ease: [0.32, 0, 0.67, 0],
+          }
+        }
     };
 
     return (
@@ -265,14 +236,12 @@ const DNStatusTrackerDialog = ({
                                 animate="open"
                                 exit="exit"
                                 style={{ transformOrigin: "bottom right" }}
-                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background"
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background rounded-[24px]"
                             >
                                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                                     <div className="relative z-10 flex justify-between items-center">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
-                                                <macroStatus.icon className="h-8 w-8 text-white" />
-                                            </div>
+                                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl"><macroStatus.icon className="h-8 w-8 text-white" /></div>
                                             <div>
                                                 <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Lifecycle Tracker</h2>
                                                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
@@ -281,9 +250,7 @@ const DNStatusTrackerDialog = ({
                                         <Badge className="bg-white/20 text-white border-none font-black text-xs px-3">{macroStatus.label}</Badge>
                                     </div>
                                     <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
-                                    <button onClick={() => onOpenChange(false)} className="absolute top-2 right-2 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                                        <X className="h-4 w-4 text-white" />
-                                    </button>
+                                    <button onClick={() => onOpenChange(false)} className="absolute top-2 right-2 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors"><X className="h-4 w-4 text-white" /></button>
                                 </div>
 
                                 <div className="flex-1 min-h-0 bg-background relative">
@@ -291,10 +258,7 @@ const DNStatusTrackerDialog = ({
                                         <div className="p-6 space-y-8 relative before:absolute before:left-[2.5rem] before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
                                             {events.map((event, i) => (
                                                 <div key={i} className="relative pl-14 group">
-                                                    <div className={cn(
-                                                        "absolute left-6 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
-                                                        event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
-                                                    )}>
+                                                    <div className={cn("absolute left-6 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110", event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white")}>
                                                         {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                                     </div>
                                                     <div className="space-y-1">
