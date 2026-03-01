@@ -187,40 +187,43 @@ const DNStatusTrackerDialog = ({
         return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
-    // HIGH-FIDELITY MAC-STYLE GENIE TRANSITION
+    // HIGH-FIDELITY APPLE GENIE VARIANTS (16-POINT POLYGON DEFORMATION)
     const genieVariants = {
         initial: {
           opacity: 0,
-          scale: 0.01,
-          x: "40vw", // Off-center towards bottom right
-          y: "40vh",
-          filter: "blur(10px)",
-          // Morph: Start as a pinched funnel at the bottom center-right
+          scale: 0.05,
+          x: "45vw", // Anchor to bottom-right (theoretical dock)
+          y: "45vh",
+          rotate: -15, // Authentic organic rotation
+          filter: "blur(12px)",
+          // High-Fidelity Funnel: Pinch at bottom, very narrow at origin
           clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
         },
         open: {
           opacity: 1,
           scale: 1,
-          x: "-50%", // Standard Radix Centering via transform
+          x: "-50%", // Standard Radix Centering
           y: "-50%",
+          rotate: 0,
           filter: "blur(0px)",
-          // Morph: Expand to a full rectangle
+          // Full Rectangle expansion
           clipPath: `polygon(0% 100%, 100% 100%, 100% 92%, 100% 80%, 100% 65%, 100% 48%, 100% 30%, 100% 15%, 100% 0%, 0% 0%, 0% 15%, 0% 30%, 0% 48%, 0% 65%, 0% 80%, 0% 92%)`,
           transition: {
-            duration: 0.65,
-            ease: [0.19, 1, 0.22, 1], // macOS-style non-linear deceleration
+            duration: 0.85, // Extended for smoother "wave" visibility
+            ease: [0.19, 1, 0.22, 1], // macOS-style majestic deceleration
           }
         },
         exit: {
           opacity: 0,
-          scale: 0.01,
-          x: "40vw",
-          y: "40vh",
-          filter: "blur(8px)",
-          // Morph: Siphon back into the dock funnel
+          scale: 0.05,
+          x: "45vw",
+          y: "45vh",
+          rotate: -15,
+          filter: "blur(10px)",
+          // Siphon Wave: Draw back into the dock funnel
           clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
           transition: {
-            duration: 0.55,
+            duration: 0.75, // Weighted retraction
             ease: [0.32, 0, 0.67, 0], // Acceleration into the dock
           }
         }
@@ -232,7 +235,7 @@ const DNStatusTrackerDialog = ({
                 {isOpen && (
                     <DialogPrimitive.Portal forceMount>
                         <DialogPrimitive.Overlay asChild>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm" />
                         </DialogPrimitive.Overlay>
                         <DialogPrimitive.Content asChild forceMount>
                             <motion.div
@@ -241,7 +244,7 @@ const DNStatusTrackerDialog = ({
                                 animate="open"
                                 exit="exit"
                                 style={{ transformOrigin: "bottom right" }}
-                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background rounded-[24px]"
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
                             >
                                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                                     <div className="relative z-10 flex justify-between items-center">
