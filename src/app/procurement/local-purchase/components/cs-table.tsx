@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   Table,
@@ -56,6 +56,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
@@ -358,6 +360,48 @@ export function ComparativeStatementTable() {
     const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
                       orgSettings?.procurementSettings?.factoryDirectorId === currentUserEmployee?.id;
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // --- GSAP QUANTUM REVEAL MATRIX ---
+    useGSAP(() => {
+        // Stage 1: Entrance of the Container
+        gsap.from(containerRef.current, {
+            opacity: 0,
+            duration: 1,
+            ease: "power2.inOut"
+        });
+
+        // Stage 2: Staggered entrance of header elements
+        gsap.from(".cs-header-animate", {
+            y: -20,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "back.out(1.7)"
+        });
+
+        // Stage 3: Table reveal
+        gsap.from(".cs-table-animate", {
+            scale: 0.98,
+            opacity: 0,
+            duration: 1,
+            delay: 0.3,
+            ease: "expo.out"
+        });
+
+        // Stage 4: Row Stagger (Reactive to data loading)
+        if (!isLoading && comparativeStatements && comparativeStatements.length > 0) {
+            gsap.from(".cs-row-animate", {
+                x: -30,
+                opacity: 0,
+                stagger: 0.04,
+                duration: 0.6,
+                ease: "power3.out",
+                delay: 0.6
+            });
+        }
+    }, { scope: containerRef, dependencies: [isLoading, comparativeStatements?.length] });
+
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         return safeItems.filter(cs => {
@@ -409,23 +453,23 @@ export function ComparativeStatementTable() {
 
     return (
         <TooltipProvider>
-            <div className="space-y-4">
+            <div className="space-y-4" ref={containerRef}>
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <div className="relative w-full sm:max-w-xs">
+                        <div className="relative w-full sm:max-w-xs cs-header-animate">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search CS, DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
                         </div>
                         {selectedRows.length > 0 && (
-                            <div className="flex items-center gap-2 ml-4">
+                            <div className="flex items-center gap-2 ml-4 cs-header-animate">
                                 <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                             </div>
                         )}
                     </div>
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Comprehensive Guide</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm cs-header-animate" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Comprehensive Guide</Button>
                 </div>
-                <div className="border rounded-lg overflow-hidden shadow-sm">
+                <div className="border rounded-lg overflow-hidden shadow-sm cs-table-animate">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -452,8 +496,8 @@ export function ComparativeStatementTable() {
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
 
                                     return (
-                                        <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForMe && "bg-orange-500/5")}>
-                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
+                                        <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors cs-row-animate", isWaitingForMe && "bg-orange-500/5")}>
+                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell><div className="flex items-center gap-1 font-medium"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
                                             <TableCell><span>{dn?.demandNoteNumber || 'N/A'}</span></TableCell>
                                             <TableCell><div className="flex flex-col"><span className="text-xs font-bold text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
