@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -36,6 +35,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
+  DialogPortal,
+  DialogOverlay,
 } from '@/components/ui/dialog';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +48,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { motion, AnimatePresence } from "framer-motion";
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -210,57 +212,112 @@ const DNStatusTrackerDialog = ({
         return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
+    const genieVariants = {
+        initial: {
+            scaleX: 0.1,
+            scaleY: 0.05,
+            y: 400,
+            opacity: 0,
+            borderRadius: "50%",
+            clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
+        },
+        open: {
+            scaleX: 1,
+            scaleY: 1,
+            y: 0,
+            opacity: 1,
+            borderRadius: "24px",
+            clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+            transition: {
+                duration: 0.5,
+                ease: [0.22, 1, 0.36, 1],
+            },
+        },
+        exit: {
+            scaleX: 0.1,
+            scaleY: 0.05,
+            y: 400,
+            opacity: 0,
+            borderRadius: "50%",
+            clipPath: "polygon(0 0, 100% 0, 80% 100%, 20% 100%)",
+            transition: {
+                duration: 0.6,
+                ease: [0.4, 0, 0.2, 1],
+            },
+        },
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl animate-dialog-in h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl">
-                <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
-                    <div className="relative z-10 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
-                                <macroStatus.icon className="h-8 w-8 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Lifecycle Tracker</h2>
-                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
-                            </div>
-                        </div>
-                        <Badge className="bg-white/20 text-white border-none font-black text-xs px-3">{macroStatus.label}</Badge>
-                    </div>
-                    <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
-                </div>
-
-                <div className="flex-1 min-h-0 bg-background relative">
-                    <ScrollArea className="h-full w-full">
-                        <div className="p-6 space-y-8 relative before:absolute before:left-[2.5rem] before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
-                            {events.map((event, i) => (
-                                <div key={i} className="relative pl-14 group">
-                                    <div className={cn(
-                                        "absolute left-6 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
-                                        event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
-                                    )}>
-                                        {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-black uppercase tracking-tight">{event.title}</h4>
-                                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{new Date(event.date).toLocaleDateString()}</span>
+            <AnimatePresence>
+                {isOpen && (
+                    <DialogPortal forceMount>
+                        <DialogOverlay asChild>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+                        </DialogOverlay>
+                        <DialogContent asChild forceMount className="sm:max-w-xl fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none">
+                            <motion.div
+                                variants={genieVariants}
+                                initial="initial"
+                                animate="open"
+                                exit="exit"
+                                className="bg-background flex flex-col h-full w-full shadow-2xl"
+                            >
+                                <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
+                                    <div className="relative z-10 flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl">
+                                                <macroStatus.icon className="h-8 w-8 text-white" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Lifecycle Tracker</h2>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                            <p className="text-muted-foreground font-medium flex items-center gap-1"><User className="h-3 w-3" /> {event.by}</p>
-                                            <p className="text-muted-foreground italic">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
+                                        <Badge className="bg-white/20 text-white border-none font-black text-xs px-3">{macroStatus.label}</Badge>
                                     </div>
+                                    <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
+                                    <button onClick={() => onOpenChange(false)} className="absolute top-2 right-2 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                                        <X className="h-4 w-4 text-white" />
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
-                        <ScrollBar orientation="vertical" />
-                    </ScrollArea>
-                </div>
 
-                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
-                </DialogFooter>
-            </DialogContent>
+                                <div className="flex-1 min-h-0 bg-background relative">
+                                    <ScrollArea className="h-full w-full">
+                                        <div className="p-6 space-y-8 relative before:absolute before:left-[2.5rem] before:top-0 before:h-full before:w-0.5 before:bg-muted pb-12">
+                                            {events.map((event, i) => (
+                                                <div key={i} className="relative pl-14 group">
+                                                    <div className={cn(
+                                                        "absolute left-6 h-8 w-8 rounded-full border-4 border-background flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110",
+                                                        event.status === 'done' ? "bg-green-500 text-white" : "bg-destructive text-white"
+                                                    )}>
+                                                        {event.status === 'done' ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-sm font-black uppercase tracking-tight">{event.title}</h4>
+                                                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">{new Date(event.date).toLocaleDateString()}</span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-[11px]">
+                                                            <p className="text-muted-foreground font-medium flex items-center gap-1"><User className="h-3 w-3" /> {event.by}</p>
+                                                            <p className="text-muted-foreground italic">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <ScrollBar orientation="vertical" />
+                                    </ScrollArea>
+                                </div>
+
+                                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
+                                </DialogFooter>
+                            </motion.div>
+                        </DialogContent>
+                    </DialogPortal>
+                )}
+            </AnimatePresence>
         </Dialog>
     );
 };
@@ -310,7 +367,7 @@ export function DemandNoteTable() {
             settings.specializedDeptManagerId === currentUserEmployee.id;
         
         const anyDeptHeadCheck = settings.departmentHeads?.some(
-            dh => dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id
+            dh => (dh.headId === currentUserEmployee.id || dh.technicalAdvisorId === currentUserEmployee.id)
         );
 
         return {
