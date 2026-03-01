@@ -35,9 +35,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-  DialogPortal,
-  DialogOverlay,
 } from '@/components/ui/dialog';
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -248,20 +247,20 @@ const DNStatusTrackerDialog = ({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogPrimitive.Root open={isOpen} onOpenChange={onOpenChange}>
             <AnimatePresence>
                 {isOpen && (
-                    <DialogPortal forceMount>
-                        <DialogOverlay asChild>
+                    <DialogPrimitive.Portal forceMount>
+                        <DialogPrimitive.Overlay asChild>
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
-                        </DialogOverlay>
-                        <DialogContent asChild forceMount className="sm:max-w-xl fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none">
+                        </DialogPrimitive.Overlay>
+                        <DialogPrimitive.Content asChild forceMount>
                             <motion.div
                                 variants={genieVariants}
                                 initial="initial"
                                 animate="open"
                                 exit="exit"
-                                className="bg-background flex flex-col h-full w-full shadow-2xl"
+                                className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl border-none outline-none focus:outline-none bg-background"
                             >
                                 <div className={cn("p-6 text-white shrink-0 relative overflow-hidden shadow-lg z-20", macroStatus.color)}>
                                     <div className="relative z-10 flex justify-between items-center">
@@ -314,11 +313,11 @@ const DNStatusTrackerDialog = ({
                                     <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
                                 </DialogFooter>
                             </motion.div>
-                        </DialogContent>
-                    </DialogPortal>
+                        </DialogPrimitive.Content>
+                    </DialogPrimitive.Portal>
                 )}
             </AnimatePresence>
-        </Dialog>
+        </DialogPrimitive.Root>
     );
 };
 
@@ -658,13 +657,13 @@ export function DemandNoteTable() {
                                                         {getDemandNoteStatusText(item)}
                                                     </Badge>
                                                     {isWaitingForApproval && (
-                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap">⚠️ Approve Requisition</Badge>
+                                                        <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[10px] h-4">⚠️ Approve Requisition</Badge>
                                                     )}
                                                     {isWaitingForGP && (
-                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap">⚠️ Assign Concern</Badge>
+                                                        <Badge className="bg-blue-500 animate-pulse text-white whitespace-nowrap text-[10px] h-4">⚠️ Assign Concern</Badge>
                                                     )}
                                                     {canConfirmMRR && (
-                                                        <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap">✅ Confirm Receipt</Badge>
+                                                        <Badge className="bg-green-600 animate-pulse text-white whitespace-nowrap text-[10px] h-4">✅ Confirm Receipt</Badge>
                                                     )}
                                                 </div>
                                             </TableCell>
