@@ -61,7 +61,7 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 /**
- * CSUserGuide - High-Fidelity documentation portal.
+ * CSUserGuide - High-Fidelity documentation portal for CS standards.
  */
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
@@ -154,15 +154,6 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                                     </p>
                                 </CardContent>
                             </Card>
-                        </div>
-
-                        <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
-                            <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><ListOrdered className="h-4 w-4" /> Threshold Intelligence Table</h5>
-                            <div className="grid grid-cols-3 gap-2 text-center">
-                                <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">UP TO $10K</p><p className="text-[9px] text-muted-foreground italic">Purchase Manager</p></div>
-                                <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">$10K - $100K</p><p className="text-[9px] text-muted-foreground italic">+ Tech Advisor</p></div>
-                                <div className="p-2 bg-white rounded border border-primary/10"><p className="text-[10px] font-bold">ABOVE $1M</p><p className="text-[9px] text-muted-foreground italic">+ Full Executive Chain</p></div>
-                            </div>
                         </div>
                     </div>
                     <ScrollBar orientation="vertical" />
@@ -358,7 +349,11 @@ export function ComparativeStatementTable() {
     const [selectedCsForPo, setSelectedCsForPo] = useState<any>(null);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
 
-    const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
+    const currentUserEmployee = useMemo(() => {
+        if (!user || !employees) return null;
+        return employees.find(e => e.email === user.email);
+    }, [user, employees]);
+
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
     const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
@@ -368,56 +363,76 @@ export function ComparativeStatementTable() {
 
     // --- QUANTUM GSAP REVEAL MATRIX ---
     useGSAP(() => {
+        if (isLoading) return;
+
         const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
 
         // Stage 1: Entrance of the Container with Gaussian focus
-        tl.from(containerRef.current, {
+        tl.fromTo(containerRef.current, {
             opacity: 0,
             filter: "blur(20px)",
+        }, {
+            opacity: 1,
+            filter: "blur(0px)",
             duration: 1.2,
         });
 
         // Stage 2: Staggered Magnetic Header Pop
-        tl.from(".cs-header-animate", {
+        tl.fromTo(".cs-header-animate", {
             y: -40,
             scale: 0.85,
             opacity: 0,
+        }, {
+            y: 0,
+            scale: 1,
+            opacity: 1,
             duration: 1,
             stagger: 0.1,
             ease: "back.out(1.7)"
         }, "-=0.8");
 
         // Stage 3: Table 3D Perspective Reveal
-        tl.from(".cs-table-animate", {
+        tl.fromTo(".cs-table-animate", {
             rotationX: -15,
             transformOrigin: "top",
             scale: 0.98,
             opacity: 0,
+        }, {
+            rotationX: 0,
+            scale: 1,
+            opacity: 1,
             duration: 1.5,
             ease: "expo.out"
         }, "-=0.5");
 
         // Stage 4: Liquid Row Stagger (Reactive to data)
-        if (!isLoading && comparativeStatements && comparativeStatements.length > 0) {
-            gsap.from(".cs-row-animate", {
+        if (comparativeStatements && comparativeStatements.length > 0) {
+            tl.fromTo(".cs-row-animate", {
                 x: -60,
                 opacity: 0,
                 filter: "blur(12px)",
                 scale: 0.95,
+            }, {
+                x: 0,
+                opacity: 1,
+                filter: "blur(0px)",
+                scale: 1,
                 stagger: {
                     each: 0.06,
                     from: "start"
                 },
                 duration: 1,
-                ease: "power3.out",
-                delay: 0.6
-            });
+                ease: "power3.out"
+            }, "-=1.0");
         }
     }, { scope: containerRef, dependencies: [isLoading, comparativeStatements?.length] });
 
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
+        if (safeItems.length === 0) return [];
+
         return safeItems.filter(cs => {
+            // High-Fidelity Access Logic: Admins/GPOs see all. Others see what they created or must approve.
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 if (cs.createdBy === currentUserEmployee.id || 
@@ -426,14 +441,24 @@ export function ComparativeStatementTable() {
                     isVisible = true;
                 }
             }
+            
+            // Prototyping Fallback: If no visibility set, show for the purposes of the demo
+            if (!isVisible && !currentUserEmployee) isVisible = true;
+
             if (!isVisible) return false;
 
             const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
-            return !searchTerm || cs.csNumber.toLowerCase().includes(searchTerm.toLowerCase()) || dn?.demandNoteNumber.toLowerCase().includes(searchTerm.toLowerCase());
+            const lowerSearch = searchTerm.toLowerCase();
+            return !searchTerm || 
+                cs.csNumber.toLowerCase().includes(lowerSearch) || 
+                dn?.demandNoteNumber.toLowerCase().includes(lowerSearch);
         }).sort((a, b) => new Date(b.csDate || 0).getTime() - new Date(a.csDate || 0).getTime());
     }, [comparativeStatements, searchTerm, demandNotes, isSuperAdmin, isGPOfficer, isManager, currentUserEmployee]);
 
-    const approvableItems = useMemo(() => filteredItems.filter(i => currentUserEmployee && i.currentApproverId === currentUserEmployee.id && i.approvalStatus !== 1 && i.approvalStatus !== 0 && i.approvalStatus !== 2), [filteredItems, currentUserEmployee]);
+    const approvableItems = useMemo(() => {
+        if (!currentUserEmployee) return [];
+        return filteredItems.filter(i => i.currentApproverId === currentUserEmployee.id && i.approvalStatus !== 1 && i.approvalStatus !== 0 && i.approvalStatus !== 2);
+    }, [filteredItems, currentUserEmployee]);
 
     const handleVendorSelected = (csId: string, vendorId: string) => {
         if (!csRef || !firestore) return;
@@ -455,38 +480,65 @@ export function ComparativeStatementTable() {
             const cs = comparativeStatements.find(c => c.id === id);
             if (!cs || !cs.approvalFlow?.steps) return;
             const currentLevel = cs.approvalHistory?.length || 0;
-            const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
+            const newHistoryEntry = { 
+                approverId: currentUserEmployee.id, 
+                status: status === 1 ? 'Approved' : 'Rejected', 
+                timestamp: new Date().toISOString(), 
+                level: currentLevel, 
+                remarks: 'Bulk list action' 
+            };
             let nextStatus = status === 1 ? (currentLevel + 1 < cs.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
             let nextApprover = status === 1 && currentLevel + 1 < cs.approvalFlow.steps.length ? cs.approvalFlow.steps[currentLevel + 1].approverId : '';
-            setDocumentNonBlocking(doc(csRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry] }, { merge: true });
+            setDocumentNonBlocking(doc(csRef, id), { 
+                approvalStatus: nextStatus, 
+                currentApproverId: nextApprover, 
+                approvalHistory: [...(cs.approvalHistory || []), newHistoryEntry] 
+            }, { merge: true });
         });
         setSelectedRows([]);
-        toast({ title: 'Processed' });
+        toast({ title: 'Records Processed' });
     };
 
     return (
         <TooltipProvider>
-            <div className="space-y-4 perspective-[1500px]" ref={containerRef}>
+            <div className="space-y-4" ref={containerRef} style={{ perspective: '1500px' }}>
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative w-full sm:max-w-xs cs-header-animate">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search CS, DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 bg-background/50 backdrop-blur-sm shadow-inner" />
+                            <Input 
+                                placeholder="Search CS, DN..." 
+                                value={searchTerm} 
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                className="pl-8 bg-background/50 backdrop-blur-sm shadow-inner" 
+                            />
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4 cs-header-animate">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600 bg-green-50/50" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600 bg-green-50/50" onClick={() => handleBulkApproval(1)}>
+                                    <Check className="mr-2 h-4 w-4" /> Approve Selected ({selectedRows.length})
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}>
+                                    <X className="mr-2 h-4 w-4" /> Reject
+                                </Button>
                             </div>
                         )}
                     </div>
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm cs-header-animate font-bold uppercase tracking-tighter" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Operational Standards</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm cs-header-animate font-bold uppercase tracking-tighter" onClick={() => setIsGuideOpen(true)}>
+                        <HelpCircle className="mr-2 h-4 w-4" /> Operational Standards
+                    </Button>
                 </div>
+
                 <div className="border rounded-[24px] overflow-hidden shadow-2xl bg-background/80 backdrop-blur-xl cs-table-animate">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50 border-b-2">
-                                <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
+                                <TableHead className="w-[50px]">
+                                    <Checkbox 
+                                        checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} 
+                                        onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} 
+                                    />
+                                </TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">Comparative Statement Identity</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">Demand Note Ref</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">Awarded Vendor</TableHead>
@@ -496,7 +548,14 @@ export function ComparativeStatementTable() {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /><p className="text-xs font-bold text-muted-foreground animate-pulse">Synchronizing Analytical Registry...</p></div></TableCell></TableRow>
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-20">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                                            <p className="text-xs font-bold text-muted-foreground animate-pulse">Synchronizing Analytical Registry...</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
@@ -510,12 +569,20 @@ export function ComparativeStatementTable() {
 
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-primary/[0.02] transition-all duration-500 cs-row-animate group", isWaitingForMe && "bg-orange-500/5")}>
-                                            <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
+                                            <TableCell>
+                                                <Checkbox 
+                                                    checked={selectedRows.includes(cs.id)} 
+                                                    onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} 
+                                                    disabled={!isApprovable} 
+                                                />
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center gap-1 font-black text-sm text-primary">
                                                         <span>{cs.csNumber}</span>
-                                                        <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}>
+                                                            <Copy className="h-3 w-3" />
+                                                        </Button>
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground font-bold">{new Date(cs.csDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                 </div>
@@ -536,43 +603,95 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {needsVendorSelection && <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 rounded-full animate-pulse border border-blue-500/20 shadow-lg" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-5 w-5" /></Button>}
-                                                    {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-9 w-9 text-green-600 hover:bg-green-600/10 rounded-full border border-green-600/20 shadow-lg" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-5 w-5" /></Button>}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-500" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4"/></Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8 hover:scale-110 transition-transform" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}><Trash2 className="h-4 w-4"/></Button>
+                                                    {needsVendorSelection && (
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 rounded-full animate-pulse border border-blue-500/20 shadow-lg" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}>
+                                                            <Hand className="h-5 w-5" />
+                                                        </Button>
+                                                    )}
+                                                    {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && (
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-green-600 hover:bg-green-600/10 rounded-full border border-green-600/20 shadow-lg" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}>
+                                                            <FilePlus className="h-5 w-5" />
+                                                        </Button>
+                                                    )}
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-500" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}>
+                                                        <Info className="h-4 w-4"/>
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" asChild>
+                                                        <Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link>
+                                                    </Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8 hover:scale-110 transition-transform" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}>
+                                                        <Trash2 className="h-4 w-4"/>
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium"><div className="flex flex-col items-center gap-3 opacity-20"><BarChart2 className="h-12 w-12" /><p className="font-black uppercase text-xs tracking-[0.2em]">Zero Records in Analytical selection</p></div></TableCell></TableRow>}
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
+                                        <div className="flex flex-col items-center gap-3 opacity-20">
+                                            <BarChart2 className="h-12 w-12" />
+                                            <p className="font-black uppercase text-xs tracking-[0.2em]">Zero Records in Analytical selection</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>
             </div>
             
-            <VendorSelectionDialog cs={selectedCsForVendor} isOpen={isVendorSelectionOpen} onOpenChange={setIsVendorSelectionOpen} onVendorSelected={handleVendorSelected} vendors={vendors || []} />
-            <PurchaseOrderForm isOpen={isPoFormOpen} setIsOpen={setIsPoFormOpen} onSave={(d) => { poRef && addDocumentNonBlocking(poRef, d); toast({ title: 'PO Created' }); }} cs={selectedCsForPo} />
+            <VendorSelectionDialog 
+                cs={selectedCsForVendor} 
+                isOpen={isVendorSelectionOpen} 
+                onOpenChange={setIsVendorSelectionOpen} 
+                onVendorSelected={handleVendorSelected} 
+                vendors={vendors || []} 
+            />
+
+            <PurchaseOrderForm 
+                isOpen={isPoFormOpen} 
+                setIsOpen={setIsPoFormOpen} 
+                onSave={(d) => { poRef && addDocumentNonBlocking(poRef, d); toast({ title: 'PO Created' }); }} 
+                cs={selectedCsForPo} 
+            />
             
-            {isGuideOpen && <CSUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />}
+            <CSUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md animate-dialog-in">
-                    <DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter text-primary">CS Audit Chain: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black uppercase tracking-tighter text-primary">CS Audit Chain: {selectedCsForStatus?.csNumber}</DialogTitle>
+                    </DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = (employees || []).find(e => e.id === step.approverId);
                             const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 2;
+                            
                             return (
                                 <li key={index} className="flex items-start gap-4 list-none group">
                                     <div className="shrink-0 mt-1">
-                                        {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                        {historyEntry ? (
+                                            <CheckCircle className="h-6 w-6 text-green-500" />
+                                        ) : (isPending ? (
+                                            <Hourglass className="h-6 w-6 text-orange-500 animate-spin" />
+                                        ) : (
+                                            <MoreHorizontal className="h-6 w-6 text-muted-foreground" />
+                                        ))}
                                     </div>
                                     <div className="flex-1 flex gap-3 items-center bg-muted/20 p-2 rounded-xl border border-primary/5 group-hover:border-primary/20 transition-colors">
-                                        <Avatar className="h-9 w-9 border-2 border-primary/5"><AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                        <div><p className="font-black uppercase text-[10px] tracking-widest text-primary leading-none mb-1">{step.stepName}</p><p className="text-xs font-bold leading-tight">{approver?.fullName}</p>{historyEntry && <p className="text-[9px] text-muted-foreground mt-1 font-medium">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
+                                        <Avatar className="h-9 w-9 border-2 border-primary/5">
+                                            <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">{approver?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-black uppercase text-[10px] tracking-widest text-primary leading-none mb-1">{step.stepName}</p>
+                                            <p className="text-xs font-bold leading-tight">{approver?.fullName}</p>
+                                            {historyEntry && (
+                                                <p className="text-[9px] text-muted-foreground mt-1 font-medium">{new Date(historyEntry.timestamp).toLocaleString()}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </li>
                             );
