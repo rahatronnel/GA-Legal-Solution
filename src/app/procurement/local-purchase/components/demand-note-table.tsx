@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -51,6 +51,48 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from "framer-motion";
 import { PurchaseOrderForm } from './po-entry-form';
+
+// HIGH-FIDELITY APPLE GENIE VARIANTS (16-POINT POLYGON DEFORMATION)
+const genieVariants = {
+    initial: {
+      opacity: 0,
+      scale: 0.05,
+      x: "45vw", // Anchor to bottom-right (theoretical dock)
+      y: "45vh",
+      rotate: -15, // Authentic organic rotation
+      filter: "blur(12px)",
+      // High-Fidelity Funnel: Pinch at bottom, very narrow at origin
+      clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
+    },
+    open: {
+      opacity: 1,
+      scale: 1,
+      x: "-50%", // Standard Radix Centering
+      y: "-50%",
+      rotate: 0,
+      filter: "blur(0px)",
+      // Full Rectangle expansion
+      clipPath: `polygon(0% 100%, 100% 100%, 100% 92%, 100% 80%, 100% 65%, 100% 48%, 100% 30%, 100% 15%, 100% 0%, 0% 0%, 0% 15%, 0% 30%, 0% 48%, 0% 65%, 0% 80%, 0% 92%)`,
+      transition: {
+        duration: 0.85, // Extended for smoother "wave" visibility
+        ease: [0.19, 1, 0.22, 1], // macOS-style majestic deceleration
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.05,
+      x: "45vw",
+      y: "45vh",
+      rotate: -15,
+      filter: "blur(10px)",
+      // Siphon Wave: Draw back into the dock funnel
+      clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
+      transition: {
+        duration: 0.75, // Weighted retraction
+        ease: [0.32, 0, 0.67, 0], // Acceleration into the dock
+      }
+    }
+};
 
 const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -187,48 +229,6 @@ const DNStatusTrackerDialog = ({
         return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
-    // HIGH-FIDELITY APPLE GENIE VARIANTS (16-POINT POLYGON DEFORMATION)
-    const genieVariants = {
-        initial: {
-          opacity: 0,
-          scale: 0.05,
-          x: "45vw", // Anchor to bottom-right (theoretical dock)
-          y: "45vh",
-          rotate: -15, // Authentic organic rotation
-          filter: "blur(12px)",
-          // High-Fidelity Funnel: Pinch at bottom, very narrow at origin
-          clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
-        },
-        open: {
-          opacity: 1,
-          scale: 1,
-          x: "-50%", // Standard Radix Centering
-          y: "-50%",
-          rotate: 0,
-          filter: "blur(0px)",
-          // Full Rectangle expansion
-          clipPath: `polygon(0% 100%, 100% 100%, 100% 92%, 100% 80%, 100% 65%, 100% 48%, 100% 30%, 100% 15%, 100% 0%, 0% 0%, 0% 15%, 0% 30%, 0% 48%, 0% 65%, 0% 80%, 0% 92%)`,
-          transition: {
-            duration: 0.85, // Extended for smoother "wave" visibility
-            ease: [0.19, 1, 0.22, 1], // macOS-style majestic deceleration
-          }
-        },
-        exit: {
-          opacity: 0,
-          scale: 0.05,
-          x: "45vw",
-          y: "45vh",
-          rotate: -15,
-          filter: "blur(10px)",
-          // Siphon Wave: Draw back into the dock funnel
-          clipPath: `polygon(48% 100%, 52% 100%, 60% 92%, 68% 80%, 74% 65%, 78% 48%, 80% 30%, 81% 15%, 82% 0%, 18% 0%, 19% 15%, 20% 30%, 22% 48%, 26% 65%, 32% 80%, 40% 92%)`,
-          transition: {
-            duration: 0.75, // Weighted retraction
-            ease: [0.32, 0, 0.67, 0], // Acceleration into the dock
-          }
-        }
-    };
-
     return (
         <DialogPrimitive.Root open={isOpen} onOpenChange={onOpenChange}>
             <AnimatePresence>
@@ -288,6 +288,94 @@ const DNStatusTrackerDialog = ({
 
                                 <DialogFooter className="p-4 border-t bg-muted/30 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
                                     <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Close Tracker</Button>
+                                </DialogFooter>
+                            </motion.div>
+                        </DialogPrimitive.Content>
+                    </DialogPrimitive.Portal>
+                )}
+            </AnimatePresence>
+        </DialogPrimitive.Root>
+    );
+};
+
+const DNApprovalFlowDialog = ({ 
+    dn, 
+    isOpen, 
+    onOpenChange,
+    employees
+}: { 
+    dn: DemandNote | null, 
+    isOpen: boolean, 
+    onOpenChange: (open: boolean) => void,
+    employees: any[]
+}) => {
+    if (!dn) return null;
+
+    return (
+        <DialogPrimitive.Root open={isOpen} onOpenChange={onOpenChange}>
+            <AnimatePresence>
+                {isOpen && (
+                    <DialogPrimitive.Portal forceMount>
+                        <DialogPrimitive.Overlay asChild>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm" />
+                        </DialogPrimitive.Overlay>
+                        <DialogPrimitive.Content asChild forceMount>
+                            <motion.div
+                                variants={genieVariants}
+                                initial="initial"
+                                animate="open"
+                                exit="exit"
+                                style={{ transformOrigin: "bottom right" }}
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-md w-full h-[70vh] max-h-[70vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
+                            >
+                                <div className="p-6 bg-primary text-white shrink-0 relative overflow-hidden shadow-lg z-20">
+                                    <div className="relative z-10 flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm shadow-xl"><ShieldCheck className="h-8 w-8 text-white" /></div>
+                                            <div>
+                                                <h2 className="text-xl font-black uppercase tracking-tighter leading-none">Approval Chain</h2>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">{dn.demandNoteNumber}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="absolute -top-12 -right-12 h-32 w-32 bg-white/5 rounded-full blur-2xl" />
+                                    <button onClick={() => onOpenChange(false)} className="absolute top-2 right-2 p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors"><X className="h-4 w-4 text-white" /></button>
+                                </div>
+
+                                <div className="flex-1 min-h-0 bg-background relative p-6">
+                                    <ScrollArea className="h-full w-full">
+                                        <ul className="space-y-6">
+                                            {dn.approvalFlow?.steps.map((step, index) => {
+                                                const historyEntry = dn.approvalHistory?.find((h:any) => h.level === index);
+                                                const approver = (employees || []).find(e => e.id === step.approverId);
+                                                const isPending = dn.currentApproverId === step.approverId && dn.approvalStatus !== 1 && dn.approvalStatus !== 0;
+                                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
+                                                
+                                                return (
+                                                    <li key={index} className="flex items-start gap-4">
+                                                        <div className="shrink-0 mt-1">
+                                                            {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                                        </div>
+                                                        <div className="flex-1 flex gap-3 items-center bg-muted/30 p-3 rounded-xl border border-primary/5">
+                                                            <Avatar className="h-10 w-10 border border-primary/10">
+                                                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-black">{approver?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="font-black uppercase text-[10px] tracking-widest text-primary leading-none mb-1">{step.stepName}</p>
+                                                                <p className="text-sm font-bold text-foreground leading-tight">{approver?.fullName || 'Not Assigned'}</p>
+                                                                {historyEntry && <p className="text-[9px] font-bold text-muted-foreground mt-1 uppercase tracking-tighter">Authorized: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                        <ScrollBar orientation="vertical" />
+                                    </ScrollArea>
+                                </div>
+
+                                <DialogFooter className="p-4 border-t bg-muted/30 shrink-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+                                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white shadow-lg">Exit Audit Flow</Button>
                                 </DialogFooter>
                             </motion.div>
                         </DialogPrimitive.Content>
@@ -689,6 +777,13 @@ export function DemandNoteTable() {
                 paymentNotes={paymentNotes}
             />
 
+            <DNApprovalFlowDialog
+                isOpen={isStatusModalOpen}
+                onOpenChange={setIsStatusModalOpen}
+                dn={selectedNoteForStatus}
+                employees={employees || []}
+            />
+
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <DialogContent className="animate-dialog-in">
                     <DialogHeader><DialogTitle>Delete Requisition?</DialogTitle><div className="text-sm text-muted-foreground">This will permanently remove demand note <strong>{currentItem?.demandNoteNumber}</strong>.</div></DialogHeader>
@@ -696,35 +791,6 @@ export function DemandNoteTable() {
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button variant="destructive" onClick={confirmDelete}>Confirm Delete</Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-                <DialogContent className="sm:max-w-lg animate-dialog-in">
-                    <DialogHeader><DialogTitle>Approval Flow: {selectedNoteForStatus?.demandNoteNumber}</DialogTitle></DialogHeader>
-                    <div className="py-4">
-                        <ul className="space-y-4">
-                            {selectedNoteForStatus?.approvalFlow?.steps.map((step, index) => {
-                                const historyEntry = selectedNoteForStatus.approvalHistory?.find((h:any) => h.level === index);
-                                const approver = (employees || []).find(e => e.id === step.approverId);
-                                const isPending = selectedNoteForStatus.currentApproverId === step.approverId && selectedNoteForStatus.approvalStatus !== 1 && selectedNoteForStatus.approvalStatus !== 0;
-                                let status: 'approved' | 'pending' | 'upcoming' = historyEntry ? 'approved' : (isPending ? 'pending' : 'upcoming');
-                                return (
-                                    <li key={index} className="flex items-start gap-4">
-                                        {status === 'approved' ? <CheckCircle className="h-6 w-6 text-green-500" /> : (status === 'pending' ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                        <div className="flex-1 flex gap-3 items-center">
-                                            <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                            <div>
-                                                <p className="font-semibold">{step.stepName}</p>
-                                                <p className="text-sm">{approver?.fullName || 'Not Assigned'}</p>
-                                                {historyEntry && <p className="text-[10px] text-muted-foreground">Approved: {new Date(historyEntry.timestamp).toLocaleString()}</p>}
-                                            </div>
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
                 </DialogContent>
             </Dialog>
         </TooltipProvider>
