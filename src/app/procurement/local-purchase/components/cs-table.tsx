@@ -366,41 +366,49 @@ export function ComparativeStatementTable() {
 
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // --- GSAP QUANTUM REVEAL MATRIX ---
+    // --- QUANTUM GSAP REVEAL MATRIX ---
     useGSAP(() => {
-        // Stage 1: Entrance of the Container
-        gsap.from(containerRef.current, {
+        const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+
+        // Stage 1: Entrance of the Container with Gaussian focus
+        tl.from(containerRef.current, {
             opacity: 0,
-            duration: 1,
-            ease: "power2.inOut"
+            filter: "blur(20px)",
+            duration: 1.2,
         });
 
-        // Stage 2: Staggered entrance of header elements
-        gsap.from(".cs-header-animate", {
-            y: -20,
+        // Stage 2: Staggered Magnetic Header Pop
+        tl.from(".cs-header-animate", {
+            y: -40,
+            scale: 0.85,
             opacity: 0,
-            duration: 0.8,
+            duration: 1,
             stagger: 0.1,
             ease: "back.out(1.7)"
-        });
+        }, "-=0.8");
 
-        // Stage 3: Table reveal
-        gsap.from(".cs-table-animate", {
+        // Stage 3: Table 3D Perspective Reveal
+        tl.from(".cs-table-animate", {
+            rotationX: -15,
+            transformOrigin: "top",
             scale: 0.98,
             opacity: 0,
-            duration: 1,
-            delay: 0.3,
+            duration: 1.5,
             ease: "expo.out"
-        });
+        }, "-=0.5");
 
-        // Stage 4: Row Stagger (Reactive to data loading)
+        // Stage 4: Liquid Row Stagger (Reactive to data)
         if (!isLoading && comparativeStatements && comparativeStatements.length > 0) {
             gsap.from(".cs-row-animate", {
-                x: -30,
+                x: -60,
                 opacity: 0,
-                filter: "blur(8px)",
-                stagger: 0.04,
-                duration: 0.6,
+                filter: "blur(12px)",
+                scale: 0.95,
+                stagger: {
+                    each: 0.06,
+                    from: "start"
+                },
+                duration: 1,
                 ease: "power3.out",
                 delay: 0.6
             });
@@ -458,37 +466,37 @@ export function ComparativeStatementTable() {
 
     return (
         <TooltipProvider>
-            <div className="space-y-4" ref={containerRef}>
+            <div className="space-y-4 perspective-[1500px]" ref={containerRef}>
                 <div className="flex flex-col sm:flex-row justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <div className="relative w-full sm:max-w-xs cs-header-animate">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search CS, DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
+                            <Input placeholder="Search CS, DN..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 bg-background/50 backdrop-blur-sm shadow-inner" />
                         </div>
                         {selectedRows.length > 0 && (
                             <div className="flex items-center gap-2 ml-4 cs-header-animate">
-                                <Button size="sm" variant="outline" className="text-green-600 border-green-600" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
+                                <Button size="sm" variant="outline" className="text-green-600 border-green-600 bg-green-50/50" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" /> Approve ({selectedRows.length})</Button>
                                 <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" /> Reject</Button>
                             </div>
                         )}
                     </div>
-                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm cs-header-animate" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Comprehensive Guide</Button>
+                    <Button variant="outline" className="text-primary border-primary hover:bg-primary/5 shadow-sm cs-header-animate font-bold uppercase tracking-tighter" onClick={() => setIsGuideOpen(true)}><HelpCircle className="mr-2 h-4 w-4" /> Operational Standards</Button>
                 </div>
-                <div className="border rounded-lg overflow-hidden shadow-sm cs-table-animate">
+                <div className="border rounded-[24px] overflow-hidden shadow-2xl bg-background/80 backdrop-blur-xl cs-table-animate">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-muted/50">
+                            <TableRow className="bg-muted/50 border-b-2">
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
-                                <TableHead className="font-bold">CS Number</TableHead>
-                                <TableHead className="font-bold">Demand Note</TableHead>
-                                <TableHead className="font-bold">Awarded Vendor</TableHead>
-                                <TableHead className="font-bold">Status</TableHead>
-                                <TableHead className="w-[140px] text-right font-bold">Actions</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">Comparative Statement Identity</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">Demand Note Ref</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">Awarded Vendor</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">Workflow Status</TableHead>
+                                <TableHead className="w-[140px] text-right font-black uppercase text-[10px] tracking-widest">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-10">Loading statements...</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /><p className="text-xs font-bold text-muted-foreground animate-pulse">Synchronizing Analytical Registry...</p></div></TableCell></TableRow>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((cs) => {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
@@ -501,31 +509,44 @@ export function ComparativeStatementTable() {
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
 
                                     return (
-                                        <TableRow key={cs.id} className={cn("hover:bg-muted/30 transition-colors cs-row-animate", isWaitingForMe && "bg-orange-500/5")}>
+                                        <TableRow key={cs.id} className={cn("hover:bg-primary/[0.02] transition-all duration-500 cs-row-animate group", isWaitingForMe && "bg-orange-500/5")}>
                                             <TableCell><Checkbox checked={selectedRows.includes(cs.id)} onCheckedChange={() => setSelectedRows(prev => prev.includes(cs.id) ? prev.filter(r => r !== cs.id) : [...prev, cs.id])} disabled={!isApprovable} /></TableCell>
-                                            <TableCell><div className="flex items-center gap-1 font-medium"><span>{cs.csNumber}</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy CS#</TooltipContent></Tooltip></div></TableCell>
-                                            <TableCell><span>{dn?.demandNoteNumber || 'N/A'}</span></TableCell>
-                                            <TableCell><div className="flex flex-col"><span className="text-xs font-bold text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'N/A'}</span>{cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground">{new Date(cs.vendorSelectionDate).toLocaleString()}</span>}</div></TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'}>{getCSStatusText(cs)}</Badge>
-                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[10px]">⚠️ Award Vendor</Badge>}
-                                                    {needsApproval && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[10px]">⚠️ Approve Audit</Badge>}
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-1 font-black text-sm text-primary">
+                                                        <span>{cs.csNumber}</span>
+                                                        <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { navigator.clipboard.writeText(cs.csNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button>
+                                                    </div>
+                                                    <span className="text-[10px] text-muted-foreground font-bold">{new Date(cs.csDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell><Badge variant="outline" className="font-bold border-primary/10">{dn?.demandNoteNumber || 'N/A'}</Badge></TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'Pending Selection'}</span>
+                                                    {cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground italic font-medium">Awarded: {new Date(cs.vendorSelectionDate).toLocaleString()}</span>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <Badge variant={cs.approvalStatus === 1 ? 'default' : 'secondary'} className="font-black uppercase text-[9px] tracking-widest">{getCSStatusText(cs)}</Badge>
+                                                    {needsVendorSelection && <Badge className="bg-orange-500 animate-pulse text-white whitespace-nowrap text-[9px] font-black h-4 px-2">⚠️ Award Vendor</Badge>}
+                                                    {needsApproval && <Badge className="bg-blue-600 animate-pulse text-white whitespace-nowrap text-[9px] font-black h-4 px-2">⚠️ Approve Audit</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    {needsVendorSelection && <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 animate-pulse" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-4 w-4" /></Button>}
-                                                    {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-4 w-4" /></Button>}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4 text-blue-500"/></Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}><Trash2 className="h-4 w-4"/></Button>
+                                                    {needsVendorSelection && <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-500 hover:bg-blue-500/10 rounded-full animate-pulse border border-blue-500/20 shadow-lg" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}><Hand className="h-5 w-5" /></Button>}
+                                                    {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && <Button variant="ghost" size="icon" className="h-9 w-9 text-green-600 hover:bg-green-600/10 rounded-full border border-green-600/20 shadow-lg" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}><FilePlus className="h-5 w-5" /></Button>}
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-500" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}><Info className="h-4 w-4"/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" asChild><Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link></Button>
+                                                    <Button variant="destructive" size="icon" className="h-8 w-8 hover:scale-110 transition-transform" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}><Trash2 className="h-4 w-4"/></Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">No Comparative Statements match your search criteria or access rights.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium"><div className="flex flex-col items-center gap-3 opacity-20"><BarChart2 className="h-12 w-12" /><p className="font-black uppercase text-xs tracking-[0.2em]">Zero Records in Analytical selection</p></div></TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
@@ -538,18 +559,20 @@ export function ComparativeStatementTable() {
 
             <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
                 <DialogContent className="sm:max-w-md animate-dialog-in">
-                    <DialogHeader><DialogTitle>Approval Flow: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle className="text-xl font-black uppercase tracking-tighter text-primary">CS Audit Chain: {selectedCsForStatus?.csNumber}</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = (employees || []).find(e => e.id === step.approverId);
                             const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 2;
                             return (
-                                <li key={index} className="flex items-start gap-4 list-none">
-                                    {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
-                                    <div className="flex-1 flex gap-3 items-center">
-                                        <Avatar className="h-10 w-10 border"><AvatarFallback>{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
-                                        <div><p className="font-semibold">{step.stepName}</p><p className="text-sm">{approver?.fullName}</p>{historyEntry && <p className="text-[10px] text-muted-foreground">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
+                                <li key={index} className="flex items-start gap-4 list-none group">
+                                    <div className="shrink-0 mt-1">
+                                        {historyEntry ? <CheckCircle className="h-6 w-6 text-green-500" /> : (isPending ? <Hourglass className="h-6 w-6 text-orange-500 animate-spin" /> : <MoreHorizontal className="h-6 w-6 text-muted-foreground" />)}
+                                    </div>
+                                    <div className="flex-1 flex gap-3 items-center bg-muted/20 p-2 rounded-xl border border-primary/5 group-hover:border-primary/20 transition-colors">
+                                        <Avatar className="h-9 w-9 border-2 border-primary/5"><AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">{approver?.fullName?.charAt(0) || '?'}</AvatarFallback></Avatar>
+                                        <div><p className="font-black uppercase text-[10px] tracking-widest text-primary leading-none mb-1">{step.stepName}</p><p className="text-xs font-bold leading-tight">{approver?.fullName}</p>{historyEntry && <p className="text-[9px] text-muted-foreground mt-1 font-medium">{new Date(historyEntry.timestamp).toLocaleString()}</p>}</div>
                                     </div>
                                 </li>
                             );
