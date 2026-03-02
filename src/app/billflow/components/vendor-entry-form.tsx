@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, File as FileIcon, 
     User, Mail, Phone, MapPin, Building, Briefcase, Hash, DollarSign, Tag, 
-    ShieldCheck, Globe, CheckCircle2, Milestone, ListOrdered, Contact, AlertTriangle
+    ShieldCheck, Globe, CheckCircle2, Milestone, ListOrdered, Contact, AlertTriangle, Clock
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -33,7 +33,7 @@ import { collection } from 'firebase/firestore';
 
 import type { VendorCategory } from './vendor-category-table';
 import type { VendorNatureOfBusiness } from './vendor-nature-of-business-table';
-import { Employee } from '@/app/user-management/components/employee-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 
 type SuppliedItem = {
