@@ -16,15 +16,17 @@ import { ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
 import type { Driver } from '../../components/driver-entry-form';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
 export default function PreventiveMaintenanceDuePage() {
     const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
     const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
     const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
     const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+    const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
     
     const [days, setDays] = useState(30);
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
@@ -61,6 +63,7 @@ export default function PreventiveMaintenanceDuePage() {
             })
             .map(rec => {
                 const vehicle = vehicles.find(v => v.id === rec.vehicleId);
+                const brand = vehicleBrands.find(b => b.id === vehicle?.brandId);
                 const maintenanceType = maintenanceTypes.find(mt => mt.id === rec.maintenanceTypeId);
                 const driver = vehicle ? getCurrentDriver(vehicle) : null;
                 return { 
@@ -68,6 +71,7 @@ export default function PreventiveMaintenanceDuePage() {
                     dueDate: parseISO(rec.upcomingServiceDate), 
                     daysUntilDue: differenceInDays(parseISO(rec.upcomingServiceDate), today),
                     vehicle,
+                    brand,
                     maintenanceType,
                     driver,
                 };
@@ -178,7 +182,7 @@ export default function PreventiveMaintenanceDuePage() {
                                         <TableRow key={rec.id}>
                                             <TableCell>
                                                 <Link href={`/vehicle-management/vehicles/${rec.vehicleId}`} className="font-medium text-primary hover:underline">
-                                                    {rec.vehicle?.make} {rec.vehicle?.model} ({rec.vehicle?.registrationNumber})
+                                                    {rec.brand?.name || ''} {rec.vehicle?.model} ({rec.vehicle?.registrationNumber})
                                                 </Link>
                                             </TableCell>
                                             <TableCell>{rec.driver?.name || 'N/A'}</TableCell>

@@ -1,7 +1,6 @@
-
 import React from 'react';
 import type { Accident } from './accident-entry-form';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Route as RouteType } from './route-table';
@@ -10,6 +9,7 @@ import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
 import type { FaultStatus } from './fault-status-table';
 import type { ServiceCenter } from './service-center-table';
+import type { VehicleBrand } from './vehicle-brand-table';
 import Image from 'next/image';
 import type { OrganizationSettings } from '@/app/settings/page';
 
@@ -102,15 +102,17 @@ interface AccidentPrintLayoutProps {
   severityLevels: SeverityLevel[];
   faultStatuses: FaultStatus[];
   repairedBy: ServiceCenter[];
+  vehicleBrands: VehicleBrand[];
   orgSettings: OrganizationSettings;
 }
 
 export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({ 
-    accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, repairedBy, orgSettings 
+    accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, repairedBy, vehicleBrands, orgSettings 
 }) => {
     let pageCounter = 1;
 
     const vehicle = vehicles.find(v => v.id === accident.vehicleId);
+    const brand = vehicleBrands.find(b => b.id === vehicle?.brandId);
     const driver = drivers.find(d => d.id === accident.driverId);
     const employee = employees.find(e => e.id === accident.employeeId);
     const route = routes.find(r => r.id === accident.routeId);
@@ -128,7 +130,7 @@ export const AccidentPrintLayout: React.FC<AccidentPrintLayoutProps> = ({
                     <div>
                         <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Incident Details</h4>
                         <div className="grid grid-cols-2 gap-x-6">
-                            <InfoRow label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
+                            <InfoRow label="Vehicle" value={vehicle ? `${brand?.name || ''} ${vehicle.model} (${vehicle.registrationNumber})` : 'N/A'} />
                             <InfoRow label="Driver" value={driver?.name} />
                             <InfoRow label="Reporting Employee" value={employee?.fullName} />
                             <InfoRow label="Accident Date & Time" value={`${accident.accidentDate} ${accident.accidentTime}`} />

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +9,8 @@ import { DollarSign, Wrench, Package } from 'lucide-react';
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
 import { isWithinInterval, parseISO } from 'date-fns';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useReportsData } from '../../components/vehicle-management-provider';
 
@@ -20,12 +20,12 @@ interface ReportData {
     totalPartsCost: number;
     totalExpensesCost: number;
     costByMaintenanceType: { name: string; cost: number; count: number }[];
-    costByVehicle: { reg: string; make: string; model: string; cost: number; count: number }[];
+    costByVehicle: { reg: string; brand: string; model: string; cost: number; count: number }[];
 }
 
 export default function MaintenanceCostSummaryPage() {
     const reportsData = useReportsData();
-    const { maintenanceRecords: records = [], maintenanceTypes = [], vehicles = [] } = reportsData?.data || {};
+    const { maintenanceRecords: records = [], maintenanceTypes = [], vehicles = [], vehicleBrands = [] } = reportsData?.data || {};
     const { isLoading } = reportsData || { isLoading: true };
 
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -38,10 +38,10 @@ export default function MaintenanceCostSummaryPage() {
 
 
     const handleGenerateReport = () => {
-        let filteredRecords = records;
+        let filteredRecords = records as MaintenanceRecord[];
 
         if (dateRange?.from && dateRange?.to) {
-            filteredRecords = records.filter(rec => {
+            filteredRecords = filteredRecords.filter(rec => {
                 if (!rec.serviceDate) return false;
                 const serviceDate = parseISO(rec.serviceDate);
                 return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
@@ -51,7 +51,7 @@ export default function MaintenanceCostSummaryPage() {
         let totalPartsCost = 0;
         let totalExpensesCost = 0;
         const costByMaintenanceType: { [key: string]: { name: string; cost: number; count: number } } = {};
-        const costByVehicle: { [key: string]: { reg: string; make: string; model: string; cost: number; count: number } } = {};
+        const costByVehicle: { [key: string]: { reg: string; brand: string; model: string; cost: number; count: number } } = {};
 
         filteredRecords.forEach(rec => {
             const partsCost = rec.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
@@ -64,7 +64,7 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Maintenance Type
             if (rec.maintenanceTypeId) {
                 if (!costByMaintenanceType[rec.maintenanceTypeId]) {
-                    const type = maintenanceTypes.find(t => t.id === rec.maintenanceTypeId);
+                    const type = maintenanceTypes.find((t: MaintenanceType) => t.id === rec.maintenanceTypeId);
                     costByMaintenanceType[rec.maintenanceTypeId] = { name: type?.name || 'Unknown', cost: 0, count: 0 };
                 }
                 costByMaintenanceType[rec.maintenanceTypeId].cost += recordTotalCost;
@@ -74,8 +74,9 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Vehicle
             if (rec.vehicleId) {
                 if (!costByVehicle[rec.vehicleId]) {
-                    const vehicle = vehicles.find(v => v.id === rec.vehicleId);
-                    costByVehicle[rec.vehicleId] = { reg: vehicle?.registrationNumber || 'Unknown', make: vehicle?.make || '', model: vehicle?.model || '', cost: 0, count: 0 };
+                    const vehicle = vehicles.find((v: Vehicle) => v.id === rec.vehicleId);
+                    const brand = vehicleBrands.find((b: VehicleBrand) => b.id === vehicle?.brandId);
+                    costByVehicle[rec.vehicleId] = { reg: vehicle?.registrationNumber || 'Unknown', brand: brand?.name || '', model: vehicle?.model || '', cost: 0, count: 0 };
                 }
                 costByVehicle[rec.vehicleId].cost += recordTotalCost;
                 costByVehicle[rec.vehicleId].count++;
@@ -164,7 +165,7 @@ export default function MaintenanceCostSummaryPage() {
                                         <TableHeader><TableRow><TableHead>Vehicle</TableHead><TableHead>Jobs</TableHead><TableHead className="text-right">Total Cost</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {reportData.costByVehicle.map(item => (
-                                                <TableRow key={item.reg}><TableCell>{item.make} {item.model} ({item.reg})</TableCell><TableCell>{item.count}</TableCell><TableCell className="text-right">{formatCurrency(item.cost)}</TableCell></TableRow>
+                                                <TableRow key={item.reg}><TableCell>{item.brand} {item.model} ({item.reg})</TableCell><TableCell>{item.count}</TableCell><TableCell className="text-right">{formatCurrency(item.cost)}</TableCell></TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>

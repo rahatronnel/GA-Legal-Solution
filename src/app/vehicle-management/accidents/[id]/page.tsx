@@ -22,6 +22,7 @@ import type { AccidentType } from '../../components/accident-type-table';
 import type { SeverityLevel } from '../../components/severity-level-table';
 import type { FaultStatus } from '../../components/fault-status-table';
 import type { ServiceCenter } from '../../components/service-center-table';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
 const documentCategories: Record<keyof Accident['documents'], string> = {
     accidentPhotos: 'Accident Photos',
@@ -93,6 +94,7 @@ export default function AccidentProfilePage() {
   const severityLevels = (vm?.data.severityLevels || []) as SeverityLevel[];
   const faultStatuses = (vm?.data.faultStatuses || []) as FaultStatus[];
   const serviceCenters = (vm?.data.serviceCenters || []) as ServiceCenter[];
+  const vehicleBrands = (vm?.data.vehicleBrands || []) as VehicleBrand[];
   const isLoading = vm?.isLoading || false;
 
 
@@ -102,10 +104,12 @@ export default function AccidentProfilePage() {
   }, [id, accidents]);
 
 
-  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy } = useMemo(() => {
+  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy, vehicleBrand } = useMemo(() => {
     if (!accident) return {};
+    const v = vehicles.find((v: Vehicle) => v.id === accident.vehicleId);
     return {
-        vehicle: vehicles.find((v: Vehicle) => v.id === accident.vehicleId),
+        vehicle: v,
+        vehicleBrand: vehicleBrands.find((b: VehicleBrand) => b.id === v?.brandId),
         driver: drivers.find((d: Driver) => d.id === accident.driverId),
         employee: employees.find((e: Employee) => e.id === accident.employeeId),
         route: routes.find((r: RouteType) => r.id === accident.routeId),
@@ -115,7 +119,7 @@ export default function AccidentProfilePage() {
         faultStatus: faultStatuses.find((fs: FaultStatus) => fs.id === accident.faultStatusId),
         repairedBy: serviceCenters.find((sc: ServiceCenter) => sc.id === accident.repairedById)
     };
-  }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters]);
+  }, [accident, vehicles, drivers, employees, routes, trips, accidentTypes, severityLevels, faultStatuses, serviceCenters, vehicleBrands]);
   
 
   if (isLoading) {
@@ -155,7 +159,7 @@ export default function AccidentProfilePage() {
             <Card>
                 <CardHeader><CardTitle>Key Details</CardTitle></CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                    <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicle.make} ${vehicle.model}` : ''} />
+                    <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicleBrand?.name || ''} ${vehicle.model}` : ''} />
                     <InfoItem icon={User} label="Driver" value={driver?.name} />
                     <InfoItem icon={Calendar} label="Date & Time" value={`${accident.accidentDate} ${accident.accidentTime}`} />
                     <InfoItem icon={Tag} label="Type" value={accidentType?.name} />

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import Image from 'next/image';
 import type { Trip } from './trip-entry-form';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
@@ -11,6 +10,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import type { ExpenseType } from './expense-type-table';
 import { ArrowRight } from 'lucide-react';
 import type { OrganizationSettings } from '@/app/settings/page';
+import type { VehicleBrand } from './vehicle-brand-table';
 
 interface PrintHeaderProps {
   orgSettings: OrganizationSettings;
@@ -44,7 +44,7 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
 const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6">
+        <div className={`flex-grow pt-6`}>
             {children}
         </div>
         <PrintFooter pageNumber={pageNumber} />
@@ -99,13 +99,15 @@ interface TripPrintLayoutProps {
   purposes: TripPurpose[];
   locations: Location[];
   expenseTypes: ExpenseType[];
+  vehicleBrands: VehicleBrand[];
   orgSettings: OrganizationSettings;
 }
 
-export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations, expenseTypes, orgSettings }) => {
+export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles, drivers, purposes, locations, expenseTypes, vehicleBrands, orgSettings }) => {
     let pageCounter = 1;
 
     const vehicle = vehicles.find(v => v.id === trip.vehicleId);
+    const brand = vehicleBrands.find(b => b.id === vehicle?.brandId);
     const driver = drivers.find(d => d.id === trip.driverId);
     const purpose = purposes.find(p => p.id === trip.purposeId);
     const totalDistance = (trip.endingMeter > trip.startingMeter) ? trip.endingMeter - trip.startingMeter : 0;
@@ -121,7 +123,7 @@ export const TripPrintLayout: React.FC<TripPrintLayoutProps> = ({ trip, vehicles
                 <h2 className="text-xl font-bold text-center mb-4">Trip Information - {trip.tripId}</h2>
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 className="text-lg font-bold">{vehicle?.make} {vehicle?.model} ({vehicle?.registrationNumber})</h3>
+                        <h3 className="text-lg font-bold">{brand?.name || ''} {vehicle?.model} ({vehicle?.registrationNumber})</h3>
                         <p className="text-sm text-gray-600">Driven by: {driver?.name}</p>
                     </div>
                     <Badge variant={getStatusVariant(trip.tripStatus)}>{trip.tripStatus}</Badge>

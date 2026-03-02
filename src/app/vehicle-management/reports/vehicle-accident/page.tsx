@@ -17,13 +17,15 @@ import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 
 import type { Accident } from '../../components/accident-entry-form';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { Driver } from '../../components/driver-entry-form';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
 export default function VehicleAccidentReportPage() {
     const [accidents] = useLocalStorage<Accident[]>('accidents', []);
     const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
     const [drivers] = useLocalStorage<Driver[]>('drivers', []);
+    const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -45,6 +47,7 @@ export default function VehicleAccidentReportPage() {
 
         const data = filteredVehicles.map(vehicle => {
             let vehicleAccidents = accidents.filter(acc => acc.vehicleId === vehicle.id);
+            const brand = vehicleBrands.find(b => b.id === vehicle.brandId);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleAccidents = vehicleAccidents.filter(acc => {
@@ -53,7 +56,7 @@ export default function VehicleAccidentReportPage() {
                 });
             }
             
-            return { ...vehicle, accidents: vehicleAccidents };
+            return { ...vehicle, brandName: brand?.name || '', accidents: vehicleAccidents };
         }).filter(v => v.accidents.length > 0);
 
         setReportData(data);
@@ -115,7 +118,7 @@ export default function VehicleAccidentReportPage() {
                                 <AccordionItem value={vehicle.id} key={vehicle.id}>
                                     <AccordionTrigger>
                                         <div className="flex justify-between w-full pr-4">
-                                            <span>{vehicle.make} {vehicle.model} ({vehicle.registrationNumber})</span>
+                                            <span>{vehicle.brandName} {vehicle.model} ({vehicle.registrationNumber})</span>
                                             <span className="text-sm text-muted-foreground">{vehicle.accidents.length} accident(s)</span>
                                         </div>
                                     </AccordionTrigger>

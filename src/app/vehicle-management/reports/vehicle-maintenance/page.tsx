@@ -17,13 +17,15 @@ import { ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import type { MaintenanceRecord } from '../../components/maintenance-entry-form';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { MaintenanceType } from '../../components/maintenance-type-table';
+import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
 export default function VehicleMaintenanceReportPage() {
     const [maintenanceRecords] = useLocalStorage<MaintenanceRecord[]>('maintenanceRecords', []);
     const [vehicles] = useLocalStorage<Vehicle[]>('vehicles', []);
     const [maintenanceTypes] = useLocalStorage<MaintenanceType[]>('maintenanceTypes', []);
+    const [vehicleBrands] = useLocalStorage<VehicleBrand[]>('vehicleBrands', []);
     
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -44,6 +46,7 @@ export default function VehicleMaintenanceReportPage() {
 
         const data = filteredVehicles.map(vehicle => {
             let vehicleMaintenance = maintenanceRecords.filter(rec => rec.vehicleId === vehicle.id);
+            const brand = vehicleBrands.find(b => b.id === vehicle.brandId);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleMaintenance = vehicleMaintenance.filter(rec => {
@@ -51,7 +54,7 @@ export default function VehicleMaintenanceReportPage() {
                     return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
                 });
             }
-            return { ...vehicle, maintenance: vehicleMaintenance };
+            return { ...vehicle, brandName: brand?.name || '', maintenance: vehicleMaintenance };
         }).filter(v => v.maintenance.length > 0);
 
         setReportData(data);
@@ -116,7 +119,7 @@ export default function VehicleMaintenanceReportPage() {
                                 <AccordionItem value={vehicle.id} key={vehicle.id}>
                                     <AccordionTrigger>
                                         <div className="flex justify-between w-full pr-4">
-                                            <span>{vehicle.make} {vehicle.model} ({vehicle.registrationNumber})</span>
+                                            <span>{vehicle.brandName} {vehicle.model} ({vehicle.registrationNumber})</span>
                                             <span className="text-sm text-muted-foreground">{vehicle.maintenance.length} job(s)</span>
                                         </div>
                                     </AccordionTrigger>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -331,7 +330,7 @@ export function BlueprintDialog({
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.2 Multi-Stage Audit</p>
                                                 <p className="text-[10px] leading-relaxed font-bold">MRR report vetted by GP Concern and Requisitioning Department Manager before accounting entry.</p>
                                             </div>
-                                            <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
+                                            <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
                                                 <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains &quot;Open&quot; without confirmant timestamp.</p>
                                             </div>
@@ -667,6 +666,24 @@ export function BlueprintDialog({
                                                 </div>
                                             </div>
                                         </div>
+                                        
+                                        <Card className="border-primary/10 shadow-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader className="bg-slate-100">
+                                                    <TableRow className="h-8">
+                                                        <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
+                                                        <TableHead className="font-black uppercase text-[9px]">Administrative</TableHead>
+                                                        <TableHead className="font-black uppercase text-[9px]">Operational</TableHead>
+                                                        <TableHead className="font-black uppercase text-[9px]">Restrictive Filter</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Demand Notes</TableCell><TableCell>Superadmin</TableCell><TableCell>All Personnel</TableCell><TableCell className="italic font-bold">Self-Only Filter</TableCell></TableRow>
+                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">GP Desk</TableCell><TableCell>GPO</TableCell><TableCell>GP Concerns</TableCell><TableCell className="italic font-bold">Assigned-Only</TableCell></TableRow>
+                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell className="text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </Card>
                                     </BlueprintSection>
                                 </TabsContent>
 
