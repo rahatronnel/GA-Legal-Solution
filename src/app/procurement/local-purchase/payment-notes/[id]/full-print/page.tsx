@@ -94,6 +94,7 @@ export default function PNFullPrintPage() {
                     const element = document.querySelector('.payment-bundle-container');
                     if (element) {
                         try {
+                            // @ts-ignore
                             const html2pdf = (await import('html2pdf.js')).default;
                             const opt = {
                                 margin: 0,
