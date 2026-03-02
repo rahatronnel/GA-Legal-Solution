@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -43,12 +42,12 @@ export function VendorTable() {
   const [currentItem, setCurrentItem] = useState<Partial<Vendor> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const safeVendors = useMemo(() => Array.isArray(vendors) ? vendors : [], [vendors]);
+  const safeVendors = useMemo(() => Array.isArray(vendors) ? vendors as Vendor[] : [], [vendors]);
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return safeVendors;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return safeVendors.filter(p => 
+    return safeVendors.filter((p: Vendor) => 
         (p.vendorName && p.vendorName.toLowerCase().includes(lowercasedTerm)) ||
         (p.vendorId && p.vendorId.toLowerCase().includes(lowercasedTerm)) ||
         (p.email && p.email.toLowerCase().includes(lowercasedTerm)) ||
@@ -157,12 +156,10 @@ export function VendorTable() {
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
 
-          const requiredHeaders = ['vendorName', 'vendorType', 'vendorCategoryCode', 'email'];
-          const headers = Object.keys(json[0] || {});
-          if (!requiredHeaders.every(h => headers.includes(h))) {
-            throw new Error(`Invalid Excel format. Required columns are: ${requiredHeaders.join(', ')}.`);
+          if (!json[0] || typeof json[0] !== "object" || !("vendorName" in json[0]) || !("vendorType" in json[0]) || !("vendorCategoryCode" in json[0]) || !("email" in json[0])) {
+             throw new Error('Invalid Excel format. Required columns are: vendorName, vendorType, vendorCategoryCode, email.');
           }
 
           toast({ title: 'Upload Started', description: `Processing ${json.length} records. This may take a moment.` });
@@ -170,53 +167,57 @@ export function VendorTable() {
           for (const item of json) {
             if (!item.vendorName || !item.email) continue;
             
-            const category = vendorCategories.find(c => c.code === item.vendorCategoryCode);
-            const nature = vendorNatureOfBusiness.find(n => n.code === item.natureOfBusinessCode);
+            const category = (vendorCategories as VendorCategory[]).find((c: VendorCategory) => c.code === String(item.vendorCategoryCode || '').trim());
+            const nature = (vendorNatureOfBusiness as VendorNatureOfBusiness[]).find((n: VendorNatureOfBusiness) => n.code === String(item.natureOfBusinessCode || '').trim());
 
             const newVendor: Partial<Omit<Vendor, 'id'>> = {
                 vendorId: `V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-                vendorName: item.vendorName,
-                vendorShortName: item.vendorShortName || '',
-                vendorType: item.vendorType || 'Company',
+                vendorName: String(item.vendorName || '').trim(),
+                vendorShortName: String(item.vendorShortName || '').trim(),
+                vendorType: (item.vendorType || 'Company') as 'Individual' | 'Company',
                 vendorCategoryId: category?.id || '',
-                vendorSubCategory: item.vendorSubCategory || '',
+                vendorSubCategory: String(item.vendorSubCategory || '').trim(),
                 natureOfBusinessId: nature?.id || '',
                 yearsOfExperience: Number(item.yearsOfExperience) || 0,
-                contactPersonName: item.contactPersonName || '',
-                contactPersonDesignation: item.contactPersonDesignation || '',
-                mobileNumber: String(item.mobileNumber || ''),
-                alternateMobileNumber: String(item.alternateMobileNumber || ''),
-                email: item.email,
-                officePhone: String(item.officePhone || ''),
-                whatsAppNumber: String(item.whatsAppNumber || ''),
-                officeAddress: item.officeAddress || '',
-                factoryAddress: item.factoryAddress || '',
-                country: item.country || '',
-                city: item.city || '',
-                tradeLicenseNumber: item.tradeLicenseNumber || '',
-                tradeLicenseExpiryDate: item.tradeLicenseExpiryDate instanceof Date ? item.tradeLicenseExpiryDate.toISOString().split('T')[0] : '',
-                tinNumber: item.tinNumber || '',
-                vatBinNumber: item.vatBinNumber || '',
-                nidOrCompanyRegNumber: item.nidOrCompanyRegNumber || '',
-                incorporationDate: item.incorporationDate instanceof Date ? item.incorporationDate.toISOString().split('T')[0] : '',
-                bankName: item.bankName || '',
-                branchName: item.branchName || '',
-                accountName: item.accountName || '',
-                accountNumber: String(item.accountNumber || ''),
-                routingNumber: String(item.routingNumber || ''),
-                paymentMethod: item.paymentMethod || '',
-                mobileBankingProvider: item.mobileBankingProvider || '',
-                paymentTerms: item.paymentTerms || '',
+                contactPersonName: String(item.contactPersonName || '').trim(),
+                contactPersonDesignation: String(item.contactPersonDesignation || '').trim(),
+                mobileNumber: String(item.mobileNumber || '').trim(),
+                alternateMobileNumber: String(item.alternateMobileNumber || '').trim(),
+                email: String(item.email || '').trim(),
+                officePhone: String(item.officePhone || '').trim(),
+                whatsAppNumber: String(item.whatsAppNumber || '').trim(),
+                officeAddress: String(item.officeAddress || '').trim(),
+                factoryAddress: String(item.factoryAddress || '').trim(),
+                country: String(item.country || '').trim(),
+                city: String(item.city || '').trim(),
+                tradeLicenseNumber: String(item.tradeLicenseNumber || '').trim(),
+                tradeLicenseExpiryDate: String(item.tradeLicenseExpiryDate || '').trim(),
+                tinNumber: String(item.tinNumber || '').trim(),
+                vatBinNumber: String(item.vatBinNumber || '').trim(),
+                nidOrCompanyRegNumber: String(item.nidOrCompanyRegNumber || '').trim(),
+                incorporationDate: String(item.incorporationDate || '').trim(),
+                bankName: String(item.bankName || '').trim(),
+                branchName: String(item.branchName || '').trim(),
+                accountName: String(item.accountName || '').trim(),
+                accountNumber: String(item.accountNumber || '').trim(),
+                routingNumber: String(item.routingNumber || '').trim(),
+                paymentMethod: (item.paymentMethod || '') as 'Bank' | 'Cheque' | 'Mobile Banking' | '',
+                mobileBankingProvider: String(item.mobileBankingProvider || '').trim(),
+                paymentTerms: String(item.paymentTerms || '').trim(),
                 creditLimit: Number(item.creditLimit) || 0,
-                currency: item.currency || 'USD',
+                currency: String(item.currency || 'USD').trim(),
                 taxDeductionApplicable: ['yes', 'true', '1'].includes(String(item.taxDeductionApplicable).toLowerCase()),
                 vatApplicable: ['yes', 'true', '1'].includes(String(item.vatApplicable).toLowerCase()),
                 suppliedItems: [],
                 documents: {
-                    tradeLicense: '', bankChequeCopy: '', contractAgreement: '', 
-                    vatCertificate: '', complianceCertificates: '', other: ''
+                    tradeLicense: [], 
+                    bankChequeCopy: [], 
+                    contractAgreement: [], 
+                    vatCertificate: [], 
+                    complianceCertificates: [], 
+                    other: []
                 },
-                loginId: item.email,
+                loginId: String(item.email || '').trim(),
                 createdDate: new Date().toISOString(),
                 vendorStatus: 'Pending',
             };
