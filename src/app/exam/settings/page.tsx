@@ -17,7 +17,7 @@ import {
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Upload, Download, FileSpreadsheet, Cpu, Plus
+    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -253,7 +253,6 @@ export default function ArsSettingsPage() {
                                 </div>
                             </div>
 
-                            {/* Entry Zone: This is where you entry questions */}
                             <div className="bg-black/20 p-10 space-y-8">
                                 <div className="flex flex-col md:row items-center justify-between gap-6 md:flex-row">
                                     <div className="space-y-1">
@@ -281,7 +280,6 @@ export default function ArsSettingsPage() {
                                     </div>
                                 </div>
 
-                                {/* Current Registry Preview */}
                                 {examQuestions.length > 0 ? (
                                     <div className="bg-black/40 rounded-[32px] border border-white/5 divide-y divide-white/5 shadow-inner overflow-hidden">
                                         <div className="bg-white/5 px-6 py-3">
@@ -316,7 +314,7 @@ export default function ArsSettingsPage() {
                                     <div className="p-20 text-center border-4 border-dashed border-white/5 rounded-[40px] opacity-30">
                                         <Cpu className="h-16 w-16 mx-auto mb-4 animate-pulse" />
                                         <p className="text-sm font-black uppercase tracking-[0.2em]">Ready for Interaction Logic Injection</p>
-                                        <p className="text-xs font-medium mt-2">Use the buttons above to add your 10 questions.</p>
+                                        <p className="text-xs font-medium mt-2">Use the buttons above to add your questions.</p>
                                     </div>
                                 )}
                             </div>
@@ -326,7 +324,7 @@ export default function ArsSettingsPage() {
                 {exams.length === 0 && (
                     <div className="flex flex-col items-center justify-center p-32 text-center border-4 border-dashed border-white/5 rounded-[60px] bg-white/[0.01]">
                         <div className="p-8 rounded-full bg-primary/10 mb-8">
-                            <Layers className="h-24 w-24 text-primary animate-bounce" />
+                            <GraduationCap className="h-24 w-24 text-primary animate-bounce" />
                         </div>
                         <h2 className="text-4xl font-black uppercase tracking-tighter text-white mb-4 leading-none">Registry Empty</h2>
                         <p className="text-slate-400 font-medium max-w-md mb-10 leading-relaxed">To start a seminar, first register a new session. You can then inject your question logic and go live with the QR code.</p>
