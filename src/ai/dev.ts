@@ -1,2 +1,1 @@
-import { config } from 'dotenv';
-config();
+// Redundant dotenv configuration removed as Next.js automatically handles .env files.
