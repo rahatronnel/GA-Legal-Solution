@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -62,6 +61,9 @@ const moduleComponents: { [key:string]: React.ComponentType } = {
     '/procurement/local-purchase/payment-notes/[id]': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/page'), { ssr: false }),
     '/procurement/local-purchase/payment-notes/[id]/print': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/print/page'), { ssr: false }),
     '/procurement/local-purchase/payment-notes/[id]/full-print': dynamic(() => import('./procurement/local-purchase/payment-notes/[id]/full-print/page'), { ssr: false }),
+    '/exam': dynamic(() => import('./exam/page'), { ssr: false }),
+    '/exam/settings': dynamic(() => import('./exam/settings/page'), { ssr: false }),
+    '/exam/results': dynamic(() => import('./exam/results/page'), { ssr: false }),
 };
 
 const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: OrganizationSettings | null, currentUserEmployee: Employee | null }) => {    
@@ -198,60 +200,23 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
             {/* DISCRETE PERIMETER ICON: Live Audience Response System (ARS) */}
             {showARS && (
                 <div className="fixed bottom-8 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 flex flex-col items-end gap-2">
-                    {isSuperAdmin && <span className="bg-primary text-primary-foreground text-[10px] font-black px-3 py-1 rounded-full shadow-2xl animate-bounce border-2 border-white/20">ARS MASTER CONSOLE</span>}
-                    <DropdownMenu>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        size="icon" 
-                                        className="h-16 w-16 rounded-full bg-primary border-4 border-white/20 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.5)] hover:scale-110 transition-all group outline-none ring-4 ring-primary/10"
-                                    >
-                                        <Radio className="h-8 w-8 text-primary-foreground animate-pulse" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest border-none">
-                                ARS Signal Hub
-                            </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end" side="top" className="w-72 mb-4 animate-scale-in rounded-3xl border-primary/20 bg-background/95 backdrop-blur-2xl shadow-2xl p-2">
-                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-4 py-3">Seminar Control Deck</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {isSuperAdmin && (
-                                <>
-                                    <DropdownMenuItem asChild className="rounded-2xl h-14 cursor-pointer focus:bg-primary focus:text-primary-foreground mb-1">
-                                        <Link href="/exam/settings" className="flex items-center w-full px-2">
-                                            <div className="p-2 bg-primary/10 rounded-lg mr-3 group-hover:bg-white/20"><ClipboardList className="h-5 w-5 text-primary group-hover:text-white" /></div>
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-xs uppercase tracking-tight">1. Exam & Survey Entry</span>
-                                                <span className="text-[9px] opacity-70">Define questions & logic</span>
-                                            </div>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild className="rounded-2xl h-14 cursor-pointer focus:bg-emerald-600 focus:text-white mb-1">
-                                        <Link href="/exam/settings" className="flex items-center w-full px-2">
-                                            <div className="p-2 bg-emerald-500/10 rounded-lg mr-3"><PlayCircle className="h-5 w-5 text-emerald-500 group-hover:text-white" /></div>
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-xs uppercase tracking-tight">2. Go Live (Broadcast)</span>
-                                                <span className="text-[9px] opacity-70">Push signal to audience</span>
-                                            </div>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                </>
-                            )}
-                            <DropdownMenuItem asChild className="rounded-2xl h-14 cursor-pointer focus:bg-blue-600 focus:text-white">
-                                <Link href="/exam/results" className="flex items-center w-full px-2">
-                                    <div className="p-2 bg-blue-500/10 rounded-lg mr-3"><BarChart2 className="h-5 w-5 text-blue-500 group-hover:text-white" /></div>
-                                    <div className="flex flex-col">
-                                        <span className="font-black text-xs uppercase tracking-tight">3. View Results</span>
-                                        <span className="text-[9px] opacity-70">Analyze performance matrix</span>
-                                    </div>
+                    {isSuperAdmin && <span className="bg-primary text-primary-foreground text-[10px] font-black px-3 py-1 rounded-full shadow-2xl animate-bounce border-2 border-white/20 uppercase tracking-widest">ARS Main Hub</span>}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                size="icon" 
+                                asChild
+                                className="h-16 w-16 rounded-full bg-primary border-4 border-white/20 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.5)] hover:scale-110 transition-all group outline-none ring-4 ring-primary/10"
+                            >
+                                <Link href="/exam">
+                                    <Radio className="h-8 w-8 text-primary-foreground animate-pulse" />
                                 </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest border-none">
+                            ARS Signal Hub
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
             )}
 
