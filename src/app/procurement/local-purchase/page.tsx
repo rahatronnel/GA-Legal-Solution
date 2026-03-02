@@ -194,7 +194,7 @@ function LocalPurchaseContent() {
             
             {/* THE MAGNETIC HOVER/ACTIVE PORTAL INDICATOR */}
             <div 
-                className="absolute h-14 w-14 rounded-full bg-primary/10 blur-xl transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0"
+                className="absolute h-14 w-14 rounded-full bg-primary/10 blur-xl transition-all duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] z-0"
                 style={{ 
                     left: `calc(${(displayPipelineIndex / (pipelineTabs.length - 1)) * 100}% - ${displayPipelineIndex * 4}px)`,
                     transform: 'translateX(0)' 
@@ -220,7 +220,7 @@ function LocalPurchaseContent() {
                 {/* UTILITY MAGNETIC SLIDING PILL */}
                 {displayUtilityIndex !== null && (
                     <div 
-                        className="absolute h-8 w-8 rounded-full bg-primary transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg"
+                        className="absolute h-8 w-8 rounded-full bg-primary transition-all duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg"
                         style={{ left: `calc(1px + ${displayUtilityIndex * 34}px)` }}
                     />
                 )}
