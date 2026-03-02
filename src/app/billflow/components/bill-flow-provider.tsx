@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 
 import type { Vendor } from './vendor-entry-form';
 import type { VendorCategory } from './vendor-category-table';
@@ -82,7 +82,7 @@ export const useMasterData = () => {
     return context;
 };
 
-const LegacyBillFlowContext = createContext<{ data: BillFlowData, isLoading: boolean } | null>(undefined);
+const LegacyBillFlowContext = createContext<{ data: BillFlowData, isLoading: boolean } | null>(null);
 
 export function LegacyBillFlowProvider({ children }: { children: React.ReactNode }) {
     const { user, isUserLoading } = useUser();

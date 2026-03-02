@@ -90,7 +90,7 @@ export function BillTable() {
   const safeBills = useMemo(() => Array.isArray(bills) ? bills as Bill[] : [], [bills]);
 
   const filteredItems = useMemo(() => {
-    return safeBills.filter(bill => {
+    return safeBills.filter((bill: Bill) => {
         const searchTermMatch = !searchTerm ||
             (bill.billId?.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (bill.billReferenceNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -118,7 +118,7 @@ export function BillTable() {
         const billingPeriodMatch = !billingPeriodRange?.from || (bill.billingPeriodFrom && isWithinInterval(parseISO(bill.billingPeriodFrom), { start: billingPeriodRange.from, end: billingPeriodRange.to || billingPeriodRange.from }));
 
         return searchTermMatch && vendorMatch && statusMatch && typeMatch && categoryMatch && departmentMatch && poMatch && woMatch && amountMatch && billDateMatch && billingPeriodMatch;
-    }).sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
+    }).sort((a: Bill, b: Bill) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime());
   }, [safeBills, searchTerm, vendorFilter, statusFilter, billTypeFilter, billCategoryFilter, departmentFilter, poFilter, woFilter, amountFilter, billDateRange, billingPeriodRange, vendors]);
 
   const clearFilters = () => {
@@ -319,7 +319,7 @@ export function BillTable() {
                       </TableRow>
                     ))
                 ) : filteredItems && filteredItems.length > 0 ? (
-                  filteredItems.map(bill => {
+                  filteredItems.map((bill: Bill) => {
                         const isPending = bill.approvalStatus !== 0 && bill.approvalStatus !== 1;
                         return (
                             <TableRow key={bill.id} data-state={selectedRows.includes(bill.id) ? "selected" : ""}>

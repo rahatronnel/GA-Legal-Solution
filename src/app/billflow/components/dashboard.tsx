@@ -13,6 +13,8 @@ import { Eye, FileText, Hourglass, CheckCircle, Users } from 'lucide-react';
 import { getBillStatusText } from '../lib/status-helper';
 import { format, isThisMonth } from 'date-fns';
 import type { Vendor } from './vendor-entry-form';
+import type { Bill } from './bill-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 const StatCard: React.FC<{ title: string, value: string | number, description?: string, icon: React.ElementType }> = ({ title, value, description, icon: Icon }) => (
     <Card>
@@ -39,19 +41,19 @@ export function BillFlowDashboard() {
 
     const currentUserEmployee = React.useMemo(() => {
         if (!user || !employees) return null;
-        return employees.find(e => e.email === user.email);
+        return (employees as Employee[]).find((e: Employee) => e.email === user.email);
     }, [user, employees]);
 
     const dashboardStats = React.useMemo(() => {
         const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
-        const allPendingBills = (bills || []).filter(b => b.approvalStatus !== 1 && b.approvalStatus !== 0);
+        const allPendingBills = (bills || []).filter((b: Bill) => b.approvalStatus !== 1 && b.approvalStatus !== 0);
         
         const myPendingBills = isSuperAdmin 
             ? allPendingBills 
-            : (allPendingBills || []).filter(b => b.currentApproverId === currentUserEmployee?.id);
+            : (allPendingBills || []).filter((b: Bill) => b.currentApproverId === currentUserEmployee?.id);
         
-        const completedThisMonth = (bills || []).filter(b => 
+        const completedThisMonth = (bills || []).filter((b: Bill) => 
             b.approvalStatus === 1 && 
             b.approvalHistory && 
             b.approvalHistory.length > 0 &&
@@ -60,12 +62,12 @@ export function BillFlowDashboard() {
 
         return {
             myPendingCount: myPendingBills.length,
-            myPendingAmount: myPendingBills.reduce((acc, b) => acc + b.totalPayableAmount, 0),
+            myPendingAmount: myPendingBills.reduce((acc: number, b: Bill) => acc + b.totalPayableAmount, 0),
             completedMonthCount: completedThisMonth.length,
-            completedMonthAmount: completedThisMonth.reduce((acc, b) => acc + b.totalPayableAmount, 0),
+            completedMonthAmount: completedThisMonth.reduce((acc: number, b: Bill) => acc + b.totalPayableAmount, 0),
             totalVendors: (vendors || []).length,
             myPendingBillsList: myPendingBills.slice(0, 5),
-            recentBills: (bills || []).sort((a,b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()).slice(0, 5)
+            recentBills: (bills || []).sort((a: Bill, b: Bill) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()).slice(0, 5)
         };
     }, [bills, vendors, currentUserEmployee, user]);
 
@@ -112,7 +114,7 @@ export function BillFlowDashboard() {
                             <Table>
                                 <TableHeader><TableRow><TableHead>Bill ID</TableHead><TableHead>Vendor</TableHead><TableHead>Amount</TableHead><TableHead className="text-right">View</TableHead></TableRow></TableHeader>
                                 <TableBody>
-                                    {dashboardStats.myPendingBillsList.map(bill => (
+                                    {dashboardStats.myPendingBillsList.map((bill: Bill) => (
                                         <TableRow key={bill.id}>
                                             <TableCell>{bill.billId}</TableCell>
                                             <TableCell>{getVendorName(bill.vendorId)}</TableCell>
@@ -134,7 +136,7 @@ export function BillFlowDashboard() {
                             <Table>
                                 <TableHeader><TableRow><TableHead>Bill ID</TableHead><TableHead>Vendor</TableHead><TableHead>Status</TableHead><TableHead className="text-right">View</TableHead></TableRow></TableHeader>
                                 <TableBody>
-                                    {dashboardStats.recentBills.map(bill => (
+                                    {dashboardStats.recentBills.map((bill: Bill) => (
                                         <TableRow key={bill.id}>
                                             <TableCell>{bill.billId}</TableCell>
                                             <TableCell>{getVendorName(bill.vendorId)}</TableCell>

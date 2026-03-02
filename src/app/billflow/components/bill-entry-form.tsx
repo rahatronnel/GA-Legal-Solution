@@ -88,7 +88,7 @@ export type Bill = {
   tdsPercentage: number;
   tdsAmount: number;
   otherCharges: number;
-  deductionAmount: number;
+  descriptionAmount: number;
   totalPayableAmount: number;
   billingPeriodFrom: string;
   billingPeriodTo: string;
@@ -110,13 +110,14 @@ export type Bill = {
   approvalStatus: number; 
   approvalHistory: any[];
   currentApproverId: string;
+  deductionAmount: number;
 };
 
-const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents' | 'approvalStatus' | 'approvalHistory' | 'currentApproverId' | 'approvalFlow'> = {
+const initialBillData: Omit<Bill, 'id' | 'billId' | 'items' | 'documents' | 'approvalStatus' | 'approvalHistory' | 'currentApproverId' | 'approvalFlow' | 'deductionAmount'> = {
   billReferenceNumber: '', vendorId: '', billTypeId: '', billCategoryId: '',
   billSubCategory: '', billDate: '', billReceivedDate: '', entryDate: '', entryBy: '',
   vatApplicable: false, vatPercentage: 0, vatAmount: 0, tdsApplicable: false,
-  tdsPercentage: 0, tdsAmount: 0, otherCharges: 0, deductionAmount: 0, totalPayableAmount: 0,
+  tdsPercentage: 0, tdsAmount: 0, otherCharges: 0, descriptionAmount: 0, totalPayableAmount: 0,
   billingPeriodFrom: '', billingPeriodTo: '', poNumber: '', woNumber: '', grnNumber: '',
   gatePassNumber: '', invoiceNumber: '', invoiceDate: '', departmentCode: '', departmentName: '',
   costCenter: '', project: '', machineNumber: '', budgetHead: '', budgetRef: '',
@@ -196,24 +197,24 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                 <div className="space-y-2 md:col-span-2">
                                   <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Issuing Vendor<MandatoryIndicator/></Label>
                                   <Popover open={vPopOpen} onOpenChange={setVPopOpen}>
-                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? (vendors as Vendor[]).find((v: Vendor) => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{(vendors as Vendor[]).map((v: Vendor)=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
+                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? vendors.find((v: Vendor) => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{vendors.map((v: Vendor)=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
                                   </Popover>
                                 </div>
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Manual Ref No.</Label><Input value={billData.billReferenceNumber} onChange={(e)=>setBillData({...billData, billReferenceNumber:e.target.value})} /></div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Bill Class<MandatoryIndicator/></Label>
                                     <Select value={billData.billTypeId} onValueChange={(v)=>setBillData({...billData, billTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{(billTypes as BillType[]).map((t: BillType)=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                                    <SelectContent>{billTypes.map((t: BillType)=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Bill Date<MandatoryIndicator/></Label>
-                                    <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start">{bDate?format(bDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
+                                    <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{bDate?format(bDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={bDate} onSelect={(d)=>{setBDate(d); setBillData({...billData, billDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Received Date</Label>
-                                    <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start">{rDate?format(rDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
+                                    <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{rDate?format(rDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
                                     <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={rDate} onSelect={(d)=>{setRDate(d); setBillData({...billData, billReceivedDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
                                 </div>
                             </div>
@@ -261,7 +262,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Attributed Department</Label>
                                 <Select value={billData.departmentName} onValueChange={(v)=>setBillData({...billData, departmentName:v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{(sections as Section[]).map((s: Section)=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                                <SelectContent>{sections.map((s: Section)=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Inbox className="h-3 w-3" /> Budget Head</Label><Input value={billData.budgetHead} onChange={(e)=>setBillData({...billData, budgetHead:e.target.value})} /></div>
                             </div>
                         </div>
