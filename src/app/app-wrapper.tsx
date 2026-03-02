@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio, BarChart2, ClipboardList, Settings as SettingsIcon } from 'lucide-react';
 import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
@@ -72,6 +72,8 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
     const showARS = orgSettings?.moduleVisibility?.showLikeExam ?? true;
     const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
+
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
 
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
@@ -196,22 +198,50 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
             {/* DISCRETE PERIMETER ICON: Live Audience Response System (ARS) */}
             {showARS && (
                 <div className="fixed bottom-8 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button 
-                                size="icon" 
-                                className="h-14 w-14 rounded-full bg-primary/10 border-2 border-primary/20 backdrop-blur-xl shadow-2xl hover:scale-110 hover:bg-primary transition-all group"
-                                asChild
-                            >
-                                <Link href="/exam/entry">
-                                    <Radio className="h-7 w-7 text-primary group-hover:text-primary-foreground group-hover:animate-pulse" />
+                    <DropdownMenu>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                    <Button 
+                                        size="icon" 
+                                        className="h-14 w-14 rounded-full bg-primary/10 border-2 border-primary/20 backdrop-blur-xl shadow-2xl hover:scale-110 hover:bg-primary transition-all group outline-none"
+                                    >
+                                        <Radio className="h-7 w-7 text-primary group-hover:text-primary-foreground group-hover:animate-pulse" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest border-none">
+                                ARS Control Hub
+                            </TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end" side="top" className="w-56 mb-4 animate-scale-in rounded-2xl border-primary/20 bg-background/80 backdrop-blur-2xl shadow-2xl">
+                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-1">ARS Signals</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
+                                <Link href="/exam/entry" className="flex items-center w-full">
+                                    <ClipboardList className="mr-2 h-4 w-4" />
+                                    <span className="font-bold text-xs uppercase tracking-tight">Participant Entry</span>
                                 </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest border-none">
-                            Live Audience Response System (ARS)
-                        </TooltipContent>
-                    </Tooltip>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
+                                <Link href="/exam/results" className="flex items-center w-full">
+                                    <BarChart2 className="mr-2 h-4 w-4" />
+                                    <span className="font-bold text-xs uppercase tracking-tight">Analytics Portal</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            {isSuperAdmin && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
+                                        <Link href="/exam/settings" className="flex items-center w-full">
+                                            <SettingsIcon className="mr-2 h-4 w-4" />
+                                            <span className="font-bold text-xs uppercase tracking-tight">Master Console</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             )}
 
