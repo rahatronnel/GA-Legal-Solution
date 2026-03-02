@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import type { OrganizationSettings } from '@/app/settings/page';
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface PdfMultiPageRendererProps {
     file: string;
@@ -11,7 +15,7 @@ interface PdfMultiPageRendererProps {
 
 /**
  * PdfMultiPageRenderer - Browser-only component for high-fidelity PDF decomposition.
- * Disables SSR to prevent canvas-related errors on the server.
+ * Configured to run only in the browser to prevent build-time canvas errors.
  */
 const PdfMultiPageRenderer: React.FC<PdfMultiPageRendererProps> = ({ file, label, orgSettings }) => {
     const [pages, setPages] = useState<string[]>([]);
@@ -20,11 +24,6 @@ const PdfMultiPageRenderer: React.FC<PdfMultiPageRendererProps> = ({ file, label
         const renderPdf = async () => {
             if (typeof window === 'undefined') return;
             try {
-                // High-Fidelity PDF decompose using dynamic import
-                const pdfjsLib = await import('pdfjs-dist');
-                // Use CDN worker for stability in cloud workstations
-                pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
-                
                 const loadingTask = pdfjsLib.getDocument(file);
                 const pdf = await loadingTask.promise;
                 const pageImages: string[] = [];
