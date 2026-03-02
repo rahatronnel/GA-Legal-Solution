@@ -242,7 +242,7 @@ export default function SettingsPage() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-exam" checked={settings.moduleVisibility?.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
-                                <Label htmlFor="vis-exam">Show "Like Exam" Section</Label>
+                                <Label htmlFor="vis-exam">Show Audience Response System (ARS) Icon</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-core" checked={settings.moduleVisibility?.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />

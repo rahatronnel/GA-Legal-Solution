@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio } from 'lucide-react';
 import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
@@ -35,6 +35,7 @@ import { collection, doc, query, where, limit } from 'firebase/firestore';
 import type { Employee } from './user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { OrganizationSettings } from './settings/page';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const moduleComponents: { [key:string]: React.ComponentType } = {
@@ -69,7 +70,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
     const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
-    const showLikeExam = orgSettings?.moduleVisibility?.showLikeExam ?? true;
+    const showARS = orgSettings?.moduleVisibility?.showLikeExam ?? true;
     const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
 
     return (
@@ -131,10 +132,9 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
             </div>
             <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {majorModules.map((majorMod) => {
-                    const isVisible = 
-                        (majorMod.name === 'Procurement Management' && showProcurement) || 
-                        (majorMod.name === 'Like Exam' && showLikeExam);
+                    const isVisible = (majorMod.name === 'Procurement Management' && showProcurement);
                     
+                    // Exclude ARS from main highlighted grid
                     if (!isVisible) return null;
 
                     return (
@@ -192,7 +192,30 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                   </>
                 )}
             </div>
-             <footer className="absolute bottom-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+
+            {/* DISCRETE PERIMETER ICON: Live Audience Response System (ARS) */}
+            {showARS && (
+                <div className="fixed bottom-8 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                size="icon" 
+                                className="h-14 w-14 rounded-full bg-primary/10 border-2 border-primary/20 backdrop-blur-xl shadow-2xl hover:scale-110 hover:bg-primary transition-all group"
+                                asChild
+                            >
+                                <Link href="/exam/entry">
+                                    <Radio className="h-7 w-7 text-primary group-hover:text-primary-foreground group-hover:animate-pulse" />
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest border-none">
+                            Live Audience Response System (ARS)
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            )}
+
+             <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
                 © 2024 YKK ERP Solution • Secure Environment
             </footer>
 

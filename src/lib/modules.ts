@@ -19,6 +19,7 @@ import {
   GraduationCap,
   BookOpen,
   ClipboardList,
+  Radio,
 } from 'lucide-react';
 
 export type Module = {
@@ -73,8 +74,8 @@ export const majorModules: MajorModule[] = [
     ],
   },
   {
-    name: 'Like Exam',
-    icon: GraduationCap,
+    name: 'Live Audience Response System (ARS)',
+    icon: Radio,
     description: 'Evaluation and assessment management',
     subModules: [
       { name: 'Exam Entry', href: '/exam/entry', icon: ClipboardList },
