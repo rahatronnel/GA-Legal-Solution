@@ -9,10 +9,13 @@ export type ArsExam = {
     id: string;
     title: string;
     description: string;
+    type: 'Exam' | 'Survey';
     status: 'Draft' | 'Published' | 'Archived';
     totalMarks: number;
     passingMarks: number;
     timeLimitMinutes: number;
+    activeQuestionIndex: number;
+    isLive: boolean;
     createdBy: string;
     createdAt: string;
 };
@@ -31,6 +34,8 @@ export type ArsSubmission = {
     id: string;
     examId: string;
     userId: string;
+    participantName: string;
+    participantMobile: string;
     answers: Record<string, string>;
     score: number;
     percentage: number;

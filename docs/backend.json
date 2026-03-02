@@ -112,14 +112,17 @@
       "properties": {
         "title": { "type": "string" },
         "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["Exam", "Survey"], "default": "Exam" },
         "status": { "type": "string", "enum": ["Draft", "Published", "Archived"] },
         "totalMarks": { "type": "number" },
         "passingMarks": { "type": "number" },
         "timeLimitMinutes": { "type": "number" },
+        "activeQuestionIndex": { "type": "number", "default": -1 },
+        "isLive": { "type": "boolean", "default": false },
         "createdBy": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "status"]
+      "required": ["title", "status", "type"]
     },
     "ArsQuestion": {
       "title": "ARS Question",
@@ -142,6 +145,8 @@
       "properties": {
         "examId": { "type": "string" },
         "userId": { "type": "string" },
+        "participantName": { "type": "string" },
+        "participantMobile": { "type": "string" },
         "answers": { "type": "object", "description": "Map of questionId to chosen option." },
         "score": { "type": "number" },
         "percentage": { "type": "number" },
