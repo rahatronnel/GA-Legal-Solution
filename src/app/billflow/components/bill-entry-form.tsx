@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -197,25 +197,27 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                 <div className="space-y-2 md:col-span-2">
                                   <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Issuing Vendor<MandatoryIndicator/></Label>
                                   <Popover open={vPopOpen} onOpenChange={setVPopOpen}>
-                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? vendors.find((v: Vendor) => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{vendors.map((v: Vendor)=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
+                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? (vendors as Vendor[]).find((v: Vendor) => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{(vendors as Vendor[]).map((v: Vendor)=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
                                   </Popover>
                                 </div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Manual Ref No.</Label><Input value={billData.billReferenceNumber} onChange={(e)=>setBillData({...billData, billReferenceNumber:e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Manual Ref No.</Label><Input value={billData.billReferenceNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, billReferenceNumber:e.target.value})} /></div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Bill Class<MandatoryIndicator/></Label>
-                                    <Select value={billData.billTypeId} onValueChange={(v)=>setBillData({...billData, billTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{billTypes.map((t: BillType)=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                                    <Select value={billData.billTypeId} onValueChange={(v)=>setBillData({...billData, billTypeId: v})}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>{(billTypes as BillType[]).map((t: BillType)=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Bill Date<MandatoryIndicator/></Label>
                                     <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{bDate?format(bDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={bDate} onSelect={(d)=>{setBDate(d); setBillData({...billData, billDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={bDate} onSelect={(d: Date | undefined)=>{setBDate(d); setBillData({...billData, billDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Received Date</Label>
                                     <Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{rDate?format(rDate,"PPP"):"Pick date"}</Button></PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={rDate} onSelect={(d)=>{setRDate(d); setBillData({...billData, billReceivedDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
+                                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={rDate} onSelect={(d: Date | undefined)=>{setRDate(d); setBillData({...billData, billReceivedDate: d?format(d,'yyyy-MM-dd'):''})}} /></PopoverContent></Popover>
                                 </div>
                             </div>
                         </div>
@@ -227,9 +229,9 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                 {items.map((item, idx) => (
                                     <div key={item.id} className="p-3 border rounded-lg space-y-2 bg-muted/5">
                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                            <Input placeholder="Item Name" value={item.name} onChange={(e) => setItems(prev => prev.map(i => i.id === item.id ? {...i, name: e.target.value} : i))} className="h-8" />
-                                            <Input placeholder="Qty" type="number" value={item.quantity} onChange={(e) => setItems(prev => prev.map(i => i.id === item.id ? {...i, quantity: parseFloat(e.target.value) || 0, netAmount: (parseFloat(e.target.value)||0) * i.unitPrice} : i))} className="h-8" />
-                                            <Input placeholder="Rate" type="number" value={item.unitPrice} onChange={(e) => setItems(prev => prev.map(i => i.id === item.id ? {...i, unitPrice: parseFloat(e.target.value) || 0, netAmount: i.quantity * (parseFloat(e.target.value)||0)} : i))} className="h-8" />
+                                            <Input placeholder="Item Name" value={item.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItems(prev => prev.map(i => i.id === item.id ? {...i, name: e.target.value} : i))} className="h-8" />
+                                            <Input placeholder="Qty" type="number" value={item.quantity} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItems(prev => prev.map(i => i.id === item.id ? {...i, quantity: parseFloat(e.target.value) || 0, netAmount: (parseFloat(e.target.value)||0) * i.unitPrice} : i))} className="h-8" />
+                                            <Input placeholder="Rate" type="number" value={item.unitPrice} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItems(prev => prev.map(i => i.id === item.id ? {...i, unitPrice: parseFloat(e.target.value) || 0, netAmount: i.quantity * (parseFloat(e.target.value)||0)} : i))} className="h-8" />
                                          </div>
                                     </div>
                                 ))}
@@ -241,8 +243,8 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                             <h3 className="font-semibold text-lg flex items-center gap-2"><Calculator className="h-5 w-5 text-primary" /> Step 3: Tax & Adjustments</h3>
                             <div className="p-4 border rounded-lg space-y-4 bg-muted/5">
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> VAT Amount</Label><Input type="number" value={billData.vatAmount} onChange={(e)=>setBillData({...billData, vatAmount: parseFloat(e.target.value)||0})} /></div>
-                                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> TDS (Tax Deducted)</Label><Input type="number" value={billData.tdsAmount} onChange={(e)=>setBillData({...billData, tdsAmount: parseFloat(e.target.value)||0})} /></div>
+                                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> VAT Amount</Label><Input type="number" value={billData.vatAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, vatAmount: parseFloat(e.target.value)||0})} /></div>
+                                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> TDS (Tax Deducted)</Label><Input type="number" value={billData.tdsAmount} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, tdsAmount: parseFloat(e.target.value)||0})} /></div>
                                </div>
                             </div>
                         </div>
@@ -251,8 +253,8 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone className="h-5 w-5 text-primary" /> Step 4: Audit Tracking</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> PO / WO Link</Label><Input value={billData.poNumber} onChange={(e)=>setBillData({...billData, poNumber: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> GRN Number</Label><Input value={billData.grnNumber} onChange={(e)=>setBillData({...billData, grnNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> PO / WO Link</Label><Input value={billData.poNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, poNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> GRN Number</Label><Input value={billData.grnNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, grnNumber: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
@@ -262,8 +264,8 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Attributed Department</Label>
                                 <Select value={billData.departmentName} onValueChange={(v)=>setBillData({...billData, departmentName:v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{sections.map((s: Section)=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Inbox className="h-3 w-3" /> Budget Head</Label><Input value={billData.budgetHead} onChange={(e)=>setBillData({...billData, budgetHead:e.target.value})} /></div>
+                                <SelectContent>{(sections as Section[]).map((s: Section)=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Inbox className="h-3 w-3" /> Budget Head</Label><Input value={billData.budgetHead} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setBillData({...billData, budgetHead:e.target.value})} /></div>
                             </div>
                         </div>
                     )}
@@ -275,7 +277,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                     <div key={key} className="p-3 border rounded-lg bg-muted/5 flex justify-between items-center group">
                                         <Label className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> {documentLabels[key]}</Label>
                                         <Label htmlFor={`up-b-${key}`} className="text-[10px] text-primary font-bold hover:underline cursor-pointer"><Upload className="h-3 w-3 inline mr-1"/>Upload</Label>
-                                        <Input id={`up-b-${key}`} type="file" className="hidden" onChange={async (e) => {
+                                        <Input id={`up-b-${key}`} type="file" className="hidden" onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                                             if (e.target.files?.[0]) {
                                                 const url = await imageToDataUrl(e.target.files[0]);
                                                 setDocuments({...documents, [key]: [...documents[key], {id: Date.now().toString(), name: e.target.files[0].name, file: url}]});

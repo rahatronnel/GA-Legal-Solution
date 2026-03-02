@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, File as FileIcon, 
     User, Mail, Phone, MapPin, Building, Briefcase, Hash, DollarSign, Tag, 
-    ShieldCheck, Globe, CheckCircle2, Milestone, ListOrdered, Contact
+    ShieldCheck, Globe, CheckCircle2, Milestone, ListOrdered, Contact, AlertTriangle
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -169,7 +170,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
         if (isOpen) {
           setStep(1);
           if (isEditing && vendor) {
-            setVData({ ...initialVendorData, ...vendor });
+            setVData({ ...initialVendorData, ...vendor } as any);
             setSuppliedItems(vendor.suppliedItems || []);
             setDocuments(vendor.documents || initialDocuments);
             setExpiryDt(vendor.tradeLicenseExpiryDate ? parseISO(vendor.tradeLicenseExpiryDate) : undefined);
@@ -178,7 +179,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
             setEndDt(vendor.contractEndDate ? parseISO(vendor.contractEndDate) : undefined);
             setApprDt(vendor.approvalDate ? parseISO(vendor.approvalDate) : undefined);
           } else {
-            setVData({...initialVendorData, loginId: '', password: ''});
+            setVData({...initialVendorData, loginId: '', password: ''} as any);
             setSuppliedItems([]);
             setDocuments(initialDocuments);
             setExpiryDt(undefined); setIncorpDt(undefined); setStartDt(undefined); setEndDt(undefined); setApprDt(undefined);
@@ -189,11 +190,6 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
     const handleSelectChange = (id: keyof typeof vData) => (value: string) => {
         setVData(prev => ({ ...prev, [id]: value }));
     };
-
-    const handleDateChange = (setter: (d: Date|undefined) => void, field: keyof typeof vData) => (date: Date|undefined) => {
-        setter(date);
-        setVData(prev => ({...prev, [field]: date ? format(date, 'yyyy-MM-dd') : ''}))
-    }
 
     const handleSave = () => {
         onSave({ ...vData, suppliedItems, documents });
@@ -214,8 +210,8 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><Building className="h-5 w-5 text-primary" /> Step 1: Corporate Identity</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Full Legal Name <MandatoryIndicator/></Label><Input id="vendorName" value={vData.vendorName} onChange={(e)=>setVData({...vData, vendorName: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Corporate Alias</Label><Input id="vendorShortName" value={vData.vendorShortName} onChange={(e)=>setVData({...vData, vendorShortName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Full Legal Name <MandatoryIndicator/></Label><Input id="vendorName" value={vData.vendorName} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, vendorName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Corporate Alias</Label><Input id="vendorShortName" value={vData.vendorShortName} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, vendorShortName: e.target.value})} /></div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Type <MandatoryIndicator/></Label>
                                     <Select value={vData.vendorType} onValueChange={handleSelectChange('vendorType')}>
@@ -227,17 +223,17 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> Category <MandatoryIndicator/></Label>
                                     <Select value={vData.vendorCategoryId} onValueChange={handleSelectChange('vendorCategoryId')}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{(categories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{(categories || []).map((c: VendorCategory) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Globe className="h-3 w-3" /> Business Nature</Label>
                                     <Select value={vData.natureOfBusinessId} onValueChange={handleSelectChange('natureOfBusinessId')}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{(naturesOfBusiness || []).map(n => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{(naturesOfBusiness || []).map((n: VendorNatureOfBusiness) => <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Mail className="h-3 w-3" /> Business Email <MandatoryIndicator/></Label><Input id="email" type="email" value={vData.email} onChange={(e)=>setVData({...vData, email: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Mail className="h-3 w-3" /> Business Email <MandatoryIndicator/></Label><Input id="email" type="email" value={vData.email} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, email: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
@@ -246,10 +242,10 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><Contact className="h-5 w-5 text-primary" /> Step 2: Communication Ports</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> POC Name</Label><Input value={vData.contactPersonName} onChange={(e)=>setVData({...vData, contactPersonName: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> POC Designation</Label><Input value={vData.contactPersonDesignation} onChange={(e)=>setVData({...vData, contactPersonDesignation: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Phone className="h-3 w-3" /> Mobile</Label><Input value={vData.mobileNumber} onChange={(e)=>setVData({...vData, mobileNumber: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Office Address</Label><Textarea value={vData.officeAddress} onChange={(e)=>setVData({...vData, officeAddress: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> POC Name</Label><Input value={vData.contactPersonName} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, contactPersonName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> POC Designation</Label><Input value={vData.contactPersonDesignation} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, contactPersonDesignation: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Phone className="h-3 w-3" /> Mobile</Label><Input value={vData.mobileNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, mobileNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Office Address</Label><Textarea value={vData.officeAddress} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>)=>setVData({...vData, officeAddress: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
@@ -258,9 +254,9 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Step 3: Legal Verification</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Trade License Number</Label><Input value={vData.tradeLicenseNumber} onChange={(e)=>setVData({...vData, tradeLicenseNumber: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> TIN Number</Label><Input value={vData.tinNumber} onChange={(e)=>setVData({...vData, tinNumber: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> VAT / BIN</Label><Input value={vData.vatBinNumber} onChange={(e)=>setVData({...vData, vatBinNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Trade License Number</Label><Input value={vData.tradeLicenseNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, tradeLicenseNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> TIN Number</Label><Input value={vData.tinNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, tinNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> VAT / BIN</Label><Input value={vData.vatBinNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, vatBinNumber: e.target.value})} /></div>
                             </div>
                         </div>
                     )}
@@ -269,8 +265,8 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Step 4: Financial Remittance</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Bank Name</Label><Input value={vData.bankName} onChange={(e)=>setVData({...vData, bankName: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Account Number</Label><Input value={vData.accountNumber} onChange={(e)=>setVData({...vData, accountNumber: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Bank Name</Label><Input value={vData.bankName} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, bankName: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Account Number</Label><Input value={vData.accountNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, accountNumber: e.target.value})} /></div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Settlement Method</Label>
                                     <Select value={vData.paymentMethod} onValueChange={handleSelectChange('paymentMethod')}>
@@ -286,8 +282,8 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                         <div className="space-y-6">
                             <h3 className="font-semibold text-lg flex items-center gap-2"><Milestone className="h-5 w-5 text-primary" /> Step 5: Commercial Terms</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Payment Cycle (Terms)</Label><Input value={vData.paymentTerms} onChange={(e)=>setVData({...vData, paymentTerms: e.target.value})} /></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Credit Limit</Label><Input type="number" value={vData.creditLimit} onChange={(e)=>setVData({...vData, creditLimit: parseFloat(e.target.value) || 0})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Payment Cycle (Terms)</Label><Input value={vData.paymentTerms} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, paymentTerms: e.target.value})} /></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Credit Limit</Label><Input type="number" value={vData.creditLimit} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setVData({...vData, creditLimit: parseFloat(e.target.value) || 0})} /></div>
                             </div>
                         </div>
                     )}
@@ -298,8 +294,8 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                             <div className="space-y-3">
                                 {suppliedItems.map((item, idx) => (
                                     <div key={item.id} className="p-3 border rounded-lg grid grid-cols-2 gap-2 bg-muted/10">
-                                        <Input value={item.name} onChange={(e) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, name: e.target.value} : si))} placeholder="Item Name" className="h-8" />
-                                        <Input type="number" value={item.rate} onChange={(e) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, rate: parseFloat(e.target.value) || 0} : si))} placeholder="Rate" className="h-8" />
+                                        <Input value={item.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, name: e.target.value} : si))} placeholder="Item Name" className="h-8" />
+                                        <Input type="number" value={item.rate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSuppliedItems(prev => prev.map(si => si.id === item.id ? {...si, rate: parseFloat(e.target.value) || 0} : si))} placeholder="Rate" className="h-8" />
                                     </div>
                                 ))}
                                 <Button variant="outline" size="sm" onClick={() => setSuppliedItems([...suppliedItems, {id: Date.now().toString(), name: '', unitOfMeasure: '', rate: 0, minOrderQuantity: 0, leadTimeDays: 0, deliveryLocation: '', deliveryFrequency: ''}])}><PlusCircle className="h-4 w-4 mr-2"/>Add Supply</Button>
@@ -315,7 +311,7 @@ export function VendorEntryForm({ isOpen, setIsOpen, onSave, vendor }: VendorEnt
                                     <div key={key} className="p-3 border rounded-lg bg-muted/5 flex justify-between items-center">
                                         <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> {documentLabels[key]}</Label>
                                         <Label htmlFor={`up-v-${key}`} className="text-xs text-primary font-bold hover:underline cursor-pointer"><Upload className="h-3 w-3 inline mr-1"/>Upload</Label>
-                                        <Input id={`up-v-${key}`} type="file" className="hidden" onChange={async (e) => {
+                                        <Input id={`up-v-${key}`} type="file" className="hidden" onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                                             if (e.target.files?.[0]) {
                                                 const url = await imageToDataUrl(e.target.files[0]);
                                                 setDocuments({...documents, [key]: [{id: Date.now().toString(), name: e.target.files[0].name, file: url}]});
