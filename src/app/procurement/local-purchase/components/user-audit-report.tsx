@@ -49,7 +49,7 @@ export function UserAuditReport() {
             list.push({ id: dn.id + '-c', type: 'Demand Note', action: 'Drafted Requisition', timestamp: dn.entryDate, reference: dn.demandNoteNumber, userId: dn.createdBy });
             
             dn.approvalHistory?.forEach((h: any, i: number) => {
-                const prevActionTime = i === 0 ? dn.entryDate : dn.approvalHistory[i-1].timestamp;
+                const prevActionTime = i === 0 ? dn.entryDate : dn.approvalHistory![i-1].timestamp;
                 list.push({ 
                     id: dn.id + '-a-' + i, type: 'Demand Note', action: `Approved Step ${i+1}`, 
                     timestamp: h.timestamp, reference: dn.demandNoteNumber, userId: h.approverId,
@@ -86,7 +86,7 @@ export function UserAuditReport() {
             }
 
             cs.approvalHistory?.forEach((h: any, i: number) => {
-                const prev = i === 0 ? cs.vendorSelectionDate : cs.approvalHistory[i-1].timestamp;
+                const prev = i === 0 ? cs.vendorSelectionDate : cs.approvalHistory![i-1].timestamp;
                 list.push({ id: cs.id + '-a-' + i, type: 'CS', action: `Approved CS Step ${i+1}`, timestamp: h.timestamp, reference: cs.csNumber, userId: h.approverId, shouldHaveDoneAt: prev || undefined, lagMinutes: prev ? differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) : undefined });
             });
         });
@@ -94,7 +94,7 @@ export function UserAuditReport() {
         purchaseOrders.forEach(po => {
             list.push({ id: po.id + '-c', type: 'PO', action: 'Drafted PO', timestamp: po.createdAt, reference: po.poNumber, userId: po.createdBy });
             po.approvalHistory?.forEach((h: any, i: number) => {
-                const prev = i === 0 ? po.createdAt : po.approvalHistory[i-1].timestamp;
+                const prev = i === 0 ? po.createdAt : po.approvalHistory![i-1].timestamp;
                 list.push({ id: po.id + '-a-' + i, type: 'PO', action: `Approved PO Step ${i+1}`, timestamp: h.timestamp, reference: po.poNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
             });
         });
@@ -102,7 +102,7 @@ export function UserAuditReport() {
         mrrs.forEach(mrr => {
             list.push({ id: mrr.id + '-c', type: 'MRR', action: 'Recorded Receipt', timestamp: mrr.createdAt, reference: mrr.mrrNumber, userId: mrr.createdBy });
             mrr.approvalHistory?.forEach((h: any, i: number) => {
-                const prev = i === 0 ? mrr.createdAt : mrr.approvalHistory[i-1].timestamp;
+                const prev = i === 0 ? mrr.createdAt : mrr.approvalHistory![i-1].timestamp;
                 list.push({ id: mrr.id + '-a-' + i, type: 'MRR', action: `Approved MRR Step ${i+1}`, timestamp: h.timestamp, reference: mrr.mrrNumber, userId: h.approverId, shouldHaveDoneAt: prev, lagMinutes: differenceInMinutes(parseISO(h.timestamp), parseISO(prev)) });
             });
         });
