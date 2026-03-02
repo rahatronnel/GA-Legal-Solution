@@ -196,7 +196,6 @@ export default function SettingsPage() {
                     <div className="space-y-2"><Label htmlFor="contactNumber">Contact Number</Label><Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} /></div>
                     <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={settings.email} onChange={handleInputChange} /></div>
                     
-                    {/* PERSISTENT REMINDER CONFIGURATION */}
                     <div className="space-y-2 p-4 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5 group hover:border-primary transition-colors">
                         <Label htmlFor="notificationReminderHours" className="flex items-center gap-2 font-bold text-primary"><Clock className="h-4 w-4" /> Persistent Reminder Pulse (Hours)</Label>
                         <Input id="notificationReminderHours" type="number" value={settings.notificationReminderHours} onChange={handleInputChange} className="bg-background font-bold" />

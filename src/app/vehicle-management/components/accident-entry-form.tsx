@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -20,7 +21,7 @@ import {
     Upload, X, Calendar as CalendarIcon, PlusCircle, AlertTriangle, 
     Car, User, Clock, MapPin, Hash, Tag, Shield, Milestone, Route, Info, 
     HeartPulse, ShieldQuestion, DollarSign, Building, CheckCircle2, ClipboardList, 
-    ShieldCheck, Image as ImageIcon
+    ShieldCheck, Image as ImageIcon, Wrench
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -141,7 +142,6 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
   const { toast } = useToast();
   const { data } = useVehicleManagement();
   
-  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
   const vehicles = (data.vehicles || []) as Vehicle[];
   const drivers = (data.drivers || []) as Driver[];
   const employees = (data.employees || []) as Employee[];

@@ -21,37 +21,27 @@ import type { Section } from '@/app/user-management/components/section-table';
 import type { ProcessCode } from '../../../components/process-code-table';
 import type { DemandType } from '../../../components/demand-type-table';
 
-/**
- * PNFullPrintPage - The High-Fidelity 9-Stage Bundle Compiler.
- * This page aggregates data from 5 modules and all evidentiary scans into one print stream.
- */
 export default function PNFullPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
     const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
 
-    // Stage 1: Payment Note
     const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
     const { data: pn, isLoading: l1 } = useDoc<PaymentNote>(pnRef);
 
-    // Stage 2: Physical Receipt (MRR)
     const mrrRef = useMemoFirebase(() => (firestore && pn) ? doc(firestore, 'mrrs', pn.mrrId) : null, [firestore, pn]);
     const { data: mrr, isLoading: l2 } = useDoc<MRR>(mrrRef);
 
-    // Stage 3: Legal Commitment (PO)
     const poRef = useMemoFirebase(() => (firestore && mrr) ? doc(firestore, 'purchaseOrders', mrr.poId) : null, [firestore, mrr]);
     const { data: po, isLoading: l3 } = useDoc<PurchaseOrder>(poRef);
 
-    // Stage 4: Sourcing Analysis (CS)
     const csRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'comparativeStatements', po.csId) : null, [firestore, po]);
     const { data: cs, isLoading: l4 } = useDoc<ComparativeStatement>(csRef);
 
-    // Stage 5: Intent Origin (DN)
     const dnRef = useMemoFirebase(() => (firestore && po) ? doc(firestore, 'demandNotes', po.demandNoteId) : null, [firestore, po]);
     const { data: dn, isLoading: l5 } = useDoc<DemandNote>(dnRef);
 
-    // Master Registries for Profile Matching
     const vendorsRef = useMemoFirebase(() => firestore ? collection(firestore, 'vendors') : null, [firestore]);
     const { data: vendors, isLoading: l6 } = useCollection<Vendor>(vendorsRef);
 
@@ -79,7 +69,6 @@ export default function PNFullPrintPage() {
     const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
     const { data: orgSettings, isLoading: l14 } = useDoc<OrganizationSettings>(settingsRef);
 
-    // Secure Hydration Guard: We wait for ALL data and the database service itself to be ready.
     const isGlobalLoading = isAuthLoading || !firestore || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
 
     useEffect(() => {
@@ -89,9 +78,7 @@ export default function PNFullPrintPage() {
 
             if (mode === 'download') {
                 const executeDownload = async () => {
-                    // High-Performance Handshake: Wait for PDF renderings to stabilize
                     await new Promise(resolve => setTimeout(resolve, 5000));
-                    
                     const element = document.querySelector('.payment-bundle-container');
                     if (element) {
                         try {
@@ -101,17 +88,10 @@ export default function PNFullPrintPage() {
                                 margin: 0,
                                 filename: `YKK_FullSet_${pn.pnNumber}.pdf`,
                                 image: { type: 'jpeg', quality: 0.98 },
-                                html2canvas: { 
-                                    scale: 2, 
-                                    useCORS: true, 
-                                    logging: false,
-                                    letterRendering: true
-                                },
+                                html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
                                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                                 pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
                             };
-                            
-                            // High-Fidelity Capture: Converts the entire subway of documents into one PDF file
                             // @ts-ignore
                             await html2pdf().from(element).set(opt).save();
                         } catch (err) {
@@ -121,10 +101,7 @@ export default function PNFullPrintPage() {
                 };
                 executeDownload();
             } else {
-                // Standard Print Path
-                const timer = setTimeout(() => {
-                    window.print();
-                }, 5000); 
+                const timer = setTimeout(() => { window.print(); }, 5000); 
                 return () => clearTimeout(timer);
             }
         }
@@ -151,22 +128,11 @@ export default function PNFullPrintPage() {
         );
     }
 
-    // Diagnostic Check: If data is truly missing, we provide a detailed organizational warning instead of a generic 404.
     if (!pn || !mrr || !po || !cs || !dn || !orgSettings) {
         return (
             <div className="p-12 text-center space-y-4">
                 <h2 className="text-2xl font-bold text-destructive">Bundle Compilation Incomplete</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                    The system could not retrieve the full record set. Please verify that the 
-                    MRR, Purchase Order, and CS are all final-approved and correctly linked.
-                </p>
-                <div className="grid grid-cols-5 gap-2 text-[10px] font-black uppercase opacity-50">
-                    <span className={pn ? "text-green-600" : ""}>PN: {pn ? "OK" : "ERR"}</span>
-                    <span className={mrr ? "text-green-600" : ""}>MRR: {mrr ? "OK" : "ERR"}</span>
-                    <span className={po ? "text-green-600" : ""}>PO: {po ? "OK" : "ERR"}</span>
-                    <span className={cs ? "text-green-600" : ""}>CS: {cs ? "OK" : "ERR"}</span>
-                    <span className={dn ? "text-green-600" : ""}>DN: {dn ? "OK" : "ERR"}</span>
-                </div>
+                <p className="text-muted-foreground max-w-md mx-auto">The system could not retrieve the full record set. Verify all modules are approved and linked.</p>
             </div>
         );
     }

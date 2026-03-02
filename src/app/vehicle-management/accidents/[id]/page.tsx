@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -83,7 +84,6 @@ export default function AccidentProfilePage() {
 
   const vm = useVehicleManagement();
   
-  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
   const accidents = (vm?.data.accidents || []) as Accident[];
   const vehicles = (vm?.data.vehicles || []) as Vehicle[];
   const drivers = (vm?.data.drivers || []) as Driver[];

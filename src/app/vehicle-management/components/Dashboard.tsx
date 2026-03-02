@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +16,6 @@ import type { Accident } from './accident-entry-form';
 export function Dashboard() {
     const { data = {}, isLoading } = useDashboardData() || {};
     
-    // High-Fidelity Type Alignment: Explicitly casting data to definitive types
     const vehicles = (data.vehicles || []) as Vehicle[];
     const drivers = (data.drivers || []) as any[];
     const trips = (data.trips || []) as Trip[];

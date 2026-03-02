@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -30,7 +31,6 @@ import {
     Send, UserCheck, Zap, TrendingUp, Search,
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, 
     Truck, BellRing, 
-    BellRing as BellRingIcon,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
     Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown, Activity,
     Scale, FileSearch, ShieldAlert, Cpu, FileSignature, ClipboardCheck
@@ -175,7 +175,6 @@ export function BlueprintDialog({
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[98vw] h-[85vh] flex flex-col p-0 overflow-hidden animate-dialog-in border-none shadow-2xl">
-                {/* CONDENSED HEADER */}
                 <div className="bg-primary p-3 text-primary-foreground shrink-0 relative overflow-hidden">
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-4">
@@ -196,7 +195,6 @@ export function BlueprintDialog({
 
                 <div className="flex-grow min-h-0 bg-muted/20">
                     <Tabs defaultValue="overview" className="h-full flex flex-col">
-                        {/* CONDENSED TABS LIST */}
                         <div className="px-4 bg-background border-b shrink-0">
                             <TabsList className="h-10 w-full justify-start bg-transparent gap-4 p-0 overflow-x-auto overflow-y-hidden no-scrollbar">
                                 <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><HistoryIcon className="h-3 w-3"/> Lifecycle</TabsTrigger>
@@ -229,14 +227,13 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase I: Requisition Integrity */}
                                     <BlueprintSection icon={FileText} title="Phase I: Requisition Integrity (Demand Note)" colorClass="bg-blue-600 border-blue-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-4">
                                                 <h5 className="font-black text-xs uppercase tracking-widest text-blue-900">Process Standards</h5>
                                                 <ul className="space-y-2">
                                                     <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Temporal Identity:</strong> Every DN is stamped with a unique, non-colliding ID based on timestamp and department code.</p></li>
-                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Department Hard-Lock:</strong> Requisitions are cryptographically bound to the creator&apos;s section, preventing data injection.</p></li>
+                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Department Hard-Lock:</strong> Requisitions are cryptographically bound to the creator's section, preventing data injection.</p></li>
                                                     <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Budget Safeguard:</strong> The Budget Head and Year are mandatory fields before procurement starts.</p></li>
                                                 </ul>
                                             </div>
@@ -251,7 +248,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase II: Sourcing Engine */}
                                     <BlueprintSection icon={Briefcase} title="Phase II: Sourcing Engine (GP Desk)" colorClass="bg-emerald-600 border-emerald-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-4">
@@ -270,7 +266,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase III: Analytical Audit */}
                                     <BlueprintSection icon={BarChart2} title="Phase III: Analytical Auditing (CS Analysis)" colorClass="bg-amber-600 border-amber-800">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="md:col-span-2 space-y-4">
@@ -295,7 +290,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase IV: Legal Commitment */}
                                     <BlueprintSection icon={ShoppingCart} title="Phase IV: Legal Commitment (Purchase Order)" colorClass="bg-purple-600 border-purple-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-4">
@@ -319,7 +313,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase V: Intake & Organizational Exit */}
                                     <BlueprintSection icon={Package} title="Phase V: intake & Logistics Verification (MRR)" colorClass="bg-emerald-800 border-emerald-900">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
@@ -337,7 +330,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* Phase VI: Financial Settlement */}
                                     <BlueprintSection icon={Wallet} title="Phase VI: Financial Settlement (Payment Note)" colorClass="bg-orange-600 border-orange-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-4">
@@ -362,10 +354,8 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* INTERACTIVE FLOW MATRIX */}
                                     <BlueprintSection icon={Workflow} title="Interactive Organizational Flow Matrix" colorClass="bg-red-900 border-red-950">
                                         <div className="p-6 border-4 border-slate-800 rounded-[2rem] bg-[#1a1c2c] shadow-inner relative overflow-x-auto min-h-[600px] flex flex-col items-center justify-center gap-10">
-                                            {/* ROW 1: REQUISITION */}
                                             <div className="flex items-center gap-4 relative">
                                                 <div className="h-12 w-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.6)] animate-pulse shrink-0"><Play className="h-6 w-6 ml-1" /></div>
                                                 <FlowArrow />
@@ -378,7 +368,6 @@ export function BlueprintDialog({
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-blue-500 to-emerald-500 opacity-40 shadow-[0_0_10px_rgba(255,255,255,0.1)]" />
 
-                                            {/* ROW 2: SOURCING */}
                                             <div className="flex items-center gap-4">
                                                 <FlowNode icon={UserPlus} title="GP Assign" status="GPO Logic" color="bg-emerald-600/60 border-emerald-400" />
                                                 <FlowArrow />
@@ -391,7 +380,6 @@ export function BlueprintDialog({
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-emerald-500 to-amber-500 opacity-40" />
 
-                                            {/* ROW 3: ANALYSIS */}
                                             <div className="flex items-center gap-4">
                                                 <FlowNode icon={BarChart2} title="CS Analysis" status="Price Audit" color="bg-amber-600/60 border-amber-400" />
                                                 <FlowArrow />
@@ -404,7 +392,6 @@ export function BlueprintDialog({
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-amber-500 to-purple-500 opacity-40" />
 
-                                            {/* ROW 4: COMMITMENT */}
                                             <div className="flex items-center gap-4">
                                                 <FlowNode icon={ShoppingCart} title="PO Entry" status="Draft Creation" color="bg-purple-600/60 border-purple-400" />
                                                 <FlowArrow />
@@ -415,7 +402,6 @@ export function BlueprintDialog({
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-purple-500 to-emerald-800 opacity-40" />
 
-                                            {/* ROW 5: LOGISTICS & CLOSING */}
                                             <div className="flex items-center gap-4">
                                                 <FlowNode icon={Truck} title="Gate Entry" status="Goods Arrival" color="bg-slate-600/60 border-slate-400" />
                                                 <FlowArrow />
@@ -428,7 +414,6 @@ export function BlueprintDialog({
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-green-600 to-orange-500 opacity-40" />
 
-                                            {/* ROW 6: SETTLEMENT */}
                                             <div className="flex items-center gap-4">
                                                 <FlowNode icon={Wallet} title="PN Entry" status="Financial Intent" color="bg-orange-600/60 border-orange-400" />
                                                 <FlowArrow />
@@ -441,7 +426,6 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    {/* ARCHITECTURE SECTION */}
                                     <Separator className="opacity-10" />
                                     <div className="space-y-4">
                                         <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-3 text-muted-foreground">
@@ -475,24 +459,9 @@ export function BlueprintDialog({
                                 <TabsContent value="dn" className="mt-0 space-y-8">
                                     <BlueprintSection icon={FileText} title="Menu Detail: Demand Note (DN)" colorClass="bg-blue-600 border-blue-800">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <LogicGate 
-                                                title="The Standard Gateway" 
-                                                description="Items without 'Special' flags route through DH and TA." 
-                                                badge="Route A" 
-                                                path="DH -&gt; TA" 
-                                            />
-                                            <LogicGate 
-                                                title="The Manufacturing Filter" 
-                                                description="Injected if department is flagged as 'Manufacturing'." 
-                                                badge="Route B" 
-                                                path="DH -&gt; TA -&gt; MFG MGR" 
-                                            />
-                                            <LogicGate 
-                                                title="The Special Audit" 
-                                                description="Triggered by high-value categories. Direct to MD." 
-                                                badge="Route C" 
-                                                path="SPEC MGR -&gt; MD" 
-                                            />
+                                            <LogicGate title="The Standard Gateway" description="Items without 'Special' flags route through DH and TA." badge="Route A" path="DH -&gt; TA" />
+                                            <LogicGate title="The Manufacturing Filter" description="Injected if department is flagged as 'Manufacturing'." badge="Route B" path="DH -&gt; TA -&gt; MFG MGR" />
+                                            <LogicGate title="The Special Audit" description="Triggered by high-value categories. Direct to MD." badge="Route C" path="SPEC MGR -&gt; MD" />
                                         </div>
                                         
                                         <div className="p-6 border-4 border-dashed rounded-[2rem] bg-blue-900/10 border-blue-500/30 space-y-6">
@@ -601,7 +570,6 @@ export function BlueprintDialog({
                                             </Card>
                                         </div>
 
-                                        {/* GRAPHICAL EXECUTIVE CHAIN ORGANOGRAM */}
                                         <div className="space-y-4 p-6 border-4 border-dashed rounded-[2rem] bg-slate-50 border-amber-200">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="p-2 bg-amber-600 rounded-lg shadow-lg">
@@ -614,7 +582,6 @@ export function BlueprintDialog({
                                             </div>
 
                                             <div className="flex flex-col items-center gap-4 relative overflow-x-auto pb-4">
-                                                {/* TIER 1: PURCHASE AUDIT */}
                                                 <div className="flex items-center gap-4">
                                                     <OrganogramNode label="Purchase Manager" sub="Audit Origin" colorClass="bg-white border-amber-400 text-amber-900" />
                                                     <OrganogramConnector />
@@ -623,7 +590,6 @@ export function BlueprintDialog({
                                                 
                                                 <OrganogramConnector vertical />
 
-                                                {/* TIER 2: DEPARTMENTAL ALIGNMENT */}
                                                 <div className="flex items-center gap-4">
                                                     <OrganogramNode label="Requester Dept. TA" sub="Dept. Verification" colorClass="bg-white border-amber-500 text-amber-900 shadow-md" />
                                                     <OrganogramConnector />
@@ -632,7 +598,6 @@ export function BlueprintDialog({
 
                                                 <OrganogramConnector vertical />
 
-                                                {/* TIER 3: FACTORY & ACCOUNTS CONTROL */}
                                                 <div className="flex items-center gap-4">
                                                     <OrganogramNode label="Vice Factory Mgr" sub="Operations Check" colorClass="bg-amber-100 border-amber-600 text-amber-900 shadow-md" />
                                                     <OrganogramConnector />
@@ -641,7 +606,6 @@ export function BlueprintDialog({
 
                                                 <OrganogramConnector vertical />
 
-                                                {/* TIER 4: COMMERCIAL & ADMIN */}
                                                 <div className="flex items-center gap-4">
                                                     <OrganogramNode label="GM Sales Dept" sub="Commercial Logic" colorClass="bg-amber-200 border-amber-700 text-amber-950 shadow-lg" />
                                                     <OrganogramConnector />
@@ -650,7 +614,6 @@ export function BlueprintDialog({
 
                                                 <OrganogramConnector vertical />
 
-                                                {/* TIER 5: FINAL AUTHORITY */}
                                                 <div className="flex flex-col items-center">
                                                     <div className="p-4 border-4 border-destructive rounded-2xl bg-white shadow-[0_0_20px_rgba(220,38,38,0.2)] animate-pulse">
                                                         <div className="flex items-center gap-3">
@@ -812,7 +775,6 @@ export function BlueprintDialog({
                                             </div>
                                         </div>
 
-                                        {/* BROAD DETAIL: 9-STAGE BUNDLE MAP */}
                                         <div className="space-y-6 p-8 border-4 border-slate-900 rounded-[3rem] bg-[#0f172a] text-white relative overflow-hidden shadow-2xl">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-transparent to-orange-500 opacity-50" />
                                             <div className="flex items-center justify-between relative z-10">
@@ -861,43 +823,18 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="notifications" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={BellRingIcon} title="Graphical Alert Propagation Map" colorClass="bg-red-600 border-red-800">
+                                    <BlueprintSection icon={BellRing} title="Graphical Alert Propagation Map" colorClass="bg-red-600 border-red-800">
                                         <div className="space-y-6 p-6 border-4 border-dashed rounded-[3rem] bg-slate-50 border-red-200 shadow-inner relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-10 opacity-5">
                                                 <Siren className="h-64 w-64 text-red-600 animate-pulse" />
                                             </div>
                                             
                                             <div className="grid grid-cols-1 gap-8 relative z-10">
-                                                <NotificationCircuit 
-                                                    trigger="REQUISITION ISSUED (DN)" 
-                                                    receiver="NEXT LEVEL APPROVER" 
-                                                    icon={FileText} 
-                                                    color="bg-blue-600 border-blue-800" 
-                                                />
-                                                <NotificationCircuit 
-                                                    trigger="DN FULLY AUTHORIZED" 
-                                                    receiver="GENERAL PURCHASE OFFICER" 
-                                                    icon={ShieldCheck} 
-                                                    color="bg-emerald-600 border-emerald-800" 
-                                                />
-                                                <NotificationCircuit 
-                                                    trigger="CONCERN TASK ASSIGNED" 
-                                                    receiver="GP CONCERN OFFICER" 
-                                                    icon={UserPlus} 
-                                                    color="bg-purple-600 border-purple-800" 
-                                                />
-                                                <NotificationCircuit 
-                                                    trigger="GOODS ARRIVAL (MRR)" 
-                                                    receiver="ORIGINAL REQUISITIONER" 
-                                                    icon={Package} 
-                                                    color="bg-orange-600 border-orange-800" 
-                                                />
-                                                <NotificationCircuit 
-                                                    trigger="INTAKE VERIFIED" 
-                                                    receiver="PURCHASE MANAGER (PN AUDIT)" 
-                                                    icon={Wallet} 
-                                                    color="bg-slate-800 border-slate-900" 
-                                                />
+                                                <NotificationCircuit trigger="REQUISITION ISSUED (DN)" receiver="NEXT LEVEL APPROVER" icon={FileText} color="bg-blue-600 border-blue-800" />
+                                                <NotificationCircuit trigger="DN FULLY AUTHORIZED" receiver="GENERAL PURCHASE OFFICER" icon={ShieldCheck} color="bg-emerald-600 border-emerald-800" />
+                                                <NotificationCircuit trigger="CONCERN TASK ASSIGNED" receiver="GP CONCERN OFFICER" icon={UserPlus} color="bg-purple-600 border-purple-800" />
+                                                <NotificationCircuit trigger="GOODS ARRIVAL (MRR)" receiver="ORIGINAL REQUISITIONER" icon={Package} color="bg-orange-600 border-orange-800" />
+                                                <NotificationCircuit trigger="INTAKE VERIFIED" receiver="PURCHASE MANAGER (PN AUDIT)" icon={Wallet} color="bg-slate-800 border-slate-900" />
                                             </div>
 
                                             <div className="mt-8 p-4 bg-red-100 rounded-2xl border-2 border-red-200 text-center relative z-10">
@@ -941,7 +878,6 @@ export function BlueprintDialog({
                     </Tabs>
                 </div>
 
-                {/* CONDENSED FOOTER */}
                 <DialogFooter className="p-3 border-t bg-muted/10 shrink-0">
                     <div className="w-full flex justify-between items-center">
                         <div className="flex items-center gap-3">
