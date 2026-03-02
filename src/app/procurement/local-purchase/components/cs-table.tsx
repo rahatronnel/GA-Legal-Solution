@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useRef } from 'react';
@@ -434,7 +433,7 @@ export function ComparativeStatementTable() {
             if (!isVisible && currentUserEmployee) {
                 if (cs.createdBy === currentUserEmployee.id || 
                     cs.currentApproverId === currentUserEmployee.id || 
-                    cs.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) {
+                    cs.approvalHistory?.some((h: any) => h.approverId === currentUserEmployee.id)) {
                     isVisible = true;
                 }
             }

@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
+import type { Department } from './department-table';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser, recreateUserWithPassword } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +35,7 @@ interface EmployeeTableProps {
   setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>; // Kept for optimistic updates but Firestore is source of truth
   sections: Section[];
   designations: Designation[];
+  departments: Department[];
 }
 
 type ProcessedEmployee = {
@@ -42,7 +44,7 @@ type ProcessedEmployee = {
   original?: Employee;
 };
 
-export function EmployeeTable({ employees, setEmployees, sections, designations }: EmployeeTableProps) {
+export function EmployeeTable({ employees, setEmployees, sections, designations, departments }: EmployeeTableProps) {
   const { toast } = useToast();
   const { handlePrint } = usePrint();
   const auth = useAuth();
@@ -66,6 +68,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       return sections.find(s => s.id === sectionId)?.name || 'N/A';
   }
 
+  const getDepartmentName = (deptId: string) => {
+      if(!departments || departments.length === 0) return 'N/A';
+      return departments.find(d => d.id === deptId)?.name || 'N/A';
+  }
+
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
     if (!searchTerm) return employees;
@@ -74,9 +81,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
       (emp.fullName && emp.fullName.toLowerCase().includes(lowercasedTerm)) ||
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
-      (getSectionName(emp.departmentId).toLowerCase().includes(lowercasedTerm))
+      (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
+      (getSectionName(emp.sectionId || '').toLowerCase().includes(lowercasedTerm))
     );
-  }, [employees, searchTerm, sections]);
+  }, [employees, searchTerm, sections, departments]);
 
   const handleAdd = () => {
     setCurrentEmployee(null);
@@ -145,21 +153,23 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     setIsDeleteConfirmOpen(false);
     setCurrentEmployee(null);
   };
-
+  
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{ 
       userIdCode: '',
       fullName: '',
-      email: '',
-      password: '',
       mobileNumber: '',
+      email: '',
       role: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
+      username: '',
+      departmentCode: '',
       sectionCode: '',
       designationCode: '',
       joiningDate: 'YYYY-MM-DD',
       address: '',
-      remarks: ''
+      remarks: '',
+      defaultPassword: '',
     }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Employees');
@@ -168,60 +178,49 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && employeesRef && auth) {
+    if (file && employeesRef) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
-          if (!json[0] || !('userIdCode' in json[0]) || !('email' in json[0])) {
-             throw new Error(`Invalid Excel format. Required columns are: userIdCode, email.`);
-          }
-
-          const processedData: ProcessedEmployee[] = [];
-          for (const item of json) {
-            const userIdCode = String(item.userIdCode || '').trim();
-            const email = String(item.email || '').trim();
-
-            if (!userIdCode && !email) continue;
-            
-            const existingEmployee = employees.find(emp => emp.userIdCode === userIdCode || emp.email === email);
-            const section = sections.find(s => s.sectionCode === String(item.sectionCode || ''));
-            const designation = designations.find(d => d.designationCode === String(item.designationCode || ''));
-
-            const employeeDataFromSheet: Partial<Employee> = {
-                userIdCode: userIdCode,
-                fullName: String(item.fullName || '').trim(),
-                email: email,
-                username: email,
-                mobileNumber: String(item.mobileNumber || '').trim(),
-                role: item.role?.toString().trim() || 'Viewer',
-                status: item.status?.toString().trim() || 'Active',
-                departmentId: section?.id || '',
-                designationId: designation?.id || '',
-                joiningDate: String(item.joiningDate || '').trim(),
-                address: String(item.address || '').trim(),
-                remarks: String(item.remarks || '').trim(),
-                defaultPassword: String(item.password || '').trim()
-            };
-            
-            if (existingEmployee) {
-                processedData.push({ isNew: false, data: employeeDataFromSheet, original: existingEmployee });
-            } else {
-                processedData.push({ isNew: true, data: employeeDataFromSheet });
-            }
-          }
+          const processed = json.map(item => {
+              const dept = departments.find(d => d.code === String(item.departmentCode || '').trim());
+              const sect = sections.find(s => s.sectionCode === String(item.sectionCode || '').trim());
+              const desig = designations.find(d => d.designationCode === String(item.designationCode || '').trim());
+              
+              const existing = employees.find(e => e.email === item.email);
+              
+              const empData: Partial<Employee> = {
+                  userIdCode: String(item.userIdCode || '').trim(),
+                  fullName: String(item.fullName || '').trim(),
+                  mobileNumber: String(item.mobileNumber || '').trim(),
+                  email: String(item.email || '').trim(),
+                  role: (item.role || 'Viewer') as any,
+                  status: (item.status || 'Active') as any,
+                  username: String(item.email || '').trim(),
+                  departmentId: dept?.id || '',
+                  sectionId: sect?.id || '',
+                  designationId: desig?.id || '',
+                  joiningDate: item.joiningDate ? String(item.joiningDate) : '',
+                  address: String(item.address || '').trim(),
+                  remarks: String(item.remarks || '').trim(),
+                  defaultPassword: String(item.defaultPassword || '').trim(),
+              };
+              
+              return {
+                  isNew: !existing,
+                  data: empData,
+                  original: existing
+              };
+          });
           
-          if (processedData.length > 0) {
-              setProcessedUpload(processedData);
-              setIsUploadConfirmOpen(true);
-          } else {
-              toast({ variant: 'destructive', title: 'Upload Error', description: 'No valid data found in the file to process.' });
-          }
+          setProcessedUpload(processed);
+          setIsUploadConfirmOpen(true);
 
         } catch (error: any) {
           toast({ variant: 'destructive', title: 'Upload Error', description: error.message });
@@ -231,7 +230,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
     }
     event.target.value = '';
   };
-  
+
   const confirmUpload = async () => {
     if (!employeesRef || !auth) return;
     
@@ -254,7 +253,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
             }
         } else if (item.original?.id) {
             const { defaultPassword, ...dataToUpdate } = item.data; // Don't update password on existing users this way
-            setDocumentNonBlocking(doc(employeesRef, item.original.id), dataToUpdate, { merge: true });
+            setDocumentNonBlocking(doc(firestore, 'employees', item.original.id), dataToUpdate, { merge: true });
             updatedCount++;
         }
     }
@@ -295,7 +294,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
               <TableHead>Email</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Section</TableHead>
+              <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[200px] text-right">Actions</TableHead>
             </TableRow>
@@ -336,7 +335,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-3 w-3"
                             onClick={() => {
                               navigator.clipboard.writeText(employee.email);
                               toast({ title: 'Copied!', description: 'Email copied to clipboard.' });
@@ -353,7 +352,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations 
                   </TableCell>
                   <TableCell>{employee.mobileNumber}</TableCell>
                   <TableCell>{employee.role}</TableCell>
-                  <TableCell>{getSectionName(employee.departmentId)}</TableCell>
+                  <TableCell>{getDepartmentName(employee.departmentId)}</TableCell>
                   <TableCell>{employee.status}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

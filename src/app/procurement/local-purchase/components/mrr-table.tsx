@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -414,7 +413,7 @@ export function MRRTable() {
             <div className="space-y-4">
                 <div className="flex justify-between items-center flex-wrap gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <div className="relative w-full sm:max-md">
+                        <div className="relative w-full sm:max-w-md">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Search MRR#, Supplier..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8" />
                         </div>

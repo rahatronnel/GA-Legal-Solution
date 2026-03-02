@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -329,7 +328,7 @@ export function BlueprintDialog({
                                             <div className="space-y-2">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
                                                 <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
-                                                    <p className="text-[10px] font-black leading-relaxed">Original Requester confirms goods. Process remains "Open" without confirmant timestamp.</p>
+                                                    <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains "Open" without confirmant timestamp.</p>
                                                 </div>
                                             </div>
                                         </div>

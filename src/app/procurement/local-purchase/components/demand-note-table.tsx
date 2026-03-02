@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -485,7 +484,7 @@ export function DemandNoteTable() {
             
             if (item.createdBy === currentUserEmployee?.id) isVisible = true;
             if (currentUserEmployee && item.currentApproverId === currentUserEmployee.id) isVisible = true;
-            if (currentUserEmployee && item.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) isVisible = true;
+            if (currentUserEmployee && item.approvalHistory?.some((h: any) => h.approverId === currentUserEmployee.id)) isVisible = true;
 
             if (!isVisible) return false;
 
@@ -695,7 +694,7 @@ export function DemandNoteTable() {
                                     const isApprovable = approvableItems.some(ai => ai.id === item.id);
 
                                     return (
-                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || isWaitingForGP || canConfirmMRR) && "bg-orange-500/5")}>
+                                        <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForApproval || isWaitingForGP || canConfirmMRR) && "bg-orange-50/5")}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(item.id)}
