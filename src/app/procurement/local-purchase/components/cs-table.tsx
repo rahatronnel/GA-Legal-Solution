@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useRef } from 'react';
@@ -39,8 +38,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -59,6 +56,8 @@ import { PurchaseOrderForm } from './po-entry-form';
 import { cn } from '@/lib/utils';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 /**
  * CSUserGuide - High-Fidelity documentation portal for CS standards.
@@ -184,7 +183,7 @@ const VendorSelectionDialog: React.FC<{
         }
     }, [isOpen]);
 
-    const selectedVendor = vendors.find(v => v.id === selectedVendorId);
+    const selectedVendor = vendors.find((v: Vendor) => v.id === selectedVendorId);
     const selectedVendorDetail = cs?.vendorDetails.find(d => d.vendorId === selectedVendorId);
 
     const financials = useMemo(() => {
@@ -243,7 +242,7 @@ const VendorSelectionDialog: React.FC<{
                                     <SelectTrigger className="h-12 text-lg animate-scale-in"><SelectValue placeholder="Choose a vendor to award..." /></SelectTrigger>
                                     <SelectContent className="animate-scale-in">
                                         {(cs?.vendorDetails || []).map(detail => {
-                                            const v = vendors.find(v => v.id === detail.vendorId);
+                                            const v = vendors.find((v: Vendor) => v.id === detail.vendorId);
                                             return <SelectItem key={detail.vendorId} value={detail.vendorId}>{v?.vendorName}</SelectItem>
                                         })}
                                     </SelectContent>
@@ -351,7 +350,7 @@ export function ComparativeStatementTable() {
 
     const currentUserEmployee = useMemo(() => {
         if (!user || !employees) return null;
-        return employees.find(e => e.email === user.email);
+        return (employees as Employee[]).find((e: Employee) => e.email === user.email);
     }, [user, employees]);
 
     const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
@@ -429,7 +428,7 @@ export function ComparativeStatementTable() {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         if (safeItems.length === 0) return [];
 
-        return safeItems.filter(cs => {
+        return (safeItems as ComparativeStatement[]).filter(cs => {
             let isVisible = isSuperAdmin || isGPOfficer || isManager;
             if (!isVisible && currentUserEmployee) {
                 if (cs.createdBy === currentUserEmployee.id || 
@@ -456,7 +455,7 @@ export function ComparativeStatementTable() {
 
     const handleVendorSelected = (csId: string, vendorId: string) => {
         if (!csRef || !firestore) return;
-        const cs = comparativeStatements.find(c => c.id === csId);
+        const cs = (comparativeStatements as ComparativeStatement[]).find(c => c.id === csId);
         if (!cs || !cs.approvalFlow?.steps) return;
         setDocumentNonBlocking(doc(csRef, csId), {
             selectedVendorId: vendorId,
@@ -471,7 +470,7 @@ export function ComparativeStatementTable() {
     const handleBulkApproval = (status: number) => {
         if (!firestore || !currentUserEmployee || !csRef) return;
         selectedRows.forEach(id => {
-            const cs = comparativeStatements.find(c => c.id === id);
+            const cs = (comparativeStatements as ComparativeStatement[]).find(c => c.id === id);
             if (!cs || !cs.approvalFlow?.steps) return;
             const currentLevel = cs.approvalHistory?.length || 0;
             const newHistoryEntry = { 
@@ -584,7 +583,7 @@ export function ComparativeStatementTable() {
                                             <TableCell><Badge variant="outline" className="font-bold border-primary/10 text-[10px]">{dn?.demandNoteNumber || 'N/A'}</Badge></TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-black text-primary">{cs.selectedVendorId ? vendors?.find(v => v.id === cs.selectedVendorId)?.vendorName : 'Pending Selection'}</span>
+                                                    <span className="text-xs font-black text-primary">{cs.selectedVendorId ? vendors?.find((v: Vendor) => v.id === cs.selectedVendorId)?.vendorName : 'Pending Selection'}</span>
                                                     {cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground italic font-black">Awarded: {new Date(cs.vendorSelectionDate).toLocaleDateString()}</span>}
                                                 </div>
                                             </TableCell>
@@ -637,7 +636,7 @@ export function ComparativeStatementTable() {
             </div>
             
             <VendorSelectionDialog 
-                cs={selectedCsForVendor} 
+                cs={selectedRows.length === 1 ? filteredItems.find(i => i.id === selectedRows[0]) || selectedCsForVendor : selectedCsForVendor} 
                 isOpen={isVendorSelectionOpen} 
                 onOpenChange={setIsVendorSelectionOpen} 
                 onVendorSelected={handleVendorSelected} 
@@ -659,6 +658,11 @@ export function ComparativeStatementTable() {
                         <DialogTitle className="text-xl font-black uppercase tracking-tighter text-primary">CS Audit Chain</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
+                        <p className="text-[10px] font-black uppercase text-blue-900">Deep Scan Engine</p>
+                        <p className="text-[9px] text-muted-foreground font-bold">
+                          DN -&gt; GP -&gt; CS -&gt; PO -&gt; MRR -&gt; PN
+                        </p>
+                        <Separator className="my-2" />
                         {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = (employees || []).find(e => e.id === step.approverId);

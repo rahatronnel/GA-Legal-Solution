@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
 import type { Vendor } from './vendor-entry-form';

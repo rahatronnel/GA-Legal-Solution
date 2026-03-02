@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -280,7 +279,7 @@ export function BlueprintDialog({
                                                 <h5 className="font-black text-xs uppercase tracking-widest text-amber-900">Authority Matrix</h5>
                                                 <div className="space-y-2">
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">Under $10K</span><Badge className="text-[8px] h-4">Manager</Badge></div>
-                                                    <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">$10K - $100K</span><Badge className="text-[8px] h-4 bg-orange-500">Tech Advisor</Badge></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">$10K - $100K</span><Badge className="text-[8px] h-4">Purchase Mgr</Badge></div>
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200 shadow-sm"><span className="text-[10px] font-black">Above $1M</span><Badge className="text-[8px] h-4" variant="destructive">Full Board</Badge></div>
                                                 </div>
                                             </div>
@@ -477,19 +476,19 @@ export function BlueprintDialog({
                                                 title="The Standard Gateway" 
                                                 description="Items without 'Special' flags route through DH and TA." 
                                                 badge="Route A" 
-                                                path="DH -> TA" 
+                                                path="DH -&gt; TA" 
                                             />
                                             <LogicGate 
                                                 title="The Manufacturing Filter" 
                                                 description="Injected if department is flagged as 'Manufacturing'." 
                                                 badge="Route B" 
-                                                path="DH -> TA -> MFG MGR" 
+                                                path="DH -&gt; TA -&gt; MFG MGR" 
                                             />
                                             <LogicGate 
                                                 title="The Special Audit" 
                                                 description="Triggered by high-value categories. Direct to MD." 
                                                 badge="Route C" 
-                                                path="SPEC MGR -> MD" 
+                                                path="SPEC MGR -&gt; MD" 
                                             />
                                         </div>
                                         
@@ -511,7 +510,9 @@ export function BlueprintDialog({
                                                         <div className="p-3 bg-white border-2 border-blue-500 rounded-xl shadow-lg animate-pulse"><Search className="h-6 w-6 text-blue-600" /></div>
                                                         <div className="space-y-1">
                                                             <p className="text-[10px] font-black uppercase text-blue-900">Deep Scan Engine</p>
-                                                            <p className="text-[9px] text-muted-foreground font-bold">DN -> GP -> CS -> PO -> MRR -> PN</p>
+                                                            <p className="text-[9px] text-muted-foreground font-bold">
+                                                              DN -&gt; GP -&gt; CS -&gt; PO -&gt; MRR -&gt; PN
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
