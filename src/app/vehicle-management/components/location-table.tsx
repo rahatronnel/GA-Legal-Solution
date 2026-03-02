@@ -129,9 +129,9 @@ export function LocationTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
 
-          if (!json[0] || !('name' in json[0]) || !('locationCode' in json[0])) {
+          if (!json[0] || typeof json[0] !== "object" || !("name" in json[0]) || !("locationCode" in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns "name" and "locationCode".');
           }
 
@@ -270,7 +270,7 @@ export function LocationTable() {
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the location "{currentLocation?.name}".
+              This action cannot be undone. This will permanently delete the location "{currentItem?.name}".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

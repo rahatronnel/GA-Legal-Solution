@@ -43,7 +43,7 @@ export function MaintenanceTypeTable() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [currentMaintenanceType, setCurrentMaintenanceType] = useState<Partial<MaintenanceType> | null>(null);
+  const [currentItem, setCurrentItem] = useState<Partial<MaintenanceType> | null>(null);
   const [maintenanceTypeData, setMaintenanceTypeData] = useState({ name: '', code: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -129,9 +129,9 @@ export function MaintenanceTypeTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
 
-          if (!json[0] || !('name' in json[0]) || !('code' in json[0])) {
+          if (!json[0] || typeof json[0] !== "object" || !("name" in json[0]) || !("code" in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "code".');
           }
 
@@ -279,5 +279,3 @@ export function MaintenanceTypeTable() {
     </TooltipProvider>
   );
 }
-
-    

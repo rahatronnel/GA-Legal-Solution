@@ -129,9 +129,9 @@ export function MaintenanceExpenseTypeTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
 
-          if (!json[0] || !('name' in json[0]) || !('code' in json[0])) {
+          if (!json[0] || typeof json[0] !== "object" || !("name" in json[0]) || !("code" in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "code".');
           }
 
@@ -239,9 +239,9 @@ export function MaintenanceExpenseTypeTable() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{currentExpenseType?.id ? 'Edit' : 'Add'} Maintenance Expense Type</DialogTitle>
+            <DialogTitle>{currentItem?.id ? 'Edit' : 'Add'} Maintenance Expense Type</DialogTitle>
             <DialogDescription>
-              {currentExpenseType?.id ? 'Update the details of the expense type.' : 'Create a new expense type for maintenance.'}
+              {currentItem?.id ? 'Update the details of the expense type.' : 'Create a new expense type for maintenance.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -279,5 +279,3 @@ export function MaintenanceExpenseTypeTable() {
     </TooltipProvider>
   );
 }
-
-    

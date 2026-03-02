@@ -125,9 +125,9 @@ export function DepartmentTable({ departments, isLoading }: DepartmentTableProps
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
 
-          if (!json[0] || !('name' in json[0]) || !('code' in json[0])) {
+          if (!json[0] || typeof json[0] !== "object" || !("name" in json[0]) || !("code" in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns with headers "name" and "code".');
           }
 
@@ -191,7 +191,7 @@ export function DepartmentTable({ departments, isLoading }: DepartmentTableProps
                         <TableCell className="text-right">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 p-0">
                                 <span className="sr-only">Open menu</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
