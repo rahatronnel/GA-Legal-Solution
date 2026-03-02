@@ -43,6 +43,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
+import type { Vendor } from './vendor-entry-form';
+import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 
 export function BillTable() {
@@ -80,12 +82,12 @@ export function BillTable() {
 
   const currentUserEmployee = useMemo(() => {
     if (!user || !employees) return null;
-    return employees.find(e => e.email === user.email);
+    return (employees as Employee[]).find((e: Employee) => e.email === user.email);
   }, [user, employees]);
 
-  const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
+  const getVendorName = (vendorId: string) => (vendors as Vendor[]).find((v: Vendor) => v.id === vendorId)?.vendorName || 'N/A';
 
-  const safeBills = useMemo(() => Array.isArray(bills) ? bills : [], [bills]);
+  const safeBills = useMemo(() => Array.isArray(bills) ? bills as Bill[] : [], [bills]);
 
   const filteredItems = useMemo(() => {
     return safeBills.filter(bill => {
@@ -186,7 +188,7 @@ export function BillTable() {
     if (!firestore || !currentUserEmployee) return;
 
     selectedRows.forEach(billId => {
-        const bill = bills.find(b => b.id === billId);
+        const bill = (bills as Bill[]).find((b: Bill) => b.id === billId);
         if (!bill || !bill.approvalFlow?.steps) return;
 
         const billRef = doc(firestore, 'bills', billId);
@@ -259,8 +261,8 @@ export function BillTable() {
             <div className="flex justify-end gap-2 flex-wrap">
                 {canPerformBulkAction && (
                     <>
-                        <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4"/>Approve Selected</Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4"/>Reject Selected</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleBulkApproval(1)}><Check className="mr-2 h-4 w-4" />Approve Selected</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleBulkApproval(0)}><X className="mr-2 h-4 w-4" />Reject Selected</Button>
                     </>
                 )}
                 <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Bill</Button>
@@ -270,11 +272,11 @@ export function BillTable() {
         <div className="p-4 border rounded-lg space-y-4">
             <div className="flex items-center gap-2 font-semibold"><Filter className="h-4 w-4" /> Filters</div>
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <Select value={vendorFilter} onValueChange={setVendorFilter}><SelectTrigger><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vendors</SelectItem>{(vendors || []).map(v => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent></Select>
+                <Select value={vendorFilter} onValueChange={setVendorFilter}><SelectTrigger><SelectValue placeholder="Filter by Vendor..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vendors</SelectItem>{((vendors as Vendor[]) || []).map((v: Vendor) => <SelectItem key={v.id} value={v.id}>{v.vendorName}</SelectItem>)}</SelectContent></Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue placeholder="Filter by Status..." /></SelectTrigger><SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="1">Final Approved</SelectItem></SelectContent></Select>
-                <Select value={billTypeFilter} onValueChange={setBillTypeFilter}><SelectTrigger><SelectValue placeholder="Filter by Bill Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Bill Types</SelectItem>{(billTypes || []).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={billCategoryFilter} onValueChange={setBillCategoryFilter}><SelectTrigger><SelectValue placeholder="Filter by Category..." /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{(billCategories || []).map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={departmentFilter} onValueChange={setDepartmentFilter}><SelectTrigger><SelectValue placeholder="Filter by Department..." /></SelectTrigger><SelectContent><SelectItem value="all">All Departments</SelectItem>{(sections || []).map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={billTypeFilter} onValueChange={setBillTypeFilter}><SelectTrigger><SelectValue placeholder="Filter by Bill Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Bill Types</SelectItem>{(billTypes || []).map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={billCategoryFilter} onValueChange={setBillCategoryFilter}><SelectTrigger><SelectValue placeholder="Filter by Category..." /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{(billCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={departmentFilter} onValueChange={setDepartmentFilter}><SelectTrigger><SelectValue placeholder="Filter by Department..." /></SelectTrigger><SelectContent><SelectItem value="all">All Departments</SelectItem>{(sections || []).map((s: any) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select>
                 <Input placeholder="PO Number..." value={poFilter} onChange={(e) => setPoFilter(e.target.value)} />
                 <Input placeholder="WO Number..." value={woFilter} onChange={(e) => setWoFilter(e.target.value)} />
                 <Input placeholder="Amount..." value={amountFilter} onChange={(e) => setAmountFilter(e.target.value)} type="number" />
@@ -382,7 +384,3 @@ export function BillTable() {
     </TooltipProvider>
   );
 }
-
-    
-
-    

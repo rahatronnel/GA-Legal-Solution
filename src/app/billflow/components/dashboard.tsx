@@ -12,6 +12,7 @@ import { useUser } from '@/firebase';
 import { Eye, FileText, Hourglass, CheckCircle, Users } from 'lucide-react';
 import { getBillStatusText } from '../lib/status-helper';
 import { format, isThisMonth } from 'date-fns';
+import type { Vendor } from './vendor-entry-form';
 
 const StatCard: React.FC<{ title: string, value: string | number, description?: string, icon: React.ElementType }> = ({ title, value, description, icon: Icon }) => (
     <Card>
@@ -68,7 +69,7 @@ export function BillFlowDashboard() {
         };
     }, [bills, vendors, currentUserEmployee, user]);
 
-    const getVendorName = (vendorId: string) => vendors.find(v => v.id === vendorId)?.vendorName || 'N/A';
+    const getVendorName = (vendorId: string) => (vendors as Vendor[]).find((v: Vendor) => v.id === vendorId)?.vendorName || 'N/A';
     
     const getStatusVariant = (status: number) => {
         if (status === 1) return 'default';

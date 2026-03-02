@@ -32,6 +32,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { OrganizationSettings } from '@/app/settings/page';
+import type { Vendor } from './vendor-entry-form';
+import type { BillType } from './bill-type-table';
+import type { Section } from '@/app/user-management/components/section-table';
 
 
 type UploadedFile = {
@@ -193,15 +196,15 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                                 <div className="space-y-2 md:col-span-2">
                                   <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Issuing Vendor<MandatoryIndicator/></Label>
                                   <Popover open={vPopOpen} onOpenChange={setVPopOpen}>
-                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? vendors.find(v => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{vendors.map(v=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
+                                    <PopoverTrigger asChild><Button variant="outline" className="w-full justify-between">{billData.vendorId ? (vendors as Vendor[]).find((v: Vendor) => v.id === billData.vendorId)?.vendorName : "Search Vendor..."}<ChevronsUpDown className="h-4 w-4 opacity-50" /></Button></PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0"><Command><CommandInput placeholder="Search name..." /><CommandList><CommandEmpty>No vendor.</CommandEmpty><CommandGroup>{(vendors as Vendor[]).map((v: Vendor)=><CommandItem key={v.id} value={v.vendorName} onSelect={()=>{setBillData({...billData, vendorId: v.id}); setVPopOpen(false);}}><Check className={cn("mr-2 h-4 w-4", billData.vendorId === v.id ? "opacity-100" : "opacity-0")} />{v.vendorName}</CommandItem>)}</CommandGroup></CommandList></Command></PopoverContent>
                                   </Popover>
                                 </div>
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Manual Ref No.</Label><Input value={billData.billReferenceNumber} onChange={(e)=>setBillData({...billData, billReferenceNumber:e.target.value})} /></div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Bill Class<MandatoryIndicator/></Label>
                                     <Select value={billData.billTypeId} onValueChange={(v)=>setBillData({...billData, billTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{billTypes.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                                    <SelectContent>{(billTypes as BillType[]).map((t: BillType)=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Bill Date<MandatoryIndicator/></Label>
@@ -258,7 +261,7 @@ export function BillEntryForm({ isOpen, setIsOpen, onSave, bill }: BillEntryForm
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Attributed Department</Label>
                                 <Select value={billData.departmentName} onValueChange={(v)=>setBillData({...billData, departmentName:v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{sections.map(s=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+                                <SelectContent>{(sections as Section[]).map((s: Section)=><SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select></div>
                                 <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Inbox className="h-3 w-3" /> Budget Head</Label><Input value={billData.budgetHead} onChange={(e)=>setBillData({...billData, budgetHead:e.target.value})} /></div>
                             </div>
                         </div>

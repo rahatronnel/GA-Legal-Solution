@@ -17,6 +17,19 @@ import type { BillItemMaster } from './bill-item-master-table';
 import type { BillItemCategory } from './bill-item-category-table';
 import type { Designation } from '@/app/user-management/components/designation-table';
 
+export type BillFlowData = {
+    vendors: Vendor[];
+    bills: Bill[];
+    billTypes: BillType[];
+    billCategories: BillCategory[];
+    employees: Employee[];
+    sections: Section[];
+    billItemCategories: BillItemCategory[];
+    vendorCategories: VendorCategory[];
+    vendorNatureOfBusiness: VendorNatureOfBusiness[];
+    designations: Designation[];
+};
+
 const MasterDataContext = createContext<{
     billItemMasters: BillItemMaster[];
     billItemCategories: BillItemCategory[];
@@ -69,7 +82,7 @@ export const useMasterData = () => {
     return context;
 };
 
-const LegacyBillFlowContext = createContext<{ data: any, isLoading: boolean } | null>(undefined);
+const LegacyBillFlowContext = createContext<{ data: BillFlowData, isLoading: boolean } | null>(undefined);
 
 export function LegacyBillFlowProvider({ children }: { children: React.ReactNode }) {
     const { user, isUserLoading } = useUser();
@@ -88,7 +101,7 @@ export function LegacyBillFlowProvider({ children }: { children: React.ReactNode
 
     const isLoading = isUserLoading || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l10 || l11;
 
-    const data = useMemo(() => ({
+    const data: BillFlowData = useMemo(() => ({
         vendors: vendors || [],
         bills: bills || [],
         billTypes: billTypes || [],
