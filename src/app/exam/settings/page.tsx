@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useArs, ArsExam, ArsQuestion } from '../components/ars-provider';
-import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useCollection } from '@/firebase';
+import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,21 @@ import { Badge } from '@/components/ui/badge';
 import { 
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
-    Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle
+    Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 export default function ArsSettingsPage() {
     const { exams, questions, isLoading } = useArs();
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const [isExamModalOpen, setIsExamModalOpen] = useState(false);
     const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
@@ -37,6 +40,18 @@ export default function ArsSettingsPage() {
     const [examForm, setExamForm] = useState({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' as 'Exam' | 'Survey' });
     const [questionForm, setQuestionForm] = useState<Omit<ArsQuestion, 'id'>>({ examId: '', questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 });
 
+    useGSAP(() => {
+        if (!isLoading) {
+            gsap.from(".ars-card-animate", {
+                y: 30,
+                opacity: 0,
+                stagger: 0.1,
+                duration: 0.6,
+                ease: "expo.out"
+            });
+        }
+    }, [isLoading, exams.length]);
+
     const handleSaveExam = () => {
         if (!firestore || !user) return;
         const examsRef = collection(firestore, 'arsExams');
@@ -44,10 +59,10 @@ export default function ArsSettingsPage() {
 
         if (currentExam?.id) {
             setDocumentNonBlocking(doc(firestore, 'arsExams', currentExam.id), data, { merge: true });
-            toast({ title: 'Registry Updated' });
+            toast({ title: 'Registry Updated', description: 'Session parameters have been synchronized.' });
         } else {
             addDocumentNonBlocking(examsRef, { ...data, isLive: false, activeQuestionIndex: -1 });
-            toast({ title: 'New Registry Created' });
+            toast({ title: 'New Registry Created', description: 'Audience session is now ready for logic injection.' });
         }
         setIsExamModalOpen(false);
     };
@@ -59,21 +74,25 @@ export default function ArsSettingsPage() {
 
         if (currentQuestion?.id) {
             setDocumentNonBlocking(doc(firestore, 'arsQuestions', currentQuestion.id), data, { merge: true });
-            toast({ title: 'Question Updated' });
+            toast({ title: 'Question Logic Synced' });
         } else {
             addDocumentNonBlocking(questionsRef, data);
-            toast({ title: 'Question Added' });
+            toast({ title: 'Question Injected', description: 'The interaction point has been added to the session.' });
         }
         setIsQuestionModalOpen(false);
     };
 
     const toggleLiveSession = (exam: ArsExam) => {
         if (!firestore) return;
+        const newState = !exam.isLive;
         setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
-            isLive: !exam.isLive,
-            activeQuestionIndex: !exam.isLive ? 0 : -1 
+            isLive: newState,
+            activeQuestionIndex: newState ? 0 : -1 
         }, { merge: true });
-        toast({ title: exam.isLive ? 'Session Halted' : 'Session Broadcast Active' });
+        toast({ 
+            title: newState ? 'Session Broadcast Active' : 'Session Halted',
+            description: newState ? 'Participants can now see the first question.' : 'The live signal has been disconnected.'
+        });
     };
 
     const nextLiveQuestion = (exam: ArsExam) => {
@@ -83,36 +102,36 @@ export default function ArsSettingsPage() {
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 activeQuestionIndex: exam.activeQuestionIndex + 1 
             }, { merge: true });
+            toast({ title: 'Signal Pushed', description: 'Moving to next interaction point.' });
         } else {
-            // End of session
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 isLive: false,
                 activeQuestionIndex: -1 
             }, { merge: true });
-            toast({ title: 'Session Concluded' });
+            toast({ title: 'Session Concluded', description: 'All logic steps have been completed.' });
         }
     };
 
     if (isLoading) return <div className="flex h-screen items-center justify-center bg-slate-950"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
     return (
-        <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-50">
+        <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-50" ref={containerRef}>
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-primary/10 rounded-[20px] backdrop-blur-xl border border-white/10 shadow-2xl">
-                        <Settings className="h-8 w-8 text-primary" />
+                        <Radio className="h-8 w-8 text-primary animate-pulse" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">ARS Control Center</h1>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mt-2">Manage Live Seminar Logic</p>
+                        <h1 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">ARS Master Console</h1>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mt-2 italic">Define High-Fidelity Interaction Logic</p>
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <Button variant="outline" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
+                    <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
                         <Link href="/"><ChevronLeft className="h-5 w-5" /> Exit Terminal</Link>
                     </Button>
-                    <Button className="h-12 rounded-full font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
-                        <FilePlus className="h-5 w-5" /> New Session
+                    <Button className="h-12 rounded-full font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:scale-105 transition-all" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
+                        <PlusCircle className="h-5 w-5" /> New Session Registry
                     </Button>
                 </div>
             </div>
@@ -121,29 +140,30 @@ export default function ArsSettingsPage() {
                 {exams.map(exam => {
                     const examQuestions = questions.filter(q => q.examId === exam.id);
                     return (
-                        <Card key={exam.id} className="bg-white/[0.02] border-white/5 rounded-[32px] overflow-hidden group">
-                            <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <Card key={exam.id} className="bg-white/[0.02] border-white/5 rounded-[32px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all">
+                            <div className="p-8 flex flex-col lg:row items-center justify-between gap-6 lg:flex-row">
                                 <div className="flex items-center gap-6 flex-1">
-                                    <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center border border-white/10">
+                                    <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center border border-white/10 shadow-inner">
                                         <Layers className="h-8 w-8 text-primary" />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <h3 className="text-2xl font-black text-white uppercase tracking-tight">{exam.title}</h3>
-                                            <Badge className="bg-primary/20 text-primary uppercase text-[10px] font-black">{exam.type}</Badge>
+                                            <h3 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{exam.title}</h3>
+                                            <Badge className={cn("uppercase text-[9px] font-black h-5", exam.type === 'Exam' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400")}>{exam.type}</Badge>
+                                            <Badge variant="outline" className="text-[9px] font-black border-white/10 opacity-50">{exam.status}</Badge>
                                         </div>
-                                        <p className="text-sm text-slate-400 font-medium">{exam.description || 'No internal description.'}</p>
+                                        <p className="text-sm text-slate-400 font-medium mt-2 line-clamp-1">{exam.description || 'No internal description recorded.'}</p>
                                     </div>
                                 </div>
                                 
-                                <div className="flex items-center gap-8 px-8 border-x border-white/5">
+                                <div className="flex items-center gap-12 px-12 border-x border-white/5">
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">Logic Step</p>
-                                        <p className="text-xl font-black text-white">{examQuestions.length}</p>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Interaction Steps</p>
+                                        <p className="text-2xl font-black text-white">{examQuestions.length}</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">Duration</p>
-                                        <p className="text-xl font-black text-white">{exam.timeLimitMinutes}m</p>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Session Velocity</p>
+                                        <p className="text-2xl font-black text-white">{exam.timeLimitMinutes}m</p>
                                     </div>
                                 </div>
 
@@ -152,41 +172,64 @@ export default function ArsSettingsPage() {
                                         <>
                                             <Button 
                                                 variant={exam.isLive ? "destructive" : "outline"} 
-                                                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] h-10 px-6"
+                                                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] h-10 px-6 border-white/10 shadow-xl"
                                                 onClick={() => toggleLiveSession(exam)}
                                             >
-                                                {exam.isLive ? <><Square className="h-3 w-3 fill-current" /> Halt Session</> : <><Play className="h-3 w-3 fill-current" /> Broadcast Live</>}
+                                                {exam.isLive ? <><Square className="h-3 w-3 fill-current" /> Halt Broadcast</> : <><Play className="h-3 w-3 fill-current" /> Broadcast Live</>}
                                             </Button>
                                             {exam.isLive && (
-                                                <Button className="h-10 rounded-full gap-2 font-black uppercase tracking-widest text-[10px]" onClick={() => nextLiveQuestion(exam)}>
-                                                    Next Question <ChevronRight className="h-4 w-4" />
+                                                <Button className="h-10 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg" onClick={() => nextLiveQuestion(exam)}>
+                                                    Push Next Question <ChevronRight className="h-4 w-4" />
                                                 </Button>
                                             )}
-                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-400" asChild>
-                                                <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-5 w-5" /></Link>
-                                            </Button>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild>
+                                                            <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-5 w-5" /></Link>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="bg-blue-600 font-black text-[10px] uppercase">Open Big Screen Display</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                         </>
                                     )}
-                                    <Button variant="ghost" size="icon" onClick={() => { setCurrentExam(exam); setIsQuestionModalOpen(true); setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); }}><PlusCircle className="h-5 w-5" /></Button>
-                                    <Button variant="ghost" size="icon" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-5 w-5" /></Button>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-5 w-5" /></Button>
+                                    <Separator orientation="vertical" className="h-8 mx-2 bg-white/5" />
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-10 w-10 text-primary bg-primary/10 hover:bg-primary/20 rounded-full" onClick={() => { 
+                                                    setCurrentExam(exam); 
+                                                    setIsQuestionModalOpen(true); 
+                                                    setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); 
+                                                }}><PlusCircle className="h-5 w-5" /></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="font-black text-[10px] uppercase">Inject Question Logic</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 rounded-full" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-5 w-5" /></Button>
                                 </div>
                             </div>
 
                             {/* Question List Expansion */}
                             {examQuestions.length > 0 && (
-                                <div className="px-8 pb-8">
-                                    <div className="bg-black/20 rounded-2xl border border-white/5 divide-y divide-white/5">
+                                <div className="px-8 pb-8 animate-in slide-in-from-top-4 duration-500">
+                                    <div className="bg-black/40 rounded-2xl border border-white/5 divide-y divide-white/5 shadow-inner">
                                         {examQuestions.map((q, i) => (
-                                            <div key={q.id} className="p-4 flex items-center justify-between group/q">
+                                            <div key={q.id} className="p-4 flex items-center justify-between group/q hover:bg-white/[0.02] transition-colors">
                                                 <div className="flex items-center gap-4">
-                                                    <span className="text-[10px] font-black text-muted-foreground w-4">{i + 1}.</span>
-                                                    <p className="text-sm font-bold">{q.questionText}</p>
-                                                    {exam.type === 'Exam' && <Badge variant="outline" className="text-[8px] h-4 border-emerald-500/30 text-emerald-500 font-black">{q.correctOption}</Badge>}
+                                                    <span className="text-[10px] font-black text-muted-foreground w-6 text-center">{i + 1}</span>
+                                                    <p className="text-sm font-bold text-white/90">{q.questionText}</p>
+                                                    {exam.type === 'Exam' && (
+                                                        <Badge variant="outline" className="text-[8px] h-4 border-emerald-500/30 text-emerald-500 font-black gap-1 uppercase">
+                                                            <CheckCircle2 className="h-2.5 w-2.5" /> {q.correctOption}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-2 opacity-0 group-hover/q:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setCurrentExam(exam); setCurrentQuestion(q); setQuestionForm({ ...q }); setIsQuestionModalOpen(true); }}><Edit className="h-3 w-3" /></Button>
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><X className="h-3 w-3" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => { setCurrentExam(exam); setCurrentQuestion(q); setQuestionForm({ ...q }); setIsQuestionModalOpen(true); }}><Edit className="h-3.5 w-3.5" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><X className="h-3.5 w-3.5" /></Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -196,107 +239,125 @@ export default function ArsSettingsPage() {
                         </Card>
                     );
                 })}
+                {exams.length === 0 && (
+                    <div className="p-20 text-center border-4 border-dashed border-white/5 rounded-[40px] opacity-20">
+                        <Radio className="h-20 w-20 mx-auto mb-4" />
+                        <p className="text-xl font-black uppercase tracking-widest">No Sessions Registered</p>
+                    </div>
+                )}
             </div>
 
-            {/* Exam/Survey Creation Modal */}
+            {/* Session Registry Modal */}
             <Dialog open={isExamModalOpen} onOpenChange={setIsExamModalOpen}>
-                <DialogContent className="sm:max-w-2xl bg-slate-900 border-white/10 text-white rounded-[40px] animate-dialog-in">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black uppercase tracking-tight">{currentExam?.id ? 'Modify Registry' : 'New Session Registry'}</DialogTitle>
-                        <DialogDescription className="text-slate-400 font-medium">Define parameters for the evaluation or survey.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-6 py-6">
-                        <div className="grid grid-cols-2 gap-4">
+                <DialogContent className="sm:max-w-2xl bg-slate-900 border-white/10 text-white rounded-[40px] animate-dialog-in p-0 overflow-hidden shadow-2xl">
+                    <div className="p-8 bg-primary text-primary-foreground">
+                        <DialogTitle className="text-3xl font-black uppercase tracking-tight italic">Registry Configuration</DialogTitle>
+                        <DialogDescription className="text-primary-foreground/70 font-medium">Define parameters for the evaluation or survey lifecycle.</DialogDescription>
+                    </div>
+                    <div className="p-8 space-y-6">
+                        <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Session Title</Label>
-                                <Input value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="bg-white/5 border-white/10" />
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Sparkles className="h-3 w-3" /> Session Identity</Label>
+                                <Input value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="bg-white/5 border-white/10 h-12 font-bold" placeholder="e.g. Q1 Operations Review" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registry Type</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><LayoutGrid className="h-3 w-3" /> Registry Logic Mode</Label>
                                 <Select value={examForm.type} onValueChange={v => setExamForm({...examForm, type: v as any})}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="bg-white/5 border-white/10 h-12 font-bold"><SelectValue /></SelectTrigger>
                                     <SelectContent className="bg-slate-900 border-white/10">
-                                        <SelectItem value="Exam">Graded Examination</SelectItem>
-                                        <SelectItem value="Survey">Audience Survey</SelectItem>
+                                        <SelectItem value="Exam">Graded Examination (Real Score)</SelectItem>
+                                        <SelectItem value="Survey">Audience Survey (Sentiment)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Description</Label>
-                            <Textarea value={examForm.description} onChange={e => setExamForm({...examForm, description: e.target.value})} className="bg-white/5 border-white/10" />
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Strategic Description</Label>
+                            <Textarea value={examForm.description} onChange={e => setExamForm({...examForm, description: e.target.value})} className="bg-white/5 border-white/10" placeholder="Internal memo regarding the purpose of this session..." rows={3} />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-3 gap-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Marks</Label>
-                                <Input type="number" value={examForm.totalMarks} onChange={e => setExamForm({...examForm, totalMarks: Number(e.target.value)})} className="bg-white/5 border-white/10" disabled={examForm.type === 'Survey'} />
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Score Ceiling</Label>
+                                <Input type="number" value={examForm.totalMarks} onChange={e => setExamForm({...examForm, totalMarks: Number(e.target.value)})} className="bg-white/5 border-white/10 h-12 font-bold" disabled={examForm.type === 'Survey'} />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pass Goal</Label>
-                                <Input type="number" value={examForm.passingMarks} onChange={e => setExamForm({...examForm, passingMarks: Number(e.target.value)})} className="bg-white/5 border-white/10" disabled={examForm.type === 'Survey'} />
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Passing Benchmark</Label>
+                                <Input type="number" value={examForm.passingMarks} onChange={e => setExamForm({...examForm, passingMarks: Number(e.target.value)})} className="bg-white/5 border-white/10 h-12 font-bold" disabled={examForm.type === 'Survey'} />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Lifecycle</Label>
-                                <Select value={examForm.status} onValueChange={v => setExamForm({...examForm, status: v})}>
-                                    <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                    <SelectContent className="bg-slate-900 border-white/10"><SelectItem value="Draft">Draft</SelectItem><SelectItem value="Published">Published</SelectItem><SelectItem value="Archived">Archived</SelectItem></SelectContent>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registry Lifecycle</Label>
+                                <Select value={examForm.status} onValueChange={v => setExamForm({...examForm, status: v as any})}>
+                                    <SelectTrigger className="bg-white/5 border-white/10 h-12 font-bold"><SelectValue /></SelectTrigger>
+                                    <SelectContent className="bg-slate-900 border-white/10">
+                                        <SelectItem value="Draft">Draft (Private)</SelectItem>
+                                        <SelectItem value="Published">Published (Public)</SelectItem>
+                                        <SelectItem value="Archived">Archived (Closed)</SelectItem>
+                                    </SelectContent>
                                 </Select>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter><Button variant="ghost" onClick={() => setIsExamModalOpen(false)}>Cancel</Button><Button onClick={handleSaveExam}>Commit Registry</Button></DialogFooter>
+                    <DialogFooter className="p-8 border-t border-white/5 bg-white/[0.02]">
+                        <Button variant="ghost" onClick={() => setIsExamModalOpen(false)} className="text-white/60">Cancel</Button>
+                        <Button onClick={handleSaveExam} className="h-12 px-8 font-black uppercase tracking-widest text-[10px]">Commit Registry</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Question Creation Modal */}
+            {/* Question Logic Modal */}
             <Dialog open={isQuestionModalOpen} onOpenChange={setIsQuestionModalOpen}>
-                <DialogContent className="sm:max-w-3xl bg-slate-900 border-white/10 text-white rounded-[40px] animate-dialog-in">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-black uppercase tracking-tight">Question Logic Entry</DialogTitle>
-                        <DialogDescription className="text-slate-400">Define the interaction point for session: {currentExam?.title}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-6 py-6">
+                <DialogContent className="sm:max-w-3xl bg-slate-900 border-white/10 text-white rounded-[40px] animate-dialog-in p-0 overflow-hidden shadow-2xl">
+                    <div className="p-8 bg-primary text-primary-foreground">
+                        <DialogTitle className="text-3xl font-black uppercase tracking-tight italic">Interaction Logic Entry</DialogTitle>
+                        <DialogDescription className="text-primary-foreground/70 font-medium">Define the core prompt and the 4-part response matrix.</DialogDescription>
+                    </div>
+                    <div className="p-8 space-y-8">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prompt Text</Label>
-                            <Input value={questionForm.questionText} onChange={e => setQuestionForm({...questionForm, questionText: e.target.value})} className="bg-white/5 border-white/10 text-lg font-bold" />
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">Question Prompt (Live Signal)</Label>
+                            <Input value={questionForm.questionText} onChange={e => setQuestionForm({...questionForm, questionText: e.target.value})} className="bg-white/5 border-white/10 h-14 text-lg font-black" placeholder="e.g. What is the primary directive for Q1?" />
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Options Array</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><ListChecks className="h-3 w-3" /> Response Options Array</Label>
                                 {questionForm.options.map((opt, i) => (
-                                    <div key={i} className="flex gap-2">
-                                        <span className="h-10 w-10 flex items-center justify-center font-black text-muted-foreground">{String.fromCharCode(65 + i)}</span>
-                                        <Input value={opt} onChange={e => { const n = [...questionForm.options]; n[i] = e.target.value; setQuestionForm({...questionForm, options: n}); }} className="bg-white/5 border-white/10" />
+                                    <div key={i} className="flex gap-3 items-center group">
+                                        <span className="h-10 w-10 flex items-center justify-center font-black text-primary bg-primary/10 rounded-xl group-focus-within:bg-primary group-focus-within:text-primary-foreground transition-all">{String.fromCharCode(65 + i)}</span>
+                                        <Input value={opt} onChange={e => { const n = [...questionForm.options]; n[i] = e.target.value; setQuestionForm({...questionForm, options: n}); }} className="bg-white/5 border-white/10 h-10 text-sm font-bold" placeholder={`Option ${i+1}`} />
                                     </div>
                                 ))}
                             </div>
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signal Type</Label>
-                                    <Select value={questionForm.type} onValueChange={v => setQuestionForm({...questionForm, type: v as any})}>
-                                        <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-slate-900 border-white/10"><SelectItem value="MCQ">Multiple Choice</SelectItem><SelectItem value="True/False">Binary True/False</SelectItem></SelectContent>
-                                    </Select>
-                                </div>
-                                {currentExam?.type === 'Exam' && (
+                            <div className="space-y-8">
+                                <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-emerald-500">Correct Signal (Validation)</Label>
-                                        <Select value={questionForm.correctOption} onValueChange={v => setQuestionForm({...questionForm, correctOption: v})}>
-                                            <SelectTrigger className="bg-emerald-500/10 border-emerald-500/20"><SelectValue placeholder="Select correct answer" /></SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-white/10">
-                                                {questionForm.options.map((opt, i) => opt && <SelectItem key={i} value={opt}>{opt}</SelectItem>)}
-                                            </SelectContent>
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signal Type</Label>
+                                        <Select value={questionForm.type} onValueChange={v => setQuestionForm({...questionForm, type: v as any})}>
+                                            <SelectTrigger className="bg-white/5 border-white/10 h-12 font-bold"><SelectValue /></SelectTrigger>
+                                            <SelectContent className="bg-slate-900 border-white/10"><SelectItem value="MCQ">4-Way Multiple Choice</SelectItem><SelectItem value="True/False">Binary True/False</SelectItem></SelectContent>
                                         </Select>
                                     </div>
-                                )}
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Weightage (Points)</Label>
-                                    <Input type="number" value={questionForm.points} onChange={e => setQuestionForm({...questionForm, points: Number(e.target.value)})} className="bg-white/5 border-white/10" />
+                                    {currentExam?.type === 'Exam' && (
+                                        <div className="space-y-2 p-4 border-2 border-dashed border-emerald-500/20 rounded-2xl bg-emerald-500/5 animate-in zoom-in-95">
+                                            <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2"><CheckCircle2 className="h-3 w-3" /> Validation Key (Correct Answer)</Label>
+                                            <Select value={questionForm.correctOption} onValueChange={v => setQuestionForm({...questionForm, correctOption: v})}>
+                                                <SelectTrigger className="bg-background border-emerald-500/30 text-emerald-400 font-black h-10"><SelectValue placeholder="Identify correct response" /></SelectTrigger>
+                                                <SelectContent className="bg-slate-900 border-white/10">
+                                                    {questionForm.options.map((opt, i) => opt && <SelectItem key={i} value={opt}>{String.fromCharCode(65 + i)}: {opt}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Logic weightage (Points)</Label>
+                                        <Input type="number" value={questionForm.points} onChange={e => setQuestionForm({...questionForm, points: Number(e.target.value)})} className="bg-white/5 border-white/10 h-12 font-bold" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter><Button variant="ghost" onClick={() => setIsQuestionModalOpen(false)}>Cancel</Button><Button onClick={handleSaveQuestion}>Inject Logic</Button></DialogFooter>
+                    <DialogFooter className="p-8 border-t border-white/5 bg-white/[0.02]">
+                        <Button variant="ghost" onClick={() => setIsQuestionModalOpen(false)} className="text-white/60">Cancel</Button>
+                        <Button onClick={handleSaveQuestion} className="h-12 px-8 font-black uppercase tracking-widest text-[10px]">Inject Logic Pulse</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
