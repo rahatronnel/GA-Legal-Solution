@@ -8,10 +8,20 @@ import { Car, Users, Wrench, AlertTriangle, Route } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
+import type { Vehicle } from './vehicle-entry-form';
+import type { Trip } from './trip-entry-form';
+import type { MaintenanceRecord } from './maintenance-entry-form';
+import type { Accident } from './accident-entry-form';
 
 export function Dashboard() {
     const { data = {}, isLoading } = useDashboardData() || {};
-    const { vehicles = [], drivers = [], trips = [], accidents = [], maintenanceRecords = [] } = data;
+    const { 
+        vehicles = [] as Vehicle[], 
+        drivers = [], 
+        trips = [] as Trip[], 
+        accidents = [] as Accident[], 
+        maintenanceRecords = [] as MaintenanceRecord[] 
+    } = data;
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -21,13 +31,13 @@ export function Dashboard() {
     const summaryStats = React.useMemo(() => ({
         totalVehicles: vehicles.length,
         totalDrivers: drivers.length,
-        ongoingTrips: trips.filter(t => t.tripStatus === 'Ongoing').length,
+        ongoingTrips: trips.filter((t: Trip) => t.tripStatus === 'Ongoing').length,
         totalAccidents: accidents.length,
     }), [vehicles, drivers, trips, accidents]);
 
     const vehicleStatusData = React.useMemo(() => {
         const statuses = { 'Active': 0, 'Under Maintenance': 0, 'Inactive': 0 };
-        vehicles.forEach(v => {
+        vehicles.forEach((v: Vehicle) => {
             if (v.status && statuses[v.status as keyof typeof statuses] !== undefined) {
                 statuses[v.status as keyof typeof statuses]++;
             }
@@ -46,7 +56,7 @@ export function Dashboard() {
             monthlyCosts[format(month, 'yyyy-MM')] = 0;
         });
 
-        maintenanceRecords.forEach(rec => {
+        maintenanceRecords.forEach((rec: MaintenanceRecord) => {
             if (rec.serviceDate) {
                 const monthKey = format(parseISO(rec.serviceDate), 'yyyy-MM');
                 if (monthKey in monthlyCosts) {
@@ -73,7 +83,7 @@ export function Dashboard() {
             monthlyCounts[format(month, 'yyyy-MM')] = 0;
         });
 
-        accidents.forEach(acc => {
+        accidents.forEach((acc: Accident) => {
             if (acc.accidentDate) {
                 const monthKey = format(parseISO(acc.accidentDate), 'yyyy-MM');
                  if (monthKey in monthlyCounts) {
