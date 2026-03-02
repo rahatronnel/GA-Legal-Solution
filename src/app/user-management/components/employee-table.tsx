@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -32,7 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface EmployeeTableProps {
   employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>; // Kept for optimistic updates but Firestore is source of truth
+  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>; 
   sections: Section[];
   designations: Designation[];
   departments: Department[];
@@ -146,8 +147,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
 
   const confirmDelete = () => {
     if (currentEmployee?.id && employeesRef) {
-        // Note: This does not delete the Firebase Auth user.
-        // That requires administrative privileges and is best handled by a server-side function.
         deleteDocumentNonBlocking(doc(employeesRef, currentEmployee.id));
         toast({ title: 'Success', description: 'Employee record deleted. Auth user is not removed.' });
     }
@@ -262,7 +261,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                  toast({ variant: 'destructive', title: `Skipping user ${item.data.email}`, description: 'New users require a valid email and a password of at least 6 characters in the Excel file.' });
             }
         } else if (item.original?.id) {
-            const { defaultPassword, ...dataToUpdate } = item.data; // Don't update password on existing users this way
+            const { defaultPassword, ...dataToUpdate } = item.data; 
             setDocumentNonBlocking(doc(firestore, 'employees', item.original.id), dataToUpdate, { merge: true });
             updatedCount++;
         }
@@ -334,14 +333,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
             {!employees ? (
                 Array.from({length: 5}).map((_, i) => (
                     <TableRow key={i}>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell colSpan={8}><Skeleton className="h-10 w-full" /></TableCell>
                     </TableRow>
                 ))
             ) : filteredEmployees && filteredEmployees.length > 0 ? (

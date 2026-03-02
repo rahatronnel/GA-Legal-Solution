@@ -15,13 +15,12 @@ import type { Accident } from './accident-entry-form';
 
 export function Dashboard() {
     const { data = {}, isLoading } = useDashboardData() || {};
-    const { 
-        vehicles = [] as Vehicle[], 
-        drivers = [], 
-        trips = [] as Trip[], 
-        accidents = [] as Accident[], 
-        maintenanceRecords = [] as MaintenanceRecord[] 
-    } = data;
+    const vehicles = (data.vehicles || []) as Vehicle[];
+    const drivers = (data.drivers || []) as any[];
+    const trips = (data.trips || []) as Trip[];
+    const accidents = (data.accidents || []) as Accident[];
+    const maintenanceRecords = (data.maintenanceRecords || []) as MaintenanceRecord[];
+
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

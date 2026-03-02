@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense, useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
 import { NotificationCenter } from './components/notification-center';
+import { NotificationCenter as NotificationCenterNew } from './components/notification-center';
 import { PaymentNoteTable } from './components/pn-table';
 import { 
     FileText, Briefcase, BarChart2, Package, 

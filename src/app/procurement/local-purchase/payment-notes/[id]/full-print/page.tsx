@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -151,7 +152,6 @@ export default function PNFullPrintPage() {
     }
 
     // Diagnostic Check: If data is truly missing, we provide a detailed organizational warning instead of a generic 404.
-    // Enhanced Integrity Check: Including orgSettings ensures type safety for the downstream Layout.
     if (!pn || !mrr || !po || !cs || !dn || !orgSettings) {
         return (
             <div className="p-12 text-center space-y-4">

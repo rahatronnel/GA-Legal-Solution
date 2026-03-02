@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { 
-    Upload, X, Calendar as CalendarIcon, File as FileIcon, PlusCircle, AlertTriangle, 
+    Upload, X, Calendar as CalendarIcon, PlusCircle, AlertTriangle, 
     Car, User, Clock, MapPin, Hash, Tag, Shield, Milestone, Route, Info, 
     HeartPulse, ShieldQuestion, DollarSign, Building, CheckCircle2, ClipboardList, 
     ShieldCheck, Image as ImageIcon
@@ -30,7 +30,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { useVehicleManagement } from './vehicle-management-provider';
 
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { AccidentType } from './accident-type-table';
@@ -184,6 +184,11 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
       setDocuments(prev => ({ ...prev, [docType]: [...prev[docType], ...newFiles] }));
     }
     e.target.value = '';
+  };
+
+  const handleSave = () => {
+    onSave({ ...aData, documents });
+    setIsOpen(false);
   };
 
   return (

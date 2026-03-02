@@ -46,7 +46,7 @@ export type OrganizationSettings = {
   logo: string; 
   favicon: string; 
   notificationReminderHours: number;
-  moduleVisibility?: {
+  moduleVisibility: {
     showProcurementManagement: boolean;
     showCoreModules: boolean;
     showLikeExam: boolean;
@@ -81,7 +81,7 @@ export type OrganizationSettings = {
   };
 };
 
-const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementSettings'> = {
+const initialSettings: OrganizationSettings = {
   name: 'YKK ERP Solution',
   slogan: 'Your Trusted Partner',
   address: 'Head Office: 123 Business Rd, Dhaka, Bangladesh',
@@ -109,7 +109,7 @@ export default function SettingsPage() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: remoteSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings as OrganizationSettings);
+  const [settings, setSettings] = useState<OrganizationSettings>(initialSettings);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [faviconPreview, setFaviconPreview] = useState<string | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
@@ -122,10 +122,10 @@ export default function SettingsPage() {
         ...initialSettings,
         ...remoteSettings,
         moduleVisibility: {
-          showProcurementManagement: remoteSettings.moduleVisibility?.showProcurementManagement ?? initialSettings.moduleVisibility!.showProcurementManagement,
-          showCoreModules: remoteSettings.moduleVisibility?.showCoreModules ?? initialSettings.moduleVisibility!.showCoreModules,
-          showLikeExam: remoteSettings.moduleVisibility?.showLikeExam ?? initialSettings.moduleVisibility!.showLikeExam,
-          enableNotifications: remoteSettings.moduleVisibility?.enableNotifications ?? initialSettings.moduleVisibility!.enableNotifications,
+          showProcurementManagement: remoteSettings.moduleVisibility?.showProcurementManagement ?? initialSettings.moduleVisibility.showProcurementManagement,
+          showCoreModules: remoteSettings.moduleVisibility?.showCoreModules ?? initialSettings.moduleVisibility.showCoreModules,
+          showLikeExam: remoteSettings.moduleVisibility?.showLikeExam ?? initialSettings.moduleVisibility.showLikeExam,
+          enableNotifications: remoteSettings.moduleVisibility?.enableNotifications ?? initialSettings.moduleVisibility.enableNotifications,
         }
       });
       if (remoteSettings.logo) setLogoPreview(remoteSettings.logo);
@@ -141,11 +141,11 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleVisibilityChange = (key: keyof NonNullable<OrganizationSettings['moduleVisibility']>, value: boolean) => {
+  const handleVisibilityChange = (key: keyof OrganizationSettings['moduleVisibility'], value: boolean) => {
     setSettings(prev => ({
       ...prev,
       moduleVisibility: {
-        ...prev.moduleVisibility!,
+        ...prev.moduleVisibility,
         [key]: value
       }
     }));
@@ -239,15 +239,15 @@ export default function SettingsPage() {
                         <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Feature Visibility</h4>
                         <div className="space-y-3">
                             <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-proc" checked={settings.moduleVisibility?.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
+                                <Checkbox id="vis-proc" checked={settings.moduleVisibility.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
                                 <Label htmlFor="vis-proc">Show Procurement Management Section</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-exam" checked={settings.moduleVisibility?.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
+                                <Checkbox id="vis-exam" checked={settings.moduleVisibility.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
                                 <Label htmlFor="vis-exam">Show Audience Response System (ARS) Icon</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-core" checked={settings.moduleVisibility?.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
+                                <Checkbox id="vis-core" checked={settings.moduleVisibility.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
                                 <Label htmlFor="vis-core">Show Core Modules Section</Label>
                             </div>
                             <Separator />
@@ -256,7 +256,7 @@ export default function SettingsPage() {
                                     <Label className="font-bold flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Notification System</Label>
                                     <p className="text-xs text-muted-foreground">Derived task-driven Action Center.</p>
                                 </div>
-                                <Switch checked={settings.moduleVisibility?.enableNotifications} onCheckedChange={(c) => handleVisibilityChange('enableNotifications', c)} />
+                                <Switch checked={settings.moduleVisibility.enableNotifications} onCheckedChange={(c) => handleVisibilityChange('enableNotifications', c)} />
                             </div>
                         </div>
                         <Button className="w-full mt-2" size="sm" onClick={handleSave}><CheckCircle2 className="mr-2 h-4 w-4"/> Update Visibility</Button>
