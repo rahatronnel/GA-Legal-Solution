@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef } from 'react';
@@ -11,7 +12,7 @@ import { useUser } from '@/firebase';
 
 /**
  * Main ARS Hub - The majestic landing page for the Live Audience Response System.
- * Features 3 primary interaction points: Entry, Broadcast, and Analytics.
+ * Features 3 primary interaction points: Entry Registry, Go Live, and Results.
  */
 export default function ArsMainHub() {
     const { user } = useUser();
@@ -62,8 +63,8 @@ export default function ArsMainHub() {
                 {/* Primary Menu Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     
-                    {/* 1. Exam & Survey Entry */}
-                    <Link href="/exam/settings" className="ars-hub-card group">
+                    {/* 1. Exam & Survey Entry (Preparation) */}
+                    <Link href="/exam/settings?mode=entry" className="ars-hub-card group">
                         <Card className="h-full bg-white/[0.02] border-white/5 hover:border-primary/40 transition-all rounded-[40px] overflow-hidden relative shadow-2xl hover:shadow-primary/10">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-opacity">
                                 <ClipboardList className="h-32 w-32 rotate-12" />
@@ -74,19 +75,19 @@ export default function ArsMainHub() {
                                 </div>
                                 <CardTitle className="text-3xl font-black text-white uppercase tracking-tight">1. Entry Registry</CardTitle>
                                 <CardDescription className="text-slate-400 text-base mt-2">
-                                    Register sessions and inject question logic before broadcasting.
+                                    Register sessions and inject interaction logic (10-15 questions) before broadcasting.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="px-10 pb-10">
                                 <div className="flex items-center gap-2 text-primary font-black uppercase text-xs tracking-widest opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-10px] group-hover:translate-x-0">
-                                    Access Registry <ArrowRight className="h-4 w-4" />
+                                    Prepare Logic <ArrowRight className="h-4 w-4" />
                                 </div>
                             </CardContent>
                         </Card>
                     </Link>
 
-                    {/* 2. Go Live (Broadcast) */}
-                    <Link href="/exam/settings" className="ars-hub-card group">
+                    {/* 2. Go Live (Broadcast Console) */}
+                    <Link href="/exam/settings?mode=broadcast" className="ars-hub-card group">
                         <Card className="h-full bg-white/[0.02] border-white/5 hover:border-emerald-500/40 transition-all rounded-[40px] overflow-hidden relative shadow-2xl hover:shadow-emerald-500/10">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-opacity">
                                 <PlayCircle className="h-32 w-32 rotate-12" />
@@ -97,12 +98,12 @@ export default function ArsMainHub() {
                                 </div>
                                 <CardTitle className="text-3xl font-black text-white uppercase tracking-tight">2. Go Live</CardTitle>
                                 <CardDescription className="text-slate-400 text-base mt-2">
-                                    Initialize the broadcast signal and generate audience QR codes.
+                                    Initialize broadcast signal, open the Seminar QR code, and monitor real-time audience response.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="px-10 pb-10">
                                 <div className="flex items-center gap-2 text-emerald-500 font-black uppercase text-xs tracking-widest opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-10px] group-hover:translate-x-0">
-                                    Push Signal <ArrowRight className="h-4 w-4" />
+                                    Launch Seminar <ArrowRight className="h-4 w-4" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -120,7 +121,7 @@ export default function ArsMainHub() {
                                 </div>
                                 <CardTitle className="text-3xl font-black text-white uppercase tracking-tight">3. Results</CardTitle>
                                 <CardDescription className="text-slate-400 text-base mt-2">
-                                    Analyze real-time response matrix and performance scoring.
+                                    Analyze real-time response matrix and performance scoring after the session.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="px-10 pb-10">
