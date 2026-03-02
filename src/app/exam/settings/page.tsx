@@ -17,7 +17,7 @@ import {
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Upload, Download, FileSpreadsheet, Cpu
+    Upload, Download, FileSpreadsheet, Cpu, Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -115,7 +115,7 @@ export default function ArsSettingsPage() {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+                const json = XLSX.utils.sheet_to_json(worksheet, {raw: false}) as any[];
 
                 if (json.length === 0) throw new Error("No data found in spreadsheet.");
 
@@ -181,112 +181,111 @@ export default function ArsSettingsPage() {
     return (
         <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-50" ref={containerRef}>
             {/* Header Hub */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 border-b border-white/5 bg-white/[0.02] rounded-[32px]">
+            <div className="flex flex-col md:row justify-between items-center gap-6 p-6 border-b border-white/5 bg-white/[0.02] rounded-[32px] md:flex-row">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-primary/10 rounded-[20px] backdrop-blur-xl border border-white/10 shadow-2xl">
                         <Radio className="h-8 w-8 text-primary animate-pulse" />
                     </div>
                     <div>
                         <h1 className="text-4xl font-black tracking-tighter uppercase text-white leading-none">ARS Master Console</h1>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mt-2 italic">Define High-Fidelity Interaction Logic</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mt-2 italic">Prepare Interactions Before Broadcasting</p>
                     </div>
                 </div>
                 <div className="flex gap-4">
                     <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
                         <Link href="/"><ChevronLeft className="h-5 w-5" /> Exit Terminal</Link>
                     </Button>
-                    <Button className="h-12 rounded-full font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:scale-105 transition-all px-8" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
-                        <PlusCircle className="h-5 w-5" /> Register New Session
+                    <Button className="h-14 rounded-full font-black uppercase tracking-widest gap-2 shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:scale-105 transition-all px-10 border-4 border-white/10" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
+                        <Plus className="h-6 w-6" /> Register New Session
                     </Button>
                 </div>
             </div>
 
             {/* Session Matrix */}
-            <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-12">
                 {exams.map(exam => {
                     const examQuestions = questions.filter(q => q.examId === exam.id);
                     return (
-                        <Card key={exam.id} className="bg-white/[0.02] border-white/5 rounded-[40px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all relative">
-                            <div className="p-10 flex flex-col lg:row items-center justify-between gap-8 lg:flex-row">
+                        <Card key={exam.id} className="bg-white/[0.02] border-white/10 rounded-[40px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all relative shadow-2xl">
+                            <div className="p-10 flex flex-col items-center justify-between gap-8 lg:flex-row border-b border-white/5">
                                 <div className="flex items-center gap-8 flex-1">
                                     <div className="h-20 w-20 rounded-[28px] bg-primary/10 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
                                         <Layers className="h-10 w-10 text-primary" />
                                     </div>
-                                    <div>
+                                    <div className="space-y-2">
                                         <div className="flex items-center gap-3">
                                             <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none">{exam.title}</h3>
                                             <Badge className={cn("uppercase text-[10px] font-black h-6 px-3", exam.type === 'Exam' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400")}>{exam.type}</Badge>
                                             <Badge variant="outline" className="text-[10px] font-black border-white/10 opacity-50 px-3">{exam.status}</Badge>
                                         </div>
-                                        <p className="text-base text-slate-400 font-medium mt-3 line-clamp-1 italic">"{exam.description || 'No internal description recorded.'}"</p>
+                                        <p className="text-base text-slate-400 font-medium mt-1 line-clamp-1 italic opacity-70">"{exam.description || 'No memo recorded.'}"</p>
                                     </div>
                                 </div>
                                 
                                 <div className="flex items-center gap-12 px-12 border-x border-white/5">
                                     <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Interaction Steps</p>
-                                        <p className="text-3xl font-black text-white">{examQuestions.length}</p>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Session Velocity</p>
-                                        <p className="text-3xl font-black text-white">{exam.timeLimitMinutes}m</p>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Questions Prepared</p>
+                                        <p className="text-4xl font-black text-white">{examQuestions.length}</p>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:row gap-3">
-                                    <div className="flex items-center gap-2">
-                                        {exam.status === 'Published' && (
-                                            <>
-                                                <Button 
-                                                    variant={exam.isLive ? "destructive" : "outline"} 
-                                                    className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] h-12 px-8 border-white/10 shadow-xl"
-                                                    onClick={() => toggleLiveSession(exam)}
-                                                >
-                                                    {exam.isLive ? <><Square className="h-3 w-3 fill-current" /> Halt Broadcast</> : <><Play className="h-3 w-3 fill-current" /> Broadcast Live</>}
-                                                </Button>
-                                                {exam.isLive && (
-                                                    <Button className="h-12 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg px-8" onClick={() => nextLiveQuestion(exam)}>
-                                                        Push Next Question <ChevronRight className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                <Button variant="ghost" size="icon" className="h-12 w-12 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild title="Big Screen Display">
-                                                    <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-6 w-6" /></Link>
-                                                </Button>
-                                            </>
-                                        )}
+                                <div className="flex flex-col gap-3 min-w-[200px]">
+                                    <Button variant="ghost" className="h-10 rounded-full gap-2 font-black uppercase text-[10px] bg-white/5 hover:bg-white/10" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-4 w-4" /> Edit Session Params</Button>
+                                    {exam.status === 'Published' && (
+                                        <Button 
+                                            variant={exam.isLive ? "destructive" : "default"} 
+                                            className="h-14 rounded-full gap-3 font-black uppercase tracking-widest text-xs shadow-xl"
+                                            onClick={() => toggleLiveSession(exam)}
+                                        >
+                                            {exam.isLive ? <><Square className="h-4 w-4 fill-current" /> Halt Broadcast</> : <><Play className="h-4 w-4 fill-current" /> GO LIVE (QR Active)</>}
+                                        </Button>
+                                    )}
+                                    {exam.isLive && (
+                                        <div className="space-y-2">
+                                            <Button className="w-full h-12 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg" onClick={() => nextLiveQuestion(exam)}>
+                                                Push Next Question <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" className="w-full h-10 rounded-full gap-2 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 font-black uppercase text-[9px]" asChild>
+                                                <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-4 w-4 mr-1" /> Seminar Screen</Link>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Entry Zone: This is where you entry questions */}
+                            <div className="bg-black/20 p-10 space-y-8">
+                                <div className="flex flex-col md:row items-center justify-between gap-6 md:flex-row">
+                                    <div className="space-y-1">
+                                        <h4 className="text-xl font-black uppercase tracking-tight text-primary">Injection Logic Panel</h4>
+                                        <p className="text-xs text-muted-foreground font-medium">Add interaction points manually or via Bulk Spreadsheet.</p>
                                     </div>
-                                    
-                                    <div className="flex items-center gap-2 justify-end">
-                                        <Button variant="outline" className="h-10 rounded-full gap-2 font-black uppercase text-[9px] border-primary/20 text-primary hover:bg-primary/10" onClick={() => { 
+                                    <div className="flex gap-4">
+                                        <Button className="h-14 rounded-full gap-3 font-black uppercase tracking-widest text-[11px] px-8 bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 border-4 border-white/10" onClick={() => { 
                                             setCurrentExam(exam); 
                                             setIsQuestionModalOpen(true); 
                                             setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); 
                                         }}>
-                                            <PlusCircle className="h-4 w-4" /> Add Question
+                                            <PlusCircle className="h-5 w-5" /> Manual Logic Entry
                                         </Button>
                                         
-                                        <Label htmlFor={`excel-up-${exam.id}`} className="cursor-pointer">
-                                            <div className="h-10 px-4 flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full transition-colors font-black uppercase text-[9px]">
-                                                <FileSpreadsheet className="h-4 w-4" /> Bulk Upload
-                                            </div>
-                                            <Input id={`excel-up-${exam.id}`} type="file" accept=".xlsx, .xls" className="hidden" onChange={(e) => handleExcelUpload(e, exam.id)} />
-                                        </Label>
-
-                                        <div className="flex gap-1 ml-4">
-                                            <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 rounded-full" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-4 w-4" /></Button>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Label htmlFor={`excel-up-${exam.id}`} className="cursor-pointer">
+                                                <div className="h-14 px-8 flex items-center justify-center gap-3 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full transition-all font-black uppercase text-[11px] border-2 border-dashed border-emerald-500/30">
+                                                    <FileSpreadsheet className="h-5 w-5" /> Excel Bulk Upload
+                                                </div>
+                                                <Input id={`excel-up-${exam.id}`} type="file" accept=".xlsx, .xls" className="hidden" onChange={(e) => handleExcelUpload(e, exam.id)} />
+                                            </Label>
+                                            <Button variant="link" size="sm" className="h-4 text-[9px] font-black uppercase text-muted-foreground opacity-50 hover:opacity-100" onClick={handleDownloadTemplate}><Download className="h-3 w-3 mr-1" /> Get Template</Button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Logic Stream Reveal */}
-                            {examQuestions.length > 0 && (
-                                <div className="px-10 pb-10 animate-in slide-in-from-top-4 duration-500">
+                                {/* Current Registry Preview */}
+                                {examQuestions.length > 0 ? (
                                     <div className="bg-black/40 rounded-[32px] border border-white/5 divide-y divide-white/5 shadow-inner overflow-hidden">
-                                        <div className="bg-white/5 px-6 py-3 flex justify-between items-center">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Session Logic Stream</span>
-                                            <Button variant="ghost" size="sm" className="h-6 text-[9px] font-black uppercase" onClick={handleDownloadTemplate}><Download className="h-3 w-3 mr-1" /> Template</Button>
+                                        <div className="bg-white/5 px-6 py-3">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Interaction Logic Registry (Live Feed)</span>
                                         </div>
                                         {examQuestions.map((q, i) => (
                                             <div key={q.id} className="p-5 flex items-center justify-between group/q hover:bg-white/[0.02] transition-colors">
@@ -308,20 +307,32 @@ export default function ArsSettingsPage() {
                                                 </div>
                                                 <div className="flex gap-2 opacity-0 group-hover/q:opacity-100 transition-opacity">
                                                     <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/10 rounded-xl" onClick={() => { setCurrentExam(exam); setCurrentQuestion(q); setQuestionForm({ ...q }); setIsQuestionModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><X className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><Trash2 className="h-4 w-4" /></Button>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="p-20 text-center border-4 border-dashed border-white/5 rounded-[40px] opacity-30">
+                                        <Cpu className="h-16 w-16 mx-auto mb-4 animate-pulse" />
+                                        <p className="text-sm font-black uppercase tracking-[0.2em]">Ready for Interaction Logic Injection</p>
+                                        <p className="text-xs font-medium mt-2">Use the buttons above to add your 10 questions.</p>
+                                    </div>
+                                )}
+                            </div>
                         </Card>
                     );
                 })}
                 {exams.length === 0 && (
-                    <div className="p-32 text-center border-4 border-dashed border-white/5 rounded-[60px] opacity-20">
-                        <Radio className="h-32 w-32 mx-auto mb-6" />
-                        <p className="text-2xl font-black uppercase tracking-[0.4em]">No Session Registries Detected</p>
+                    <div className="flex flex-col items-center justify-center p-32 text-center border-4 border-dashed border-white/5 rounded-[60px] bg-white/[0.01]">
+                        <div className="p-8 rounded-full bg-primary/10 mb-8">
+                            <Layers className="h-24 w-24 text-primary animate-bounce" />
+                        </div>
+                        <h2 className="text-4xl font-black uppercase tracking-tighter text-white mb-4 leading-none">Registry Empty</h2>
+                        <p className="text-slate-400 font-medium max-w-md mb-10 leading-relaxed">To start a seminar, first register a new session. You can then inject your question logic and go live with the QR code.</p>
+                        <Button className="h-20 rounded-[30px] font-black uppercase tracking-[0.2em] gap-4 px-12 bg-primary text-primary-foreground hover:scale-105 transition-all shadow-2xl shadow-primary/20 text-lg border-8 border-white/5" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
+                            <PlusCircle className="h-8 w-8" /> Create Your First Seminar
+                        </Button>
                     </div>
                 )}
             </div>
@@ -330,7 +341,7 @@ export default function ArsSettingsPage() {
             <Dialog open={isExamModalOpen} onOpenChange={setIsExamModalOpen}>
                 <DialogContent className="sm:max-w-2xl bg-slate-900 border-white/10 text-white rounded-[40px] animate-dialog-in p-0 overflow-hidden shadow-2xl">
                     <div className="p-8 bg-primary text-primary-foreground">
-                        <DialogTitle className="text-3xl font-black uppercase tracking-tight italic">Registry Configuration</DialogTitle>
+                        <DialogTitle className="text-3xl font-black uppercase tracking-tight italic">Seminar Registry</DialogTitle>
                         <DialogDescription className="text-primary-foreground/70 font-medium">Define parameters for the evaluation or survey lifecycle.</DialogDescription>
                     </div>
                     <div className="p-8 space-y-6">
