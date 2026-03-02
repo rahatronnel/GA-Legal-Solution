@@ -11,10 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Eye, Printer, Users, FilePlus, Hand, Edit, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useProcurement } from './procurement-provider';
+import { useProcurement } from '@/app/procurement/local-purchase/components/procurement-provider';
 import { useFirestore, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { DemandNote, Quotation } from './demand-note-entry-form';
+import type { DemandNote, Quotation } from '@/app/procurement/local-purchase/components/demand-note-entry-form';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,7 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ChevronsUpDown, Check, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { ComparativeStatementForm } from './cs-entry-form';
+import { ComparativeStatementForm } from '@/app/procurement/local-purchase/components/cs-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
 const MultiSelectPopover: React.FC<{
@@ -48,7 +48,7 @@ const MultiSelectPopover: React.FC<{
     return (
          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-10">
+                <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between h-auto min-h-10">
                     <div className="flex flex-wrap gap-1">
                         {selectedItems.length > 0
                             ? selectedItems.map(item => <Badge key={item.id} variant="secondary">{item.vendorName}</Badge>)
