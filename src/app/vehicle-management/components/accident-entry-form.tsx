@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -141,7 +140,15 @@ interface AccidentEntryFormProps {
 export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: AccidentEntryFormProps) {
   const { toast } = useToast();
   const { data } = useVehicleManagement();
-  const { vehicles = [], drivers = [], employees = [], accidentTypes = [], severityLevels = [], faultStatuses = [], serviceCenters = [] } = data;
+  
+  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
+  const vehicles = (data.vehicles || []) as Vehicle[];
+  const drivers = (data.drivers || []) as Driver[];
+  const employees = (data.employees || []) as Employee[];
+  const accidentTypes = (data.accidentTypes || []) as AccidentType[];
+  const severityLevels = (data.severityLevels || []) as SeverityLevel[];
+  const faultStatuses = (data.faultStatuses || []) as FaultStatus[];
+  const serviceCenters = (data.serviceCenters || []) as ServiceCenter[];
   
   const [step, setStep] = useState(1);
   const [aData, setAData] = useState(initialAccidentData);
@@ -155,7 +162,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
     if (isOpen) {
       setStep(1);
       if (isEditing && accident) {
-        setAData({ ...initialAccidentData, ...accident });
+        setAData({ ...initialAccidentData, ...accident } as any);
         setDocuments(accident.documents || initialDocuments);
         setAccDate(accident.accidentDate ? parseISO(accident.accidentDate) : undefined);
       } else {
@@ -209,21 +216,21 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
                     <Select value={aData.vehicleId} onValueChange={(v) => setAData({...aData, vehicleId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
-                        <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                        <SelectContent>{vehicles.map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Driver During Incident<MandatoryIndicator/></Label>
                     <Select value={aData.driverId} onValueChange={(v) => setAData({...aData, driverId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Driver" /></SelectTrigger>
-                        <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                        <SelectContent>{drivers.map((d: Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                    <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Reported By Official</Label>
                     <Select value={aData.employeeId} onValueChange={(v) => setAData({...aData, employeeId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Official" /></SelectTrigger>
-                        <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
+                        <SelectContent>{employees.map((e: Employee) => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -247,17 +254,17 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Collision Type</Label>
                         <Select value={aData.accidentTypeId} onValueChange={(v) => setAData({...aData, accidentTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{accidentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                        <SelectContent>{accidentTypes.map((t: AccidentType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Shield className="h-3 w-3" /> Severity Level</Label>
                         <Select value={aData.severityLevelId} onValueChange={(v) => setAData({...aData, severityLevelId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{severityLevels.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+                        <SelectContent>{severityLevels.map((s: SeverityLevel) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><ShieldQuestion className="h-3 w-3" /> Fault Determination</Label>
                         <Select value={aData.faultStatusId} onValueChange={(v) => setAData({...aData, faultStatusId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{faultStatuses.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
+                        <SelectContent>{faultStatuses.map((f: FaultStatus) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                 </div>
               </div>
@@ -290,7 +297,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={aData.estimatedRepairCost} onChange={handleInputChange}/></div>
                   <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={aData.actualRepairCost} onChange={handleInputChange}/></div>
                   <div className="space-y-2 col-span-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Chosen Repair Workshop</Label><Select value={aData.repairedById} onValueChange={(v) => setAData({...aData, repairedById: v})}><SelectTrigger><SelectValue placeholder="Select Workshop"/></SelectTrigger>
-                  <SelectContent>{serviceCenters.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
+                  <SelectContent>{serviceCenters.map((sc: ServiceCenter) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
               </div>
             )}

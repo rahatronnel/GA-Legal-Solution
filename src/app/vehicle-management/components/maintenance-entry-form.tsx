@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -30,7 +29,7 @@ import { format, parseISO } from 'date-fns';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useVehicleManagement } from './vehicle-management-provider';
 
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { MaintenanceType } from './maintenance-type-table';
 import type { ServiceCenter } from './service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
@@ -122,8 +121,14 @@ interface MaintenanceEntryFormProps {
 
 export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employees }: MaintenanceEntryFormProps) {
   const { toast } = useToast();
-  const { data, setData } = useVehicleManagement();
-  const { vehicles = [], drivers = [], parts: allParts = [], maintenanceTypes = [], serviceCenters = [], maintenanceExpenseTypes = [] } = data;
+  const { data } = useVehicleManagement();
+  
+  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
+  const vehicles = (data.vehicles || []) as Vehicle[];
+  const drivers = (data.drivers || []) as Driver[];
+  const allParts = (data.parts || []) as PartType[];
+  const maintenanceTypes = (data.maintenanceTypes || []) as MaintenanceType[];
+  const serviceCenters = (data.serviceCenters || []) as ServiceCenter[];
   
   const [step, setStep] = useState(1);
   const [mData, setMData] = useState(initialMaintenanceData);
@@ -173,7 +178,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
         if (part.id === id) {
             const updated = { ...part, [field]: value };
             if (field === 'partId') {
-                const pInfo = allParts.find((ap:any) => ap.id === value);
+                const pInfo = allParts.find((ap: any) => ap.id === value);
                 if (pInfo) { updated.price = pInfo.price; updated.brand = pInfo.brand; }
             }
             return updated;
@@ -220,28 +225,28 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle Registration<MandatoryIndicator/></Label>
                         <Select value={mData.vehicleId} onValueChange={handleSelectChange('vehicleId')}>
                             <SelectTrigger><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
-                            <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                            <SelectContent>{vehicles.map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Service Type<MandatoryIndicator/></Label>
                         <Select value={mData.maintenanceTypeId} onValueChange={handleSelectChange('maintenanceTypeId')}>
                             <SelectTrigger><SelectValue placeholder="Choose Type" /></SelectTrigger>
-                            <SelectContent>{maintenanceTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                            <SelectContent>{maintenanceTypes.map((t: MaintenanceType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Authorized Service Center<MandatoryIndicator/></Label>
                         <Select value={mData.serviceCenterId} onValueChange={handleSelectChange('serviceCenterId')}>
                             <SelectTrigger><SelectValue placeholder="Choose Garage" /></SelectTrigger>
-                            <SelectContent>{serviceCenters.map(sc => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent>
+                            <SelectContent>{serviceCenters.map((sc: ServiceCenter) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Monitoring Official</Label>
                         <Select value={mData.monitoringEmployeeId} onValueChange={handleSelectChange('monitoringEmployeeId')}>
                             <SelectTrigger><SelectValue placeholder="Select Employee" /></SelectTrigger>
-                            <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
+                            <SelectContent>{employees.map((e: Employee) => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
@@ -274,7 +279,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
                             <div key={part.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center p-3 rounded-md border bg-primary/5">
                                 <Select value={part.partId} onValueChange={(v) => updatePart(part.id, 'partId', v)}>
                                     <SelectTrigger className="h-8"><SelectValue placeholder="Part Name"/></SelectTrigger>
-                                    <SelectContent>{allParts.map(ap => <SelectItem key={ap.id} value={ap.id}>{ap.name}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{allParts.map((ap: PartType) => <SelectItem key={ap.id} value={ap.id}>{ap.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} className="h-8" />
                                 <Input placeholder="Qty" type="number" value={part.quantity} onChange={(e) => updatePart(part.id, 'quantity', parseInt(e.target.value) || 0)} className="h-8" />
@@ -311,7 +316,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={() => prevStep} disabled={step === 1}>Previous</Button>
             {step < 3 ? (
                 <Button onClick={() => setStep(s => s + 1)}>Continue</Button>
             ) : (

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,7 +5,7 @@ import { usePrint } from './print-provider';
 import { DriverPrintLayout } from './driver-print-layout';
 import { VehiclePrintLayout } from './vehicle-print-layout';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { VehicleType } from './vehicle-type-table';
 import { EmployeePrintLayout } from '@/app/user-management/components/employee-print-layout';

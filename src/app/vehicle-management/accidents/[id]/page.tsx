@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -81,19 +80,20 @@ export default function AccidentProfilePage() {
   const { id } = params;
   const { handlePrint } = usePrint();
 
-  const { data, isLoading } = useVehicleManagement();
-  const {
-      accidents,
-      vehicles,
-      drivers,
-      employees,
-      routes,
-      trips,
-      accidentTypes,
-      severityLevels,
-      faultStatuses,
-      serviceCenters,
-  } = data;
+  const vm = useVehicleManagement();
+  
+  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
+  const accidents = (vm?.data.accidents || []) as Accident[];
+  const vehicles = (vm?.data.vehicles || []) as Vehicle[];
+  const drivers = (vm?.data.drivers || []) as Driver[];
+  const employees = (vm?.data.employees || []) as Employee[];
+  const routes = (vm?.data.routes || []) as RouteType[];
+  const trips = (vm?.data.trips || []) as Trip[];
+  const accidentTypes = (vm?.data.accidentTypes || []) as AccidentType[];
+  const severityLevels = (vm?.data.severityLevels || []) as SeverityLevel[];
+  const faultStatuses = (vm?.data.faultStatuses || []) as FaultStatus[];
+  const serviceCenters = (vm?.data.serviceCenters || []) as ServiceCenter[];
+  const isLoading = vm?.isLoading || false;
 
 
   const accident = useMemo(() => {

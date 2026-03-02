@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -21,14 +20,14 @@ import {
     Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, 
     Check, File as FileIcon, GripVertical, User, Car, Flag, Clock, Hash, 
     Milestone, DollarSign, Tag, ListOrdered, MapPin, Route as RouteIcon, 
-    Info, Image as ImageIcon, Briefcase
+    Info, Image as ImageIcon, Briefcase, CheckCircle2
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { TripPurpose } from './trip-purpose-table';
 import type { Location } from './location-table';
@@ -123,6 +122,16 @@ const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
 
 export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryFormProps) {
   const { toast } = useToast();
+  const { data: vmData } = useVehicleManagement();
+  
+  // High-Fidelity Type Alignment: Explicitly casting data to definitive types
+  const vehicles = (vmData.vehicles || []) as Vehicle[];
+  const drivers = (vmData.drivers || []) as Driver[];
+  const tripPurposes = (vmData.tripPurposes || []) as TripPurpose[];
+  const locations = (vmData.locations || []) as Location[];
+  const expenseTypes = (vmData.expenseTypes || []) as ExpenseType[];
+  const routes = (vmData.routes || []) as Route[];
+
   const [step, setStep] = useState(1);
   const [tripData, setTripData] = useState<Omit<Trip, 'id' | 'tripId' | 'documents' | 'expenses' | 'stops'>>(initialTripData);
   const [stops, setStops] = useState<Stop[]>([]);
@@ -132,19 +141,16 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  const { data: vmData } = useVehicleManagement();
-  const { vehicles = [], drivers = [], tripPurposes = [], locations = [], expenseTypes = [], routes = [] } = vmData;
-
   const isEditing = trip && trip.id;
   const progress = Math.round((step / 2) * 100);
 
-  const selectedDriver = useMemo(() => (drivers || []).find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
+  const selectedDriver = useMemo(() => drivers.find(d => d.id === tripData.driverId), [tripData.driverId, drivers]);
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       if (isEditing && trip) {
-        setTripData({ ...initialTripData, ...trip });
+        setTripData({ ...initialTripData, ...trip } as any);
         setStops(trip.stops || []);
         setExpenses(trip.expenses || []);
         setDocuments(trip.documents || initialDocuments);
@@ -272,21 +278,21 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                       <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
                       <Select value={tripData.vehicleId} onValueChange={handleSelectChange('vehicleId')}>
                           <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
-                          <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                          <SelectContent>{vehicles.map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
                       </Select>
                   </div>
                   <div className="space-y-2">
                       <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Driver<MandatoryIndicator/></Label>
                       <Select value={tripData.driverId} onValueChange={handleSelectChange('driverId')}>
                           <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
-                          <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>{drivers.map((d: Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                       </Select>
                   </div>
                   <div className="space-y-2">
                       <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Flag className="h-3 w-3" /> Purpose<MandatoryIndicator/></Label>
                       <Select value={tripData.purposeId} onValueChange={handleSelectChange('purposeId')}>
                           <SelectTrigger><SelectValue placeholder="Choose purpose" /></SelectTrigger>
-                          <SelectContent>{tripPurposes.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>{tripPurposes.map((p: TripPurpose) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                       </Select>
                   </div>
                   <div className="space-y-2">
@@ -331,7 +337,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                                 <span className="w-12 text-[10px] uppercase font-black text-muted-foreground">{index === 0 ? 'START' : (index === stops.length -1 ? 'DEST' : `P-${index}`)}</span>
                                 <Select value={stop.locationId} onValueChange={(v) => updateStopLocation(stop.id, v)}>
                                     <SelectTrigger className="flex-1"><SelectValue placeholder="Select Location" /></SelectTrigger>
-                                    <SelectContent>{locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{locations.map((l: Location) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeStop(stop.id)}><X className="h-4 w-4"/></Button>
                            </div>
@@ -351,7 +357,7 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
                             <div key={expense.id} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center p-2 rounded-md bg-background border">
                                 <Select value={expense.expenseTypeId} onValueChange={(v) => updateExpense(expense.id, 'expenseTypeId', v)}>
                                     <SelectTrigger className="h-8"><SelectValue placeholder="Type"/></SelectTrigger>
-                                    <SelectContent>{expenseTypes.map(et => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{expenseTypes.map((et: ExpenseType) => <SelectItem key={et.id} value={et.id}>{et.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Input placeholder="Amount" type="number" value={expense.amount} onChange={(e) => updateExpense(expense.id, 'amount', parseFloat(e.target.value) || 0)} className="h-8" />
                                 <Input type="date" value={expense.date} onChange={(e) => updateExpense(expense.id, 'date', e.target.value)} className="h-8" />
@@ -392,9 +398,9 @@ export function TripEntryForm({ isOpen, setIsOpen, onSave, trip }: TripEntryForm
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={() => prevStep} disabled={step === 1}>Previous</Button>
             {step < 2 ? (
-                <Button onClick={nextStep}>Continue</Button>
+                <Button onClick={() => setStep(s => s + 1)}>Continue</Button>
             ) : (
                 <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Trip Data' : 'Finalize Trip Entry'}</Button>
             )}

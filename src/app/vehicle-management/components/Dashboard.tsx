@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { useDashboardData } from './vehicle-management-provider';
 import { Car, Users, Wrench, AlertTriangle, Route } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { format, parseISO, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns';
+import { format, parseISO, subMonths, eachMonthOfInterval } from 'date-fns';
 import type { Vehicle } from './vehicle-entry-form';
 import type { Trip } from './trip-entry-form';
 import type { MaintenanceRecord } from './maintenance-entry-form';
@@ -15,6 +14,8 @@ import type { Accident } from './accident-entry-form';
 
 export function Dashboard() {
     const { data = {}, isLoading } = useDashboardData() || {};
+    
+    // High-Fidelity Type Alignment: Explicitly casting data to definitive types
     const vehicles = (data.vehicles || []) as Vehicle[];
     const drivers = (data.drivers || []) as any[];
     const trips = (data.trips || []) as Trip[];
