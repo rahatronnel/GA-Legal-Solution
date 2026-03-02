@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -68,6 +69,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
     const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
+    const showLikeExam = orgSettings?.moduleVisibility?.showLikeExam ?? true;
     const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
 
     return (
@@ -128,33 +130,41 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                  <p className="text-muted-foreground mt-2 font-bold uppercase tracking-widest text-xs">Certified Organizational Operating System</p>
             </div>
             <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                {showProcurement && majorModules.map((majorMod) => (
-                    <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20 backdrop-blur-md">
-                        <CardHeader>
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary/10 rounded-lg">
-                                    <majorMod.icon className="h-8 w-8 text-primary" />
+                {majorModules.map((majorMod) => {
+                    const isVisible = 
+                        (majorMod.name === 'Procurement Management' && showProcurement) || 
+                        (majorMod.name === 'Like Exam' && showLikeExam);
+                    
+                    if (!isVisible) return null;
+
+                    return (
+                        <Card key={majorMod.name} className="w-full border-primary/20 shadow-lg bg-secondary/20 backdrop-blur-md">
+                            <CardHeader>
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-primary/10 rounded-lg">
+                                        <majorMod.icon className="h-8 w-8 text-primary" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-2xl font-black uppercase tracking-tight">{majorMod.name}</CardTitle>
+                                        <CardDescription className="font-medium">{majorMod.description}</CardDescription>
+                                    </div>
                                 </div>
-                                <div>
-                                    <CardTitle className="text-2xl font-black uppercase tracking-tight">{majorMod.name}</CardTitle>
-                                    <CardDescription className="font-medium">{majorMod.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    {majorMod.subModules.map((subMod) => (
+                                        <Link href={subMod.href} key={subMod.href}>
+                                            <Card className="h-full flex flex-col items-center justify-center text-center p-6 transition-all hover:shadow-2xl hover:scale-105 hover:bg-primary/10 hover:border-primary/40 group">
+                                                <subMod.icon className="h-12 w-12 text-primary mb-3 group-hover:animate-bounce" />
+                                                <p className="font-bold text-base uppercase tracking-tighter">{subMod.name}</p>
+                                            </Card>
+                                        </Link>
+                                    ))}
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {majorMod.subModules.map((subMod) => (
-                                    <Link href={subMod.href} key={subMod.href}>
-                                        <Card className="h-full flex flex-col items-center justify-center text-center p-6 transition-all hover:shadow-2xl hover:scale-105 hover:bg-primary/10 hover:border-primary/40 group">
-                                            <subMod.icon className="h-12 w-12 text-primary mb-3 group-hover:animate-bounce" />
-                                            <p className="font-bold text-base uppercase tracking-tighter">{subMod.name}</p>
-                                        </Card>
-                                    </Link>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+                            </CardContent>
+                        </Card>
+                    );
+                })}
                 
                 {showCore && (
                   <>

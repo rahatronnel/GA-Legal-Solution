@@ -1,3 +1,4 @@
+
 import {
   Users,
   Settings,
@@ -15,6 +16,9 @@ import {
   Archive,
   Receipt,
   ShoppingCart,
+  GraduationCap,
+  BookOpen,
+  ClipboardList,
 } from 'lucide-react';
 
 export type Module = {
@@ -66,6 +70,16 @@ export const majorModules: MajorModule[] = [
     subModules: [
       { name: 'Foreign Purchase', href: '/procurement/foreign-purchase', icon: Plane },
       { name: 'Local Purchase', href: '/procurement/local-purchase', icon: Home },
+    ],
+  },
+  {
+    name: 'Like Exam',
+    icon: GraduationCap,
+    description: 'Evaluation and assessment management',
+    subModules: [
+      { name: 'Exam Entry', href: '/exam/entry', icon: ClipboardList },
+      { name: 'Results', href: '/exam/results', icon: Globe },
+      { name: 'Settings', href: '/exam/settings', icon: Settings },
     ],
   },
 ];

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -48,6 +49,7 @@ export type OrganizationSettings = {
   moduleVisibility?: {
     showProcurementManagement: boolean;
     showCoreModules: boolean;
+    showLikeExam: boolean;
     enableNotifications: boolean;
   };
   approvalFlow?: {
@@ -94,6 +96,7 @@ const initialSettings: Omit<OrganizationSettings, 'approvalFlow' | 'procurementS
   moduleVisibility: {
     showProcurementManagement: true,
     showCoreModules: true,
+    showLikeExam: true,
     enableNotifications: true
   }
 };
@@ -236,6 +239,10 @@ export default function SettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-proc" checked={settings.moduleVisibility?.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
                                 <Label htmlFor="vis-proc">Show Procurement Management Section</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="vis-exam" checked={settings.moduleVisibility?.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
+                                <Label htmlFor="vis-exam">Show "Like Exam" Section</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="vis-core" checked={settings.moduleVisibility?.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />

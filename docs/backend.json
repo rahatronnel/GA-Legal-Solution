@@ -22,6 +22,7 @@
           "properties": {
             "showProcurementManagement": { "type": "boolean" },
             "showCoreModules": { "type": "boolean" },
+            "showLikeExam": { "type": "boolean" },
             "enableNotifications": { "type": "boolean" }
           }
         },
