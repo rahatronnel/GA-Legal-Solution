@@ -16,6 +16,14 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { 
     Workflow, FileText, Users, BarChart2, ShoppingCart, Package, 
     ChevronRight, ShieldCheck, DollarSign, Gavel, 
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
@@ -314,23 +322,17 @@ export function BlueprintDialog({
                                     {/* Phase V: Intake & Organizational Exit */}
                                     <BlueprintSection icon={Package} title="Phase V: intake & Logistics Verification (MRR)" colorClass="bg-emerald-800 border-emerald-900">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            <div className="space-y-2">
+                                            <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.1 Physical Intake</p>
-                                                <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
-                                                    <p className="text-[10px] leading-relaxed font-bold">Goods entry logged with container IDs. Discrepancies flagged against PO baseline.</p>
-                                                </div>
+                                                <p className="text-[10px] leading-relaxed font-bold">Goods entry logged with container IDs. Discrepancies flagged against PO baseline.</p>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.2 Multi-Stage Audit</p>
-                                                <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
-                                                    <p className="text-[10px] leading-relaxed font-bold">MRR report vetted by GP Concern and Requisitioning Department Manager before accounting entry.</p>
-                                                </div>
+                                                <p className="text-[10px] leading-relaxed font-bold">MRR report vetted by GP Concern and Requisitioning Department Manager before accounting entry.</p>
                                             </div>
-                                            <div className="space-y-2">
+                                            <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
-                                                <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
-                                                    <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains &quot;Open&quot; without confirmant timestamp.</p>
-                                                </div>
+                                                <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains &quot;Open&quot; without confirmant timestamp.</p>
                                             </div>
                                         </div>
                                     </BlueprintSection>
@@ -760,7 +762,7 @@ export function BlueprintDialog({
                                                 <CardHeader className="bg-orange-500 text-white py-2"><CardTitle className="text-[10px] font-black uppercase leading-none">The Financial Payload</CardTitle></CardHeader>
                                                 <CardContent className="pt-4 space-y-2">
                                                     <ul className="space-y-2">
-                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-3 w-3 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Automated:</strong> Amount inherited from MRR value.</p></li>
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Automated:</strong> Amount inherited from MRR value.</p></li>
                                                         <li className="flex gap-3 items-start"><CheckCircle2 className="h-3 w-3 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Bundle:</strong> Click generating evidentiary trail for Accounts.</p></li>
                                                         <li className="flex gap-3 items-start"><CheckCircle2 className="h-3 w-3 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Lock:</strong> Hard-lock sign-off required for disbursement.</p></li>
                                                     </ul>
