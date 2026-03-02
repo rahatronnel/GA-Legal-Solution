@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -65,13 +64,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   
-  const getSectionName = (sectionId: string) => {
-      if(!sections || sections.length === 0) return 'N/A';
+  const getSectionName = (sectionId?: string) => {
+      if(!sectionId || !sections || sections.length === 0) return 'N/A';
       return sections.find(s => s.id === sectionId)?.name || 'N/A';
   }
 
-  const getDepartmentName = (deptId: string) => {
-      if(!departments || departments.length === 0) return 'N/A';
+  const getDepartmentName = (deptId?: string) => {
+      if(!deptId || !departments || departments.length === 0) return 'N/A';
       return departments.find(d => d.id === deptId)?.name || 'N/A';
   }
 
@@ -84,7 +83,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
       (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
-      (getSectionName(emp.sectionId || '').toLowerCase().includes(lowercasedTerm))
+      (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm))
     );
   }, [employees, searchTerm, sections, departments]);
 

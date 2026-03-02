@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, Text, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Car, User, Wrench, Calendar, Building, FileText, Package, Tag, DollarSign, MapPin, Clock, Shield, AlertTriangle, CheckSquare, XSquare, Landmark, Route, Fingerprint, HeartPulse, ShieldQuestion, Printer, X } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePrint } from '../../components/print-provider';
@@ -183,7 +182,7 @@ export default function AccidentProfilePage() {
                             <InfoItem icon={User} label="Reporting Employee" value={employee?.fullName} />
                             <InfoItem icon={Route} label="Route" value={route?.name} />
                             <InfoItem icon={Fingerprint} label="Trip ID" value={trip?.tripId} />
-                            <InfoItem icon={Text} label="Description" value={accident.description} fullWidth />
+                            <InfoItem icon={FileText} label="Description" value={accident.description} fullWidth />
                         </CardContent>
                     </Card>
                      <Card>

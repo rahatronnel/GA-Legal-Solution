@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -22,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { AccidentType } from './accident-type-table';
 import type { SeverityLevel } from './severity-level-table';
@@ -39,13 +38,13 @@ export function AccidentTable() {
   
   const { data } = useVehicleManagement();
   const {
-      accidents,
-      vehicles = [],
-      drivers = [],
-      accidentTypes = [],
-      severityLevels = [],
-      routes = [],
-      faultStatuses = [],
+      accidents = [] as Accident[],
+      vehicles = [] as Vehicle[],
+      drivers = [] as Driver[],
+      accidentTypes = [] as AccidentType[],
+      severityLevels = [] as SeverityLevel[],
+      routes = [] as Route[],
+      faultStatuses = [] as FaultStatus[],
   } = data;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -72,7 +71,7 @@ export function AccidentTable() {
   const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
   const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
 
-  const safeAccidents = Array.isArray(accidents) ? accidents : [];
+  const safeAccidents = Array.isArray(accidents) ? accidents as Accident[] : [];
 
   const filteredAccidents = useMemo(() => {
     return safeAccidents.filter(acc => {

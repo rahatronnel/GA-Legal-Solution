@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -855,11 +854,11 @@ export function BlueprintDialog({
                                         <Card className="border-primary/10 shadow-lg overflow-hidden">
                                             <Table>
                                                 <TableHeader className="bg-slate-100">
-                                                    <TableRow className="h-8">
-                                                        <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Administrative</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Operational</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Restrictive Filter</TableHead>
+                                                    <TableRow className="h-10 border-b-2">
+                                                        <TableHead className="font-black uppercase text-[10px]">Tab / Menu</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Administrative</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Operational</TableHead>
+                                                        <TableHead className="font-black uppercase text-[10px]">Restrictive Filter</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -886,7 +885,7 @@ export function BlueprintDialog({
                             </div>
                             <p className="text-[10px] font-bold text-muted-foreground italic">Authorized documentation.</p>
                         </div>
-                        <Button onClick={() => onOpenChange(false)} className="h-8 px-8 font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-primary/20">Exit Blueprint</Button>
+                        <button onClick={() => onOpenChange(false)} className="h-8 px-8 font-black uppercase tracking-widest text-[10px] bg-primary text-white rounded-md shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">Exit Blueprint</button>
                     </div>
                 </DialogFooter>
             </DialogContent>
