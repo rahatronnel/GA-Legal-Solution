@@ -1,8 +1,7 @@
-
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useArs, ArsExam, ArsQuestion } from '../components/ars-provider';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,11 +10,72 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, Timer, ChevronRight, ChevronLeft, GraduationCap, Send, AlertCircle, Home } from 'lucide-react';
+import { CheckCircle2, Timer, ChevronRight, ChevronLeft, GraduationCap, Send, AlertCircle, Home, X, Layers } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+
+/**
+ * OptionPart - A micro-level differentiated interaction component.
+ */
+const OptionPart = ({ 
+    opt, 
+    isSelected, 
+    id, 
+    index 
+}: { 
+    opt: string, 
+    isSelected: boolean, 
+    id: string,
+    index: number
+}) => {
+    const itemRef = useRef<HTMLDivElement>(null);
+
+    useGSAP(() => {
+        if (isSelected) {
+            gsap.to(itemRef.current, {
+                scale: 1.02,
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        } else {
+            gsap.to(itemRef.current, {
+                scale: 1,
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                duration: 0.3,
+                ease: 'power2.out'
+            });
+        }
+    }, { dependencies: [isSelected] });
+
+    return (
+        <div ref={itemRef} className="group">
+            <Label 
+                htmlFor={id}
+                className={cn(
+                    "flex items-center gap-4 p-6 rounded-[24px] border-2 cursor-pointer transition-all active:scale-[0.98]",
+                    isSelected 
+                        ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]" 
+                        : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10"
+                )}
+            >
+                <div className={cn(
+                    "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                    isSelected ? "border-primary bg-primary" : "border-white/20"
+                )}>
+                    {isSelected && <div className="h-2 w-2 bg-slate-950 rounded-full" />}
+                </div>
+                <span className={cn(
+                    "text-lg font-bold tracking-tight transition-colors",
+                    isSelected ? "text-white" : "text-white/60 group-hover:text-white/80"
+                )}>{opt}</span>
+                <RadioGroupItem value={opt} id={id} className="sr-only" />
+            </Label>
+        </div>
+    );
+};
 
 /**
  * QuestionPart - A micro-level differentiated component for ARS response.
@@ -38,55 +98,36 @@ const QuestionPart = ({
 
     useGSAP(() => {
         gsap.fromTo(containerRef.current, 
-            { opacity: 0, y: 20, filter: 'blur(10px)' }, 
-            { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.5, ease: 'expo.out' }
+            { opacity: 0, y: 30, filter: 'blur(10px)', scale: 0.95 }, 
+            { opacity: 1, y: 0, filter: 'blur(0px)', scale: 1, duration: 0.6, ease: 'expo.out' }
         );
     }, { scope: containerRef, dependencies: [question.id] });
 
     return (
         <div ref={containerRef} className="space-y-8">
             <div className="flex justify-between items-center">
-                <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] tracking-[0.2em]">Step {index + 1} of {total}</Badge>
+                <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] tracking-[0.2em]">Quantum Step {index + 1} of {total}</Badge>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                    <Timer className="h-4 w-4" />
-                    <span className="text-xs font-bold tabular-nums">Real-Time Sync</span>
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Live Sync Active</span>
                 </div>
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-3xl font-black tracking-tighter leading-tight text-white">{question.questionText}</h2>
-                <div className="h-1 w-20 bg-primary rounded-full" />
+                <h2 className="text-4xl font-black tracking-tighter leading-none text-white">{question.questionText}</h2>
+                <div className="h-1.5 w-24 bg-gradient-to-r from-primary to-transparent rounded-full" />
             </div>
 
             <RadioGroup value={value} onValueChange={onChange} className="grid grid-cols-1 gap-4">
-                {question.options.map((opt, i) => {
-                    const isSelected = value === opt;
-                    return (
-                        <div key={i} className="group">
-                            <Label 
-                                htmlFor={`q-${question.id}-o-${i}`}
-                                className={cn(
-                                    "flex items-center gap-4 p-6 rounded-[24px] border-2 cursor-pointer transition-all active:scale-[0.98]",
-                                    isSelected 
-                                        ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]" 
-                                        : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10"
-                                )}
-                            >
-                                <div className={cn(
-                                    "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                                    isSelected ? "border-primary bg-primary" : "border-white/20"
-                                )}>
-                                    {isSelected && <div className="h-2 w-2 bg-slate-950 rounded-full" />}
-                                </div>
-                                <span className={cn(
-                                    "text-lg font-bold tracking-tight transition-colors",
-                                    isSelected ? "text-white" : "text-white/60 group-hover:text-white/80"
-                                )}>{opt}</span>
-                                <RadioGroupItem value={opt} id={`q-${question.id}-o-${i}`} className="sr-only" />
-                            </Label>
-                        </div>
-                    );
-                })}
+                {question.options.map((opt, i) => (
+                    <OptionPart 
+                        key={i} 
+                        opt={opt} 
+                        isSelected={value === opt} 
+                        id={`q-${question.id}-o-${i}`} 
+                        index={i}
+                    />
+                ))}
             </RadioGroup>
         </div>
     );
@@ -226,7 +267,13 @@ export default function ArsEntryPage() {
             <div className="absolute bottom-[-10%] left-[-10%] h-[500px] w-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="max-w-2xl w-full space-y-8 relative z-10">
-                <Progress value={progress} className="h-1.5 bg-white/5" />
+                <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest px-1">
+                        <span>Progress Efficiency</span>
+                        <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-1.5 bg-white/5" />
+                </div>
                 
                 {currentQuestion ? (
                     <QuestionPart 
