@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -338,7 +338,14 @@ export function AppWrapper() {
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <div className="flex flex-col sm:gap-4 sm:py-4">
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-            <Component />
+            <Suspense fallback={
+                <div className="flex flex-col h-full w-full items-center justify-center gap-4">
+                    <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs font-black uppercase text-muted-foreground animate-pulse">Syncing interaction points...</p>
+                </div>
+            }>
+                <Component />
+            </Suspense>
           </main>
         </div>
       </div>

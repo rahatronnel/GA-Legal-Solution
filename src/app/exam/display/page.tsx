@@ -1,25 +1,22 @@
 "use client";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useArs } from '../components/ars-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Radio, Users, Timer, ChevronRight, BarChart2, ShieldCheck, GraduationCap, Smartphone, QrCode, Wifi, History } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { cn } from '@/lib/utils';
+import { Users, BarChart2, Radio, Smartphone, History, Wifi } from 'lucide-react';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 
+/**
+ * SeminarDisplayPage - The Majestic Live Projection Screen.
+ * Displays real-time QR codes for audience boarding and dynamic response matrices.
+ */
 export default function SeminarDisplayPage() {
     const searchParams = useSearchParams();
     const examId = searchParams.get('id');
     const { exams, questions, submissions, isLoading: isArsLoading } = useArs();
-    const firestore = useFirestore();
 
     const exam = useMemo(() => exams.find(e => e.id === examId), [exams, examId]);
     const activeQuestions = useMemo(() => questions.filter(q => q.examId === examId), [questions, examId]);
@@ -45,7 +42,6 @@ export default function SeminarDisplayPage() {
         return Object.entries(stats).map(([name, value]) => ({ name, value }));
     }, [currentQuestion, examSubmissions]);
 
-    // Construct high-fidelity join URL for QR code
     const joinUrl = useMemo(() => {
         if (typeof window === 'undefined' || !examId) return '';
         return `${window.location.origin}/exam/entry?examId=${examId}`;

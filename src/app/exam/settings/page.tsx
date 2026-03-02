@@ -1,11 +1,9 @@
 "use client";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import React, { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
-import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { 
-    Settings, PlusCircle, Trash2, Edit, Save, X, 
-    Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
+    Settings, PlusCircle, Trash2, Edit, X, 
+    Layers, Hash, CheckCircle2, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap, ClipboardList, LayoutDashboard
+    Download, FileSpreadsheet, Cpu, Plus, ClipboardList
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';

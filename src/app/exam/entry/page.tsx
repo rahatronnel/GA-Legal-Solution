@@ -1,20 +1,17 @@
 "use client";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
-import { useUser, useUser as useAuthUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
+import { useArs, type ArsExam } from '../components/ars-provider';
+import { useUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, Timer, ChevronRight, ChevronLeft, GraduationCap, Send, AlertCircle, Home, X, Layers, UserCircle, Smartphone, Wifi } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
