@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio, BarChart2, ClipboardList, Settings as SettingsIcon } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio, BarChart2, ClipboardList, Settings as SettingsIcon, PlayCircle } from 'lucide-react';
 import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
@@ -214,32 +214,32 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                                 ARS Control Hub
                             </TooltipContent>
                         </Tooltip>
-                        <DropdownMenuContent align="end" side="top" className="w-56 mb-4 animate-scale-in rounded-2xl border-primary/20 bg-background/80 backdrop-blur-2xl shadow-2xl">
+                        <DropdownMenuContent align="end" side="top" className="w-64 mb-4 animate-scale-in rounded-2xl border-primary/20 bg-background/80 backdrop-blur-2xl shadow-2xl">
                             <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground pb-1">ARS Signals</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
-                                <Link href="/exam/entry" className="flex items-center w-full">
-                                    <ClipboardList className="mr-2 h-4 w-4" />
-                                    <span className="font-bold text-xs uppercase tracking-tight">Participant Entry</span>
-                                </Link>
-                            </DropdownMenuItem>
+                            {isSuperAdmin && (
+                                <>
+                                    <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
+                                        <Link href="/exam/settings" className="flex items-center w-full">
+                                            <ClipboardList className="mr-2 h-4 w-4" />
+                                            <span className="font-bold text-xs uppercase tracking-tight">Exam and Survey</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
+                                        <Link href="/exam/settings" className="flex items-center w-full">
+                                            <PlayCircle className="mr-2 h-4 w-4" />
+                                            <span className="font-bold text-xs uppercase tracking-tight">Go Live Exam or Survey</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
                             <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
                                 <Link href="/exam/results" className="flex items-center w-full">
                                     <BarChart2 className="mr-2 h-4 w-4" />
-                                    <span className="font-bold text-xs uppercase tracking-tight">Analytics Portal</span>
+                                    <span className="font-bold text-xs uppercase tracking-tight">Results</span>
                                 </Link>
                             </DropdownMenuItem>
-                            {isSuperAdmin && (
-                                <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild className="rounded-xl h-11 cursor-pointer focus:bg-primary focus:text-primary-foreground">
-                                        <Link href="/exam/settings" className="flex items-center w-full">
-                                            <SettingsIcon className="mr-2 h-4 w-4" />
-                                            <span className="font-bold text-xs uppercase tracking-tight">Master Console</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
