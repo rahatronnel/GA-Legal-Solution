@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -18,7 +17,7 @@ import {
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap
+    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap, ClipboardList
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -237,7 +236,7 @@ export default function ArsSettingsPage() {
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-3">
                                             <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none">{exam.title}</h3>
-                                            <Badge className={cn("uppercase text-[10px] font-black h-6 px-3", exam.type === 'Exam' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400")}>{exam.type}</Badge>
+                                            <Badge className={cn("uppercase text-[10px] font-black h-6 px-3", exam.type === 'Exam' ? "bg-blue-50/20 text-blue-400" : "bg-purple-50/20 text-purple-400")}>{exam.type}</Badge>
                                             <Badge variant="outline" className="text-[10px] font-black border-white/10 opacity-50 px-3">{exam.status}</Badge>
                                         </div>
                                         <p className="text-base text-slate-400 font-medium mt-1 line-clamp-1 italic opacity-70">"{exam.description || 'No memo recorded.'}"</p>
@@ -304,7 +303,7 @@ export default function ArsSettingsPage() {
                                                     </div>
                                                     <Input id={`excel-up-${exam.id}`} type="file" accept=".xlsx, .xls" className="hidden" onChange={(e) => handleExcelUpload(e, exam.id)} />
                                                 </Label>
-                                                <Button variant="link" size="sm" className="h-4 text-[9px] font-black uppercase text-muted-foreground opacity-50 hover:opacity-100" onClick={handleDownloadTemplate}><Download className="h-3 w-3 mr-1" /> Get Template</Button>
+                                                <Button variant="link" size="sm" className="h-4 text-[9px] font-black uppercase text-muted-foreground opacity-50 hover:opacity-100" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Get Template</Button>
                                             </div>
                                         </div>
                                     </div>
