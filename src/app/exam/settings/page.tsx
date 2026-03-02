@@ -28,6 +28,10 @@ import { useGSAP } from '@gsap/react';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 
+/**
+ * ARS Master Console - High-Fidelity Logic Preparation Terminal.
+ * Featuring atomic question entry and bulk Excel injection.
+ */
 export default function ArsSettingsPage() {
     const { exams, questions, isLoading } = useArs();
     const { user } = useUser();
@@ -62,10 +66,10 @@ export default function ArsSettingsPage() {
 
         if (currentExam?.id) {
             setDocumentNonBlocking(doc(firestore, 'arsExams', currentExam.id), data, { merge: true });
-            toast({ title: 'Registry Updated' });
+            toast({ title: 'Registry Updated', description: 'Session parameters have been synchronized.' });
         } else {
             addDocumentNonBlocking(examsRef, { ...data, isLive: false, activeQuestionIndex: -1 });
-            toast({ title: 'New Session Registry Created' });
+            toast({ title: 'New Session Registry Created', description: 'Session initialized in the seminar cloud.' });
         }
         setIsExamModalOpen(false);
     };
@@ -85,16 +89,19 @@ export default function ArsSettingsPage() {
         setIsQuestionModalOpen(false);
     };
 
+    /**
+     * Quantum Template Generation - Creates the official ARS Excel schema.
+     */
     const handleDownloadTemplate = () => {
         const wsData = [
             {
                 questionText: "What is the primary objective of this session?",
                 type: "MCQ",
-                optionA: "Option 1",
-                optionB: "Option 2",
-                optionC: "Option 3",
-                optionD: "Option 4",
-                correctOption: "Option 1",
+                optionA: "Increase Productivity",
+                optionB: "Reduce Operational Lag",
+                optionC: "Improve Quality",
+                optionD: "Employee Wellness",
+                correctOption: "Increase Productivity",
                 points: 10
             }
         ];
@@ -102,8 +109,12 @@ export default function ArsSettingsPage() {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Questions");
         XLSX.writeFile(wb, "ARS_Question_Template.xlsx");
+        toast({ title: "Template Downloaded", description: "Fill 10-15 rows and upload to begin." });
     };
 
+    /**
+     * High-Performance Excel Processing - Injects bulk logic into the seminar cloud.
+     */
     const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>, examId: string) => {
         const file = e.target.files?.[0];
         if (!file || !firestore) return;
@@ -121,6 +132,7 @@ export default function ArsSettingsPage() {
 
                 const questionsRef = collection(firestore, 'arsQuestions');
                 
+                // Iterative Injection: Handling 10-15 questions sequentially
                 json.forEach(row => {
                     const questionData: Omit<ArsQuestion, 'id'> = {
                         examId: examId,
@@ -138,13 +150,13 @@ export default function ArsSettingsPage() {
                     addDocumentNonBlocking(questionsRef, questionData);
                 });
 
-                toast({ title: "Bulk Injection Success", description: `${json.length} questions synchronized.` });
+                toast({ title: "Bulk Injection Success", description: `${json.length} interaction points synchronized.` });
             } catch (err: any) {
                 toast({ variant: "destructive", title: "Upload Failed", description: err.message });
             }
         };
         reader.readAsArrayBuffer(file);
-        e.target.value = '';
+        e.target.value = ''; // Reset for re-uploads
     };
 
     const toggleLiveSession = (exam: ArsExam) => {
@@ -155,7 +167,8 @@ export default function ArsSettingsPage() {
             activeQuestionIndex: newState ? 0 : -1 
         }, { merge: true });
         toast({ 
-            title: newState ? 'Broadcast Active' : 'Broadcast Halted'
+            title: newState ? 'Broadcast Active' : 'Broadcast Halted',
+            description: newState ? 'QR code is now synchronized with participant terminals.' : 'Session closed.'
         });
     };
 
@@ -166,13 +179,13 @@ export default function ArsSettingsPage() {
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 activeQuestionIndex: exam.activeQuestionIndex + 1 
             }, { merge: true });
-            toast({ title: 'Signal Pushed' });
+            toast({ title: 'Signal Pushed', description: 'Next question is now active on all terminals.' });
         } else {
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 isLive: false,
                 activeQuestionIndex: -1 
             }, { merge: true });
-            toast({ title: 'Session Concluded' });
+            toast({ title: 'Session Concluded', description: 'Final results are now visible.' });
         }
     };
 
@@ -193,7 +206,7 @@ export default function ArsSettingsPage() {
                 </div>
                 <div className="flex gap-4">
                     <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
-                        <Link href="/"><ChevronLeft className="h-5 w-5" /> Exit Terminal</Link>
+                        <Link href="/exam"><ChevronLeft className="h-5 w-5" /> Exit Terminal</Link>
                     </Button>
                     <Button className="h-14 rounded-full font-black uppercase tracking-widest gap-2 shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:scale-105 transition-all px-10 border-4 border-white/10" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
                         <Plus className="h-6 w-6" /> Register New Session
@@ -253,6 +266,7 @@ export default function ArsSettingsPage() {
                                 </div>
                             </div>
 
+                            {/* PREPARATION PANEL - BULK & MANUAL ENTRY */}
                             <div className="bg-black/20 p-10 space-y-8">
                                 <div className="flex flex-col md:row items-center justify-between gap-6 md:flex-row">
                                     <div className="space-y-1">
