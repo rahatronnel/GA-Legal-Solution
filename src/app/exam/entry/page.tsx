@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
-import { useUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
+import { useUser, useUser as useAuthUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import Link from 'next/link';
 const OptionPart = ({ opt, isSelected, id }: { opt: string, isSelected: boolean, id: string }) => {
     const itemRef = useRef<HTMLDivElement>(null);
     useGSAP(() => {
-        gsap.to(itemRef.current, { scale: isSelected ? 1.02 : 1, backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)', duration: 0.3, ease: 'power2.out' });
+        gsap.to(itemRef.current, { scale: isSelected ? 1.02 : 1, backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)', duration: 0.3, ease: "power2.out" });
     }, { dependencies: [isSelected] });
 
     return (
@@ -99,7 +99,7 @@ export default function ArsEntryPage() {
             if (answers[q.id] === q.correctOption) score += q.points;
         });
 
-        const percentage = (score / selectedExam.totalMarks) * 100;
+        const percentage = (score / (selectedExam.totalMarks || 1)) * 100;
         const status = score >= selectedExam.passingMarks ? 'Passed' : 'Failed';
 
         const submissionData = {

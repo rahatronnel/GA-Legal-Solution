@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useArs, ArsExam, ArsQuestion } from '../components/ars-provider';
+import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
 import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import {
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap, ClipboardList
+    Upload, Download, FileSpreadsheet, Cpu, Plus, GraduationCap, ClipboardList, LayoutDashboard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -196,7 +196,7 @@ export default function ArsSettingsPage() {
     return (
         <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-50" ref={containerRef}>
             {/* Header Hub - Differentiated Labels */}
-            <div className="flex flex-col md:row justify-between items-center gap-6 p-6 border-b border-white/5 bg-white/[0.02] rounded-[32px] md:flex-row">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 border-b border-white/5 bg-white/[0.02] rounded-[32px]">
                 <div className="flex items-center gap-4">
                     <div className={cn("p-3 rounded-[20px] backdrop-blur-xl border border-white/10 shadow-2xl", isBroadcastMode ? "bg-emerald-500/10" : "bg-primary/10")}>
                         {isBroadcastMode ? <Play className="h-8 w-8 text-emerald-500 animate-pulse" /> : <ClipboardList className="h-8 w-8 text-primary" />}
@@ -282,7 +282,7 @@ export default function ArsSettingsPage() {
                             {/* PREPARATION PANEL - Only visible in Entry mode */}
                             {!isBroadcastMode && (
                                 <div className="bg-black/20 p-10 space-y-8">
-                                    <div className="flex flex-col md:row items-center justify-between gap-6 md:flex-row">
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                                         <div className="space-y-1">
                                             <h4 className="text-xl font-black uppercase tracking-tight text-primary">Injection Logic Panel</h4>
                                             <p className="text-xs text-muted-foreground font-medium">Add interaction points manually or via Bulk Spreadsheet.</p>

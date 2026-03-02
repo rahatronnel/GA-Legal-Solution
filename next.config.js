@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -30,7 +29,6 @@ const nextConfig = {
     ],
   },
   webpack: (config) => {
-    // Definitive fix for pdfjs-dist build error: Ignore 'canvas' on server-side
     config.resolve.alias.canvas = false;
     return config;
   },
