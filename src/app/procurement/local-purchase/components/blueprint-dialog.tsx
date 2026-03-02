@@ -521,8 +521,8 @@ export function BlueprintDialog({
                                                     <div className="relative z-10 space-y-2">
                                                         <div className="flex items-center justify-between"><Badge className="bg-blue-500 text-[8px] h-4">STATUS: SCANNING</Badge><Cpu className="h-3 w-3 text-blue-400" /></div>
                                                         <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-2/3 animate-[progress_2s_infinite]" /></div>
-                                                        <div className="text-[10px] font-mono text-blue-300">>> Cross-Referencing PN-Registry...</div>
-                                                        <div className="text-[10px] font-mono text-emerald-400">>> Match Found: PN-8821 (Treasury Ready)</div>
+                                                        <div className="text-[10px] font-mono text-blue-300">&gt;&gt; Cross-Referencing PN-Registry...</div>
+                                                        <div className="text-[10px] font-mono text-emerald-400">&gt;&gt; Match Found: PN-8821 (Treasury Ready)</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -579,7 +579,7 @@ export function BlueprintDialog({
                                                 <div className="space-y-1.5">
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-bold">Under $10,000</span><Badge className="text-[8px] h-4">Purchase Manager</Badge></div>
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-bold">$10K - $100K</span><div className="flex gap-1"><Badge className="text-[8px] h-4">Purchase Mgr</Badge><Badge className="text-[8px] h-4">TA</Badge></div></div>
-                                                    <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-bold">$100K - $1M</span><Badge className="text-[8px] h-4 bg-orange-500 text-white">Spec. Manager</Badge></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200 shadow-sm"><span className="text-[10px] font-bold">$100K - $1M</span><Badge className="text-[8px] h-4 bg-orange-500 text-white">Spec. Manager</Badge></div>
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200 shadow-sm"><span className="text-[10px] font-black">ABOVE $1M</span><Badge variant="destructive" className="text-[8px] h-4">EXECUTIVE CHAIN</Badge></div>
                                                 </div>
                                             </div>
