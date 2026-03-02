@@ -194,7 +194,7 @@ function FinalizeMrrDialog({
         if (isOpen && mrr) {
             setBillDocs([]);
             setChallanDocs([]);
-            const dn = demandNotes.find(d => d.demandNoteNumber === mrr.demandNoteNumber);
+            const dn = (demandNotes as DemandNote[]).find(d => d.demandNoteNumber === mrr.demandNoteNumber);
             setConfirmantId(dn?.createdBy || '');
         }
     }, [isOpen, mrr, demandNotes]);
@@ -284,7 +284,7 @@ export function MRRTable() {
     const { user } = useUser();
     const { toast } = useToast();
     const firestore = useFirestore();
-    const mrrColRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
+    const mrrRef = useMemoFirebase(() => firestore ? collection(firestore, 'mrrs') : null, [firestore]);
     const pnColRef = useMemoFirebase(() => firestore ? collection(firestore, 'paymentNotes') : null, [firestore]);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -338,8 +338,8 @@ export function MRRTable() {
     const approvableItems = useMemo(() => filteredMrrs.filter(m => currentUserEmployee && m.currentApproverId === currentUserEmployee.id && m.approvalStatus > 2), [filteredMrrs, currentUserEmployee]);
 
     const handleFinalize = (data: { bill: UploadedFile[], challan: UploadedFile[], confirmantId: string }) => {
-        if (!selectedMrrForFinal || !mrrColRef || !orgSettings?.procurementSettings) return;
-        const dn = demandNotes.find(d => d.demandNoteNumber === selectedMrrForFinal.demandNoteNumber);
+        if (!selectedMrrForFinal || !mrrRef || !orgSettings?.procurementSettings) return;
+        const dn = (demandNotes as DemandNote[]).find(d => d.demandNoteNumber === selectedMrrForFinal.demandNoteNumber);
         const { procurementSettings } = orgSettings;
         const requestedDeptHeadId = (procurementSettings.departmentHeads || []).find(dh => dh.sectionId === dn?.sectionId)?.headId;
         const steps = [
@@ -349,7 +349,7 @@ export function MRRTable() {
             { stepName: 'Purchase Dept. TA', approverId: procurementSettings.csApprovalRoles?.purchaseDeptTaId || '' }
         ].filter(s => !!s.approverId);
 
-        setDocumentNonBlocking(doc(mrrColRef, selectedMrrForFinal.id), {
+        setDocumentNonBlocking(doc(mrrRef, selectedMrrForFinal.id), {
             documents: { bill: data.bill, challan: data.challan },
             receiverConfirmantId: data.confirmantId,
             approvalFlow: { steps },
@@ -363,15 +363,15 @@ export function MRRTable() {
     };
 
     const handleBulkApproval = (status: number) => {
-        if (!firestore || !currentUserEmployee || !mrrColRef) return;
+        if (!firestore || !currentUserEmployee || !mrrRef) return;
         selectedRows.forEach(id => {
-            const mrr = mrrs.find(m => m.id === id);
+            const mrr = (mrrs as MRR[]).find(m => m.id === id);
             if (!mrr || !mrr.approvalFlow?.steps) return;
             const currentLevel = mrr.approvalHistory?.length || 0;
             const newHistoryEntry = { approverId: currentUserEmployee.id, status: status === 1 ? 'Approved' : 'Rejected', timestamp: new Date().toISOString(), level: currentLevel, remarks: 'Bulk action' };
             let nextStatus = status === 1 ? (currentLevel + 1 < mrr.approvalFlow.steps.length ? getNextApprovalStatusCode(currentLevel) : 1) : 0;
             let nextApprover = status === 1 && currentLevel + 1 < mrr.approvalFlow.steps.length ? mrr.approvalFlow.steps[currentLevel + 1].approverId : '';
-            setDocumentNonBlocking(doc(mrrColRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(mrr.approvalHistory || []), newHistoryEntry] }, { merge: true });
+            setDocumentNonBlocking(doc(mrrRef, id), { approvalStatus: nextStatus, currentApproverId: nextApprover, approvalHistory: [...(mrr.approvalHistory || []), newHistoryEntry] }, { merge: true });
         });
         setSelectedRows([]);
         toast({ title: "Success", description: "Records processed successfully." });
@@ -447,7 +447,7 @@ export function MRRTable() {
                             {isLoading ? (
                                 <TableRow><TableCell colSpan={9} className="text-center py-10">Loading records...</TableCell></TableRow>
                             ) : filteredMrrs.length > 0 ? (
-                                filteredMrrs.map(mrr => {
+                                filteredMrrs.map((mrr: MRR) => {
                                     const po = purchaseOrders?.find(p => p.poNumber === mrr.poId || p.id === mrr.poId);
                                     const cs = comparativeStatements?.find(c => c.id === po?.csId);
                                     const dn = (demandNotes as DemandNote[]).find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
