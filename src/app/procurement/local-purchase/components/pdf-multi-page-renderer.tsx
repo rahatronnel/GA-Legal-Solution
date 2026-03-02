@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import type { OrganizationSettings } from '@/app/settings/page';
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+// @ts-ignore
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
