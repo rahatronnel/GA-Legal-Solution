@@ -408,7 +408,7 @@ export function WorkflowTracker() {
                                     );
                                 })}
                                 
-                                {selectedDn.approvalStatus === 1 && 
+                                {selectedDn && 
                                  purchaseOrders.some(p => p.demandNoteId === selectedDnId && p.approvalStatus === 1) && 
                                  paymentNotes.some(pn => {
                                      const m = mrrs.find(mrr => mrr.id === pn.mrrId);

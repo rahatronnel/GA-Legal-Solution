@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -94,57 +95,59 @@ const genieVariants = {
     }
 };
 
-const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
-            <DialogHeader className="p-6 bg-primary text-primary-foreground shrink-0">
-                <div className="flex items-center gap-2">
-                    <HelpCircle className="h-6 w-6 text-white" />
-                    <DialogTitle className="text-xl text-white font-black uppercase tracking-tight">DN Operational Guide</DialogTitle>
-                </div>
-                <DialogDescription className="text-white/70">Internal guidelines for material and service requisitions.</DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="flex-grow">
-                <div className="p-6 space-y-6">
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            The Demand Note is the starting point of the procurement lifecycle. It serves as a formal internal request from any department for goods, services, or equipment.
-                        </p>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Dynamic Approval Logic</h4>
-                        <p className="text-sm text-muted-foreground mb-2">The system automatically calculates the approval path based on the items requested:</p>
-                        <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
-                            <li><strong>Standard:</strong> Routed to the department's Head and Technical Advisor.</li>
-                            <li><strong>Manufacturing:</strong> Routed to Head, TA, and the Manufacturing Dept. Manager.</li>
-                            <li><strong>Special Items:</strong> Routed to Head, TA, Specialized Dept. Manager, and finally the Managing Director (MD).</li>
-                        </ul>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> GP Desk Integration</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Once a Demand Note is <Badge>Final Approved</Badge>, it is automatically visible at the <strong>General Purchase (GP) Desk</strong>. Here, a GP Officer will assign a specific "GP Concern" to begin sourcing vendor quotations.
-                        </p>
-                    </section>
-                    <Separator />
-                    <section className="space-y-2">
-                        <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Access & Visibility</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Requisitions are visible to the creator, all approvers in the chain, and GP personnel. Management can track the status in real-time via the <Badge variant="outline">Action Beacons</Badge> displayed in the list view. This ensures a transparent and audit-ready procurement cycle.
-                        </p>
-                    </section>
-                </div>
-                <ScrollBar orientation="vertical" />
-            </ScrollArea>
-            <DialogFooter className="p-4 border-t shrink-0">
-                <Button onClick={() => onOpenChange(false)} className="w-full">Dismiss Guide</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
-);
+const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+                <DialogHeader className="p-6 bg-primary text-primary-foreground shrink-0">
+                    <div className="flex items-center gap-2">
+                        <HelpCircle className="h-6 w-6 text-white" />
+                        <DialogTitle className="text-xl text-white font-black uppercase tracking-tight">DN Operational Guide</DialogTitle>
+                    </div>
+                    <DialogDescription className="text-white/70">Internal guidelines for material and service requisitions.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="flex-grow">
+                    <div className="p-6 space-y-6">
+                        <section className="space-y-2">
+                            <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                The Demand Note is the starting point of the procurement lifecycle. It serves as a formal internal request from any department for goods, services, or equipment.
+                            </p>
+                        </section>
+                        <Separator />
+                        <section className="space-y-2">
+                            <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Dynamic Approval Logic</h4>
+                            <p className="text-sm text-muted-foreground mb-2">The system automatically calculates the approval path based on the items requested:</p>
+                            <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
+                                <li><strong>Standard:</strong> Routed to the department's Head and Technical Advisor.</li>
+                                <li><strong>Manufacturing:</strong> Routed to Head, TA, and the Manufacturing Dept. Manager.</li>
+                                <li><strong>Special Items:</strong> Routed to Head, TA, Specialized Dept. Manager, and finally the Managing Director (MD).</li>
+                            </ul>
+                        </section>
+                        <Separator />
+                        <section className="space-y-2">
+                            <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> GP Desk Integration</h4>
+                            <p className="text-sm text-muted-foreground">
+                                Once a Demand Note is <Badge>Final Approved</Badge>, it is automatically visible at the <strong>General Purchase (GP) Desk</strong>. Here, a GP Officer will assign a specific "GP Concern" to begin sourcing vendor quotations.
+                            </p>
+                        </section>
+                        <Separator />
+                        <section className="space-y-2">
+                            <h4 className="font-bold flex items-center gap-2 text-primary"><UserCheck className="h-4 w-4"/> Access & Visibility</h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                Requisitions are visible to the creator, all approvers in the chain, and GP personnel. Management can track the status in real-time via the <Badge variant="outline">Action Beacons</Badge> displayed in the list view. This ensures a transparent and audit-ready procurement cycle.
+                            </p>
+                        </section>
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+                <DialogFooter className="p-4 border-t shrink-0">
+                    <Button onClick={() => onOpenChange(false)} className="w-full">Dismiss Guide</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 const DNStatusTrackerDialog = ({ 
     dn, 
@@ -214,19 +217,19 @@ const DNStatusTrackerDialog = ({
 
     const macroStatus = useMemo(() => {
         if (pn?.approvalStatus === 1) return { label: 'Payment Authorized', color: 'bg-green-600', icon: CheckCircle2 };
-        if (pn) return { label: 'In Treasury Audit (PN)', color: 'bg-orange-500', icon: Wallet };
+        if (pn) return { label: 'In Treasury Audit (PN)', color: 'bg-orange-50', icon: Wallet };
         if (mrr?.approvalStatus === 1) return { label: 'Awaiting Payment Initiation', color: 'bg-blue-600', icon: DollarSign };
-        if (mrr) return { label: 'In Quality Audit (MRR)', color: 'bg-orange-500', icon: Package };
+        if (mrr) return { label: 'In Quality Audit (MRR)', color: 'bg-orange-50', icon: Package };
         if (po?.isSentToVendor) return { label: 'Awaiting Goods Arrival', color: 'bg-blue-500', icon: Truck };
-        if (po?.approvalStatus === 1) return { label: 'Awaiting PO Dispatch', color: 'bg-orange-500', icon: Send };
-        if (po) return { label: 'In PO Authorization', color: 'bg-orange-500', icon: ShoppingCart };
+        if (po?.approvalStatus === 1) return { label: 'Awaiting PO Dispatch', color: 'bg-orange-50', icon: Send };
+        if (po) return { label: 'In PO Authorization', color: 'bg-orange-50', icon: ShoppingCart };
         if (cs?.approvalStatus === 1) return { label: 'Awaiting PO Creation', color: 'bg-blue-600', icon: FilePlus };
-        if (cs?.approvalStatus === 3) return { label: 'In Financial Audit (CS)', color: 'bg-orange-500', icon: BarChart2 };
-        if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-orange-500', icon: Hand };
+        if (cs?.approvalStatus === 3) return { label: 'In Financial Audit (CS)', color: 'bg-orange-50', icon: BarChart2 };
+        if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-orange-50', icon: Hand };
         if (dn.gpConcernOfficerId) return { label: 'In Vendor Sourcing (GP)', color: 'bg-blue-500', icon: Briefcase };
         if (dn.approvalStatus === 1) return { label: 'Awaiting GP Assignment', color: 'bg-blue-600', icon: UserPlus };
         if (dn.approvalStatus === 0) return { label: 'Requisition Rejected', color: 'bg-destructive', icon: XCircleIcon };
-        return { label: 'In Internal Approval (DN)', color: 'bg-orange-500', icon: Hourglass };
+        return { label: 'In Internal Approval (DN)', color: 'bg-orange-50', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
     return (
@@ -530,7 +533,7 @@ export function DemandNoteTable() {
         if (!firestore || !currentUserEmployee || !dataRef) return;
 
         selectedRows.forEach(id => {
-            const item = demandNotes.find(dn => dn.id === id);
+            const item = (demandNotes as DemandNote[]).find(dn => dn.id === id);
             if (!item || !item.approvalFlow?.steps) return;
 
             const currentLevel = item.approvalHistory?.length || 0;
@@ -704,7 +707,7 @@ export function DemandNoteTable() {
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center gap-1">
                                                         <span>{item.demandNoteNumber}</span>
-                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy DN#</TooltipContent></Tooltip>
+                                                        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100" onClick={() => { navigator.clipboard.writeText(item.demandNoteNumber); toast({ title: 'Copied!' }); }}><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent className="animate-scale-in">Copy DN#</TooltipContent></Tooltip>
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground">{item.date}</span>
                                                 </div>

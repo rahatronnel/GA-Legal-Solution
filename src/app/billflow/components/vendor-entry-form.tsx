@@ -130,7 +130,7 @@ const initialVendorData: Omit<Vendor, 'id' | 'vendorId' | 'documents' | 'supplie
   contractEndDate: '', paymentTerms: '', creditLimit: 0, currency: 'USD', taxDeductionApplicable: false,
   vatApplicable: false, loginId: '', createdBy: '', createdDate: '', lastUpdatedBy: '',
   vendorStatus: 'Pending', approvedBy: '', approvalDate: '', reviewFrequency: '', riskLevel: ''
-};
+} as any;
 
 const initialDocuments = Object.keys(documentLabels).reduce((acc, key) => ({...acc, [key]: []}), {} as Record<DocType, UploadedFile[]>);
 

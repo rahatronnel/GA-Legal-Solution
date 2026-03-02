@@ -145,7 +145,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Multi-Stage Verification</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -> **Requested Dept. Manager** -> **Purchase Manager** -> **Purchase Dept. TA**.
+                                        Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -&gt; **Requested Dept. Manager** -&gt; **Purchase Manager** -&gt; **Purchase Dept. TA**.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -326,7 +326,7 @@ export function MRRTable() {
         return safeItems.filter(mrr => {
             let isVisible = isSuperAdmin || roleData.isGPOfficer || roleData.isManager;
             if (!isVisible && currentUserEmployee) {
-                if (mrr.createdBy === currentUserEmployee.id || mrr.currentApproverId === currentUserEmployee.id || mrr.approvalHistory?.some(h => h.approverId === currentUserEmployee.id)) {
+                if (mrr.createdBy === currentUserEmployee.id || mrr.currentApproverId === currentUserEmployee.id || mrr.approvalHistory?.some((h:any) => h.approverId === currentUserEmployee.id)) {
                     isVisible = true;
                 }
             }
@@ -341,7 +341,7 @@ export function MRRTable() {
         if (!selectedMrrForFinal || !mrrColRef || !orgSettings?.procurementSettings) return;
         const dn = demandNotes.find(d => d.demandNoteNumber === selectedMrrForFinal.demandNoteNumber);
         const { procurementSettings } = orgSettings;
-        const requestedDeptHeadId = procurementSettings.departmentHeads.find(dh => dh.sectionId === dn?.sectionId)?.headId;
+        const requestedDeptHeadId = (procurementSettings.departmentHeads || []).find(dh => dh.sectionId === dn?.sectionId)?.headId;
         const steps = [
             { stepName: 'GP Concern', approverId: selectedMrrForFinal.createdBy },
             { stepName: 'Requested Dept. Manager', approverId: requestedDeptHeadId || '' },
@@ -435,7 +435,7 @@ export function MRRTable() {
                                 <TableHead className="w-[50px]"><Checkbox checked={approvableItems.length > 0 && selectedRows.length === approvableItems.length} onCheckedChange={(c) => setSelectedRows(c ? approvableItems.map(i => i.id) : [])} /></TableHead>
                                 <TableHead className="font-bold">MRR Number</TableHead>
                                 <TableHead className="font-bold">PO Number</TableHead>
-                                <TableHead className="font-bold">CS & DN Refs</TableHead>
+                                <TableHead className="font-bold">CS &amp; DN Refs</TableHead>
                                 <TableHead className="font-bold">GP Concern</TableHead>
                                 <TableHead className="font-bold">Supplier</TableHead>
                                 <TableHead className="font-bold text-right">Amount</TableHead>
@@ -450,7 +450,7 @@ export function MRRTable() {
                                 filteredMrrs.map(mrr => {
                                     const po = purchaseOrders?.find(p => p.poNumber === mrr.poId || p.id === mrr.poId);
                                     const cs = comparativeStatements?.find(c => c.id === po?.csId);
-                                    const dn = demandNotes?.find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
+                                    const dn = (demandNotes as DemandNote[]).find(d => d.id === po?.demandNoteId || d.demandNoteNumber === mrr.demandNoteNumber);
                                     const pnExists = paymentNotes?.some(p => p.mrrId === mrr.id);
 
                                     const isWaitingForFinalize = mrr.approvalStatus === 2 && (isSuperAdmin || mrr.createdBy === currentUserEmployee?.id);
@@ -461,7 +461,7 @@ export function MRRTable() {
                                     const canInitiatePn = isFinalApproved && !pnExists && (isSuperAdmin || roleData.isGPOfficer || (currentUserEmployee && mrr.createdBy === currentUserEmployee.id));
 
                                     return (
-                                        <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) ? 'bg-orange-500/5' : '')}>
+                                        <TableRow key={mrr.id} className={cn("hover:bg-muted/30 transition-colors", (isWaitingForFinalize || isWaitingForApproval) ? 'bg-orange-50/5' : '')}>
                                             <TableCell><Checkbox checked={selectedRows.includes(mrr.id)} onCheckedChange={() => setSelectedRows(p => p.includes(mrr.id) ? p.filter(r => r !== mrr.id) : [...p, mrr.id])} disabled={!isApprovable} /></TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1 group/mrr">
@@ -542,7 +542,7 @@ export function MRRTable() {
                 </div>
             </div>
 
-            <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={demandNotes || []} />
+            <FinalizeMrrDialog mrr={selectedMrrForFinal} isOpen={isFinalizeOpen} onOpenChange={setIsFinalizeOpen} onFinalize={handleFinalize} employees={employees || []} demandNotes={(demandNotes as DemandNote[]) || []} />
             
             <MRRUserGuide isOpen={isGuideOpen} onOpenChange={setIsGuideOpen} />
 
@@ -552,7 +552,7 @@ export function MRRTable() {
                     <div className="py-4 space-y-4">
                         {selectedMrrForStatus?.approvalFlow?.steps.map((step: any, index: number) => {
                             const historyEntry = selectedMrrForStatus.approvalHistory?.find((h:any) => h.level === index);
-                            const approver = employees?.find(e => e.id === step.approverId);
+                            const approver = (employees as Employee[]).find(e => e.id === step.approverId);
                             const isPending = selectedMrrForStatus.currentApproverId === step.approverId && selectedMrrForStatus.approvalStatus > 2;
                             return (
                                 <li key={index} className="flex items-center gap-4 list-none">
