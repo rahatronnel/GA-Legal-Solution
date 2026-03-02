@@ -3,7 +3,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useArs, ArsExam, ArsQuestion } from '../components/ars-provider';
-import { useFirestore, useUser, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import { Separator } from '@/components/ui/separator';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import * as XLSX from 'xlsx';
+import { cn } from '@/lib/utils';
 
 export default function ArsSettingsPage() {
     const { exams, questions, isLoading } = useArs();
@@ -61,10 +62,10 @@ export default function ArsSettingsPage() {
 
         if (currentExam?.id) {
             setDocumentNonBlocking(doc(firestore, 'arsExams', currentExam.id), data, { merge: true });
-            toast({ title: 'Registry Updated', description: 'Session parameters have been synchronized.' });
+            toast({ title: 'Registry Updated' });
         } else {
             addDocumentNonBlocking(examsRef, { ...data, isLive: false, activeQuestionIndex: -1 });
-            toast({ title: 'New Registry Created', description: 'Audience session is now ready for logic injection.' });
+            toast({ title: 'New Session Registry Created' });
         }
         setIsExamModalOpen(false);
     };
@@ -79,7 +80,7 @@ export default function ArsSettingsPage() {
             toast({ title: 'Question Logic Synced' });
         } else {
             addDocumentNonBlocking(questionsRef, data);
-            toast({ title: 'Question Injected', description: 'The interaction point has been added to the session.' });
+            toast({ title: 'Question Injected' });
         }
         setIsQuestionModalOpen(false);
     };
@@ -137,7 +138,7 @@ export default function ArsSettingsPage() {
                     addDocumentNonBlocking(questionsRef, questionData);
                 });
 
-                toast({ title: "Bulk Injection Success", description: `${json.length} questions synchronized with the cloud.` });
+                toast({ title: "Bulk Injection Success", description: `${json.length} questions synchronized.` });
             } catch (err: any) {
                 toast({ variant: "destructive", title: "Upload Failed", description: err.message });
             }
@@ -154,8 +155,7 @@ export default function ArsSettingsPage() {
             activeQuestionIndex: newState ? 0 : -1 
         }, { merge: true });
         toast({ 
-            title: newState ? 'Session Broadcast Active' : 'Session Halted',
-            description: newState ? 'Participants can now see the first question.' : 'The live signal has been disconnected.'
+            title: newState ? 'Broadcast Active' : 'Broadcast Halted'
         });
     };
 
@@ -166,13 +166,13 @@ export default function ArsSettingsPage() {
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 activeQuestionIndex: exam.activeQuestionIndex + 1 
             }, { merge: true });
-            toast({ title: 'Signal Pushed', description: 'Moving to next interaction point.' });
+            toast({ title: 'Signal Pushed' });
         } else {
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 isLive: false,
                 activeQuestionIndex: -1 
             }, { merge: true });
-            toast({ title: 'Session Concluded', description: 'All logic steps have been completed.' });
+            toast({ title: 'Session Concluded' });
         }
     };
 
@@ -180,7 +180,8 @@ export default function ArsSettingsPage() {
 
     return (
         <div className="p-8 space-y-8 bg-slate-950 min-h-screen text-slate-50" ref={containerRef}>
-            <div className="flex justify-between items-center">
+            {/* Header Hub */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 border-b border-white/5 bg-white/[0.02] rounded-[32px]">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-primary/10 rounded-[20px] backdrop-blur-xl border border-white/10 shadow-2xl">
                         <Radio className="h-8 w-8 text-primary animate-pulse" />
@@ -194,105 +195,120 @@ export default function ArsSettingsPage() {
                     <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
                         <Link href="/"><ChevronLeft className="h-5 w-5" /> Exit Terminal</Link>
                     </Button>
-                    <Button className="h-12 rounded-full font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:scale-105 transition-all" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
-                        <PlusCircle className="h-5 w-5" /> New Session Registry
+                    <Button className="h-12 rounded-full font-black uppercase tracking-widest gap-2 shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:scale-105 transition-all px-8" onClick={() => { setCurrentExam(null); setExamForm({ title: '', description: '', totalMarks: 100, passingMarks: 50, timeLimitMinutes: 10, status: 'Draft', type: 'Exam' }); setIsExamModalOpen(true); }}>
+                        <PlusCircle className="h-5 w-5" /> Register New Session
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            {/* Session Matrix */}
+            <div className="grid grid-cols-1 gap-8">
                 {exams.map(exam => {
                     const examQuestions = questions.filter(q => q.examId === exam.id);
                     return (
-                        <Card key={exam.id} className="bg-white/[0.02] border-white/5 rounded-[32px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all">
-                            <div className="p-8 flex flex-col lg:row items-center justify-between gap-6 lg:flex-row">
-                                <div className="flex items-center gap-6 flex-1">
-                                    <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center border border-white/10 shadow-inner">
-                                        <Layers className="h-8 w-8 text-primary" />
+                        <Card key={exam.id} className="bg-white/[0.02] border-white/5 rounded-[40px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all relative">
+                            <div className="p-10 flex flex-col lg:row items-center justify-between gap-8 lg:flex-row">
+                                <div className="flex items-center gap-8 flex-1">
+                                    <div className="h-20 w-20 rounded-[28px] bg-primary/10 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-6 transition-transform">
+                                        <Layers className="h-10 w-10 text-primary" />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <h3 className="text-2xl font-black text-white uppercase tracking-tight leading-none">{exam.title}</h3>
-                                            <Badge className={cn("uppercase text-[9px] font-black h-5", exam.type === 'Exam' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400")}>{exam.type}</Badge>
-                                            <Badge variant="outline" className="text-[9px] font-black border-white/10 opacity-50">{exam.status}</Badge>
+                                            <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none">{exam.title}</h3>
+                                            <Badge className={cn("uppercase text-[10px] font-black h-6 px-3", exam.type === 'Exam' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400")}>{exam.type}</Badge>
+                                            <Badge variant="outline" className="text-[10px] font-black border-white/10 opacity-50 px-3">{exam.status}</Badge>
                                         </div>
-                                        <p className="text-sm text-slate-400 font-medium mt-2 line-clamp-1">{exam.description || 'No internal description recorded.'}</p>
+                                        <p className="text-base text-slate-400 font-medium mt-3 line-clamp-1 italic">"{exam.description || 'No internal description recorded.'}"</p>
                                     </div>
                                 </div>
                                 
                                 <div className="flex items-center gap-12 px-12 border-x border-white/5">
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Interaction Steps</p>
-                                        <p className="text-2xl font-black text-white">{examQuestions.length}</p>
+                                        <p className="text-3xl font-black text-white">{examQuestions.length}</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Session Velocity</p>
-                                        <p className="text-2xl font-black text-white">{exam.timeLimitMinutes}m</p>
+                                        <p className="text-3xl font-black text-white">{exam.timeLimitMinutes}m</p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3">
-                                    {exam.status === 'Published' && (
-                                        <>
-                                            <Button 
-                                                variant={exam.isLive ? "destructive" : "outline"} 
-                                                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] h-10 px-6 border-white/10 shadow-xl"
-                                                onClick={() => toggleLiveSession(exam)}
-                                            >
-                                                {exam.isLive ? <><Square className="h-3 w-3 fill-current" /> Halt Broadcast</> : <><Play className="h-3 w-3 fill-current" /> Broadcast Live</>}
-                                            </Button>
-                                            {exam.isLive && (
-                                                <Button className="h-10 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg" onClick={() => nextLiveQuestion(exam)}>
-                                                    Push Next Question <ChevronRight className="h-4 w-4" />
+                                <div className="flex flex-col sm:row gap-3">
+                                    <div className="flex items-center gap-2">
+                                        {exam.status === 'Published' && (
+                                            <>
+                                                <Button 
+                                                    variant={exam.isLive ? "destructive" : "outline"} 
+                                                    className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] h-12 px-8 border-white/10 shadow-xl"
+                                                    onClick={() => toggleLiveSession(exam)}
+                                                >
+                                                    {exam.isLive ? <><Square className="h-3 w-3 fill-current" /> Halt Broadcast</> : <><Play className="h-3 w-3 fill-current" /> Broadcast Live</>}
                                                 </Button>
-                                            )}
-                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild title="Big Screen Display">
-                                                <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-5 w-5" /></Link>
-                                            </Button>
-                                        </>
-                                    )}
-                                    <Separator orientation="vertical" className="h-8 mx-2 bg-white/5" />
-                                    <div className="flex items-center gap-1">
-                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-primary bg-primary/10 hover:bg-primary/20 rounded-full" onClick={() => { 
+                                                {exam.isLive && (
+                                                    <Button className="h-12 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20 shadow-lg px-8" onClick={() => nextLiveQuestion(exam)}>
+                                                        Push Next Question <ChevronRight className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                <Button variant="ghost" size="icon" className="h-12 w-12 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild title="Big Screen Display">
+                                                    <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-6 w-6" /></Link>
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 justify-end">
+                                        <Button variant="outline" className="h-10 rounded-full gap-2 font-black uppercase text-[9px] border-primary/20 text-primary hover:bg-primary/10" onClick={() => { 
                                             setCurrentExam(exam); 
                                             setIsQuestionModalOpen(true); 
                                             setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); 
-                                        }} title="Add Single Question"><PlusCircle className="h-5 w-5" /></Button>
+                                        }}>
+                                            <PlusCircle className="h-4 w-4" /> Add Question
+                                        </Button>
                                         
                                         <Label htmlFor={`excel-up-${exam.id}`} className="cursor-pointer">
-                                            <div className="h-10 w-10 flex items-center justify-center text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full transition-colors" title="Excel Bulk Upload">
-                                                <FileSpreadsheet className="h-5 w-5" />
+                                            <div className="h-10 px-4 flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full transition-colors font-black uppercase text-[9px]">
+                                                <FileSpreadsheet className="h-4 w-4" /> Bulk Upload
                                             </div>
                                             <Input id={`excel-up-${exam.id}`} type="file" accept=".xlsx, .xls" className="hidden" onChange={(e) => handleExcelUpload(e, exam.id)} />
                                         </Label>
-                                        
-                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:bg-white/10 rounded-full" onClick={handleDownloadTemplate} title="Download Excel Template">
-                                            <Download className="h-5 w-5" />
-                                        </Button>
+
+                                        <div className="flex gap-1 ml-4">
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 rounded-full" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 rounded-full" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-5 w-5" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-5 w-5" /></Button>
                                 </div>
                             </div>
 
-                            {/* Question List Expansion */}
+                            {/* Logic Stream Reveal */}
                             {examQuestions.length > 0 && (
-                                <div className="px-8 pb-8 animate-in slide-in-from-top-4 duration-500">
-                                    <div className="bg-black/40 rounded-2xl border border-white/5 divide-y divide-white/5 shadow-inner">
+                                <div className="px-10 pb-10 animate-in slide-in-from-top-4 duration-500">
+                                    <div className="bg-black/40 rounded-[32px] border border-white/5 divide-y divide-white/5 shadow-inner overflow-hidden">
+                                        <div className="bg-white/5 px-6 py-3 flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Session Logic Stream</span>
+                                            <Button variant="ghost" size="sm" className="h-6 text-[9px] font-black uppercase" onClick={handleDownloadTemplate}><Download className="h-3 w-3 mr-1" /> Template</Button>
+                                        </div>
                                         {examQuestions.map((q, i) => (
-                                            <div key={q.id} className="p-4 flex items-center justify-between group/q hover:bg-white/[0.02] transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-[10px] font-black text-muted-foreground w-6 text-center">{i + 1}</span>
-                                                    <p className="text-sm font-bold text-white/90">{q.questionText}</p>
-                                                    {exam.type === 'Exam' && (
-                                                        <Badge variant="outline" className="text-[8px] h-4 border-emerald-500/30 text-emerald-500 font-black gap-1 uppercase">
-                                                            <CheckCircle2 className="h-2.5 w-2.5" /> {q.correctOption}
-                                                        </Badge>
-                                                    )}
+                                            <div key={q.id} className="p-5 flex items-center justify-between group/q hover:bg-white/[0.02] transition-colors">
+                                                <div className="flex items-center gap-6">
+                                                    <span className="text-xs font-black text-muted-foreground w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">{i + 1}</span>
+                                                    <div className="space-y-1">
+                                                        <p className="text-base font-bold text-white/90">{q.questionText}</p>
+                                                        <div className="flex gap-4">
+                                                            {exam.type === 'Exam' && (
+                                                                <Badge variant="outline" className="text-[9px] h-5 border-emerald-500/30 text-emerald-500 font-black gap-1.5 uppercase tracking-tighter">
+                                                                    <CheckCircle2 className="h-3 w-3" /> Valid Key: {q.correctOption}
+                                                                </Badge>
+                                                            )}
+                                                            <Badge variant="outline" className="text-[9px] h-5 border-white/10 text-muted-foreground font-black uppercase tracking-tighter">
+                                                                Weight: {q.points} pt
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="flex gap-2 opacity-0 group-hover/q:opacity-100 transition-opacity">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => { setCurrentExam(exam); setCurrentQuestion(q); setQuestionForm({ ...q }); setIsQuestionModalOpen(true); }}><Edit className="h-3.5 w-3.5" /></Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><X className="h-3.5 w-3.5" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/10 rounded-xl" onClick={() => { setCurrentExam(exam); setCurrentQuestion(q); setQuestionForm({ ...q }); setIsQuestionModalOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsQuestions', q.id))}><X className="h-4 w-4" /></Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -303,9 +319,9 @@ export default function ArsSettingsPage() {
                     );
                 })}
                 {exams.length === 0 && (
-                    <div className="p-20 text-center border-4 border-dashed border-white/5 rounded-[40px] opacity-20">
-                        <Radio className="h-20 w-20 mx-auto mb-4" />
-                        <p className="text-xl font-black uppercase tracking-widest">No Sessions Registered</p>
+                    <div className="p-32 text-center border-4 border-dashed border-white/5 rounded-[60px] opacity-20">
+                        <Radio className="h-32 w-32 mx-auto mb-6" />
+                        <p className="text-2xl font-black uppercase tracking-[0.4em]">No Session Registries Detected</p>
                     </div>
                 )}
             </div>
@@ -362,7 +378,7 @@ export default function ArsSettingsPage() {
                     </div>
                     <DialogFooter className="p-8 border-t border-white/5 bg-white/[0.02]">
                         <Button variant="ghost" onClick={() => setIsExamModalOpen(false)} className="text-white/60">Cancel</Button>
-                        <Button onClick={handleSaveExam} className="h-12 px-8 font-black uppercase tracking-widest text-[10px]">Commit Registry</Button>
+                        <Button onClick={handleSaveExam} className="h-14 px-12 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20">Commit Registry</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -419,7 +435,7 @@ export default function ArsSettingsPage() {
                     </div>
                     <DialogFooter className="p-8 border-t border-white/5 bg-white/[0.02]">
                         <Button variant="ghost" onClick={() => setIsQuestionModalOpen(false)} className="text-white/60">Cancel</Button>
-                        <Button onClick={handleSaveQuestion} className="h-12 px-8 font-black uppercase tracking-widest text-[10px]">Inject Logic Pulse</Button>
+                        <Button onClick={handleSaveQuestion} className="h-14 px-12 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20">Inject Logic Pulse</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

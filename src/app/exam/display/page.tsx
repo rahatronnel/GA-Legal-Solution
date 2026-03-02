@@ -9,7 +9,7 @@ import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Radio, Users, Timer, ChevronRight, BarChart2, ShieldCheck, GraduationCap, Smartphone, QrCode } from 'lucide-react';
+import { Radio, Users, Timer, ChevronRight, BarChart2, ShieldCheck, GraduationCap, Smartphone, QrCode, Wifi, History } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,12 @@ export default function SeminarDisplayPage() {
         return Object.entries(stats).map(([name, value]) => ({ name, value }));
     }, [currentQuestion, examSubmissions]);
 
+    // Construct high-fidelity join URL for QR code
+    const joinUrl = useMemo(() => {
+        if (typeof window === 'undefined' || !examId) return '';
+        return `${window.location.origin}/exam/entry?examId=${examId}`;
+    }, [examId]);
+
     if (isArsLoading || !exam) {
         return <div className="flex h-screen items-center justify-center bg-black"><div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full" /></div>;
     }
@@ -68,7 +74,7 @@ export default function SeminarDisplayPage() {
                         <div className="p-12 bg-white/5 border border-white/10 rounded-[60px] flex flex-col items-center text-center space-y-8 animate-in zoom-in-95 duration-1000">
                             <div className="p-8 bg-white rounded-[40px] shadow-2xl">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + '/exam/entry')}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`}
                                     alt="QR Code"
                                     className="w-64 h-64"
                                 />
@@ -139,7 +145,7 @@ export default function SeminarDisplayPage() {
                         <p className="text-slate-400 leading-relaxed">Respond directly from your smartphone browser.</p>
                         <div className="bg-white p-4 rounded-3xl inline-block">
                             <img 
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/exam/entry')}`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(joinUrl)}`}
                                 alt="Small QR"
                                 className="w-32 h-32"
                             />

@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
 import { useUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
 import { collection } from 'firebase/firestore';
@@ -38,6 +39,9 @@ const OptionPart = ({ opt, isSelected, id }: { opt: string, isSelected: boolean,
 };
 
 export default function ArsEntryPage() {
+    const searchParams = useSearchParams();
+    const urlExamId = searchParams.get('examId');
+    
     const { exams, questions, isLoading } = useArs();
     const { user } = useUser();
     const auth = useAuth();
@@ -51,6 +55,14 @@ export default function ArsEntryPage() {
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isFinished, setIsFinished] = useState(false);
     const [finalResult, setFinalResult] = useState<any>(null);
+
+    // High-Fidelity Sync: Auto-detect exam from URL (QR Scan)
+    useEffect(() => {
+        if (!isLoading && urlExamId && !selectedExam) {
+            const matched = exams.find(e => e.id === urlExamId);
+            if (matched) setSelectedExam(matched);
+        }
+    }, [isLoading, urlExamId, exams, selectedExam]);
 
     // Live Session Sync
     const liveExam = useMemo(() => {
@@ -157,22 +169,22 @@ export default function ArsEntryPage() {
     if (!isBoarded) {
         return (
             <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950">
-                <Card className="max-w-md w-full bg-white/5 border-white/10 rounded-[40px] text-white">
-                    <CardHeader className="p-8 text-center">
+                <Card className="max-w-md w-full bg-white/5 border-white/10 rounded-[40px] text-white shadow-2xl ring-1 ring-white/10">
+                    <CardHeader className="p-8 text-center border-b border-white/5">
                         <UserCircle className="h-16 w-16 mx-auto mb-4 text-primary" />
-                        <CardTitle className="text-2xl font-black uppercase">Participant Boarding</CardTitle>
-                        <CardDescription>Enter details to join: {selectedExam.title}</CardDescription>
+                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Boarding Session</CardTitle>
+                        <CardDescription className="font-bold text-slate-400">{selectedExam.title}</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8 pt-0 space-y-6">
+                    <CardContent className="p-8 space-y-6">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground">Full Name</Label>
-                            <Input value={participantName} onChange={e => setParticipantName(e.target.value)} className="bg-white/5 border-white/10 h-12" placeholder="John Doe" />
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Participant Name</Label>
+                            <Input value={participantName} onChange={e => setParticipantName(e.target.value)} className="bg-white/5 border-white/10 h-12 text-lg font-bold" placeholder="Your Name" />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground">Mobile Number</Label>
-                            <Input value={participantMobile} onChange={e => setParticipantMobile(e.target.value)} className="bg-white/5 border-white/10 h-12" placeholder="+880..." />
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Mobile Number</Label>
+                            <Input value={participantMobile} onChange={e => setParticipantMobile(e.target.value)} className="bg-white/5 border-white/10 h-12 text-lg font-bold" placeholder="+880..." />
                         </div>
-                        <Button className="w-full h-14 rounded-full font-black uppercase" onClick={handleBoarding} disabled={!participantName || !participantMobile}>Join Session</Button>
+                        <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20" onClick={handleBoarding} disabled={!participantName || !participantMobile}>Sync & Board Terminal</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -204,7 +216,7 @@ export default function ArsEntryPage() {
                     <h2 className="text-3xl font-black text-white uppercase tracking-tighter">All Responses Logged</h2>
                     <p className="text-slate-400 font-medium">Please wait for the moderator to conclude the session.</p>
                 </div>
-                <Button className="rounded-full px-8" variant="outline" onClick={finalizeSubmission}>Submit Results</Button>
+                <Button className="rounded-full px-8 h-12 font-black uppercase tracking-widest" variant="outline" onClick={finalizeSubmission}>Submit Results</Button>
             </div>
         );
     }
