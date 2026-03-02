@@ -16,7 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { 
     Settings, PlusCircle, Trash2, Edit, Save, X, 
     Layers, Clock, Hash, CheckCircle2, AlertTriangle, FilePlus, ChevronLeft,
-    Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles
+    Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
+    Upload, Download, FileSpreadsheet, Cpu
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -24,6 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+import * as XLSX from 'xlsx';
 
 export default function ArsSettingsPage() {
     const { exams, questions, isLoading } = useArs();
@@ -80,6 +82,68 @@ export default function ArsSettingsPage() {
             toast({ title: 'Question Injected', description: 'The interaction point has been added to the session.' });
         }
         setIsQuestionModalOpen(false);
+    };
+
+    const handleDownloadTemplate = () => {
+        const wsData = [
+            {
+                questionText: "What is the primary objective of this session?",
+                type: "MCQ",
+                optionA: "Option 1",
+                optionB: "Option 2",
+                optionC: "Option 3",
+                optionD: "Option 4",
+                correctOption: "Option 1",
+                points: 10
+            }
+        ];
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Questions");
+        XLSX.writeFile(wb, "ARS_Question_Template.xlsx");
+    };
+
+    const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>, examId: string) => {
+        const file = e.target.files?.[0];
+        if (!file || !firestore) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+                if (json.length === 0) throw new Error("No data found in spreadsheet.");
+
+                const questionsRef = collection(firestore, 'arsQuestions');
+                
+                json.forEach(row => {
+                    const questionData: Omit<ArsQuestion, 'id'> = {
+                        examId: examId,
+                        questionText: String(row.questionText || ''),
+                        type: (row.type === 'True/False' ? 'True/False' : 'MCQ') as any,
+                        options: [
+                            String(row.optionA || ''),
+                            String(row.optionB || ''),
+                            String(row.optionC || ''),
+                            String(row.optionD || '')
+                        ].filter(o => o !== ''),
+                        correctOption: String(row.correctOption || ''),
+                        points: Number(row.points) || 1
+                    };
+                    addDocumentNonBlocking(questionsRef, questionData);
+                });
+
+                toast({ title: "Bulk Injection Success", description: `${json.length} questions synchronized with the cloud.` });
+            } catch (err: any) {
+                toast({ variant: "destructive", title: "Upload Failed", description: err.message });
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
     };
 
     const toggleLiveSession = (exam: ArsExam) => {
@@ -182,31 +246,30 @@ export default function ArsSettingsPage() {
                                                     Push Next Question <ChevronRight className="h-4 w-4" />
                                                 </Button>
                                             )}
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild>
-                                                            <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-5 w-5" /></Link>
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="bg-blue-600 font-black text-[10px] uppercase">Open Big Screen Display</TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 rounded-full" asChild title="Big Screen Display">
+                                                <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-5 w-5" /></Link>
+                                            </Button>
                                         </>
                                     )}
                                     <Separator orientation="vertical" className="h-8 mx-2 bg-white/5" />
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-10 w-10 text-primary bg-primary/10 hover:bg-primary/20 rounded-full" onClick={() => { 
-                                                    setCurrentExam(exam); 
-                                                    setIsQuestionModalOpen(true); 
-                                                    setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); 
-                                                }}><PlusCircle className="h-5 w-5" /></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent className="font-black text-[10px] uppercase">Inject Question Logic</TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <div className="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-primary bg-primary/10 hover:bg-primary/20 rounded-full" onClick={() => { 
+                                            setCurrentExam(exam); 
+                                            setIsQuestionModalOpen(true); 
+                                            setQuestionForm({ examId: exam.id, questionText: '', type: 'MCQ', options: ['', '', '', ''], correctOption: '', points: 1 }); 
+                                        }} title="Add Single Question"><PlusCircle className="h-5 w-5" /></Button>
+                                        
+                                        <Label htmlFor={`excel-up-${exam.id}`} className="cursor-pointer">
+                                            <div className="h-10 w-10 flex items-center justify-center text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-full transition-colors" title="Excel Bulk Upload">
+                                                <FileSpreadsheet className="h-5 w-5" />
+                                            </div>
+                                            <Input id={`excel-up-${exam.id}`} type="file" accept=".xlsx, .xls" className="hidden" onChange={(e) => handleExcelUpload(e, exam.id)} />
+                                        </Label>
+                                        
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:bg-white/10 rounded-full" onClick={handleDownloadTemplate} title="Download Excel Template">
+                                            <Download className="h-5 w-5" />
+                                        </Button>
+                                    </div>
                                     <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 rounded-full" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-5 w-5" /></Button>
                                     <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => deleteDocumentNonBlocking(doc(firestore!, 'arsExams', exam.id))}><Trash2 className="h-5 w-5" /></Button>
                                 </div>
@@ -261,7 +324,7 @@ export default function ArsSettingsPage() {
                                 <Input value={examForm.title} onChange={e => setExamForm({...examForm, title: e.target.value})} className="bg-white/5 border-white/10 h-12 font-bold" placeholder="e.g. Q1 Operations Review" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><LayoutGrid className="h-3 w-3" /> Registry Logic Mode</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Layers className="h-3 w-3" /> Registry Logic Mode</Label>
                                 <Select value={examForm.type} onValueChange={v => setExamForm({...examForm, type: v as any})}>
                                     <SelectTrigger className="bg-white/5 border-white/10 h-12 font-bold"><SelectValue /></SelectTrigger>
                                     <SelectContent className="bg-slate-900 border-white/10">
