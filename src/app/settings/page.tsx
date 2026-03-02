@@ -122,8 +122,10 @@ export default function SettingsPage() {
         ...initialSettings,
         ...remoteSettings,
         moduleVisibility: {
-          ...initialSettings.moduleVisibility,
-          ...remoteSettings.moduleVisibility
+          showProcurementManagement: remoteSettings.moduleVisibility?.showProcurementManagement ?? initialSettings.moduleVisibility!.showProcurementManagement,
+          showCoreModules: remoteSettings.moduleVisibility?.showCoreModules ?? initialSettings.moduleVisibility!.showCoreModules,
+          showLikeExam: remoteSettings.moduleVisibility?.showLikeExam ?? initialSettings.moduleVisibility!.showLikeExam,
+          enableNotifications: remoteSettings.moduleVisibility?.enableNotifications ?? initialSettings.moduleVisibility!.enableNotifications,
         }
       });
       if (remoteSettings.logo) setLogoPreview(remoteSettings.logo);
