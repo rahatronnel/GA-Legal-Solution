@@ -11,7 +11,7 @@ import { useProcurement } from './procurement-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
-import { format, parseISO, isWithinInterval, differenceInMinutes } from 'date-fns';
+import { format, parseISO, isWithinInterval, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import { UserCheck, Clock, Search, Filter, Building, LayoutGrid, X, ChevronsUpDown, Check, ScrollText, Timer } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';

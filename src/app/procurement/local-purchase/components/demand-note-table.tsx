@@ -35,8 +35,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
@@ -118,7 +118,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                             <h4 className="font-bold flex items-center gap-2 text-primary"><ListOrdered className="h-4 w-4"/> Dynamic Approval Logic</h4>
                             <p className="text-sm text-muted-foreground mb-2">The system automatically calculates the approval path based on the items requested:</p>
                             <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
-                                <li><strong>Standard:</strong> Routed to the department's Head and Technical Advisor.</li>
+                                <li><strong>Standard:</strong> Routed to the department&apos;s Head and Technical Advisor.</li>
                                 <li><strong>Manufacturing:</strong> Routed to Head, TA, and the Manufacturing Dept. Manager.</li>
                                 <li><strong>Special Items:</strong> Routed to Head, TA, Specialized Dept. Manager, and finally the Managing Director (MD).</li>
                             </ul>
@@ -127,7 +127,7 @@ const DemandNoteUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpen
                         <section className="space-y-2">
                             <h4 className="font-bold flex items-center gap-2 text-primary"><ShieldCheck className="h-4 w-4"/> GP Desk Integration</h4>
                             <p className="text-sm text-muted-foreground">
-                                Once a Demand Note is <Badge>Final Approved</Badge>, it is automatically visible at the <strong>General Purchase (GP) Desk</strong>. Here, a GP Officer will assign a specific "GP Concern" to begin sourcing vendor quotations.
+                                Once a Demand Note is <Badge>Final Approved</Badge>, it is automatically visible at the <strong>General Purchase (GP) Desk</strong>. Here, a GP Officer will assign a specific &quot;GP Concern&quot; to begin sourcing vendor quotations.
                             </p>
                         </section>
                         <Separator />
@@ -328,7 +328,7 @@ const DNApprovalFlowDialog = ({
                                 animate="open"
                                 exit="exit"
                                 style={{ transformOrigin: "bottom right" }}
-                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-md w-full h-[70vh] max-h-[70vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-md w-full h-[70vh] max-h-[70vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
                             >
                                 <div className="p-6 bg-primary text-white shrink-0 relative overflow-hidden shadow-lg z-20">
                                     <div className="relative z-10 flex justify-between items-center">

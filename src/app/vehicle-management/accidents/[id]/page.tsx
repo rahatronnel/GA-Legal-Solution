@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -14,7 +13,7 @@ import { usePrint } from '../../components/print-provider';
 import { Separator } from '@/components/ui/separator';
 
 import type { Accident } from '../../components/accident-entry-form';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { Driver } from '../../components/driver-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Route as RouteType } from '../../components/route-table';

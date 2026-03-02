@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -14,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 
 import type { MaintenanceRecord } from '../components/maintenance-entry-form';
-import type { Vehicle } from '../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { MaintenanceType } from '../components/maintenance-type-table';
 import type { ServiceCenter } from '../components/service-center-table';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';

@@ -159,7 +159,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
                 </ScrollArea>
                 
                 <DialogFooter className="p-4 border-t shrink-0">
-                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Let's Analyze</Button>
+                    <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Understood, Let&apos;s Analyze</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -561,7 +561,7 @@ export function ComparativeStatementTable() {
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
 
                                     return (
-                                        <TableRow key={cs.id} className={cn("hover:bg-primary/[0.02] transition-colors duration-200 cs-row-animate group h-14", isWaitingForMe && "bg-orange-500/5")}>
+                                        <TableRow key={cs.id} className={cn("hover:bg-primary/[0.02] transition-colors duration-200 cs-row-animate group h-14", isWaitingForMe && "bg-orange-50/5")}>
                                             <TableCell>
                                                 <Checkbox 
                                                     checked={selectedRows.includes(cs.id)} 
@@ -663,7 +663,7 @@ export function ComparativeStatementTable() {
                           DN -&gt; GP -&gt; CS -&gt; PO -&gt; MRR -&gt; PN
                         </p>
                         <Separator className="my-2" />
-                        {selectedCsForStatus?.approvalFlow?.steps.map((step, index) => {
+                        {selectedCsForStatus?.approvalFlow?.steps.map((step: any, index: number) => {
                             const historyEntry = selectedCsForStatus.approvalHistory?.find((h:any) => h.level === index);
                             const approver = (employees || []).find(e => e.id === step.approverId);
                             const isPending = selectedCsForStatus.currentApproverId === step.approverId && selectedCsForStatus.approvalStatus !== 1 && selectedCsForStatus.approvalStatus !== 0 && selectedCsForStatus.approvalStatus !== 2;

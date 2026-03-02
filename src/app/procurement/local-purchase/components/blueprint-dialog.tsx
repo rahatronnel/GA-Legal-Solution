@@ -21,13 +21,13 @@ import {
     ListOrdered, GitCommitHorizontal, MapPin, Info, CheckCircle2, 
     Send, UserCheck, Zap, TrendingUp, Search,
     History as HistoryIcon, Layers, UserPlus, Tag, Bell, Lock, 
-    Truck, BellRing, MousePointerClick,
+    Truck, BellRing, 
+    BellRing as BellRingIcon,
     MailCheck, Siren, Database, ArrowRight, Play, CheckCircle, FilePlus,
     Wallet, FileStack, Landmark, Timer, Briefcase, ChevronDown, Activity,
     Scale, FileSearch, ShieldAlert, Cpu, FileSignature, ClipboardCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 const BlueprintSection = ({ 
     icon: Icon, 
@@ -228,7 +228,7 @@ export function BlueprintDialog({
                                                 <h5 className="font-black text-xs uppercase tracking-widest text-blue-900">Process Standards</h5>
                                                 <ul className="space-y-2">
                                                     <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Temporal Identity:</strong> Every DN is stamped with a unique, non-colliding ID based on timestamp and department code.</p></li>
-                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Department Hard-Lock:</strong> Requisitions are cryptographically bound to the creator's section, preventing data injection.</p></li>
+                                                    <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Department Hard-Lock:</strong> Requisitions are cryptographically bound to the creator&apos;s section, preventing data injection.</p></li>
                                                     <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5"/><p className="text-xs text-muted-foreground font-medium"><strong>Budget Safeguard:</strong> The Budget Head and Year are mandatory fields before procurement starts.</p></li>
                                                 </ul>
                                             </div>
@@ -236,7 +236,7 @@ export function BlueprintDialog({
                                                 <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-blue-800">Architecture Trigger: Dynamic Routing</CardTitle></CardHeader>
                                                 <CardContent>
                                                     <p className="text-[10px] leading-relaxed italic text-blue-700 font-bold">
-                                                        The system executes a "Deep Scan" of line items. If a "Special Category" part is detected, the standard 2-step signature chain is expanded to 4-step chain including Specialized Manager and MD.
+                                                        The system executes a &quot;Deep Scan&quot; of line items. If a &quot;Special Category&quot; part is detected, the standard 2-step signature chain is expanded to 4-step chain including Specialized Manager and MD.
                                                     </p>
                                                 </CardContent>
                                             </Card>
@@ -271,7 +271,7 @@ export function BlueprintDialog({
                                                     <p className="text-amber-600">// Calculation Logic for every Vendor [V]</p>
                                                     <p className="font-bold text-foreground">Let TotalCost[V] = Σ(Item[i].Qty * Item[i].UnitPrice[V]);</p>
                                                     <p className="font-bold text-foreground">Let NetAmount[V] = TotalCost[V] - Discount[V] + VAT[V] + Tax[V];</p>
-                                                    <p className="text-emerald-600 font-black">IF (NetAmount[V] == MIN(all NetAmounts)) SET Flag("Best Offer");</p>
+                                                    <p className="text-emerald-600 font-black">IF (NetAmount[V] == MIN(all NetAmounts)) SET Flag(&quot;Best Offer&quot;);</p>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground font-medium">The CS acts as legal justification for spending. It highlights lowest bidder automatically.</p>
                                             </div>
@@ -279,7 +279,8 @@ export function BlueprintDialog({
                                                 <h5 className="font-black text-xs uppercase tracking-widest text-amber-900">Authority Matrix</h5>
                                                 <div className="space-y-2">
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">Under $10K</span><Badge className="text-[8px] h-4">Manager</Badge></div>
-                                                    <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">$10K - $100K</span><Badge className="text-[8px] h-4">Purchase Mgr</Badge></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded shadow-sm"><span className="text-[10px] font-black">$10K - $100K</span><div className="flex gap-1"><Badge className="text-[8px] h-4">Purchase Mgr</Badge><Badge className="text-[8px] h-4">TA</Badge></div></div>
+                                                    <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200 shadow-sm"><span className="text-[10px] font-black">$100K - $1M</span><Badge className="text-[8px] h-4 bg-orange-500 text-white">Spec. Manager</Badge></div>
                                                     <div className="flex items-center justify-between p-2 bg-white border rounded bg-amber-50 border-amber-200 shadow-sm"><span className="text-[10px] font-black">Above $1M</span><Badge className="text-[8px] h-4" variant="destructive">Full Board</Badge></div>
                                                 </div>
                                             </div>
@@ -303,7 +304,7 @@ export function BlueprintDialog({
                                                 <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-slate-400">Security Trigger: Evidence Compliance</CardTitle></CardHeader>
                                                 <CardContent>
                                                     <p className="text-[10px] leading-relaxed italic text-slate-300 font-bold">
-                                                        System blocks MRR if PO is missing "PO Acknowledgement" or "Mushok (VAT)" scans. Enforces "Paperwork First" policy.
+                                                        System blocks MRR if PO is missing &quot;PO Acknowledgement&quot; or &quot;Mushok (VAT)&quot; scans. Enforces &quot;Paperwork First&quot; policy.
                                                     </p>
                                                 </CardContent>
                                             </Card>
@@ -328,7 +329,7 @@ export function BlueprintDialog({
                                             <div className="space-y-2">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.3 Final Organizational Exit</p>
                                                 <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-300 shadow-2xl">
-                                                    <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains "Open" without confirmant timestamp.</p>
+                                                    <p className="text-[10px] font-black font-black leading-relaxed">Original Requester confirms goods. Process remains &quot;Open&quot; without confirmant timestamp.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -531,7 +532,7 @@ export function BlueprintDialog({
                                         <div className="p-4 border-2 border-blue-100 rounded-2xl bg-blue-50/30">
                                             <h4 className="font-black text-blue-900 uppercase text-xs mb-3 tracking-widest flex items-center gap-2"><TrendingUp className="h-4 w-4"/> Asset Fingerprinting</h4>
                                             <p className="text-[10px] text-blue-800/70 leading-relaxed mb-4 font-bold">
-                                                DN locks **Particulars**, **Quantity**, and **Budget Head**. These become the "Control Baseline" for all subsequent modules.
+                                                DN locks **Particulars**, **Quantity**, and **Budget Head**. These become the &quot;Control Baseline&quot; for all subsequent modules.
                                             </p>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 leading-none">Draft</p><p className="text-[14px] font-bold mt-1">Pending</p></div>
@@ -551,7 +552,7 @@ export function BlueprintDialog({
                                                 <CardContent className="pt-4 space-y-3">
                                                     <div className="flex items-start gap-3">
                                                         <div className="h-5 w-5 rounded bg-emerald-600 text-white flex items-center justify-center font-bold text-[9px]">1</div>
-                                                        <div><p className="text-[10px] font-bold uppercase leading-none mb-1">Officer Handover</p><p className="text-[9px] text-muted-foreground font-medium leading-tight">GP Officer selects a specific 'Concern' based on expertise.</p></div>
+                                                        <div><p className="text-[10px] font-bold uppercase leading-none mb-1">Officer Handover</p><p className="text-[9px] text-muted-foreground font-medium leading-tight">GP Officer selects a specific &apos;Concern&apos; based on expertise.</p></div>
                                                     </div>
                                                     <div className="flex items-start gap-3">
                                                         <div className="h-5 w-5 rounded bg-emerald-600 text-white flex items-center justify-center font-bold text-[9px]">2</div>
@@ -589,7 +590,7 @@ export function BlueprintDialog({
                                                     <div className="p-2 border rounded bg-muted/20 font-mono text-[9px] font-bold leading-tight">
                                                         IF (ManualSelection == true) ALERT (MD);
                                                         <br/>CALC (Total = (Qty * Price) - Disc + VAT);
-                                                        <br/>FLAG (Lowest_Bidder, "Best Offer");
+                                                        <br/>FLAG (Lowest_Bidder, &quot;Best Offer&quot;);
                                                     </div>
                                                     <p className="text-[9px] text-muted-foreground leading-relaxed italic font-bold">
                                                         Highlights lowest bidder but allows override for technical superiority—triggering audit alert.
@@ -683,7 +684,7 @@ export function BlueprintDialog({
                                                 <h4 className="font-black uppercase text-[10px] text-purple-900 flex items-center gap-2 leading-none"><Send className="h-3 w-3"/> Dispatch Logic</h4>
                                                 <div className="relative pl-8 space-y-6 before:absolute before:left-3 before:top-0 before:h-full before:w-0.5 before:bg-purple-200">
                                                     <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-purple-600 border-4 border-white shadow-sm"/><p className="text-[10px] font-bold uppercase leading-none">Authorized</p><p className="text-[9px] text-muted-foreground font-medium mt-1">Internal signatures complete.</p></div>
-                                                    <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-white border-4 border-purple-600 shadow-sm"/><p className="text-[10px] font-bold uppercase leading-none">Dispatched</p><p className="text-[9px] text-purple-700 font-black italic mt-1">User clicks "Send to Vendor".</p></div>
+                                                    <div className="relative"><div className="absolute -left-8 h-6 w-6 rounded-full bg-white border-4 border-purple-600 shadow-sm"/><p className="text-[10px] font-bold uppercase leading-none">Dispatched</p><p className="text-[9px] text-purple-700 font-black italic mt-1">User clicks &quot;Send to Vendor&quot;.</p></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -720,7 +721,7 @@ export function BlueprintDialog({
                                             <div className="p-4 bg-background rounded-xl border-2 border-emerald-100 space-y-2 shadow-md">
                                                 <h5 className="font-black text-[10px] uppercase text-emerald-900 flex items-center gap-2 leading-none"><Bell className="h-3 w-3"/> Verification</h5>
                                                 <p className="text-[9px] text-muted-foreground leading-relaxed font-bold">
-                                                    **Requester** notified to verify goods quality and click "Confirm Receipt".
+                                                    **Requester** notified to verify goods quality and click &quot;Confirm Receipt&quot;.
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-background rounded-xl border-2 border-emerald-100 space-y-2 shadow-md">
@@ -832,7 +833,7 @@ export function BlueprintDialog({
                                             </div>
                                             <div className="p-4 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 text-center relative z-10">
                                                 <p className="text-[10px] font-bold text-white/60 italic leading-relaxed">
-                                                    "The system joins all internal approvals and physical document scans into a single high-fidelity print stream, unrolling multi-page PDFs for absolute audit compliance."
+                                                    &quot;The system joins all internal approvals and physical document scans into a single high-fidelity print stream, unrolling multi-page PDFs for absolute audit compliance.&quot;
                                                 </p>
                                             </div>
                                         </div>
@@ -840,7 +841,7 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="notifications" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={BellRing} title="Graphical Alert Propagation Map" colorClass="bg-red-600 border-red-800">
+                                    <BlueprintSection icon={BellRingIcon} title="Graphical Alert Propagation Map" colorClass="bg-red-600 border-red-800">
                                         <div className="space-y-6 p-6 border-4 border-dashed rounded-[3rem] bg-slate-50 border-red-200 shadow-inner relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-10 opacity-5">
                                                 <Siren className="h-64 w-64 text-red-600 animate-pulse" />
@@ -885,7 +886,7 @@ export function BlueprintDialog({
                                                     <h5 className="text-xs font-black uppercase text-red-900 tracking-widest">Recursive Temporal Pulse</h5>
                                                 </div>
                                                 <p className="text-[10px] text-red-800/70 font-bold leading-relaxed px-12">
-                                                    "If a notification remains unacknowledged, the system triggers a recursive signal every [X] hours, incrementing the badge count until operational sign-off is achieved."
+                                                    &quot;If a notification remains unacknowledged, the system triggers a recursive signal every [X] hours, incrementing the badge count until operational sign-off is achieved.&quot;
                                                 </p>
                                             </div>
                                         </div>

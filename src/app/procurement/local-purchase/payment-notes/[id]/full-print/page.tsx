@@ -111,6 +111,7 @@ export default function PNFullPrintPage() {
                             };
                             
                             // High-Fidelity Capture: Converts the entire subway of documents into one PDF file
+                            // @ts-ignore
                             await html2pdf().from(element).set(opt).save();
                         } catch (err) {
                             console.error("Critical PDF Export Failure:", err);

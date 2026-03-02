@@ -115,7 +115,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
                                 <CardContent className="pt-6 space-y-2">
-                                    <h5 className="font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-4 w-4"/> The "Entry Audit" Objective</h5>
+                                    <h5 className="font-bold flex items-center gap-2 text-blue-600"><ClipboardCheck className="h-4 w-4"/> The &quot;Entry Audit&quot; Objective</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                         The MRR is the official organizational proof that goods have entered the premises. It validates that the **Quantity** and **Quality** match the original Demand Note requirements.
                                     </p>
@@ -135,7 +135,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-amber-600"><UserCheck className="h-4 w-4"/> Receiver Confirmation</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        A "Receiver Confirmant" must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier of the asset's condition.
+                                        A &quot;Receiver Confirmant&quot; must be selected. This is the specific individual who performed the physical inspection. Their digital profile is recorded as the primary verifier of the asset&apos;s condition.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -144,7 +144,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                                 <CardContent className="pt-6 space-y-2">
                                     <h5 className="font-bold flex items-center gap-2 text-purple-600"><ShieldCheck className="h-4 w-4"/> Multi-Stage Verification</h5>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
-                                        Once finalized, the MRR moves through a 4-stage flow: **GP Concern** -&gt; **Requested Dept. Manager** -&gt; **Purchase Manager** -&gt; **Purchase Dept. TA**.
+                                        Once finalized, the MRR moves through a 4-stage flow: **GP Concern** &gt; **Requested Dept. Manager** &gt; **Purchase Manager** &gt; **Purchase Dept. TA**.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -153,7 +153,7 @@ const MRRUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange:
                         <div className="p-4 bg-primary/5 border rounded-xl space-y-3">
                             <h5 className="font-black text-[10px] uppercase tracking-tighter text-primary flex items-center gap-2"><Box className="h-4 w-4" /> Physical Condition Check</h5>
                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **"Not Ok"** to prevent faulty assets from entering inventory.
+                                Inspectors must flag **Goods Condition** and **Packaging Condition** explicitly. Damaged shipments must be marked as **&quot;Not Ok&quot;** to prevent faulty assets from entering inventory.
                             </p>
                         </div>
                     </div>

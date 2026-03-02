@@ -54,6 +54,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
   const [isUploadConfirmOpen, setIsUploadConfirmOpen] = useState(false);
   const [processedUpload, setProcessedUpload] = useState<ProcessedEmployee[]>([]);
@@ -154,6 +155,15 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
     setCurrentEmployee(null);
   };
   
+  const confirmDeleteAll = () => {
+     if (!employeesRef) return;
+     employees.forEach(employee => {
+         deleteDocumentNonBlocking(doc(employeesRef, employee.id));
+     });
+    toast({ title: 'Success', description: 'All employee records are being deleted.' });
+    setIsDeleteAllConfirmOpen(false);
+  };
+
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{ 
       userIdCode: '',
@@ -283,6 +293,27 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                 <Upload className="mr-2 h-4 w-4" /> Upload
             </Label>
             <Input id="upload-excel-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+             <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={employees.length === 0}>
+                        <Trash className="mr-2 h-4 w-4" /> Delete All
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete all {employees.length} employee records.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDeleteAll}>
+                            Yes, delete all
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
       </div>
       <div className="border rounded-lg">
