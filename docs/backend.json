@@ -105,6 +105,51 @@
       },
       "required": ["name", "email"]
     },
+    "ArsExam": {
+      "title": "ARS Session/Exam",
+      "type": "object",
+      "description": "Represents an assessment session in the ARS.",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["Draft", "Published", "Archived"] },
+        "totalMarks": { "type": "number" },
+        "passingMarks": { "type": "number" },
+        "timeLimitMinutes": { "type": "number" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status"]
+    },
+    "ArsQuestion": {
+      "title": "ARS Question",
+      "type": "object",
+      "description": "A single question within an ARS exam.",
+      "properties": {
+        "examId": { "type": "string" },
+        "questionText": { "type": "string" },
+        "type": { "type": "string", "enum": ["MCQ", "True/False"] },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctOption": { "type": "string" },
+        "points": { "type": "number", "default": 1 }
+      },
+      "required": ["examId", "questionText", "type"]
+    },
+    "ArsSubmission": {
+      "title": "ARS Submission",
+      "type": "object",
+      "description": "A user's response set for an ARS session.",
+      "properties": {
+        "examId": { "type": "string" },
+        "userId": { "type": "string" },
+        "answers": { "type": "object", "description": "Map of questionId to chosen option." },
+        "score": { "type": "number" },
+        "percentage": { "type": "number" },
+        "status": { "type": "string", "enum": ["Passed", "Failed"] },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["examId", "userId", "answers"]
+    },
     "AcknowledgedTask": {
       "title": "Acknowledged Task",
       "type": "object",
@@ -839,6 +884,9 @@
     "/comparativeStatements/{csId}": { "schema": { "$ref": "#/entities/ComparativeStatement" }, "description": "Stores all generated comparative statements." },
     "/purchaseOrders/{poId}": { "schema": { "$ref": "#/entities/PurchaseOrder" }, "description": "Stores all created purchase orders." },
     "/mrrs/{mrrId}": { "schema": { "$ref": "#/entities/MRR" }, "description": "Stores all Material Receiving Reports." },
-    "/paymentNotes/{pnId}": { "schema": { "$ref": "#/entities/PaymentNote" }, "description": "Stores all payment notes for finance processing." }
+    "/paymentNotes/{pnId}": { "schema": { "$ref": "#/entities/PaymentNote" }, "description": "Stores all payment notes for finance processing." },
+    "/arsExams/{examId}": { "schema": { "$ref": "#/entities/ArsExam" }, "description": "Stores ARS evaluation sessions." },
+    "/arsQuestions/{questionId}": { "schema": { "$ref": "#/entities/ArsQuestion" }, "description": "Stores individual questions for ARS exams." },
+    "/arsSubmissions/{submissionId}": { "schema": { "$ref": "#/entities/ArsSubmission" }, "description": "Stores user results for ARS exams." }
   }
 }
