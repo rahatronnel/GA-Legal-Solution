@@ -1,4 +1,6 @@
 
+"use client";
+
 import React from 'react';
 import Image from 'next/image';
 import type { Driver } from './driver-entry-form';
@@ -30,16 +32,22 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
     </div>
 );
 
-const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
-    <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500">
-        Page {pageNumber}
+const PrintFooter = ({ pageNumber, children }: { pageNumber: number, children?: React.ReactNode }) => (
+    <div className="absolute bottom-4 left-0 right-0 px-4">
+        <div className="flex justify-between items-end">
+            <div className="text-xs text-gray-500">Page {pageNumber}</div>
+            {children}
+            <div className="text-xs text-gray-500 text-right">
+                <p>Printed on: {new Date().toLocaleDateString()}</p>
+            </div>
+        </div>
     </div>
 )
 
 const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string, footerContent?: React.ReactNode}> = ({children, pageNumber, orgSettings, className = '', footerContent}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6">
+        <div className={`flex-grow pt-6`}>
             {children}
         </div>
         <PrintFooter pageNumber={pageNumber}>{footerContent}</PrintFooter>

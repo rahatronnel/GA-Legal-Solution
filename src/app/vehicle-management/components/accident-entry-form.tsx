@@ -217,7 +217,7 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                     <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
                     <Select value={aData.vehicleId} onValueChange={(v) => setAData({...aData, vehicleId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
-                        <SelectContent>{vehicles.map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
+                        <SelectContent>{(vehicles as Vehicle[]).map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">

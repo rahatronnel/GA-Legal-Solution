@@ -24,8 +24,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-entry-form';
 import { useDriverData } from './vehicle-management-provider';
-import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, getDoc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useAuth, recreateUserWithPassword } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DriverTable() {
@@ -33,6 +33,7 @@ export function DriverTable() {
   const firestore = useFirestore();
   const { drivers, vehicles, isLoading } = useDriverData();
   const { handlePrint } = usePrint();
+  const auth = useAuth();
   
   const driversRef = useMemoFirebase(() => firestore ? collection(firestore, 'drivers') : null, [firestore]);
 
@@ -41,6 +42,10 @@ export function DriverTable() {
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const safeDrivers = Array.isArray(drivers) ? drivers as Driver[] : [];
   const safeVehicles = Array.isArray(vehicles) ? vehicles as Vehicle[] : [];
@@ -105,6 +110,33 @@ export function DriverTable() {
     setIsDeleteAllConfirmOpen(false);
   };
 
+  const handleSetPassword = (driver: Driver) => {
+      setCurrentDriver(driver);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setIsSetPasswordOpen(true);
+  };
+
+  const confirmSetPassword = async () => {
+      if (!auth || !currentDriver?.email) return;
+      if (newPassword.length < 6) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Password must be at least 6 characters.'});
+          return;
+      }
+      if (newPassword !== confirmNewPassword) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.'});
+          return;
+      }
+
+      try {
+        await recreateUserWithPassword(auth, currentDriver.email, newPassword);
+        toast({ title: 'Success', description: `Password for ${currentDriver.name} has been set.`});
+        setIsSetPasswordOpen(false);
+      } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Operation Failed', description: error.message || 'Could not set the new password.'});
+      }
+  };
+
   const handleDownloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{ 
       driverIdCode: '',
@@ -143,7 +175,7 @@ export function DriverTable() {
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, { dateNF: 'yyyy-mm-dd' }) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet) as any[];
 
           const requiredHeaders = ['driverIdCode', 'name', 'mobileNumber'];
           const headers = Object.keys(json[0] || {});
@@ -249,7 +281,7 @@ export function DriverTable() {
               <TableHead>Driver ID</TableHead>
               <TableHead>Mobile Number</TableHead>
               <TableHead>Employment Type</TableHead>
-              <TableHead className="w-[160px] text-right">Actions</TableHead>
+              <TableHead className="w-[200px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -296,6 +328,10 @@ export function DriverTable() {
                         <TooltipContent>Edit Driver</TooltipContent>
                       </Tooltip>
                        <Tooltip>
+                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetPassword(driver)}><KeyRound className="h-4 w-4 text-orange-500" /></Button></TooltipTrigger>
+                        <TooltipContent>Set Password</TooltipContent>
+                      </Tooltip>
+                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePrint(driver, 'driver')}>
                             <Printer className="h-4 w-4" />
@@ -333,6 +369,23 @@ export function DriverTable() {
         driver={currentDriver}
         vehicles={safeVehicles}
       />
+
+      <Dialog open={isSetPasswordOpen} onOpenChange={setIsSetPasswordOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set New Password</DialogTitle>
+                    <DialogDescription>Set a new password for {currentDriver?.name}.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2"><Label htmlFor="new-password">New Password</Label><Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="confirm-new-password">Confirm New Password</Label><Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} /></div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsSetPasswordOpen(false)}>Cancel</Button>
+                    <Button onClick={confirmSetPassword}>Set Password</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent>

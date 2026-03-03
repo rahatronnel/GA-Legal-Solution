@@ -68,9 +68,9 @@ export function AccidentTable() {
     return () => clearTimeout(timer);
   }, []);
 
-  const getVehicleReg = (vehicleId: string) => vehicles.find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getDriverName = (driverId: string) => drivers.find((d: Driver) => d.id === driverId)?.name || 'N/A';
-  const getAccidentTypeName = (typeId: string) => accidentTypes.find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => (vehicles as Vehicle[]).find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getDriverName = (driverId: string) => (drivers as Driver[]).find((d: Driver) => d.id === driverId)?.name || 'N/A';
+  const getAccidentTypeName = (typeId: string) => (accidentTypes as AccidentType[]).find((t: AccidentType) => t.id === typeId)?.name || 'N/A';
 
   const safeAccidents = Array.isArray(accidents) ? accidents as Accident[] : [];
 
@@ -167,12 +167,12 @@ export function AccidentTable() {
                 </div>
             </div>
             <div className="flex flex-wrap gap-2">
-                <Select value={vehicleFilter} onValueChange={setVehicleFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vehicles</SelectItem>{vehicles.map((v:Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select>
-                <Select value={driverFilter} onValueChange={setDriverFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger><SelectContent><SelectItem value="all">All Drivers</SelectItem>{drivers.map((d:Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{accidentTypes.map((t:AccidentType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={severityFilter} onValueChange={setSeverityFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Severity..." /></SelectTrigger><SelectContent><SelectItem value="all">All Severity Levels</SelectItem>{severityLevels.map((s:SeverityLevel) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={routeFilter} onValueChange={setRouteFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Route..." /></SelectTrigger><SelectContent><SelectItem value="all">All Routes</SelectItem>{routes.map((r:Route) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={faultStatusFilter} onValueChange={setFaultStatusFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Fault..." /></SelectTrigger><SelectContent><SelectItem value="all">All Fault Statuses</SelectItem>{faultStatuses.map((f:FaultStatus) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={vehicleFilter} onValueChange={setVehicleFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Vehicle..." /></SelectTrigger><SelectContent><SelectItem value="all">All Vehicles</SelectItem>{(vehicles as Vehicle[]).map((v:Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent></Select>
+                <Select value={driverFilter} onValueChange={setDriverFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger><SelectContent><SelectItem value="all">All Drivers</SelectItem>{(drivers as Driver[]).map((d:Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Type..." /></SelectTrigger><SelectContent><SelectItem value="all">All Types</SelectItem>{(accidentTypes as AccidentType[]).map((t:AccidentType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={severityFilter} onValueChange={setSeverityFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Severity..." /></SelectTrigger><SelectContent><SelectItem value="all">All Severity Levels</SelectItem>{(severityLevels as SeverityLevel[]).map((s:SeverityLevel) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={routeFilter} onValueChange={setRouteFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Route..." /></SelectTrigger><SelectContent><SelectItem value="all">All Routes</SelectItem>{(routes as Route[]).map((r:Route) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={faultStatusFilter} onValueChange={setFaultStatusFilter}><SelectTrigger className="w-full sm:w-auto"><SelectValue placeholder="Filter by Fault..." /></SelectTrigger><SelectContent><SelectItem value="all">All Fault Statuses</SelectItem>{(faultStatuses as FaultStatus[]).map((f:FaultStatus) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
                 <Button variant="ghost" onClick={clearFilters}><X className="mr-2 h-4 w-4" /> Clear</Button>
             </div>
         </div>

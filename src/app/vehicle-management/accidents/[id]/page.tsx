@@ -104,12 +104,13 @@ export default function AccidentProfilePage() {
   }, [id, accidents]);
 
 
-  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy, vehicleBrand } = useMemo(() => {
+  const { vehicle, driver, employee, route, trip, accidentType, severityLevel, faultStatus, repairedBy, brandName } = useMemo(() => {
     if (!accident) return {};
     const v = vehicles.find((v: Vehicle) => v.id === accident.vehicleId);
+    const brand = vehicleBrands.find((b: VehicleBrand) => b.id === v?.brandId);
     return {
         vehicle: v,
-        vehicleBrand: vehicleBrands.find((b: VehicleBrand) => b.id === v?.brandId),
+        brandName: brand?.name || '',
         driver: drivers.find((d: Driver) => d.id === accident.driverId),
         employee: employees.find((e: Employee) => e.id === accident.employeeId),
         route: routes.find((r: RouteType) => r.id === accident.routeId),
@@ -159,7 +160,7 @@ export default function AccidentProfilePage() {
             <Card>
                 <CardHeader><CardTitle>Key Details</CardTitle></CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                    <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${vehicleBrand?.name || ''} ${vehicle.model}` : ''} />
+                    <InfoItem icon={Car} label="Vehicle" value={vehicle ? `${brandName} ${vehicle.model}` : ''} />
                     <InfoItem icon={User} label="Driver" value={driver?.name} />
                     <InfoItem icon={Calendar} label="Date & Time" value={`${accident.accidentDate} ${accident.accidentTime}`} />
                     <InfoItem icon={Tag} label="Type" value={accidentType?.name} />
@@ -219,7 +220,7 @@ export default function AccidentProfilePage() {
                                 <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
                             )
                         ))}
-                        {Object.values(accident.documents as unknown as any[]).every((arr: any) => !arr || arr.length === 0) && (
+                        {Object.values(accident.documents as unknown as any[]).every((arr: any) => !arr || (Array.isArray(arr) && arr.length === 0)) && (
                             <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                         )}
                     </div>

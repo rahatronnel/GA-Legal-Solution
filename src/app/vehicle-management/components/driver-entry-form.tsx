@@ -108,7 +108,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
     if (isOpen) {
       setStep(1);
       if (isEditing && driver) {
-        setDriverData({ ...initialDriverData, ...driver });
+        setDriverData({ ...initialDriverData, ...driver } as any);
         setProfilePicPreview(driver.profilePicture || null);
         setDocPreviews(driver.documents || { drivingLicense: '', nid: '', other: '' });
       } else {
@@ -221,40 +221,40 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Driver Code / ID<MandatoryIndicator/></Label>
+                            <Label htmlFor="driverIdCode" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Driver Code / ID<MandatoryIndicator/></Label>
                             <Input id="driverIdCode" value={driverData.driverIdCode} onChange={handleInputChange} />
                         </div>
                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Legal Full Name<MandatoryIndicator/></Label>
+                            <Label htmlFor="name" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Legal Full Name<MandatoryIndicator/></Label>
                              <Input id="name" value={driverData.name} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Father / Guardian</Label>
+                            <Label htmlFor="fatherOrGuardianName" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Father / Guardian</Label>
                             <Input id="fatherOrGuardianName" value={driverData.fatherOrGuardianName} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Birth</Label>
+                            <Label htmlFor="dateOfBirth" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Birth</Label>
                             <Input id="dateOfBirth" value={driverData.dateOfBirth} onChange={handleInputChange} placeholder="YYYY-MM-DD" />
                         </div>
                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Gender</Label>
+                            <Label htmlFor="gender" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Gender</Label>
                             <Select value={driverData.gender} onValueChange={handleSelectChange('gender')}>
                                 <SelectTrigger><SelectValue placeholder="Choose gender" /></SelectTrigger>
                                 <SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent>
                             </Select>
                         </div>
                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Phone className="h-3 w-3" /> Primary Mobile<MandatoryIndicator/></Label>
+                            <Label htmlFor="mobileNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Phone className="h-3 w-3" /> Primary Mobile<MandatoryIndicator/></Label>
                             <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
                         </div>
                     </div>
                     <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                          <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Present Address</Label>
+                          <Label htmlFor="presentAddress" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Present Address</Label>
                           <Textarea id="presentAddress" value={driverData.presentAddress} onChange={handleInputChange} rows={2} />
                       </div>
                       <div className="space-y-2">
-                          <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Permanent Address</Label>
+                          <Label htmlFor="permanentAddress" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Permanent Address</Label>
                           <Textarea id="permanentAddress" value={driverData.permanentAddress} onChange={handleInputChange} rows={2} />
                       </div>
                     </div>
@@ -267,26 +267,26 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                 <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Step 2: Licensing Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Driving License Number</Label>
+                      <Label htmlFor="drivingLicenseNumber" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Driving License Number</Label>
                       <Input id="drivingLicenseNumber" value={driverData.drivingLicenseNumber} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> License Class</Label>
+                      <Label htmlFor="licenseType" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> License Class</Label>
                       <Select value={driverData.licenseType} onValueChange={handleSelectChange('licenseType')}>
                           <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                           <SelectContent><SelectItem value="Light">Light Vehicle</SelectItem><SelectItem value="Heavy">Heavy Duty</SelectItem><SelectItem value="Professional">Professional Carrier</SelectItem></SelectContent>
                       </Select>
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Issue Date</Label>
+                      <Label htmlFor="licenseIssueDate" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Issue Date</Label>
                       <Input id="licenseIssueDate" value={driverData.licenseIssueDate} onChange={handleInputChange} type="date" />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Expiry Date</Label>
+                      <Label htmlFor="licenseExpiryDate" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Expiry Date</Label>
                       <Input id="licenseExpiryDate" value={driverData.licenseExpiryDate} onChange={handleInputChange} type="date" />
                   </div>
                   <div className="space-y-2 col-span-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Issuing Authority (e.g. BRTA)</Label>
+                      <Label htmlFor="issuingAuthority" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Issuing Authority (e.g. BRTA)</Label>
                       <Input id="issuingAuthority" value={driverData.issuingAuthority} onChange={handleInputChange} />
                   </div>
                 </div>
@@ -298,26 +298,26 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                 <h3 className="font-semibold text-lg flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" /> Step 3: Employment Verification</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Joining</Label>
+                      <Label htmlFor="joiningDate" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Joining</Label>
                       <Input id="joiningDate" value={driverData.joiningDate} onChange={handleInputChange} type="date" />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> Employment Category</Label>
+                      <Label htmlFor="employmentType" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> Employment Category</Label>
                       <Select value={driverData.employmentType} onValueChange={handleSelectChange('employmentType')}>
                           <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                           <SelectContent><SelectItem value="Permanent">Permanent</SelectItem><SelectItem value="Contract">Contractual</SelectItem><SelectItem value="Temporary">Casual/Daily</SelectItem></SelectContent>
                       </Select>
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Assigned Department</Label>
+                      <Label htmlFor="department" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Assigned Department</Label>
                       <Input id="department" value={driverData.department} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Assigned Shift</Label>
+                      <Label htmlFor="dutyShift" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Assigned Shift</Label>
                       <Input id="dutyShift" value={driverData.dutyShift} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Users className="h-3 w-3" /> Supervisor / Reported To</Label>
+                      <Label htmlFor="supervisor" className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Users className="h-3 w-3" /> Supervisor / Reported To</Label>
                       <Input id="supervisor" value={driverData.supervisor} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
@@ -364,14 +364,15 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
             {step < 4 ? (
-                <Button onClick={() => nextStep()}>Continue</Button>
+                <Button onClick={nextStep}>Continue</Button>
             ) : (
                 <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Changes' : 'Register Driver'}</Button>
             )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
