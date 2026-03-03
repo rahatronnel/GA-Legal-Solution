@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import type { Driver } from './driver-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { OrganizationSettings } from '@/app/settings/page';
 
 
@@ -20,7 +20,7 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
         </div>
         {orgSettings.logo ? (
              <div className="w-24 h-24 relative">
-                <Image src={orgSettings.logo} alt="Organization Logo" layout="fill" className="object-contain" />
+                <Image src={orgSettings.logo} alt="Organization Logo" fill className="object-contain" />
             </div>
         ) : (
              <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">
@@ -56,7 +56,7 @@ const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: string, lab
             <h2 className="text-lg font-bold mb-4">{label}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
-                    <Image src={doc} alt={label} layout="fill" className="object-contain" />
+                    <Image src={doc} alt={label} fill className="object-contain" />
                 ) : (
                      <p>Cannot preview this document type. It is available for download on the profile page.</p>
                 )}

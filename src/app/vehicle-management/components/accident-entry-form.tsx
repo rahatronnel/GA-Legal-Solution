@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -139,15 +140,16 @@ interface AccidentEntryFormProps {
 
 export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: AccidentEntryFormProps) {
   const { toast } = useToast();
-  const { data } = useVehicleManagement();
+  const vehicleManagement = useVehicleManagement();
+  const { data: vmData } = vehicleManagement || { data: {} };
   
-  const vehicles = (data.vehicles || []) as Vehicle[];
-  const drivers = (data.drivers || []) as Driver[];
-  const employees = (data.employees || []) as Employee[];
-  const accidentTypes = (data.accidentTypes || []) as AccidentType[];
-  const severityLevels = (data.severityLevels || []) as SeverityLevel[];
-  const faultStatuses = (data.faultStatuses || []) as FaultStatus[];
-  const serviceCenters = (data.serviceCenters || []) as ServiceCenter[];
+  const vehicles = (vmData.vehicles || []) as Vehicle[];
+  const drivers = (vmData.drivers || []) as Driver[];
+  const employees = (vmData.employees || []) as Employee[];
+  const accidentTypes = (vmData.accidentTypes || []) as AccidentType[];
+  const severityLevels = (vmData.severityLevels || []) as SeverityLevel[];
+  const faultStatuses = (vmData.faultStatuses || []) as FaultStatus[];
+  const serviceCenters = (vmData.serviceCenters || []) as ServiceCenter[];
   
   const [step, setStep] = useState(1);
   const [aData, setAData] = useState(initialAccidentData);

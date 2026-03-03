@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { 
-    Upload, X, User, Hash, Calendar as CalendarIcon, VenetianMask, Phone, 
+    Upload, X, User, Hash, Calendar as CalendarIcon, Phone, 
     Milestone, ShieldCheck, MapPin, Building, Briefcase, Clock, Users, 
     FileSignature, FileText, Image as ImageIcon, Contact
 } from 'lucide-react';
@@ -236,7 +237,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             <Input id="dateOfBirth" value={driverData.dateOfBirth} onChange={handleInputChange} placeholder="YYYY-MM-DD" />
                         </div>
                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><VenetianMask className="h-3 w-3" /> Gender</Label>
+                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Gender</Label>
                             <Select value={driverData.gender} onValueChange={handleSelectChange('gender')}>
                                 <SelectTrigger><SelectValue placeholder="Choose gender" /></SelectTrigger>
                                 <SelectContent><SelectItem value="Male">Male</SelectItem><SelectItem value="Female">Female</SelectItem><SelectItem value="Other">Other</SelectItem></SelectContent>
@@ -270,7 +271,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                       <Input id="drivingLicenseNumber" value={driverData.drivingLicenseNumber} onChange={handleInputChange} />
                   </div>
                   <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><VenetianMask className="h-3 w-3" /> License Class</Label>
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> License Class</Label>
                       <Select value={driverData.licenseType} onValueChange={handleSelectChange('licenseType')}>
                           <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                           <SelectContent><SelectItem value="Light">Light Vehicle</SelectItem><SelectItem value="Heavy">Heavy Duty</SelectItem><SelectItem value="Professional">Professional Carrier</SelectItem></SelectContent>
@@ -339,7 +340,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             const label = { drivingLicense: 'Driving License Scan', nid: 'NID Scan', other: 'Supporting Doc'}[docType];
                             return (
                                 <div className="space-y-2 p-3 border rounded-lg bg-muted/10 group" key={docType}>
-                                    <Label className="font-semibold text-xs flex items-center gap-2 uppercase tracking-tight text-muted-foreground"><FileSignature className="h-3 w-3" /> {label}</Label>
+                                    <Label className="font-semibold text-xs flex items-center gap-2 uppercase tracking-tight text-muted-foreground"><ShieldCheck className="h-3 w-3" /> {label}</Label>
                                     {preview ? (
                                         <div className="flex items-center justify-between text-sm p-2 bg-primary/5 rounded-md border border-primary/20">
                                             <span className="truncate font-medium flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Copy Uploaded</span>

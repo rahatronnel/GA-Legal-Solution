@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -465,7 +466,7 @@ export function BlueprintDialog({
                                         
                                         <div className="p-6 border-4 border-dashed rounded-[2rem] bg-blue-900/10 border-blue-500/30 space-y-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-blue-600 rounded-lg shadow-xl"><HistoryIcon className="h-6 w-6 text-white animate-spin-slow" /></div>
+                                                <div className="p-2 bg-blue-600 rounded-lg shadow-xl"><HistoryIcon className="h-6 w-6 text-white" /></div>
                                                 <div>
                                                     <h4 className="text-base font-black uppercase tracking-tighter text-blue-900 leading-none">Lifecycle Monitoring Hub (Status Track)</h4>
                                                     <p className="text-[9px] font-bold text-blue-700/60 uppercase tracking-widest mt-1">Real-Time Procurement Diagnostic Engine</p>
@@ -506,9 +507,9 @@ export function BlueprintDialog({
                                             </p>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 leading-none">Draft</p><p className="text-[14px] font-bold mt-1">Pending</p></div>
-                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 leading-none">Signature 1</p><p className="text-[14px] font-bold mt-1">Reviewed</p></div>
-                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 leading-none">Signature 2</p><p className="text-[14px] font-bold mt-1">Checked</p></div>
-                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 leading-none">Final Gate</p><p className="text-[14px] font-bold mt-1 text-green-600">Approved</p></div>
+                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 none">Signature 1</p><p className="text-[14px] font-bold mt-1">Reviewed</p></div>
+                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 none">Signature 2</p><p className="text-[14px] font-bold mt-1">Checked</p></div>
+                                                <div className="p-2 bg-white rounded-lg shadow-sm text-center border"><p className="text-[8px] font-black uppercase text-blue-600 none">Final Gate</p><p className="text-[14px] font-bold mt-1 text-green-600">Approved</p></div>
                                             </div>
                                         </div>
                                     </BlueprintSection>
@@ -590,9 +591,9 @@ export function BlueprintDialog({
                                                 <OrganogramConnector vertical />
 
                                                 <div className="flex items-center gap-4">
-                                                    <OrganogramNode label="Requester Dept. TA" sub="Dept. Verification" colorClass="bg-white border-amber-500 text-amber-900 shadow-md" />
+                                                    <OrganogramNode label="Requester Dept. TA" sub="Dept. Verification" colorClass="bg-white border-amber-50 text-amber-900 shadow-md" />
                                                     <OrganogramConnector />
-                                                    <OrganogramNode label="Specialized Mgr" sub="Subject Specialist" colorClass="bg-white border-amber-500 text-amber-900 shadow-md" />
+                                                    <OrganogramNode label="Specialized Mgr" sub="Subject Specialist" colorClass="bg-white border-amber-50 text-amber-900 shadow-md" />
                                                 </div>
 
                                                 <OrganogramConnector vertical />
@@ -614,7 +615,7 @@ export function BlueprintDialog({
                                                 <OrganogramConnector vertical />
 
                                                 <div className="flex flex-col items-center">
-                                                    <div className="p-4 border-4 border-destructive rounded-2xl bg-white shadow-[0_0_20px_rgba(220,38,38,0.2)] animate-pulse">
+                                                    <div className="p-4 border-4 border-destructive rounded-2xl bg-white shadow-[0_0_20px_rgba(220,38,38,0.2)]">
                                                         <div className="flex items-center gap-3">
                                                             <div className="p-2 bg-destructive rounded-full">
                                                                 <Gavel className="h-6 w-6 text-white" />
@@ -629,23 +630,25 @@ export function BlueprintDialog({
                                             </div>
                                         </div>
                                         
-                                        <Card className="border-primary/10 shadow-lg overflow-hidden">
-                                            <Table>
-                                                <TableHeader className="bg-slate-100">
-                                                    <TableRow className="h-8">
-                                                        <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Administrative</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Operational</TableHead>
-                                                        <TableHead className="font-black uppercase text-[9px]">Restrictive Filter</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Demand Notes</TableCell><TableCell>Superadmin</TableCell><TableCell>All Personnel</TableCell><TableCell className="italic font-bold">Self-Only Filter</TableCell></TableRow>
-                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">GP Desk</TableCell><TableCell>GPO</TableCell><TableCell>GP Concerns</TableCell><TableCell className="italic font-bold">Assigned-Only</TableCell></TableRow>
-                                                    <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell className="text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
-                                                </TableBody>
-                                            </Table>
-                                        </Card>
+                                        <BlueprintSection icon={Lock} title="Organizational Access Matrix" colorClass="bg-slate-800 border-slate-900">
+                                            <Card className="border-primary/10 shadow-lg overflow-hidden">
+                                                <Table>
+                                                    <TableHeader className="bg-slate-100">
+                                                        <TableRow className="h-8">
+                                                            <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
+                                                            <TableHead className="font-black uppercase text-[9px]">Administrative</TableHead>
+                                                            <TableHead className="font-black uppercase text-[9px]">Operational</TableHead>
+                                                            <TableHead className="font-black uppercase text-[9px]">Restrictive Filter</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Demand Notes</TableCell><TableCell>Superadmin</TableCell><TableCell>All Personnel</TableCell><TableCell className="italic font-bold">Self-Only Filter</TableCell></TableRow>
+                                                        <TableRow className="text-[10px] font-medium"><TableCell className="font-black">GP Desk</TableCell><TableCell>GPO</TableCell><TableCell>GP Concerns</TableCell><TableCell className="italic font-bold">Assigned-Only</TableCell></TableRow>
+                                                        <TableRow className="text-[10px] font-medium"><TableCell className="font-black">Settings</TableCell><TableCell className="text-red-600 font-black">Superadmin Only</TableCell><TableCell>—</TableCell><TableCell className="italic font-bold">Zero Visibility</TableCell></TableRow>
+                                                    </TableBody>
+                                                </Table>
+                                            </Card>
+                                        </BlueprintSection>
                                     </BlueprintSection>
                                 </TabsContent>
 
@@ -770,7 +773,7 @@ export function BlueprintDialog({
                                             <div className="flex justify-center items-center gap-4">
                                                 <OrganogramNode label="GP Concern" sub="Financial Preparer" colorClass="bg-white border-orange-400" />
                                                 <OrganogramConnector />
-                                                <OrganogramNode label="Purchase Manager" sub="Final Treasury Audit" colorClass="bg-orange-500 text-white border-white shadow-xl animate-pulse" />
+                                                <OrganogramNode label="Purchase Manager" sub="Final Treasury Audit" colorClass="bg-orange-500 text-white border-white shadow-xl" />
                                             </div>
                                         </div>
 
@@ -838,7 +841,7 @@ export function BlueprintDialog({
 
                                             <div className="mt-8 p-4 bg-red-100 rounded-2xl border-2 border-red-200 text-center relative z-10">
                                                 <div className="flex items-center justify-center gap-3 mb-2">
-                                                    <Timer className="h-5 w-5 text-red-600 animate-spin-slow" />
+                                                    <Timer className="h-5 w-5 text-red-600" />
                                                     <h5 className="text-xs font-black uppercase text-red-900 tracking-widest">Recursive Temporal Pulse</h5>
                                                 </div>
                                                 <p className="text-[10px] text-red-800/70 font-bold leading-relaxed px-12">
