@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -218,7 +219,7 @@ export default function AccidentProfilePage() {
                                 <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
                             )
                         ))}
-                        {Object.values(accident.documents as any[]).every(arr => !arr || arr.length === 0) && (
+                        {Object.values(accident.documents as unknown as any[]).every((arr: any) => !arr || arr.length === 0) && (
                             <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                         )}
                     </div>

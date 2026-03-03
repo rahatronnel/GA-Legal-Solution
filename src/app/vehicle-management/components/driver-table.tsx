@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -24,7 +25,7 @@ import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-entry-form';
 import { useDriverData } from './vehicle-management-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DriverTable() {
@@ -139,7 +140,6 @@ export function DriverTable() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          // High-Fidelity Sync: cellDates moved to correct XLSX.read location
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];

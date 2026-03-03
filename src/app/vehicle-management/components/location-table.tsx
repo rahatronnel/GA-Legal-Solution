@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -129,7 +130,7 @@ export function LocationTable() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { raw: false });
+          const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
 
           if (!json[0] || typeof json[0] !== "object" || !("name" in json[0]) || !("locationCode" in json[0])) {
              throw new Error('Invalid Excel file format. Expecting columns "name" and "locationCode".');
