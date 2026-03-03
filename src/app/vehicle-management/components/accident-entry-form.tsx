@@ -212,21 +212,21 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                 <h3 className="font-semibold text-lg flex items-center gap-2"><Car className="h-5 w-5 text-primary" /> Step 1: Incident Specifics</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Car className="h-3 w-3" /> Vehicle<MandatoryIndicator/></Label>
                     <Select value={aData.vehicleId} onValueChange={(v) => setAData({...aData, vehicleId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Vehicle" /></SelectTrigger>
                         <SelectContent>{vehicles.map((v: Vehicle) => <SelectItem key={v.id} value={v.id}>{v.registrationNumber}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Driver During Incident<MandatoryIndicator/></Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><User className="h-3 w-3" /> Driver During Incident<MandatoryIndicator/></Label>
                     <Select value={aData.driverId} onValueChange={(v) => setAData({...aData, driverId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Driver" /></SelectTrigger>
                         <SelectContent>{drivers.map((d: Driver) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                    <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Reported By Official</Label>
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><User className="h-3 w-3" /> Reported By Official</Label>
                     <Select value={aData.employeeId} onValueChange={(v) => setAData({...aData, employeeId: v})}>
                         <SelectTrigger><SelectValue placeholder="Select Official" /></SelectTrigger>
                         <SelectContent>{employees.map((e: Employee) => <SelectItem key={e.id} value={e.id}>{e.fullName}</SelectItem>)}</SelectContent>
@@ -236,32 +236,32 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Date of Incident<MandatoryIndicator/></Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><CalendarIcon className="h-3 w-3" /> Date of Incident<MandatoryIndicator/></Label>
                         <Popover>
                             <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{accDate?format(accDate,"PPP"):"Select Date"}</Button></PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={accDate} onSelect={(d) => { setAccDate(d); setAData({...aData, accidentDate: d?format(d, 'yyyy-MM-dd'):''})}} /></PopoverContent>
                         </Popover>
                     </div>
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Clock className="h-3 w-3" /> Time of Incident<MandatoryIndicator/></Label>
+                      <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Clock className="h-3 w-3" /> Time of Incident<MandatoryIndicator/></Label>
                       <TimeInput value={aData.accidentTime} onChange={(v) => setAData({...aData, accidentTime: v})} />
                     </div>
-                    <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><MapPin className="h-3 w-3" /> Precise Location<MandatoryIndicator/></Label><Input id="location" value={aData.location} onChange={handleInputChange} /></div>
+                    <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><MapPin className="h-3 w-3" /> Precise Location<MandatoryIndicator/></Label><Input id="location" value={aData.location} onChange={handleInputChange} /></div>
                 </div>
                 
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Tag className="h-3 w-3" /> Collision Type</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Tag className="h-3 w-3" /> Collision Type</Label>
                         <Select value={aData.accidentTypeId} onValueChange={(v) => setAData({...aData, accidentTypeId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>{accidentTypes.map((t: AccidentType) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Shield className="h-3 w-3" /> Severity Level</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Shield className="h-3 w-3" /> Severity Level</Label>
                         <Select value={aData.severityLevelId} onValueChange={(v) => setAData({...aData, severityLevelId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>{severityLevels.map((s: SeverityLevel) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><ShieldQuestion className="h-3 w-3" /> Fault Determination</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><ShieldQuestion className="h-3 w-3" /> Fault Determination</Label>
                         <Select value={aData.faultStatusId} onValueChange={(v) => setAData({...aData, faultStatusId: v})}><SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>{faultStatuses.map((f: FaultStatus) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select>
                     </div>
@@ -273,16 +273,16 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                  <h3 className="font-semibold text-lg flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Step 2: Damage Evaluation</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 col-span-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Wrench className="h-3 w-3" /> Vehicle Damage Summary</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Wrench className="h-3 w-3" /> Vehicle Damage Summary</Label>
                         <Textarea id="vehicleDamageDescription" value={aData.vehicleDamageDescription} onChange={handleInputChange} rows={3} />
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><HeartPulse className="h-3 w-3" /> Human Injury Level</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><HeartPulse className="h-3 w-3" /> Human Injury Level</Label>
                         <Select value={aData.humanInjury} onValueChange={(v) => setAData({...aData, humanInjury: v as any})}><SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent><SelectItem value="None">None</SelectItem><SelectItem value="Minor">Minor</SelectItem><SelectItem value="Serious">Serious</SelectItem><SelectItem value="Fatal">Fatal</SelectItem></SelectContent></Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Car className="h-3 w-3" /> Asset Condition Post-Crash</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Car className="h-3 w-3" /> Asset Condition Post-Crash</Label>
                         <Select value={aData.vehicleStatusAfterAccident} onValueChange={(v) => setAData({...aData, vehicleStatusAfterAccident: v as any})}><SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent><SelectItem value="Running">Running</SelectItem><SelectItem value="Repair Required">Requires Repair</SelectItem><SelectItem value="Total Loss">Total Loss / Scrap</SelectItem></SelectContent></Select>
                     </div>
@@ -293,9 +293,9 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Step 3: Financial Liability</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={aData.estimatedRepairCost} onChange={handleInputChange}/></div>
-                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><DollarSign className="h-3 w-3" /> Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={aData.actualRepairCost} onChange={handleInputChange}/></div>
-                  <div className="space-y-2 col-span-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Chosen Repair Workshop</Label><Select value={aData.repairedById} onValueChange={(v) => setAData({...aData, repairedById: v})}><SelectTrigger><SelectValue placeholder="Select Workshop"/></SelectTrigger>
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><DollarSign className="h-3 w-3" /> Estimated Repair Cost</Label><Input id="estimatedRepairCost" type="number" value={aData.estimatedRepairCost} onChange={handleInputChange}/></div>
+                  <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><DollarSign className="h-3 w-3" /> Actual Repair Cost</Label><Input id="actualRepairCost" type="number" value={aData.actualRepairCost} onChange={handleInputChange}/></div>
+                  <div className="space-y-2 col-span-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Chosen Repair Workshop</Label><Select value={aData.repairedById} onValueChange={(v) => setAData({...aData, repairedById: v})}><SelectTrigger><SelectValue placeholder="Select Workshop"/></SelectTrigger>
                   <SelectContent>{serviceCenters.map((sc: ServiceCenter) => <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>)}</SelectContent></Select></div>
                 </div>
               </div>
@@ -308,8 +308,8 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                         <div className="flex items-center space-x-2"><Checkbox id="policeReportFiled" checked={aData.policeReportFiled} onCheckedChange={(c) => setAData({...aData, policeReportFiled: !!c})} /><Label htmlFor="policeReportFiled">Police Case / GD Filed?</Label></div>
                         {aData.policeReportFiled && (
                             <div className="space-y-4 pl-6 pt-2 animate-in fade-in slide-in-from-top-2">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Case / GD Number</Label><Input id="policeReportNumber" value={aData.policeReportNumber} onChange={handleInputChange}/></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Police Station (Thana)</Label><Input id="policeStation" value={aData.policeStation} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Case / GD Number</Label><Input id="policeReportNumber" value={aData.policeReportNumber} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Police Station (Thana)</Label><Input id="policeStation" value={aData.policeStation} onChange={handleInputChange}/></div>
                             </div>
                         )}
                     </div>
@@ -317,8 +317,8 @@ export function AccidentEntryForm({ isOpen, setIsOpen, onSave, accident }: Accid
                         <div className="flex items-center space-x-2"><Checkbox id="insuranceClaimFiled" checked={aData.insuranceClaimFiled} onCheckedChange={(c) => setAData({...aData, insuranceClaimFiled: !!c})} /><Label htmlFor="insuranceClaimFiled">Insurance Claim Initiated?</Label></div>
                          {aData.insuranceClaimFiled && (
                             <div className="space-y-4 pl-6 pt-2 animate-in fade-in slide-in-from-top-2">
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Claim Reference Number</Label><Input id="insuranceClaimNumber" value={aData.insuranceClaimNumber} onChange={handleInputChange}/></div>
-                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Insurer Name</Label><Input id="insuranceCompany" value={aData.insuranceCompany} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Claim Reference Number</Label><Input id="insuranceClaimNumber" value={aData.insuranceClaimNumber} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Insurer Name</Label><Input id="insuranceCompany" value={aData.insuranceCompany} onChange={handleInputChange}/></div>
                             </div>
                         )}
                     </div>

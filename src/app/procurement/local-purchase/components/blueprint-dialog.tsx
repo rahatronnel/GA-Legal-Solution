@@ -212,7 +212,7 @@ export function BlueprintDialog({
                             <div className="max-w-7xl mx-auto space-y-8 pb-32">
                                 
                                 <TabsContent value="overview" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={GitCommitHorizontal} title="The High-Fidelity Lifecycle subway" colorClass="bg-slate-800 border-slate-900">
+                                    <BlueprintSection icon={GitCommitHorizontal} title="The High-Fidelity Lifecycle Subway" colorClass="bg-slate-800 border-slate-900">
                                         <div className="relative p-8 border-4 border-dashed rounded-[2rem] bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-700">
                                             <div className="grid grid-cols-1 md:grid-cols-6 gap-4 relative z-10">
                                                 <ProcessStep icon={FileText} label="Requisition" status="DN DRAFT" sub="Intent" />
@@ -259,7 +259,7 @@ export function BlueprintDialog({
                                             </div>
                                             <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-100 flex flex-col justify-center text-center space-y-2">
                                                 <Users className="h-10 w-10 text-emerald-600 mx-auto" />
-                                                <p className="text-xs font-black uppercase tracking-tighter">Market rate integrity</p>
+                                                <p className="text-xs font-black uppercase tracking-tighter">Market Rate Integrity</p>
                                                 <p className="text-[10px] text-muted-foreground leading-relaxed font-bold">System prevents single-vendor bias by requiring explicit bid documentation.</p>
                                             </div>
                                         </div>
@@ -312,7 +312,7 @@ export function BlueprintDialog({
                                         </div>
                                     </BlueprintSection>
 
-                                    <BlueprintSection icon={Package} title="Phase V: intake & Logistics Verification (MRR)" colorClass="bg-emerald-800 border-emerald-900">
+                                    <BlueprintSection icon={Package} title="Phase V: Intake & Logistics Verification (MRR)" colorClass="bg-emerald-800 border-emerald-900">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="p-3 bg-black/60 rounded-xl border border-green-500/30 text-green-100 shadow-2xl">
                                                 <p className="text-[11px] font-black uppercase text-green-400 drop-shadow-sm">5.1 Physical Intake</p>
@@ -408,7 +408,7 @@ export function BlueprintDialog({
                                                 <FlowArrow />
                                                 <FlowDiamond label="Quality Pass?" color="bg-emerald-950 border-emerald-500" />
                                                 <FlowArrow />
-                                                <FlowNode icon={UserCheck} title="Requester confirm" status="Logistics Locked" color="bg-green-600 text-white border-white" />
+                                                <FlowNode icon={UserCheck} title="Requester Confirm" status="Logistics Locked" color="bg-green-600 text-white border-white" />
                                             </div>
 
                                             <div className="h-10 w-1 bg-gradient-to-b from-green-600 to-orange-500 opacity-40" />
@@ -653,7 +653,7 @@ export function BlueprintDialog({
                                     <BlueprintSection icon={ShoppingCart} title="Menu Detail: Purchase Order (PO)" colorClass="bg-purple-600 border-purple-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="p-6 bg-background border-4 border-double rounded-2xl space-y-4 shadow-xl">
-                                                <div className="flex items-center gap-3"><Gavel className="h-8 w-8 text-purple-600"/><h4 className="text-base font-black uppercase tracking-tighter leading-none">Legal commitment</h4></div>
+                                                <div className="flex items-center gap-3"><Gavel className="h-8 w-8 text-purple-600"/><h4 className="text-base font-black uppercase tracking-tighter leading-none">Legal Commitment</h4></div>
                                                 <p className="text-[10px] text-muted-foreground leading-relaxed font-bold">
                                                     PO inherits terms from CS and hard-codes them. Dispatched orders locked to prevent retroactive price manipulation.
                                                 </p>
@@ -701,7 +701,7 @@ export function BlueprintDialog({
                                                 </p>
                                             </div>
                                             <div className="p-4 bg-background rounded-xl border-2 border-emerald-100 space-y-2 shadow-md">
-                                                <h5 className="font-black text-[10px] uppercase text-emerald-900 flex items-center gap-2 leading-none"><Bell className="h-3 w-3"/> Verification</h5>
+                                                <h5 className="font-black text-[10px] uppercase text-emerald-900 flex items-center gap-2 leading-none"><BellRing className="h-3 w-3"/> Verification</h5>
                                                 <p className="text-[9px] text-muted-foreground leading-relaxed font-bold">
                                                     **Requester** notified to verify goods quality and click &quot;Confirm Receipt&quot;.
                                                 </p>
@@ -743,8 +743,8 @@ export function BlueprintDialog({
                                                 <CardContent className="pt-4 space-y-2">
                                                     <ul className="space-y-2">
                                                         <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Automated:</strong> Amount inherited from MRR value.</p></li>
-                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-3 w-3 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Bundle:</strong> Click generating evidentiary trail for Accounts.</p></li>
-                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-3 w-3 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Lock:</strong> Hard-lock sign-off required for disbursement.</p></li>
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Bundle:</strong> Click generating evidentiary trail for Accounts.</p></li>
+                                                        <li className="flex gap-3 items-start"><CheckCircle2 className="h-4 w-4 text-orange-600 shrink-0 mt-0.5"/><p className="text-[10px] text-muted-foreground font-medium leading-tight"><strong>Lock:</strong> Hard-lock sign-off required for disbursement.</p></li>
                                                     </ul>
                                                 </CardContent>
                                             </Card>

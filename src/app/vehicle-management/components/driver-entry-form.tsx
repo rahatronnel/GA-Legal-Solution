@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parse, isValid } from 'date-fns';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import { imageToDataUrl } from '@/lib/utils';
 
 export type Driver = {
@@ -364,9 +363,9 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>Previous</Button>
             {step < 4 ? (
-                <Button onClick={nextStep}>Continue</Button>
+                <Button onClick={() => nextStep()}>Continue</Button>
             ) : (
                 <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">{isEditing ? 'Sync Changes' : 'Register Driver'}</Button>
             )}
