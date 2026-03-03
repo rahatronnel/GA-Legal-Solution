@@ -23,7 +23,7 @@ import {
     FileSignature, FileText, Image as ImageIcon, Contact
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { format, parse, isValid } from 'date-fns';
+import { format } from 'date-fns';
 import type { Vehicle } from './vehicle-entry-form';
 import { imageToDataUrl } from '@/lib/utils';
 
@@ -373,6 +373,5 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    </>
   );
 }

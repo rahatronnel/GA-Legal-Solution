@@ -25,7 +25,7 @@ import type { FaultStatus } from '../../components/fault-status-table';
 import type { ServiceCenter } from '../../components/service-center-table';
 import type { VehicleBrand } from '../../components/vehicle-brand-table';
 
-const documentCategories: Record<keyof Accident['documents'], string> = {
+const documentCategories: Record<string, string> = {
     accidentPhotos: 'Accident Photos',
     policeReport: 'Police Report',
     insuranceClaimForm: 'Insurance Claim Form',
@@ -215,12 +215,12 @@ export default function AccidentProfilePage() {
                 </TabsContent>
                 <TabsContent value="documents" className="pt-4">
                     <div className="space-y-6">
-                        {(Object.keys(documentCategories) as (keyof Accident['documents'])[]).map(key => (
-                            accident.documents[key] && accident.documents[key].length > 0 && (
-                                <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
+                        {(Object.keys(documentCategories)).map(key => (
+                            accident.documents[key as keyof Accident['documents']] && accident.documents[key as keyof Accident['documents']].length > 0 && (
+                                <DocumentViewer key={key} files={accident.documents[key as keyof Accident['documents']]} categoryLabel={documentCategories[key]} />
                             )
                         ))}
-                        {Object.values(accident.documents as unknown as any[]).every((arr: any) => !arr || (Array.isArray(arr) && arr.length === 0)) && (
+                        {Object.values(accident.documents as unknown as any[]).every(arr => !arr || (Array.isArray(arr) && arr.length === 0)) && (
                             <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                         )}
                     </div>

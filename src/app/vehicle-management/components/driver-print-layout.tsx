@@ -103,7 +103,7 @@ export const DriverPrintLayout: React.FC<DriverPrintLayoutProps> = ({ driver, ve
                     <div className="flex-shrink-0">
                          <Avatar className="h-32 w-32 border">
                             <AvatarImage src={driver.profilePicture} alt={driver.name} />
-                            <AvatarFallback className="text-3xl">{getInitials(driver.name)}</AvatarFallback>
+                            <AvatarFallback className="text-4xl">{getInitials(driver.name)}</AvatarFallback>
                         </Avatar>
                     </div>
                     <div className="flex-grow">
