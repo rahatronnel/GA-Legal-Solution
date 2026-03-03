@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -221,7 +220,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> Driver Code / ID<MandatoryIndicator/></Label>
+                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> Driver Code / ID<MandatoryIndicator/></Label>
                             <Input id="driverIdCode" value={driverData.driverIdCode} onChange={handleInputChange} />
                         </div>
                          <div className="space-y-2">
@@ -244,7 +243,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
                             </Select>
                         </div>
                          <div className="space-y-2">
-                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Phone className="h-3 w-3" /> Primary Mobile<MandatoryIndicator/></Label>
+                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Phone className="h-3 w-3" /> Primary Mobile<MandatoryIndicator/></Label>
                             <Input id="mobileNumber" value={driverData.mobileNumber} onChange={handleInputChange} />
                         </div>
                     </div>

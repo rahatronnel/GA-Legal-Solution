@@ -74,7 +74,7 @@ export function AccidentTable() {
   const safeAccidents = Array.isArray(accidents) ? accidents as Accident[] : [];
 
   const filteredAccidents = useMemo(() => {
-    return safeAccidents.filter(acc => {
+    return safeAccidents.filter((acc: Accident) => {
         const searchTermMatch = searchTerm === '' ||
             getVehicleReg(acc.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
             getDriverName(acc.driverId).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -191,7 +191,7 @@ export function AccidentTable() {
             {isLoading ? (
                 <TableRow><TableCell colSpan={6} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredAccidents && filteredAccidents.length > 0 ? (
-                filteredAccidents.map((accident) => (
+                filteredAccidents.map((accident: Accident) => (
                 <TableRow key={accident.id}>
                     <TableCell>{accident.accidentId}</TableCell>
                     <TableCell>{getVehicleReg(accident.vehicleId)}</TableCell>

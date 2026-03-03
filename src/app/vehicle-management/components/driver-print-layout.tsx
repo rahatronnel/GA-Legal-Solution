@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Image from 'next/image';
 import type { Driver } from './driver-entry-form';
@@ -20,7 +19,7 @@ const PrintHeader: React.FC<PrintHeaderProps> = ({ orgSettings }) => (
         </div>
         {orgSettings.logo ? (
              <div className="w-24 h-24 relative">
-                <Image src={orgSettings.logo} alt="Organization Logo" fill className="object-contain" />
+                <Image src={orgSettings.logo} alt="Organization Logo" layout="fill" className="object-contain" />
             </div>
         ) : (
              <div className="w-20 h-20 bg-gray-200 flex items-center justify-center">

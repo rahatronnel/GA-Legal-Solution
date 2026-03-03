@@ -1,5 +1,4 @@
-
-'use client';
+"use client";
 
 import React from 'react';
 import {
@@ -516,7 +515,7 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="gp" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={Briefcase} title="Menu Detail: General Purchase (GP) Desk" colorClass="bg-emerald-600 border-emerald-800">
+                                    <BlueprintSection icon={Briefcase} title="Phase II: Sourcing Engine (GP Desk)" colorClass="bg-emerald-600 border-emerald-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <Card className="border-none bg-background shadow-xl">
                                                 <CardHeader className="bg-emerald-50 py-2"><CardTitle className="text-[10px] font-black uppercase text-emerald-900 leading-none">Task Assignment Engine</CardTitle></CardHeader>
@@ -544,7 +543,7 @@ export function BlueprintDialog({
                                 </TabsContent>
 
                                 <TabsContent value="cs" className="mt-0 space-y-8">
-                                    <BlueprintSection icon={BarChart2} title="Menu Detail: Comparative Statement (CS)" colorClass="bg-amber-600 border-amber-800">
+                                    <BlueprintSection icon={BarChart2} title="Phase III: Analytical Auditing (CS Analysis)" colorClass="bg-amber-600 border-amber-800">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-4">
                                                 <h4 className="font-black uppercase text-[10px] tracking-[0.2em] text-amber-900 leading-none">Threshold Matrix</h4>
@@ -636,9 +635,9 @@ export function BlueprintDialog({
                                                     <TableHeader className="bg-slate-100">
                                                         <TableRow className="h-8">
                                                             <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
-                                                            <TableHead className="font-black uppercase text-[9px]">Administrative</TableHead>
-                                                            <TableHead className="font-black uppercase text-[9px]">Operational</TableHead>
-                                                            <TableHead className="font-black uppercase text-[9px]">Restrictive Filter</TableHead>
+                                                            <TableHead className="font-black uppercase text-[10px]">Administrative</TableHead>
+                                                            <TableHead className="font-black uppercase text-[10px]">Operational</TableHead>
+                                                            <TableHead className="font-black uppercase text-[10px]">Restrictive Filter</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>

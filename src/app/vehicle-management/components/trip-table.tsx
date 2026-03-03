@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -21,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { Location } from './location-table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -59,9 +58,9 @@ export function TripTable() {
     return () => clearTimeout(timer);
   }, []);
   
-  const getVehicleReg = (vehicleId: string) => (vehicles || []).find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getDriverName = (driverId: string) => (drivers || []).find(d => d.id === driverId)?.name || 'N/A';
-  const getLocationName = (locationId: string) => (locations || []).find(l => l.id === locationId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => (vehicles as Vehicle[] || []).find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getDriverName = (driverId: string) => (drivers as Driver[] || []).find(d => d.id === driverId)?.name || 'N/A';
+  const getLocationName = (locationId: string) => (locations as Location[] || []).find(l => l.id === locationId)?.name || 'N/A';
 
   const getRouteName = (stops: Trip['stops']) => {
     if (!stops || stops.length < 2) return 'N/A';
@@ -73,12 +72,12 @@ export function TripTable() {
     return `${start} -> ${end}`;
   };
 
-  const safeTrips = Array.isArray(trips) ? trips : [];
+  const safeTrips = Array.isArray(trips) ? trips as Trip[] : [];
 
   const filteredTrips = useMemo(() => {
-    return safeTrips.filter(trip => {
+    return safeTrips.filter((trip: Trip) => {
       const lowercasedTerm = searchTerm.toLowerCase();
-      const vehicle = (vehicles || []).find(v => v.id === trip.vehicleId);
+      const vehicle = (vehicles as Vehicle[] || []).find(v => v.id === trip.vehicleId);
 
       const searchMatch = searchTerm === '' || 
         (trip.tripId && trip.tripId.toLowerCase().includes(lowercasedTerm)) ||
@@ -205,7 +204,7 @@ export function TripTable() {
                     <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Driver..." /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Drivers</SelectItem>
-                        {(drivers || []).map(driver => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
+                        {(drivers || []).map((driver:any) => <SelectItem key={driver.id} value={driver.id}>{driver.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Popover>
@@ -248,7 +247,7 @@ export function TripTable() {
             {isLoading ? (
                 <TableRow><TableCell colSpan={7} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredTrips && filteredTrips.length > 0 ? (
-                filteredTrips.map((t) => (
+                filteredTrips.map((t: Trip) => (
                 <TableRow key={t.id}>
                     <TableCell>{t.tripId}</TableCell>
                     <TableCell>{getVehicleReg(t.vehicleId)}</TableCell>

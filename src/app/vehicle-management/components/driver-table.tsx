@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -22,7 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import { useDriverData } from './vehicle-management-provider';
 import { useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -42,13 +41,13 @@ export function DriverTable() {
   const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const safeDrivers = Array.isArray(drivers) ? drivers : [];
-  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+  const safeDrivers = Array.isArray(drivers) ? drivers as Driver[] : [];
+  const safeVehicles = Array.isArray(vehicles) ? vehicles as Vehicle[] : [];
 
   const filteredDrivers = useMemo(() => {
     if (!searchTerm) return safeDrivers;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return safeDrivers.filter(driver => 
+    return safeDrivers.filter((driver: Driver) => 
       (driver.name && driver.name.toLowerCase().includes(lowercasedTerm)) ||
       (driver.driverIdCode && driver.driverIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (driver.mobileNumber && driver.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
@@ -98,7 +97,7 @@ export function DriverTable() {
   
   const confirmDeleteAll = () => {
      if (!driversRef) return;
-     safeDrivers.forEach(driver => {
+     safeDrivers.forEach((driver: Driver) => {
          deleteDocumentNonBlocking(doc(driversRef, driver.id));
      });
     toast({ title: 'Success', description: 'All driver records are being deleted.' });
@@ -175,7 +174,7 @@ export function DriverTable() {
               employmentType: item.employmentType?.toString().trim() || '',
               department: item.department?.toString().trim() || '',
               dutyShift: item.dutyShift?.toString().trim() || '',
-              assignedVehicleId: '', // Cannot be imported from Excel easily
+              assignedVehicleId: '', 
               supervisor: item.supervisor?.toString().trim() || '',
             }));
           
@@ -260,7 +259,7 @@ export function DriverTable() {
                     </TableRow>
               ))
             ) : filteredDrivers.length > 0 ? (
-              filteredDrivers.map((driver) => (
+              filteredDrivers.map((driver: Driver) => (
                 <TableRow key={driver.id}>
                   <TableCell className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -27,7 +26,7 @@ import { useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBl
 import { collection, doc } from 'firebase/firestore';
 import { usePrint } from './print-provider';
 
-import type { Vehicle } from './vehicle-table';
+import type { Vehicle } from './vehicle-entry-form';
 import type { Driver } from './driver-entry-form';
 import type { MaintenanceType } from './maintenance-type-table';
 import type { ServiceCenter } from './service-center-table';
@@ -55,19 +54,19 @@ export function MaintenanceRecordTable() {
   const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>();
   
-  const getVehicleReg = (vehicleId: string) => vehicles.find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
-  const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find((t:any) => t.id === typeId)?.name || 'N/A';
+  const getVehicleReg = (vehicleId: string) => (vehicles as Vehicle[]).find((v:any) => v.id === vehicleId)?.registrationNumber || 'N/A';
+  const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes as MaintenanceType[]).find((t:any) => t.id === typeId)?.name || 'N/A';
   const calculateTotalCost = (record: MaintenanceRecord) => {
     const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
     const expensesCost = record.expenses?.reduce((acc, exp) => acc + exp.amount, 0) || 0;
     return partsCost + expensesCost;
   }
 
-  const safeRecords = Array.isArray(records) ? records : [];
+  const safeRecords = Array.isArray(records) ? records as MaintenanceRecord[] : [];
 
   const filteredRecords = useMemo(() => {
     if (!safeRecords) return [];
-    return safeRecords.filter(record => {
+    return safeRecords.filter((record: MaintenanceRecord) => {
         const searchTermMatch = searchTerm === '' || 
             getVehicleReg(record.vehicleId).toLowerCase().includes(searchTerm.toLowerCase()) ||
             getMaintenanceTypeName(record.maintenanceTypeId).toLowerCase().includes(searchTerm.toLowerCase());
@@ -202,7 +201,7 @@ export function MaintenanceRecordTable() {
             {isLoadingData ? (
                 <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>
             ) : filteredRecords && filteredRecords.length > 0 ? (
-                filteredRecords.map((record) => (
+                filteredRecords.map((record: MaintenanceRecord) => (
                 <TableRow key={record.id}>
                     <TableCell>{getVehicleReg(record.vehicleId)}</TableCell>
                     <TableCell>{getMaintenanceTypeName(record.maintenanceTypeId)}</TableCell>
