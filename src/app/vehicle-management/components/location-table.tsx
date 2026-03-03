@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -23,11 +22,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { Download, Upload, PlusCircle, Edit, Trash2, Search } from 'lucide-react';
+import { Download, Upload, PlusCircle, Edit, Trash2, Search, MapPin } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 
 export type Location = {
   id: string;
@@ -58,7 +58,7 @@ export function LocationTable() {
     );
   }, [safeLocations, searchTerm]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setLocationData(prev => ({ ...prev, [id]: value }));
   };
@@ -270,7 +270,7 @@ export function LocationTable() {
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the location "{currentItem?.name}".
+              This action cannot be undone. This will permanently delete the location "{currentLocation?.name}".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

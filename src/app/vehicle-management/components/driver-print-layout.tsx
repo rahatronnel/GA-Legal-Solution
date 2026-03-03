@@ -35,13 +35,13 @@ const PrintFooter = ({ pageNumber }: { pageNumber: number }) => (
     </div>
 )
 
-const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string}> = ({children, pageNumber, orgSettings, className = ''}) => (
+const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string, footerContent?: React.ReactNode}> = ({children, pageNumber, orgSettings, className = '', footerContent}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
         <PrintHeader orgSettings={orgSettings} />
         <div className="flex-grow pt-6">
             {children}
         </div>
-        <PrintFooter pageNumber={pageNumber} />
+        <PrintFooter pageNumber={pageNumber}>{footerContent}</PrintFooter>
     </div>
 )
 
