@@ -13,7 +13,9 @@ import type { MaintenanceRecord } from './maintenance-entry-form';
 import type { Accident } from './accident-entry-form';
 
 export function Dashboard() {
-    const { data = {}, isLoading } = useDashboardData() || {};
+    const dashboardResult = useDashboardData();
+    const data = dashboardResult?.data || {};
+    const isLoading = dashboardResult?.isLoading;
     
     const vehicles = (data.vehicles || []) as Vehicle[];
     const drivers = (data.drivers || []) as any[];

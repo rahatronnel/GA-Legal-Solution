@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { useVehicleManagement } from '@/app/vehicle-management/components/vehicle-management-provider';
@@ -218,7 +218,7 @@ export default function AccidentProfilePage() {
                                 <DocumentViewer key={key} files={accident.documents[key]} categoryLabel={documentCategories[key]} />
                             )
                         ))}
-                        {(Object.values(accident.documents) as any[]).every(arr => !arr || arr.length === 0) && (
+                        {Object.values(accident.documents).every((arr: any) => !arr || arr.length === 0) && (
                             <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No documents were uploaded for this record.</p>
                         )}
                     </div>
