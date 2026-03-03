@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -139,10 +140,10 @@ export function DriverTable() {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, { dateNF: 'yyyy-mm-dd', cellDates: true }) as any[];
+          const json = XLSX.utils.sheet_to_json(worksheet, { dateNF: 'yyyy-mm-dd' }) as any[];
 
           const requiredHeaders = ['driverIdCode', 'name', 'mobileNumber'];
           const headers = Object.keys(json[0] || {});

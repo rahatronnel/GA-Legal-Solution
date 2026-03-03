@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -633,8 +634,8 @@ export function BlueprintDialog({
                                             <Card className="border-primary/10 shadow-lg overflow-hidden">
                                                 <Table>
                                                     <TableHeader className="bg-slate-100">
-                                                        <TableRow className="h-8">
-                                                            <TableHead className="font-black uppercase text-[9px]">Tab / Menu</TableHead>
+                                                        <TableRow className="h-10 border-b-2">
+                                                            <TableHead className="font-black uppercase text-[10px]">Tab / Menu</TableHead>
                                                             <TableHead className="font-black uppercase text-[10px]">Administrative</TableHead>
                                                             <TableHead className="font-black uppercase text-[10px]">Operational</TableHead>
                                                             <TableHead className="font-black uppercase text-[10px]">Restrictive Filter</TableHead>
