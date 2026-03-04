@@ -41,8 +41,8 @@ export default function ArsEntryPage() {
     const searchParams = useSearchParams();
     const urlExamId = searchParams.get('examId');
     
-    const { exams, questions, submissions, isLoading } = useArs();
-    const { user } = useUser();
+    const { exams, questions, submissions, isLoading: isDataLoading } = useArs();
+    const { user, isUserLoading } = useUser();
     const auth = useAuth();
     const firestore = useFirestore();
 
@@ -60,13 +60,20 @@ export default function ArsEntryPage() {
     // Timer logic
     const [timeLeft, setTimeLeft] = useState(0);
 
-    // 1. Auto-detect exam from URL
+    // 0. High-Fidelity Handshake: Ensure anonymous authentication is active to load collections
     useEffect(() => {
-        if (!isLoading && urlExamId && !selectedExam) {
+        if (!user && !isUserLoading && auth) {
+            initiateAnonymousSignIn(auth);
+        }
+    }, [user, isUserLoading, auth]);
+
+    // 1. Auto-detect exam from URL once authenticated and data is ready
+    useEffect(() => {
+        if (!isDataLoading && urlExamId && !selectedExam) {
             const matched = exams.find(e => e.id === urlExamId);
             if (matched) setSelectedExam(matched);
         }
-    }, [isLoading, urlExamId, exams, selectedExam]);
+    }, [isDataLoading, urlExamId, exams, selectedExam]);
 
     // 2. Persistent Resumption: Detect if user is already boarded
     const userSubmission = useMemo(() => {
@@ -82,7 +89,7 @@ export default function ArsEntryPage() {
             setCurrentSubmissionId(userSubmission.id);
             setAnswers(userSubmission.answers || {});
         }
-    }, [userSubmission]);
+    }, [userSubmission, isBoarded]);
 
     // 3. Live Status Tracking
     const liveExam = useMemo(() => {
@@ -117,21 +124,14 @@ export default function ArsEntryPage() {
     }, [timeLeft, liveExam?.isLive, currentQuestion]);
 
     const handleBoarding = async () => {
-        if (!participantName || !participantMobile || !selectedExam || !firestore || !auth) return;
+        if (!participantName || !participantMobile || !selectedExam || !firestore || !user) return;
         
         setIsBoardingLoading(true);
 
         try {
-            // Ensure anonymous sign-in
-            let currentUserId = user?.uid;
-            if (!user) {
-                const cred = await initiateAnonymousSignIn(auth);
-                // Auth update will trigger userSubmission check via useEffect, but we proceed here for the initial flow
-            }
-
             const submissionData = {
                 examId: selectedExam.id,
-                userId: user?.uid || 'temp', // This will be patched by resumption logic if needed
+                userId: user.uid,
                 participantName,
                 participantMobile,
                 answers: {},
@@ -145,7 +145,7 @@ export default function ArsEntryPage() {
             if (docRef) setCurrentSubmissionId(docRef.id);
             setIsBoarded(true);
         } catch (err) {
-            console.error(err);
+            console.error("Boarding failure:", err);
         } finally {
             setIsBoardingLoading(false);
         }
@@ -186,7 +186,7 @@ export default function ArsEntryPage() {
         setIsFinished(true);
     };
 
-    if (isLoading) return <div className="flex h-screen items-center justify-center bg-slate-950"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+    if (isDataLoading || isUserLoading) return <div className="flex h-screen items-center justify-center bg-slate-950"><div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
     if (isFinished) {
         return (
@@ -224,6 +224,12 @@ export default function ArsEntryPage() {
                                 </CardHeader>
                             </Card>
                         ))}
+                        {exams.filter(e => e.status === 'Published').length === 0 && (
+                            <div className="col-span-full py-20 text-center opacity-30">
+                                <Wifi className="h-12 w-12 mx-auto mb-4 animate-pulse" />
+                                <p className="font-black uppercase tracking-widest text-sm">No Active Signals Detected</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
