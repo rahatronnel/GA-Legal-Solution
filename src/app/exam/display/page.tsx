@@ -3,11 +3,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useArs } from '../components/ars-provider';
-import { useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play } from 'lucide-react';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +69,14 @@ export default function SeminarDisplayPage() {
         }
     };
 
+    const handleStartExam = () => {
+        if (!firestore || !exam || activeQuestions.length === 0) return;
+        setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), {
+            isLive: true,
+            activeQuestionIndex: 0
+        }, { merge: true });
+    };
+
     const responseStats = useMemo(() => {
         if (!currentQuestion) return [];
         const stats: Record<string, number> = {};
@@ -114,9 +123,27 @@ export default function SeminarDisplayPage() {
                 <div className="lg:col-span-2 flex flex-col gap-8 min-h-0">
                     {!exam.isLive && exam.activeQuestionIndex === -1 ? (
                         <div className="flex-1 p-12 bg-white/5 border border-white/10 rounded-[60px] flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-1000 shadow-2xl shadow-primary/5">
-                            <div className="p-8 bg-white rounded-[40px] shadow-2xl"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`} alt="QR" className="w-64 h-64"/></div>
-                            <div className="space-y-4"><h2 className="text-4xl font-black uppercase tracking-tight italic">Scan to Sync Terminal</h2><p className="text-xl text-slate-400 font-medium italic">Please register with your Identity Code after scanning.</p></div>
-                            <div className="flex gap-8"><div className="flex items-center gap-3"><Users className="h-8 w-8 text-primary" /><span className="text-3xl font-black">{examSubmissions.length} Boarded</span></div><div className="flex items-center gap-3"><Wifi className="h-8 w-8 text-primary animate-pulse" /><span className="text-3xl font-black">Link Active</span></div></div>
+                            <div className="p-8 bg-white rounded-[40px] shadow-2xl">
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`} alt="QR" className="w-64 h-64"/>
+                            </div>
+                            <div className="space-y-4">
+                                <h2 className="text-4xl font-black uppercase tracking-tight italic text-primary">Scan to Sync Terminal</h2>
+                                <p className="text-xl text-slate-400 font-medium italic">Please register with your name and mobile number to board.</p>
+                            </div>
+                            
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="flex gap-8">
+                                    <div className="flex items-center gap-3"><Users className="h-8 w-8 text-primary" /><span className="text-3xl font-black">{examSubmissions.length} Boarded</span></div>
+                                    <div className="flex items-center gap-3"><Wifi className="h-8 w-8 text-primary animate-pulse" /><span className="text-3xl font-black">Link Active</span></div>
+                                </div>
+                                
+                                <Button 
+                                    onClick={handleStartExam}
+                                    className="h-20 px-16 rounded-full font-black uppercase tracking-widest text-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] hover:scale-110 transition-all bg-primary text-primary-foreground border-4 border-white/20"
+                                >
+                                    <Play className="mr-4 h-8 w-8 fill-current" /> Start Seminar Exam
+                                </Button>
+                            </div>
                         </div>
                     ) : currentQuestion ? (
                         <div className="flex-1 flex flex-col gap-8 animate-in slide-in-from-bottom-12 duration-700 min-h-0">
