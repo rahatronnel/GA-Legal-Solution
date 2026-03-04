@@ -8,10 +8,10 @@ import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play } from 'lucide-react';
+import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play, ChevronRight, Check } from 'lucide-react';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 export default function SeminarDisplayPage() {
@@ -113,7 +113,7 @@ export default function SeminarDisplayPage() {
                     <h1 className="text-5xl font-black tracking-tighter leading-none uppercase italic">{exam.title}</h1>
                 </div>
                 <div className="flex gap-12">
-                    <div className="flex flex-col items-end"><p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Live Audience</p><div className="flex items-center gap-2 text-3xl font-black"><Users className="h-6 w-6 text-primary" /> {examSubmissions.length}</div></div>
+                    <div className="flex flex-col items-end"><p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Boarded Registry</p><div className="flex items-center gap-2 text-3xl font-black"><Users className="h-6 w-6 text-primary" /> {examSubmissions.length}</div></div>
                     <div className="flex flex-col items-end"><p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Logic Registry</p><div className="flex items-center gap-2 text-3xl font-black text-blue-400"><Hash className="h-6 w-6" /> {activeQuestions.length}</div></div>
                 </div>
             </header>
@@ -122,26 +122,57 @@ export default function SeminarDisplayPage() {
                 {/* Main Interaction Area */}
                 <div className="lg:col-span-2 flex flex-col gap-8 min-h-0">
                     {!exam.isLive && exam.activeQuestionIndex === -1 ? (
-                        <div className="flex-1 p-12 bg-white/5 border border-white/10 rounded-[60px] flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-1000 shadow-2xl shadow-primary/5">
-                            <div className="p-8 bg-white rounded-[40px] shadow-2xl">
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`} alt="QR" className="w-64 h-64"/>
-                            </div>
-                            <div className="space-y-4">
-                                <h2 className="text-4xl font-black uppercase tracking-tight italic text-primary">Scan to Sync Terminal</h2>
-                                <p className="text-xl text-slate-400 font-medium italic">Please register with your name and mobile number to board.</p>
+                        <div className="flex-1 p-8 bg-white/5 border border-white/10 rounded-[60px] flex flex-col gap-8 animate-in zoom-in-95 duration-1000 shadow-2xl shadow-primary/5 min-h-0">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center flex-1 min-h-0">
+                                <div className="flex flex-col items-center justify-center text-center space-y-6">
+                                    <div className="p-6 bg-white rounded-[40px] shadow-2xl">
+                                        <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(joinUrl)}`} alt="QR" className="w-48 h-48 lg:w-64 lg:h-64"/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h2 className="text-3xl font-black uppercase tracking-tight italic text-primary leading-none">Sync Terminal</h2>
+                                        <p className="text-sm text-slate-400 font-medium italic">Scan to board the session.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col h-full min-h-0">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xl font-black uppercase italic tracking-tight text-white flex items-center gap-2">
+                                            <Users className="h-5 w-5 text-primary" /> Personnel Boarded
+                                        </h3>
+                                        <Badge className="bg-primary/20 text-primary font-black uppercase text-[10px] tracking-widest">{examSubmissions.length} Joined</Badge>
+                                    </div>
+                                    <ScrollArea className="flex-1 bg-white/[0.02] border border-white/10 rounded-[32px] p-4 relative">
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {examSubmissions.map((sub) => (
+                                                <div key={sub.id} className="p-3 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between animate-in slide-in-from-right-4 group hover:bg-white/10 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-black text-[10px] uppercase">{sub.participantName.charAt(0)}</div>
+                                                        <div className="text-left">
+                                                            <p className="text-xs font-black leading-none uppercase">{sub.participantName}</p>
+                                                            <p className="text-[9px] font-bold text-muted-foreground mt-1">{sub.participantMobile}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                                </div>
+                                            ))}
+                                            {examSubmissions.length === 0 && (
+                                                <div className="h-full flex flex-col items-center justify-center py-20 opacity-30 italic text-xs text-center space-y-2">
+                                                    <Wifi className="h-8 w-8 animate-pulse text-primary" />
+                                                    <p className="uppercase font-black tracking-widest">Waiting for signals...</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <ScrollBar orientation="vertical" />
+                                    </ScrollArea>
+                                </div>
                             </div>
                             
-                            <div className="flex flex-col items-center gap-6">
-                                <div className="flex gap-8">
-                                    <div className="flex items-center gap-3"><Users className="h-8 w-8 text-primary" /><span className="text-3xl font-black">{examSubmissions.length} Boarded</span></div>
-                                    <div className="flex items-center gap-3"><Wifi className="h-8 w-8 text-primary animate-pulse" /><span className="text-3xl font-black">Link Active</span></div>
-                                </div>
-                                
+                            <div className="flex justify-center shrink-0">
                                 <Button 
                                     onClick={handleStartExam}
-                                    className="h-20 px-16 rounded-full font-black uppercase tracking-widest text-2xl shadow-[0_0_50px_rgba(255,255,255,0.1)] hover:scale-110 transition-all bg-primary text-primary-foreground border-4 border-white/20"
+                                    className="h-16 px-16 rounded-full font-black uppercase tracking-widest text-xl shadow-[0_0_50px_rgba(255,255,255,0.1)] hover:scale-110 transition-all bg-primary text-primary-foreground border-4 border-white/20"
                                 >
-                                    <Play className="mr-4 h-8 w-8 fill-current" /> Start Seminar Exam
+                                    <Play className="mr-4 h-6 w-6 fill-current" /> Start Seminar Exam
                                 </Button>
                             </div>
                         </div>
@@ -182,27 +213,60 @@ export default function SeminarDisplayPage() {
                             </Card>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-8 bg-white/5 border border-white/10 rounded-[60px] animate-in fade-in duration-1000">
-                            <div className="p-6 rounded-full bg-emerald-500/10 border border-emerald-500/20"><CheckCircle2 className="h-20 w-20 text-emerald-500" /></div>
-                            <h2 className="text-7xl font-black uppercase italic tracking-tighter">Session Over</h2>
-                            <div className="grid grid-cols-2 gap-8 w-full max-w-2xl">
-                                <div className="p-8 bg-white/5 rounded-3xl border border-white/10"><p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Grand Analytics</p><p className="text-5xl font-black">{examSubmissions.length} Pers.</p></div>
-                                <div className="p-8 bg-white/5 rounded-3xl border border-white/10"><p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Avg. Proficiency</p><p className="text-5xl font-black">{Math.round(examSubmissions.reduce((acc, s) => acc + s.percentage, 0) / (examSubmissions.length || 1))}%</p></div>
+                        <div className="flex-1 flex flex-col p-12 bg-white/5 border border-white/10 rounded-[60px] animate-in fade-in duration-1000 min-h-0">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/20"><CheckCircle2 className="h-10 w-10 text-emerald-500" /></div>
+                                    <div><h2 className="text-4xl font-black uppercase italic tracking-tighter">Session Concluded</h2><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Final Performance Analysis</p></div>
+                                </div>
+                                <div className="flex gap-8">
+                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Mean Accuracy</p><p className="text-3xl font-black text-primary">{Math.round(examSubmissions.reduce((acc, s) => acc + s.percentage, 0) / (examSubmissions.length || 1))}%</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Personnel</p><p className="text-3xl font-black">{examSubmissions.length}</p></div>
+                                </div>
                             </div>
+
+                            <Card className="flex-1 min-h-0 bg-white/[0.02] border-white/10 rounded-[40px] overflow-hidden">
+                                <CardHeader className="bg-white/5 border-b border-white/10"><CardTitle className="text-xs uppercase font-black tracking-widest flex items-center gap-2"><History className="h-4 w-4" /> Global Score Matrix</CardTitle></CardHeader>
+                                <CardContent className="p-0 h-full overflow-hidden">
+                                    <ScrollArea className="h-full">
+                                        <Table>
+                                            <TableHeader className="bg-white/[0.02]"><TableRow className="border-white/10"><TableHead className="text-[10px] font-black uppercase text-white/40 pl-8">Personnel</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center">Score</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center">Efficiency</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-right pr-8">Status</TableHead></TableRow></TableHeader>
+                                            <TableBody>
+                                                {examSubmissions.sort((a,b) => b.score - a.score).map((sub) => (
+                                                    <TableRow key={sub.id} className="border-white/5 hover:bg-white/[0.02]">
+                                                        <TableCell className="pl-8 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-[10px]">{sub.participantName.charAt(0)}</div>
+                                                                <div className="text-left"><p className="text-xs font-black uppercase">{sub.participantName}</p><p className="text-[9px] font-bold text-muted-foreground">{sub.participantMobile}</p></div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center font-black text-sm">{sub.score} <span className="text-[10px] text-white/40">pts</span></TableCell>
+                                                        <TableCell className="text-center font-black text-sm text-primary">{Math.round(sub.percentage)}%</TableCell>
+                                                        <TableCell className="text-right pr-8">
+                                                            <Badge className={cn("text-[9px] font-black h-5 uppercase px-3", sub.status === 'Passed' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-destructive/20 text-destructive border-destructive/30")}>{sub.status}</Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                        <ScrollBar orientation="vertical" />
+                                    </ScrollArea>
+                                </CardContent>
+                            </Card>
                         </div>
                     )}
                 </div>
 
-                {/* Live Participant Monitor */}
+                {/* Live Participant Monitor (Feed always on the right) */}
                 <div className="flex flex-col gap-8 min-h-0">
                     <Card className="bg-white/5 border-white/10 rounded-[40px] p-8 flex flex-col h-full overflow-hidden shadow-2xl">
-                        <CardHeader className="p-0 pb-6 border-b border-white/10"><CardTitle className="text-sm uppercase font-black tracking-[0.2em] flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Live Terminal Feed</CardTitle></CardHeader>
+                        <CardHeader className="p-0 pb-6 border-b border-white/10"><CardTitle className="text-sm uppercase font-black tracking-[0.2em] flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Signal Stream</CardTitle></CardHeader>
                         <CardContent className="p-0 flex-1 overflow-hidden pt-6">
                             <ScrollArea className="h-full">
                                 <Table>
-                                    <TableHeader><TableRow className="border-white/10"><TableHead className="text-[10px] font-black text-white/40 uppercase">Boarded Personnel</TableHead><TableHead className="text-[10px] font-black text-white/40 uppercase text-center">Prog.</TableHead></TableRow></TableHeader>
+                                    <TableHeader><TableRow className="border-white/10"><TableHead className="text-[10px] font-black text-white/40 uppercase">Terminal</TableHead><TableHead className="text-[10px] font-black text-white/40 uppercase text-center">Feed</TableHead></TableRow></TableHeader>
                                     <TableBody>
-                                        {examSubmissions.sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((sub, i) => {
+                                        {examSubmissions.sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((sub) => {
                                             const ansCount = Object.keys(sub.answers || {}).length;
                                             const isDone = ansCount === activeQuestions.length && activeQuestions.length > 0;
                                             return (
@@ -210,7 +274,7 @@ export default function SeminarDisplayPage() {
                                                     <TableCell className="py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className={cn("h-8 w-8 rounded-full flex items-center justify-center font-black text-[10px]", isDone ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-primary/20 text-primary")}>{sub.participantName.charAt(0)}</div>
-                                                            <div><p className="text-xs font-black truncate max-w-[120px]">{sub.participantName}</p><p className="text-[9px] font-bold text-muted-foreground">{sub.participantMobile}</p></div>
+                                                            <div><p className="text-xs font-black truncate max-w-[120px] uppercase">{sub.participantName}</p><p className="text-[9px] font-bold text-muted-foreground">{sub.participantMobile}</p></div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center">
@@ -220,10 +284,11 @@ export default function SeminarDisplayPage() {
                                             )
                                         })}
                                         {examSubmissions.length === 0 && (
-                                            <TableRow><TableCell colSpan={2} className="py-20 text-center opacity-30 italic text-xs">Waiting for terminal boarding signals...</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={2} className="py-20 text-center opacity-30 italic text-xs uppercase font-black tracking-widest">Waiting for signals...</TableCell></TableRow>
                                         )}
                                     </TableBody>
                                 </Table>
+                                <ScrollBar orientation="vertical" />
                             </ScrollArea>
                         </CardContent>
                     </Card>
