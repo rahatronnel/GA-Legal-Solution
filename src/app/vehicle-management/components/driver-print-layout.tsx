@@ -64,7 +64,7 @@ const DocumentPage = ({ doc, label, pageNumber, orgSettings }: {doc: string, lab
             <h2 className="text-lg font-bold mb-4">{label}</h2>
             <div className="border rounded-lg p-2 flex justify-center items-center h-[22cm] relative">
                  {isImage ? (
-                    <Image src={doc} alt={label} fill className="object-contain" />
+                    <Image src={doc} alt={label} layout="fill" className="object-contain" />
                 ) : (
                      <p>Cannot preview this document type. It is available for download on the profile page.</p>
                 )}

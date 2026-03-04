@@ -40,13 +40,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { ServiceCenter } from './service-center-table';
 import { TimeInput } from './time-input';
 
-type UploadedFile = {
+export type UploadedFile = {
   id: string;
   name: string;
   file: string; 
 }
 
-type AccidentDocumentType = 'accidentPhotos' | 'policeReport' | 'insuranceClaimForm' | 'workshopQuotation' | 'repairInvoice' | 'medicalReport';
+export type AccidentDocumentType = 'accidentPhotos' | 'policeReport' | 'insuranceClaimForm' | 'workshopQuotation' | 'repairInvoice' | 'medicalReport';
 
 const documentCategories: Record<AccidentDocumentType, string> = {
     accidentPhotos: 'Accident Scene Photos',
