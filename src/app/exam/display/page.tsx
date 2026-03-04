@@ -78,7 +78,8 @@ export default function SeminarDisplayPage() {
         if (!firestore || !exam) return;
         setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
             isLive: false,
-            activeQuestionIndex: -1 
+            // Preserve the index so the result screen triggers (index !== -1)
+            activeQuestionIndex: exam.activeQuestionIndex === -1 ? 0 : exam.activeQuestionIndex
         }, { merge: true });
     };
 
@@ -135,7 +136,7 @@ export default function SeminarDisplayPage() {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 min-h-0">
                 {/* Main Interaction Area */}
                 <div className="lg:col-span-2 flex flex-col gap-8 min-h-0">
-                    {!exam.isLive && exam.activeQuestionIndex === -1 && examSubmissions.length === 0 ? (
+                    {exam.activeQuestionIndex === -1 ? (
                         <div className="flex-1 p-8 bg-white/5 border border-white/10 rounded-[60px] flex flex-col gap-8 animate-in zoom-in-95 duration-1000 shadow-2xl shadow-primary/5 min-h-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center flex-1 min-h-0">
                                 <div className="flex flex-col items-center justify-center text-center space-y-6">
@@ -190,7 +191,7 @@ export default function SeminarDisplayPage() {
                                 </Button>
                             </div>
                         </div>
-                    ) : currentQuestion ? (
+                    ) : exam.isLive && currentQuestion ? (
                         <div className="flex-1 flex flex-col gap-8 animate-in slide-in-from-bottom-12 duration-700 min-h-0">
                             <div className="flex justify-between items-center bg-white/5 p-6 rounded-[32px] border border-white/10">
                                 <div className="space-y-1"><p className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">Signal Countdown</p><div className={cn("text-6xl font-black font-mono transition-colors", timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-white")}>{timeLeft}s</div></div>

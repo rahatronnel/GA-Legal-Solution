@@ -89,14 +89,13 @@ export default function ArsEntryPage() {
             setCurrentSubmissionId(userSubmission.id);
             setAnswers(userSubmission.answers || {});
             
-            // If the session was already over, show results
-            const matchedExam = exams.find(e => e.id === selectedExam?.id);
-            if (matchedExam && !matchedExam.isLive && matchedExam.activeQuestionIndex === -1 && Object.keys(userSubmission.answers || {}).length > 0) {
+            // Restore finish state if applicable
+            if (userSubmission.score > 0 || userSubmission.status === 'Passed' || userSubmission.status === 'Failed') {
                 setFinalResult(userSubmission);
                 setIsFinished(true);
             }
         }
-    }, [userSubmission, isBoarded, exams, selectedExam]);
+    }, [userSubmission, isBoarded]);
 
     // 3. Live Status Tracking
     const liveExam = useMemo(() => {
@@ -137,7 +136,7 @@ export default function ArsEntryPage() {
 
     // Auto-calculate results when session concludes
     useEffect(() => {
-        if (isBoarded && liveExam && !liveExam.isLive && liveExam.activeQuestionIndex === -1 && !isFinished) {
+        if (isBoarded && liveExam && !liveExam.isLive && liveExam.activeQuestionIndex !== -1 && !isFinished) {
             finalizeSubmission();
         }
     }, [liveExam?.isLive, isBoarded]);
@@ -311,7 +310,7 @@ export default function ArsEntryPage() {
         );
     }
 
-    if (!liveExam?.isLive) {
+    if (!liveExam?.isLive && liveExam?.activeQuestionIndex === -1) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-center space-y-8 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />

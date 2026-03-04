@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -18,7 +17,7 @@ import {
     Settings, PlusCircle, Trash2, Edit, X, 
     Layers, Hash, CheckCircle2, ChevronLeft,
     Play, Square, ChevronRight, Monitor, ListChecks, HelpCircle, Radio, Sparkles,
-    Download, FileSpreadsheet, Cpu, Plus, ClipboardList, Timer
+    Download, FileSpreadsheet, Cpu, Plus, ClipboardList, Timer, RefreshCcw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -125,17 +124,33 @@ export default function ArsSettingsPage() {
 
     const toggleLiveSession = (exam: ArsExam) => {
         if (!firestore) return;
-        const newState = !exam.isLive;
-        setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { isLive: newState, activeQuestionIndex: newState ? 0 : -1 }, { merge: true });
+        if (exam.isLive) {
+            // End session manually
+            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
+                isLive: false,
+                // Keep index at current to show results
+                activeQuestionIndex: exam.activeQuestionIndex === -1 ? 0 : exam.activeQuestionIndex
+            }, { merge: true });
+            toast({ title: "Seminar Halted", description: "Analytical Conclusion View active." });
+        } else {
+            // Reset to Boarding Phase (QR Code)
+            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
+                isLive: false, 
+                activeQuestionIndex: -1 
+            }, { merge: true });
+            toast({ title: "Seminar Initialized", description: "Boarding phase active. Open Seminar Screen." });
+        }
     };
 
     const nextLiveQuestion = (exam: ArsExam) => {
         if (!firestore) return;
         const examQuestions = questions.filter(q => q.examId === exam.id);
         if (exam.activeQuestionIndex < examQuestions.length - 1) {
-            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { activeQuestionIndex: exam.activeQuestionIndex + 1 }, { merge: true });
+            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
+                activeQuestionIndex: exam.activeQuestionIndex + 1 
+            }, { merge: true });
         } else {
-            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { isLive: false, activeQuestionIndex: -1 }, { merge: true });
+            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { isLive: false }, { merge: true });
         }
     };
 
@@ -168,6 +183,8 @@ export default function ArsSettingsPage() {
             <div className="grid grid-cols-1 gap-12">
                 {visibleExams.map(exam => {
                     const examQuestions = questions.filter(q => q.examId === exam.id);
+                    const isBoarding = !exam.isLive && exam.activeQuestionIndex === -1;
+                    
                     return (
                         <Card key={exam.id} className="bg-white/[0.02] border-white/10 rounded-[40px] overflow-hidden group ars-card-animate hover:bg-white/[0.04] transition-all relative shadow-2xl">
                             <div className="p-10 flex flex-col items-center justify-between gap-8 lg:flex-row border-b border-white/5">
@@ -185,28 +202,28 @@ export default function ArsSettingsPage() {
                                     </div>
                                 </div>
                                 
-                                <div className="flex items-center gap-12 px-12 border-x border-white/5">
-                                    <div className="text-center">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest opacity-50">Points Registry</p>
-                                        <p className="text-4xl font-black text-white">{examQuestions.length}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3 min-w-[200px]">
+                                <div className="flex flex-col gap-3 min-w-[220px]">
                                     {!isBroadcastMode && (
                                         <Button variant="ghost" className="h-10 rounded-full gap-2 font-black uppercase text-[10px] bg-white/5 hover:bg-white/10" onClick={() => { setCurrentExam(exam); setExamForm({ ...exam }); setIsExamModalOpen(true); }}><Edit className="h-4 w-4" /> Edit Parameters</Button>
                                     )}
                                     {isBroadcastMode && (
                                         <div className="space-y-3 w-full">
-                                            <Button variant={exam.isLive ? "destructive" : "default"} className="w-full h-14 rounded-full gap-3 font-black uppercase tracking-widest text-xs shadow-xl bg-emerald-600 hover:bg-emerald-700" onClick={() => toggleLiveSession(exam)}>
-                                                {exam.isLive ? <><Square className="h-4 w-4 fill-current" /> Halt Broadcast</> : <><Play className="h-4 w-4 fill-current" /> GO LIVE</>}
+                                            <Button 
+                                                variant={exam.isLive ? "destructive" : "default"} 
+                                                className={cn("w-full h-14 rounded-full gap-3 font-black uppercase tracking-widest text-xs shadow-xl", isBoarding ? "bg-blue-600 hover:bg-blue-700" : "bg-emerald-600 hover:bg-emerald-700")}
+                                                onClick={() => toggleLiveSession(exam)}
+                                            >
+                                                {isBoarding ? <><RefreshCcw className="h-4 w-4" /> Boarding Mode</> : exam.isLive ? <><Square className="h-4 w-4 fill-current" /> Halt Broadcast</> : <><Play className="h-4 w-4 fill-current" /> Reset to Boarding</>}
                                             </Button>
-                                            {exam.isLive && (
-                                                <div className="space-y-2">
+                                            
+                                            <div className="space-y-2">
+                                                {exam.isLive && (
                                                     <Button className="w-full h-12 rounded-full gap-2 font-black uppercase tracking-widest text-[10px] bg-blue-600 hover:bg-blue-700" onClick={() => nextLiveQuestion(exam)}>Push Next Question <ChevronRight className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" className="w-full h-10 rounded-full gap-2 text-blue-400 bg-blue-500/10 font-black uppercase text-[9px]" asChild><Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-4 w-4 mr-1" /> Open Seminar Screen</Link></Button>
-                                                </div>
-                                            )}
+                                                )}
+                                                <Button variant="ghost" className="w-full h-10 rounded-full gap-2 text-blue-400 bg-blue-500/10 font-black uppercase text-[9px]" asChild>
+                                                    <Link href={`/exam/display?id=${exam.id}`} target="_blank"><Monitor className="h-4 w-4 mr-1" /> Open Seminar Screen</Link>
+                                                </Button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
