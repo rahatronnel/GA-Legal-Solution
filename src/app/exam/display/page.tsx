@@ -8,7 +8,7 @@ import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play, ChevronRight, Check } from 'lucide-react';
+import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play, ChevronRight, Check, XCircle, Trophy, Award, TrendingUp } from 'lucide-react';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -62,10 +62,7 @@ export default function SeminarDisplayPage() {
                 activeQuestionIndex: exam.activeQuestionIndex + 1 
             }, { merge: true });
         } else {
-            setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
-                isLive: false,
-                activeQuestionIndex: -1 
-            }, { merge: true });
+            handleEndSession();
         }
     };
 
@@ -74,6 +71,14 @@ export default function SeminarDisplayPage() {
         setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), {
             isLive: true,
             activeQuestionIndex: 0
+        }, { merge: true });
+    };
+
+    const handleEndSession = () => {
+        if (!firestore || !exam) return;
+        setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
+            isLive: false,
+            activeQuestionIndex: -1 
         }, { merge: true });
     };
 
@@ -114,14 +119,23 @@ export default function SeminarDisplayPage() {
                 </div>
                 <div className="flex gap-12">
                     <div className="flex flex-col items-end"><p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Boarded Registry</p><div className="flex items-center gap-2 text-3xl font-black"><Users className="h-6 w-6 text-primary" /> {examSubmissions.length}</div></div>
-                    <div className="flex flex-col items-end"><p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Logic Registry</p><div className="flex items-center gap-2 text-3xl font-black text-blue-400"><Hash className="h-6 w-6" /> {activeQuestions.length}</div></div>
+                    {exam.isLive && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="h-12 rounded-full font-black uppercase tracking-widest px-6 shadow-xl shadow-red-500/20"
+                            onClick={handleEndSession}
+                        >
+                            <XCircle className="mr-2 h-4 w-4" /> End Session
+                        </Button>
+                    )}
                 </div>
             </header>
 
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10 min-h-0">
                 {/* Main Interaction Area */}
                 <div className="lg:col-span-2 flex flex-col gap-8 min-h-0">
-                    {!exam.isLive && exam.activeQuestionIndex === -1 ? (
+                    {!exam.isLive && exam.activeQuestionIndex === -1 && examSubmissions.length === 0 ? (
                         <div className="flex-1 p-8 bg-white/5 border border-white/10 rounded-[60px] flex flex-col gap-8 animate-in zoom-in-95 duration-1000 shadow-2xl shadow-primary/5 min-h-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center flex-1 min-h-0">
                                 <div className="flex flex-col items-center justify-center text-center space-y-6">
@@ -213,40 +227,43 @@ export default function SeminarDisplayPage() {
                             </Card>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col p-12 bg-white/5 border border-white/10 rounded-[60px] animate-in fade-in duration-1000 min-h-0">
+                        <div className="flex-1 flex flex-col p-8 bg-white/5 border border-white/10 rounded-[60px] animate-in fade-in duration-1000 min-h-0">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-4 rounded-3xl bg-emerald-500/10 border border-emerald-500/20"><CheckCircle2 className="h-10 w-10 text-emerald-500" /></div>
-                                    <div><h2 className="text-4xl font-black uppercase italic tracking-tighter">Session Concluded</h2><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Final Performance Analysis</p></div>
+                                    <div className="p-4 rounded-3xl bg-primary text-primary-foreground shadow-2xl shadow-primary/20"><Trophy className="h-10 w-10" /></div>
+                                    <div><h2 className="text-4xl font-black uppercase italic tracking-tighter">Session Concluded</h2><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Final Performance Analysis Matrix</p></div>
                                 </div>
                                 <div className="flex gap-8">
-                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Mean Accuracy</p><p className="text-3xl font-black text-primary">{Math.round(examSubmissions.reduce((acc, s) => acc + s.percentage, 0) / (examSubmissions.length || 1))}%</p></div>
-                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Personnel</p><p className="text-3xl font-black">{examSubmissions.length}</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Global Mean</p><p className="text-3xl font-black text-primary">{Math.round(examSubmissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / (examSubmissions.length || 1))}%</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-black text-white/40 uppercase mb-1">Total Personnel</p><p className="text-3xl font-black">{examSubmissions.length}</p></div>
                                 </div>
                             </div>
 
                             <Card className="flex-1 min-h-0 bg-white/[0.02] border-white/10 rounded-[40px] overflow-hidden">
-                                <CardHeader className="bg-white/5 border-b border-white/10"><CardTitle className="text-xs uppercase font-black tracking-widest flex items-center gap-2"><History className="h-4 w-4" /> Global Score Matrix</CardTitle></CardHeader>
+                                <CardHeader className="bg-white/5 border-b border-white/10 py-4 px-8"><CardTitle className="text-xs uppercase font-black tracking-widest flex items-center gap-2"><Award className="h-4 w-4 text-primary" /> Official Registry Results</CardTitle></CardHeader>
                                 <CardContent className="p-0 h-full overflow-hidden">
                                     <ScrollArea className="h-full">
                                         <Table>
-                                            <TableHeader className="bg-white/[0.02]"><TableRow className="border-white/10"><TableHead className="text-[10px] font-black uppercase text-white/40 pl-8">Personnel</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center">Score</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center">Efficiency</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-right pr-8">Status</TableHead></TableRow></TableHeader>
+                                            <TableHeader className="bg-white/[0.02] sticky top-0 z-20"><TableRow className="border-white/10"><TableHead className="text-[10px] font-black uppercase text-white/40 pl-8 h-12">Personnel Identity</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center h-12">Score</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-center h-12">Accuracy</TableHead><TableHead className="text-[10px] font-black uppercase text-white/40 text-right pr-8 h-12">Validation</TableHead></TableRow></TableHeader>
                                             <TableBody>
-                                                {examSubmissions.sort((a,b) => b.score - a.score).map((sub) => (
-                                                    <TableRow key={sub.id} className="border-white/5 hover:bg-white/[0.02]">
+                                                {examSubmissions.sort((a,b) => (b.score || 0) - (a.score || 0)).map((sub) => (
+                                                    <TableRow key={sub.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
                                                         <TableCell className="pl-8 py-4">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-[10px]">{sub.participantName.charAt(0)}</div>
-                                                                <div className="text-left"><p className="text-xs font-black uppercase">{sub.participantName}</p><p className="text-[9px] font-bold text-muted-foreground">{sub.participantMobile}</p></div>
+                                                                <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-xs border border-primary/20">{sub.participantName.charAt(0)}</div>
+                                                                <div className="text-left"><p className="text-sm font-black uppercase">{sub.participantName}</p><p className="text-[10px] font-bold text-muted-foreground">{sub.participantMobile}</p></div>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-center font-black text-sm">{sub.score} <span className="text-[10px] text-white/40">pts</span></TableCell>
-                                                        <TableCell className="text-center font-black text-sm text-primary">{Math.round(sub.percentage)}%</TableCell>
+                                                        <TableCell className="text-center font-black text-lg">{sub.score || 0} <span className="text-[10px] text-white/20 uppercase tracking-widest">pts</span></TableCell>
+                                                        <TableCell className="text-center font-black text-lg text-primary">{Math.round(sub.percentage || 0)}%</TableCell>
                                                         <TableCell className="text-right pr-8">
-                                                            <Badge className={cn("text-[9px] font-black h-5 uppercase px-3", sub.status === 'Passed' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-destructive/20 text-destructive border-destructive/30")}>{sub.status}</Badge>
+                                                            <Badge className={cn("text-[10px] font-black h-6 uppercase px-4 border-2 shadow-lg", sub.status === 'Passed' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-destructive/20 text-destructive border-destructive/30")}>{sub.status || 'Failed'}</Badge>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
+                                                {examSubmissions.length === 0 && (
+                                                    <TableRow><TableCell colSpan={4} className="py-20 text-center opacity-20 italic uppercase font-black tracking-[0.2em]">Zero Signals Logged</TableCell></TableRow>
+                                                )}
                                             </TableBody>
                                         </Table>
                                         <ScrollBar orientation="vertical" />
@@ -260,11 +277,11 @@ export default function SeminarDisplayPage() {
                 {/* Live Participant Monitor (Feed always on the right) */}
                 <div className="flex flex-col gap-8 min-h-0">
                     <Card className="bg-white/5 border-white/10 rounded-[40px] p-8 flex flex-col h-full overflow-hidden shadow-2xl">
-                        <CardHeader className="p-0 pb-6 border-b border-white/10"><CardTitle className="text-sm uppercase font-black tracking-[0.2em] flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Signal Stream</CardTitle></CardHeader>
+                        <CardHeader className="p-0 pb-6 border-b border-white/10"><CardTitle className="text-sm uppercase font-black tracking-[0.2em] flex items-center gap-2"><Activity className="h-4 w-4 text-primary" /> Live Signal Stream</CardTitle></CardHeader>
                         <CardContent className="p-0 flex-1 overflow-hidden pt-6">
                             <ScrollArea className="h-full">
                                 <Table>
-                                    <TableHeader><TableRow className="border-white/10"><TableHead className="text-[10px] font-black text-white/40 uppercase">Terminal</TableHead><TableHead className="text-[10px] font-black text-white/40 uppercase text-center">Feed</TableHead></TableRow></TableHeader>
+                                    <TableHeader><TableRow className="border-white/10"><TableHead className="text-[10px] font-black text-white/40 uppercase">Terminal</TableHead><TableHead className="text-[10px] font-black text-white/40 uppercase text-center">Efficiency</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {examSubmissions.sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map((sub) => {
                                             const ansCount = Object.keys(sub.answers || {}).length;
