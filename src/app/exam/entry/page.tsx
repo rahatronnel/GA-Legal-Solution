@@ -1,17 +1,18 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useArs, type ArsExam } from '../components/ars-provider';
-import { useUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
@@ -49,12 +50,13 @@ export default function ArsEntryPage() {
     const [participantName, setParticipantName] = useState('');
     const [participantMobile, setParticipantMobile] = useState('');
     const [isBoarded, setIsBoarded] = useState(false);
+    const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
     
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isFinished, setIsFinished] = useState(false);
     const [finalResult, setFinalResult] = useState<any>(null);
 
-    // High-Fidelity Sync: Auto-detect exam from URL (QR Scan)
+    // Auto-detect exam from URL
     useEffect(() => {
         if (!isLoading && urlExamId && !selectedExam) {
             const matched = exams.find(e => e.id === urlExamId);
@@ -62,7 +64,7 @@ export default function ArsEntryPage() {
         }
     }, [isLoading, urlExamId, exams, selectedExam]);
 
-    // Live Session Sync
+    // Track live status of the exam
     const liveExam = useMemo(() => {
         if (!selectedExam) return null;
         return exams.find(e => e.id === selectedExam.id);
@@ -78,20 +80,46 @@ export default function ArsEntryPage() {
     }, [liveExam, activeQuestions]);
 
     const handleBoarding = async () => {
-        if (!participantName || !participantMobile) return;
+        if (!participantName || !participantMobile || !selectedExam || !firestore) return;
+        
+        // Ensure anonymous sign-in
         if (!user) {
             initiateAnonymousSignIn(auth!);
+            return; // Wait for auth state change
         }
+
+        const submissionData = {
+            examId: selectedExam.id,
+            userId: user.uid,
+            participantName,
+            participantMobile,
+            answers: {},
+            score: 0,
+            percentage: 0,
+            status: 'Failed',
+            submittedAt: new Date().toISOString()
+        };
+
+        const docRef = await addDocumentNonBlocking(collection(firestore, 'arsSubmissions'), submissionData);
+        if (docRef) setCurrentSubmissionId(docRef.id);
         setIsBoarded(true);
     };
 
     const handleAnswerSubmit = (value: string) => {
-        if (!currentQuestion) return;
-        setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
+        if (!currentQuestion || !currentSubmissionId || !firestore) return;
+        
+        const newAnswers = { ...answers, [currentQuestion.id]: value };
+        setAnswers(newAnswers);
+
+        // Real-time synchronization: Push answer to the server immediately
+        setDocumentNonBlocking(doc(firestore, 'arsSubmissions', currentSubmissionId), {
+            answers: newAnswers,
+            submittedAt: new Date().toISOString()
+        }, { merge: true });
     };
 
     const finalizeSubmission = () => {
-        if (!selectedExam || !user || !firestore) return;
+        if (!selectedExam || !currentSubmissionId || !firestore) return;
 
         let score = 0;
         activeQuestions.forEach(q => {
@@ -101,20 +129,15 @@ export default function ArsEntryPage() {
         const percentage = (score / (selectedExam.totalMarks || 1)) * 100;
         const status = score >= selectedExam.passingMarks ? 'Passed' : 'Failed';
 
-        const submissionData = {
-            examId: selectedExam.id,
-            userId: user.uid,
-            participantName,
-            participantMobile,
-            answers,
+        const finalData = {
             score,
             percentage,
             status,
             submittedAt: new Date().toISOString()
         };
 
-        addDocumentNonBlocking(collection(firestore, 'arsSubmissions'), submissionData);
-        setFinalResult(submissionData);
+        setDocumentNonBlocking(doc(firestore, 'arsSubmissions', currentSubmissionId), finalData, { merge: true });
+        setFinalResult({ ...finalData, participantName });
         setIsFinished(true);
     };
 
@@ -127,11 +150,9 @@ export default function ArsEntryPage() {
                     <div className={cn("p-12", finalResult.status === 'Passed' ? "bg-emerald-600" : "bg-destructive")}>
                         <CheckCircle2 className="h-20 w-20 mx-auto mb-4" />
                         <h2 className="text-3xl font-black uppercase italic">Registry Logged</h2>
-                        <p className="text-sm opacity-80 mt-2">Thank you, {participantName}. Your responses have been synchronized with the seminar cloud.</p>
+                        <p className="text-sm opacity-80 mt-2">Thank you, {participantName}. Your responses have been synchronized.</p>
                     </div>
-                    <CardContent className="p-8">
-                        <Button className="w-full h-14 rounded-full font-black uppercase" asChild><Link href="/"><Home className="mr-2 h-5 w-5" /> Home</Link></Button>
-                    </CardContent>
+                    <CardContent className="p-8"><Button className="w-full h-14 rounded-full font-black uppercase" asChild><Link href="/"><Home className="mr-2 h-5 w-5" /> Home</Link></Button></CardContent>
                 </Card>
             </div>
         );
@@ -192,14 +213,9 @@ export default function ArsEntryPage() {
     if (!liveExam?.isLive) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-center space-y-8">
-                <div className="h-24 w-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse shadow-2xl">
-                    <Wifi className="h-10 w-10 text-primary" />
-                </div>
-                <div className="space-y-2">
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Waiting for Signal...</h2>
-                    <p className="text-slate-400 font-medium">Hello {participantName}. The moderator will push the first question shortly.</p>
-                </div>
-                <Badge variant="outline" className="border-white/10 text-muted-foreground px-4 py-1">Connection State: Synced</Badge>
+                <div className="h-24 w-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse shadow-2xl"><Wifi className="h-10 w-10 text-primary" /></div>
+                <div className="space-y-2"><h2 className="text-3xl font-black text-white uppercase tracking-tighter">Waiting for Signal...</h2><p className="text-slate-400 font-medium">Hello {participantName}. The moderator will push the first question shortly.</p></div>
+                <Badge variant="outline" className="border-white/10 text-muted-foreground px-4 py-1">Connection: Locked</Badge>
             </div>
         );
     }
@@ -207,14 +223,9 @@ export default function ArsEntryPage() {
     if (!currentQuestion) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-center space-y-8">
-                <div className="h-24 w-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-2xl">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-                </div>
-                <div className="space-y-2">
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter">All Responses Logged</h2>
-                    <p className="text-slate-400 font-medium">Please wait for the moderator to conclude the session.</p>
-                </div>
-                <Button className="rounded-full px-8 h-12 font-black uppercase tracking-widest" variant="outline" onClick={finalizeSubmission}>Submit Results</Button>
+                <div className="h-24 w-24 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-2xl"><CheckCircle2 className="h-10 w-10 text-emerald-500" /></div>
+                <div className="space-y-2"><h2 className="text-3xl font-black text-white uppercase tracking-tighter">All Signals Logged</h2><p className="text-slate-400 font-medium">Please wait for the moderator to conclude the session.</p></div>
+                <Button className="rounded-full px-8 h-12 font-black uppercase tracking-widest" variant="outline" onClick={finalizeSubmission}>Finalize My Results</Button>
             </div>
         );
     }
@@ -223,8 +234,8 @@ export default function ArsEntryPage() {
         <div className="min-h-screen bg-slate-950 p-6 flex flex-col items-center justify-center">
             <div className="max-w-xl w-full space-y-8">
                 <div className="flex justify-between items-center mb-4">
-                    <Badge className="bg-primary/10 text-primary uppercase font-black tracking-widest text-[9px]">Question {liveExam.activeQuestionIndex + 1} of {activeQuestions.length}</Badge>
-                    <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500 animate-ping" /><span className="text-[10px] font-black uppercase text-red-500">Live Input</span></div>
+                    <Badge className="bg-primary/10 text-primary uppercase font-black tracking-widest text-[9px]">Signal {liveExam.activeQuestionIndex + 1} of {activeQuestions.length}</Badge>
+                    <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500 animate-ping" /><span className="text-[10px] font-black uppercase text-red-500">Live Feedback Window</span></div>
                 </div>
                 
                 <h2 className="text-3xl font-black text-white tracking-tighter leading-none">{currentQuestion.questionText}</h2>
@@ -236,7 +247,7 @@ export default function ArsEntryPage() {
                     ))}
                 </RadioGroup>
 
-                <p className="text-center text-[10px] text-muted-foreground uppercase font-black tracking-widest pt-8">Real-Time Signal Integrity Active</p>
+                <div className="flex justify-center pt-8"><p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-2"><Clock className="h-3 w-3" /> Monitor screen for window countdown</p></div>
             </div>
         </div>
     );

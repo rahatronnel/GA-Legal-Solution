@@ -28,6 +28,7 @@ export type ArsQuestion = {
     options: string[];
     correctOption: string;
     points: number;
+    timeLimitSeconds: number; // Injected: Question-specific window
 };
 
 export type ArsSubmission = {
