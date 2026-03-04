@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
@@ -41,7 +41,7 @@ export default function ArsEntryPage() {
     const searchParams = useSearchParams();
     const urlExamId = searchParams.get('examId');
     
-    const { exams, questions, isLoading } = useArs();
+    const { exams, questions, submissions, isLoading } = useArs();
     const { user } = useUser();
     const auth = useAuth();
     const firestore = useFirestore();
@@ -51,12 +51,16 @@ export default function ArsEntryPage() {
     const [participantMobile, setParticipantMobile] = useState('');
     const [isBoarded, setIsBoarded] = useState(false);
     const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
+    const [isBoardingLoading, setIsBoardingLoading] = useState(false);
     
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isFinished, setIsFinished] = useState(false);
     const [finalResult, setFinalResult] = useState<any>(null);
 
-    // Auto-detect exam from URL
+    // Timer logic
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    // 1. Auto-detect exam from URL
     useEffect(() => {
         if (!isLoading && urlExamId && !selectedExam) {
             const matched = exams.find(e => e.id === urlExamId);
@@ -64,7 +68,23 @@ export default function ArsEntryPage() {
         }
     }, [isLoading, urlExamId, exams, selectedExam]);
 
-    // Track live status of the exam
+    // 2. Persistent Resumption: Detect if user is already boarded
+    const userSubmission = useMemo(() => {
+        if (!user || !submissions || !selectedExam) return null;
+        return submissions.find(s => s.examId === selectedExam.id && s.userId === user.uid);
+    }, [submissions, selectedExam, user]);
+
+    useEffect(() => {
+        if (userSubmission && !isBoarded) {
+            setIsBoarded(true);
+            setParticipantName(userSubmission.participantName);
+            setParticipantMobile(userSubmission.participantMobile);
+            setCurrentSubmissionId(userSubmission.id);
+            setAnswers(userSubmission.answers || {});
+        }
+    }, [userSubmission]);
+
+    // 3. Live Status Tracking
     const liveExam = useMemo(() => {
         if (!selectedExam) return null;
         return exams.find(e => e.id === selectedExam.id);
@@ -79,30 +99,56 @@ export default function ArsEntryPage() {
         return activeQuestions[liveExam.activeQuestionIndex];
     }, [liveExam, activeQuestions]);
 
-    const handleBoarding = async () => {
-        if (!participantName || !participantMobile || !selectedExam || !firestore) return;
-        
-        // Ensure anonymous sign-in
-        if (!user) {
-            initiateAnonymousSignIn(auth!);
-            return; // Wait for auth state change
+    // 4. Timer Pulse
+    useEffect(() => {
+        if (currentQuestion) {
+            setTimeLeft(currentQuestion.timeLimitSeconds || 30);
         }
+    }, [liveExam?.activeQuestionIndex, currentQuestion?.id]);
 
-        const submissionData = {
-            examId: selectedExam.id,
-            userId: user.uid,
-            participantName,
-            participantMobile,
-            answers: {},
-            score: 0,
-            percentage: 0,
-            status: 'Failed',
-            submittedAt: new Date().toISOString()
-        };
+    useEffect(() => {
+        if (!liveExam?.isLive || timeLeft <= 0 || !currentQuestion) return;
 
-        const docRef = await addDocumentNonBlocking(collection(firestore, 'arsSubmissions'), submissionData);
-        if (docRef) setCurrentSubmissionId(docRef.id);
-        setIsBoarded(true);
+        const interval = setInterval(() => {
+            setTimeLeft(prev => Math.max(0, prev - 1));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [timeLeft, liveExam?.isLive, currentQuestion]);
+
+    const handleBoarding = async () => {
+        if (!participantName || !participantMobile || !selectedExam || !firestore || !auth) return;
+        
+        setIsBoardingLoading(true);
+
+        try {
+            // Ensure anonymous sign-in
+            let currentUserId = user?.uid;
+            if (!user) {
+                const cred = await initiateAnonymousSignIn(auth);
+                // Auth update will trigger userSubmission check via useEffect, but we proceed here for the initial flow
+            }
+
+            const submissionData = {
+                examId: selectedExam.id,
+                userId: user?.uid || 'temp', // This will be patched by resumption logic if needed
+                participantName,
+                participantMobile,
+                answers: {},
+                score: 0,
+                percentage: 0,
+                status: 'Failed',
+                submittedAt: new Date().toISOString()
+            };
+
+            const docRef = await addDocumentNonBlocking(collection(firestore, 'arsSubmissions'), submissionData);
+            if (docRef) setCurrentSubmissionId(docRef.id);
+            setIsBoarded(true);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsBoardingLoading(false);
+        }
     };
 
     const handleAnswerSubmit = (value: string) => {
@@ -111,7 +157,6 @@ export default function ArsEntryPage() {
         const newAnswers = { ...answers, [currentQuestion.id]: value };
         setAnswers(newAnswers);
 
-        // Real-time synchronization: Push answer to the server immediately
         setDocumentNonBlocking(doc(firestore, 'arsSubmissions', currentSubmissionId), {
             answers: newAnswers,
             submittedAt: new Date().toISOString()
@@ -203,7 +248,9 @@ export default function ArsEntryPage() {
                             <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Mobile Number</Label>
                             <Input value={participantMobile} onChange={e => setParticipantMobile(e.target.value)} className="bg-white/5 border-white/10 h-12 text-lg font-bold" placeholder="+880..." />
                         </div>
-                        <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20" onClick={handleBoarding} disabled={!participantName || !participantMobile}>Sync & Board Terminal</Button>
+                        <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20" onClick={handleBoarding} disabled={!participantName || !participantMobile || isBoardingLoading}>
+                            {isBoardingLoading ? 'Syncing...' : 'Sync & Board Terminal'}
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -215,7 +262,7 @@ export default function ArsEntryPage() {
             <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-center space-y-8">
                 <div className="h-24 w-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse shadow-2xl"><Wifi className="h-10 w-10 text-primary" /></div>
                 <div className="space-y-2"><h2 className="text-3xl font-black text-white uppercase tracking-tighter">Waiting for Signal...</h2><p className="text-slate-400 font-medium">Hello {participantName}. The moderator will push the first question shortly.</p></div>
-                <Badge variant="outline" className="border-white/10 text-muted-foreground px-4 py-1">Connection: Locked</Badge>
+                <Badge variant="outline" className="border-white/10 text-muted-foreground px-4 py-1">Terminal Registry: Locked</Badge>
             </div>
         );
     }
@@ -231,11 +278,27 @@ export default function ArsEntryPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 p-6 flex flex-col items-center justify-center">
-            <div className="max-w-xl w-full space-y-8">
+        <div className="min-h-screen bg-slate-950 p-6 flex flex-col items-center justify-center relative overflow-hidden">
+            {/* Highlighted Countdown Bar */}
+            <div className="fixed top-0 left-0 right-0 h-2 bg-white/5 z-50">
+                <div 
+                    className={cn("h-full transition-all duration-1000 ease-linear", timeLeft <= 5 ? "bg-red-500" : "bg-primary")} 
+                    style={{ width: `${(timeLeft / (currentQuestion.timeLimitSeconds || 30)) * 100}%` }} 
+                />
+            </div>
+
+            <div className="max-w-xl w-full space-y-8 relative z-10">
                 <div className="flex justify-between items-center mb-4">
                     <Badge className="bg-primary/10 text-primary uppercase font-black tracking-widest text-[9px]">Signal {liveExam.activeQuestionIndex + 1} of {activeQuestions.length}</Badge>
-                    <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500 animate-ping" /><span className="text-[10px] font-black uppercase text-red-500">Live Feedback Window</span></div>
+                    <div className="flex items-center gap-3">
+                        <div className={cn("text-4xl font-black font-mono transition-colors", timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-white/40")}>
+                            {timeLeft}s
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                            <span className="text-[10px] font-black uppercase text-red-500">Live Window</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <h2 className="text-3xl font-black text-white tracking-tighter leading-none">{currentQuestion.questionText}</h2>
@@ -247,7 +310,11 @@ export default function ArsEntryPage() {
                     ))}
                 </RadioGroup>
 
-                <div className="flex justify-center pt-8"><p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-2"><Clock className="h-3 w-3" /> Monitor screen for window countdown</p></div>
+                <div className="flex justify-center pt-8">
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-2">
+                        <Timer className="h-3 w-3" /> Monitor main screen for global countdown
+                    </p>
+                </div>
             </div>
         </div>
     );
