@@ -6,15 +6,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // ADD THIS SECTION BELOW:
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // This tells the builder to ignore the 'canvas' error
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        canvas: false,
-      };
-    }
+  webpack: (config) => {
+    // This is the strongest way to tell Vercel to ignore 'canvas'
+    config.externals.push({ canvas: 'canvas' });
     return config;
   },
 }

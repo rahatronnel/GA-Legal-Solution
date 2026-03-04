@@ -1,13 +1,11 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import type { OrganizationSettings } from '@/app/settings/page';
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-// @ts-ignore
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// We REMOVED the pdfjsWorker import because it causes the Vercel build error.
+// Instead, we set the worker path using a CDN link below.
 
 interface PdfMultiPageRendererProps {
     file: string;
@@ -15,16 +13,17 @@ interface PdfMultiPageRendererProps {
     orgSettings: OrganizationSettings;
 }
 
-/**
- * PdfMultiPageRenderer - Browser-only component for high-fidelity PDF decomposition.
- * Configured to run only in the browser to prevent build-time canvas errors.
- */
 const PdfMultiPageRenderer: React.FC<PdfMultiPageRendererProps> = ({ file, label, orgSettings }) => {
     const [pages, setPages] = useState<string[]>([]);
 
     useEffect(() => {
+        // Set the worker source to a CDN so the build doesn't crash
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
         const renderPdf = async () => {
+            // Only run this code in the browser
             if (typeof window === 'undefined') return;
+            
             try {
                 const loadingTask = pdfjsLib.getDocument(file);
                 const pdf = await loadingTask.promise;
@@ -32,7 +31,7 @@ const PdfMultiPageRenderer: React.FC<PdfMultiPageRendererProps> = ({ file, label
                 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({ scale: 2.0 }); // High-density scaling
+                    const viewport = page.getViewport({ scale: 2.0 }); 
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
                     
