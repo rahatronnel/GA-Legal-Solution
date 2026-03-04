@@ -364,7 +364,7 @@ export function DriverEntryForm({ isOpen, setIsOpen, onSave, driver, vehicles }:
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={prevStep} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={() => prevStep} disabled={step === 1}>Previous</Button>
             {step < 4 ? (
                 <Button onClick={nextStep}>Continue</Button>
             ) : (

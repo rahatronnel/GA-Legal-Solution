@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -47,10 +48,11 @@ export default function VehicleAccidentReportPage() {
 
         const data = filteredVehicles.map(vehicle => {
             let vehicleAccidents = accidents.filter(acc => acc.vehicleId === vehicle.id);
-            const brand = vehicleBrands.find(b => b.id === vehicle.brandId);
+            const brand = (vehicleBrands as VehicleBrand[]).find(b => b.id === vehicle.brandId);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleAccidents = vehicleAccidents.filter(acc => {
+                    if (!acc.accidentDate) return false;
                     const accDate = parseISO(acc.accidentDate);
                     return isWithinInterval(accDate, { start: dateRange.from!, end: dateRange.to! });
                 });
@@ -62,7 +64,7 @@ export default function VehicleAccidentReportPage() {
         setReportData(data);
     };
 
-    const getDriverName = (driverId: string) => drivers.find(d => d.id === driverId)?.name || 'N/A';
+    const getDriverName = (driverId: string) => (drivers as Driver[]).find(d => d.id === driverId)?.name || 'N/A';
 
     if (!mounted) {
         return null;
@@ -79,7 +81,7 @@ export default function VehicleAccidentReportPage() {
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
+                                {selectedVehicleId ? (vehicles as Vehicle[]).find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -88,7 +90,7 @@ export default function VehicleAccidentReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {vehicles.map((vehicle) => (
+                                    {(vehicles as Vehicle[]).map((vehicle) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
                                         setOpen(false);

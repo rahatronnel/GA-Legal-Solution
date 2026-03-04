@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -64,7 +65,7 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Maintenance Type
             if (rec.maintenanceTypeId) {
                 if (!costByMaintenanceType[rec.maintenanceTypeId]) {
-                    const type = maintenanceTypes.find((t: MaintenanceType) => t.id === rec.maintenanceTypeId);
+                    const type = (maintenanceTypes as MaintenanceType[]).find(t => t.id === rec.maintenanceTypeId);
                     costByMaintenanceType[rec.maintenanceTypeId] = { name: type?.name || 'Unknown', cost: 0, count: 0 };
                 }
                 costByMaintenanceType[rec.maintenanceTypeId].cost += recordTotalCost;
@@ -74,8 +75,8 @@ export default function MaintenanceCostSummaryPage() {
             // Breakdown by Vehicle
             if (rec.vehicleId) {
                 if (!costByVehicle[rec.vehicleId]) {
-                    const vehicle = vehicles.find((v: Vehicle) => v.id === rec.vehicleId);
-                    const brand = vehicleBrands.find((b: VehicleBrand) => b.id === vehicle?.brandId);
+                    const vehicle = (vehicles as Vehicle[]).find(v => v.id === rec.vehicleId);
+                    const brand = (vehicleBrands as VehicleBrand[]).find(b => b.id === vehicle?.brandId);
                     costByVehicle[rec.vehicleId] = { reg: vehicle?.registrationNumber || 'Unknown', brand: brand?.name || '', model: vehicle?.model || '', cost: 0, count: 0 };
                 }
                 costByVehicle[rec.vehicleId].cost += recordTotalCost;

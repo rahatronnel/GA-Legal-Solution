@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -46,10 +47,11 @@ export default function VehicleMaintenanceReportPage() {
 
         const data = filteredVehicles.map(vehicle => {
             let vehicleMaintenance = maintenanceRecords.filter(rec => rec.vehicleId === vehicle.id);
-            const brand = vehicleBrands.find(b => b.id === vehicle.brandId);
+            const brand = (vehicleBrands as VehicleBrand[]).find(b => b.id === vehicle.brandId);
 
             if (dateRange?.from && dateRange?.to) {
                 vehicleMaintenance = vehicleMaintenance.filter(rec => {
+                    if (!rec.serviceDate) return false;
                     const serviceDate = parseISO(rec.serviceDate);
                     return isWithinInterval(serviceDate, { start: dateRange.from!, end: dateRange.to! });
                 });
@@ -60,7 +62,7 @@ export default function VehicleMaintenanceReportPage() {
         setReportData(data);
     };
 
-    const getMaintenanceTypeName = (typeId: string) => maintenanceTypes.find(t => t.id === typeId)?.name || 'N/A';
+    const getMaintenanceTypeName = (typeId: string) => (maintenanceTypes as MaintenanceType[]).find(t => t.id === typeId)?.name || 'N/A';
     
     const calculateTotalCost = (record: MaintenanceRecord) => {
         const partsCost = record.parts?.reduce((acc, part) => acc + (part.price * part.quantity), 0) || 0;
@@ -83,7 +85,7 @@ export default function VehicleMaintenanceReportPage() {
                      <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedVehicleId ? vehicles.find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
+                                {selectedVehicleId ? (vehicles as Vehicle[]).find(v => v.id === selectedVehicleId)?.registrationNumber : "Select Vehicle (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -92,7 +94,7 @@ export default function VehicleMaintenanceReportPage() {
                                 <CommandInput placeholder="Search by Reg No or ID..." />
                                 <CommandEmpty>No vehicle found.</CommandEmpty>
                                 <CommandList><CommandGroup>
-                                    {vehicles.map((vehicle) => (
+                                    {(vehicles as Vehicle[]).map((vehicle) => (
                                     <CommandItem key={vehicle.id} value={`${vehicle.registrationNumber} ${vehicle.vehicleIdCode}`} onSelect={() => {
                                         setSelectedVehicleId(vehicle.id === selectedVehicleId ? undefined : vehicle.id);
                                         setOpen(false);

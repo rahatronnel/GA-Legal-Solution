@@ -17,7 +17,7 @@ import { DateRange } from 'react-day-picker';
 import { isWithinInterval, parseISO } from 'date-fns';
 
 import type { Accident } from '../../components/accident-entry-form';
-import type { Vehicle } from '../../components/vehicle-table';
+import type { Vehicle } from '../../components/vehicle-entry-form';
 import type { Driver } from '../../components/driver-entry-form';
 import { useReportsData } from '../../components/vehicle-management-provider';
 
@@ -67,7 +67,7 @@ export default function DriverAccidentReportPage() {
         setReportData(data);
     };
 
-    const getVehicleReg = (vehicleId: string) => vehicles.find(v => v.id === vehicleId)?.registrationNumber || 'N/A';
+    const getVehicleReg = (vehicleId: string) => (vehicles as Vehicle[]).find((v: Vehicle) => v.id === vehicleId)?.registrationNumber || 'N/A';
 
     if (!mounted || isLoading) {
         return <p>Loading report data...</p>;
@@ -84,7 +84,7 @@ export default function DriverAccidentReportPage() {
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" role="combobox" aria-expanded={open} className="w-[250px] justify-between">
-                                {selectedDriverId ? drivers.find(d => d.id === selectedDriverId)?.name : "Select Driver (Optional)"}
+                                {selectedDriverId ? (drivers as Driver[]).find(d => d.id === selectedDriverId)?.name : "Select Driver (Optional)"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
@@ -95,7 +95,7 @@ export default function DriverAccidentReportPage() {
                                 <CommandList>
                                 <CommandGroup>
                                     <CommandItem onSelect={() => { setSelectedDriverId(undefined); setOpen(false); }}>All Drivers</CommandItem>
-                                    {drivers.map((driver) => (
+                                    {(drivers as Driver[]).map((driver) => (
                                     <CommandItem
                                         key={driver.id}
                                         value={driver.name}
