@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,11 +14,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound, Copy } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound } from 'lucide-react';
 import { DriverEntryForm, type Driver } from './driver-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from './print-provider';
 import type { Vehicle } from './vehicle-entry-form';
@@ -81,8 +81,7 @@ export function DriverTable() {
         setDocumentNonBlocking(doc(driversRef, id), data, { merge: true });
         toast({ title: 'Success', description: 'Driver updated successfully.' });
     } else {
-        const newDriver: Omit<Driver, 'id'> = { ...data };
-        addDocumentNonBlocking(driversRef, newDriver);
+        addDocumentNonBlocking(driversRef, data);
         toast({ title: 'Success', description: 'Driver added successfully.' });
     }
   };
@@ -118,23 +117,35 @@ export function DriverTable() {
   };
 
   const confirmSetPassword = async () => {
-      if (!auth || !currentDriver?.email) return;
-      if (newPassword.length < 6) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Password must be at least 6 characters.'});
-          return;
-      }
-      if (newPassword !== confirmNewPassword) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.'});
-          return;
-      }
+    const email = (currentDriver as any)?.email;
+    if (!auth || !email) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Driver email not found.' });
+        return;
+    };
+    
+    if (newPassword.length < 6) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Password must be at least 6 characters.'});
+        return;
+    }
+    if (newPassword !== confirmNewPassword) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.'});
+        return;
+    }
 
-      try {
-        await recreateUserWithPassword(auth, currentDriver.email, newPassword);
-        toast({ title: 'Success', description: `Password for ${currentDriver.name} has been set.`});
+    try {
+        await recreateUserWithPassword(auth, email, newPassword);
+        toast({ 
+          title: 'Success', 
+          description: `Password for ${currentDriver?.name || 'Driver'} has been set.` 
+        });
         setIsSetPasswordOpen(false);
-      } catch (error: any) {
-          toast({ variant: 'destructive', title: 'Operation Failed', description: error.message || 'Could not set the new password.'});
-      }
+    } catch (error: any) {
+        toast({ 
+          variant: 'destructive', 
+          title: 'Error', 
+          description: error.message || 'Failed to update password.' 
+        });
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -377,8 +388,14 @@ export function DriverTable() {
                     <DialogDescription>Set a new password for {currentDriver?.name}.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="space-y-2"><Label htmlFor="new-password">New Password</Label><Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="confirm-new-password">Confirm New Password</Label><Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} /></div>
+                    <div className="space-y-2">
+                        <Label htmlFor="new-password">New Password</Label>
+                        <Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                        <Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} />
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsSetPasswordOpen(false)}>Cancel</Button>
