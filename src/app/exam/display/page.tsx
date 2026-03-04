@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -12,6 +11,7 @@ import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash,
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export default function SeminarDisplayPage() {
     const searchParams = useSearchParams();
