@@ -8,7 +8,7 @@ import { doc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play, ChevronRight, Check, XCircle, Trophy, Award, TrendingUp } from 'lucide-react';
+import { Users, BarChart2, Radio, Smartphone, History, Wifi, Timer, Clock, Hash, CheckCircle2, Play, ChevronRight, Check, XCircle, Trophy, Award, TrendingUp, Activity } from 'lucide-react';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -257,7 +257,7 @@ export default function SeminarDisplayPage() {
                                                         <TableCell className="text-center font-black text-lg">{sub.score || 0} <span className="text-[10px] text-white/20 uppercase tracking-widest">pts</span></TableCell>
                                                         <TableCell className="text-center font-black text-lg text-primary">{Math.round(sub.percentage || 0)}%</TableCell>
                                                         <TableCell className="text-right pr-8">
-                                                            <Badge className={cn("text-[10px] font-black h-6 uppercase px-4 border-2 shadow-lg", sub.status === 'Passed' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-destructive/20 text-destructive border-destructive/30")}>{sub.status || 'Failed'}</Badge>
+                                                            <Badge className={cn("text-[10px] font-black h-6 uppercase px-4 border-2 shadow-lg", sub.status === 'Passed' ? "bg-emerald-50/20 text-emerald-400 border-emerald-500/30" : "bg-destructive/20 text-destructive border-destructive/30")}>{sub.status || 'Failed'}</Badge>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
@@ -295,7 +295,7 @@ export default function SeminarDisplayPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        <Badge variant="outline" className={cn("text-[10px] font-black h-6 border-white/10 px-2", isDone ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-white/60")}>{ansCount} / {activeQuestions.length}</Badge>
+                                                        <Badge variant="outline" className={cn("text-[10px] font-black h-6 border-white/10 px-2", isDone ? "bg-emerald-50/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-white/60")}>{ansCount} / {activeQuestions.length}</Badge>
                                                     </TableCell>
                                                 </TableRow>
                                             )
