@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp, XCircle } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
