@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -89,8 +90,8 @@ export default function ArsEntryPage() {
             setCurrentSubmissionId(userSubmission.id);
             setAnswers(userSubmission.answers || {});
             
-            // Restore finish state if applicable
-            if (userSubmission.score > 0 || userSubmission.status === 'Passed' || userSubmission.status === 'Failed') {
+            // Restore finish state if applicable (Only if status is definitively set)
+            if (userSubmission.status === 'Passed' || userSubmission.status === 'Failed') {
                 setFinalResult(userSubmission);
                 setIsFinished(true);
             }
@@ -155,7 +156,7 @@ export default function ArsEntryPage() {
                 answers: {},
                 score: 0,
                 percentage: 0,
-                status: 'Failed',
+                // status: 'Failed', // CRITICAL FIX: Removed initial status to prevent premature conclusion
                 submittedAt: new Date().toISOString()
             };
 

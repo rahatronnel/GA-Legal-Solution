@@ -40,7 +40,7 @@ export type ArsSubmission = {
     answers: Record<string, string>;
     score: number;
     percentage: number;
-    status: 'Passed' | 'Failed';
+    status?: 'Passed' | 'Failed'; // Made optional to prevent premature conclusion
     submittedAt: string;
 };
 
