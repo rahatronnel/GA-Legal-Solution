@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -12,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp, XCircle } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp, XCircle, LogOut } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
@@ -156,7 +155,6 @@ export default function ArsEntryPage() {
                 answers: {},
                 score: 0,
                 percentage: 0,
-                // status: 'Failed', // CRITICAL FIX: Removed initial status to prevent premature conclusion
                 submittedAt: new Date().toISOString()
             };
 
@@ -244,7 +242,10 @@ export default function ArsEntryPage() {
                                 &quot;Hello {participantName}, your assessment signal has been successfully hard-locked into the organizational performance matrix.&quot;
                             </p>
                         </div>
-                        <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20 border-4 border-white/10" asChild><Link href="/"><Home className="mr-2 h-5 w-5" /> Back to Dashboard</Link></Button>
+                        {/* EXIT LOGIC: Directed to the entry registry instead of the private dashboard */}
+                        <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20 border-4 border-white/10" asChild onClick={() => setSelectedExam(null)}>
+                            <Link href="/exam/entry"><LogOut className="mr-2 h-5 w-5" /> Exit Session</Link>
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

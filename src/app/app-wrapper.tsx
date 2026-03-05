@@ -283,13 +283,21 @@ export function AppWrapper() {
     }
   }, [orgSettings]);
 
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
-  
-  // Resilient Hydration Guard: We only block for the initial identity check (isUserLoading)
-  // After Auth is known, we let the user through to Login or Dashboard (using fallbacks for settings)
-  const isSyncingInitialIdentity = isUserLoading && !emergencyBypass;
+  // HIGH-FIDELITY SECURITY GATE LOGIC
+  const isCorporateUser = useMemo(() => {
+    if (isUserLoading) return true; // Assume true while loading auth to avoid flicker
+    if (!user) return false;
+    if (user.email === 'superadmin@galsolution.com') return true;
+    return !!currentUserEmployee;
+  }, [user, isUserLoading, currentUserEmployee]);
 
-  if (isSyncingInitialIdentity) {
+  // Public Participants are allowed ONLY on the entry page
+  const isPublicRoute = pathname.startsWith('/exam/entry');
+
+  const isSyncingInitialIdentity = isUserLoading && !emergencyBypass;
+  const isSyncingCorporateProfile = !!user?.email && user.email !== 'superadmin@galsolution.com' && isLoadingUserEmployee;
+
+  if (isSyncingInitialIdentity || isSyncingCorporateProfile) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-6 p-8">
         <div className="relative">
@@ -316,8 +324,14 @@ export function AppWrapper() {
     );
   }
 
+  // If not logged in, force login (except for public emergency bypass)
   if (!user && !emergencyBypass) {
     return <LoginPage />;
+  }
+
+  // FIREWALL: Anonymous participants trying to edit URL to go to dashboard
+  if (!isPublicRoute && !isCorporateUser && !emergencyBypass) {
+      return <LoginPage />;
   }
 
   const findMatchingKey = (path: string) => {
