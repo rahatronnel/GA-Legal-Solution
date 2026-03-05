@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useArs, type ArsExam, type ArsQuestion } from '../components/ars-provider';
 import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +122,7 @@ export default function ArsSettingsPage() {
         reader.readAsArrayBuffer(file);
     };
 
-    const toggleLiveSession = (exam: ArsExam) => {
+    const toggleLiveSession = async (exam: ArsExam) => {
         if (!firestore) return;
         if (exam.isLive) {
             // End session manually
@@ -134,11 +134,20 @@ export default function ArsSettingsPage() {
             toast({ title: "Seminar Halted", description: "Analytical Conclusion View active." });
         } else {
             // Reset to Boarding Phase (QR Code)
+            // NEW: Delete all previous submissions for this exam to start fresh
+            try {
+                const subsQuery = query(collection(firestore, 'arsSubmissions'), where('examId', '==', exam.id));
+                const snapshot = await getDocs(subsQuery);
+                snapshot.docs.forEach(s => deleteDocumentNonBlocking(s.ref));
+            } catch (err) {
+                console.error("Boarding cleanup failure:", err);
+            }
+
             setDocumentNonBlocking(doc(firestore, 'arsExams', exam.id), { 
                 isLive: false, 
                 activeQuestionIndex: -1 
             }, { merge: true });
-            toast({ title: "Seminar Initialized", description: "Boarding phase active. Open Seminar Screen." });
+            toast({ title: "Seminar Initialized", description: "Boarding phase active. Previous participants cleared." });
         }
     };
 

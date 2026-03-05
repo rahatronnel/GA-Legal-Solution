@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -7,14 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BarChart2, Globe, TrendingUp, Users, Award, ShieldAlert, Home, ChevronLeft } from 'lucide-react';
+import { BarChart2, Globe, TrendingUp, Users, Award, ShieldAlert, Home, ChevronLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 export default function ArsResultsPage() {
     const { exams, submissions, isLoading } = useArs();
+    const firestore = useFirestore();
 
     const stats = useMemo(() => {
         const total = submissions.length;
@@ -46,9 +48,23 @@ export default function ArsResultsPage() {
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] mt-2">Cloud-Synchronized Organizational Metrics</p>
                     </div>
                 </div>
-                <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
-                    <Link href="/"><ChevronLeft className="h-5 w-5" /> System Terminal</Link>
-                </Button>
+                <div className="flex gap-4">
+                    <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="rounded-full h-12 px-6 font-black uppercase tracking-widest bg-red-600/20 text-red-500 border border-red-500/20 hover:bg-red-600 hover:text-white"
+                        onClick={() => {
+                            if (confirm('Wipe ALL results from the performance registry?')) {
+                                submissions.forEach(s => deleteDocumentNonBlocking(doc(firestore!, 'arsSubmissions', s.id)));
+                            }
+                        }}
+                    >
+                        Clear Registry
+                    </Button>
+                    <Button variant="ghost" className="rounded-full h-12 gap-2 text-white/60 hover:text-white" asChild>
+                        <Link href="/exam"><ChevronLeft className="h-5 w-5" /> Hub Console</Link>
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -92,18 +108,29 @@ export default function ArsResultsPage() {
                     <CardHeader className="bg-white/[0.02] border-b border-white/5"><CardTitle className="text-lg font-black uppercase text-white flex items-center gap-2"><BarChart2 className="h-5 w-5 text-emerald-500" /> Live Feed</CardTitle></CardHeader>
                     <CardContent className="p-0">
                         <div className="divide-y divide-white/5">
-                            {submissions.sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).slice(0, 6).map(sub => {
+                            {submissions.sort((a,b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).map(sub => {
                                 const exam = exams.find(e => e.id === sub.examId);
                                 return (
                                     <div key={sub.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
                                         <div className="space-y-1">
                                             <p className="text-sm font-black text-white group-hover:text-primary transition-colors">{exam?.title}</p>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase">{new Date(sub.submittedAt).toLocaleTimeString()}</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase">{sub.participantName} • {new Date(sub.submittedAt).toLocaleTimeString()}</p>
                                         </div>
-                                        <Badge variant={sub.status === 'Passed' ? 'default' : 'destructive'} className="font-black text-[9px] h-5 uppercase tracking-tighter">{sub.status}</Badge>
+                                        <div className="flex items-center gap-3">
+                                            <Badge variant={sub.status === 'Passed' ? 'default' : 'destructive'} className="font-black text-[9px] h-5 uppercase tracking-tighter">{sub.status}</Badge>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => firestore && deleteDocumentNonBlocking(doc(firestore, 'arsSubmissions', sub.id))}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 )
                             })}
+                            {submissions.length === 0 && <div className="p-12 text-center opacity-30 italic text-xs uppercase font-black tracking-widest">Feed Empty</div>}
                         </div>
                     </CardContent>
                 </Card>
