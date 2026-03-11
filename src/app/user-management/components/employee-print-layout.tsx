@@ -43,7 +43,7 @@ const PrintFooter = ({ pageNumber, children }: { pageNumber: number, children?: 
             </div>
         </div>
     </div>
-);
+)
 
 const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string, footerContent?: React.ReactNode}> = ({children, pageNumber, orgSettings, className = '', footerContent}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
@@ -144,6 +144,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                             <InfoRow label="Email Address" value={employee.email} />
                             <InfoRow label="Username / Login ID" value={employee.username} />
                             <InfoRow label="Process Code" value={employee.processCode} />
+                            <InfoRow label="Employee Type" value={employee.employeeType} />
                             <InfoRow label="Address" value={employee.address} fullWidth />
                         </div>
                     </div>

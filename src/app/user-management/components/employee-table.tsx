@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -83,6 +84,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
       (emp.processCode && emp.processCode.toLowerCase().includes(lowercasedTerm)) ||
+      (emp.employeeType && emp.employeeType.toLowerCase().includes(lowercasedTerm)) ||
       (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
       (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm))
     );
@@ -171,6 +173,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       email: '',
       role: 'Admin/Operator/Driver/Viewer',
       status: 'Active/Inactive',
+      employeeType: 'Executive/S. Staff',
       username: '',
       departmentCode: '',
       sectionCode: '',
@@ -212,6 +215,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                   email: String(item.email || '').trim(),
                   role: (item.role || 'Viewer') as any,
                   status: (item.status || 'Active') as any,
+                  employeeType: (item.employeeType || '') as any,
                   username: String(item.email || '').trim(),
                   departmentId: dept?.id || '',
                   sectionId: sect?.id || '',
@@ -349,7 +353,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                            <User className="h-6 w-6 text-muted-foreground" />
                        )}
                     </div>
-                    {employee.fullName}
+                    <div>
+                        <p className="font-medium leading-none mb-1">{employee.fullName}</p>
+                        <Badge variant="outline" className="text-[9px] h-4 font-black uppercase tracking-tighter opacity-70">{employee.employeeType || 'Unset'}</Badge>
+                    </div>
                   </TableCell>
                   <TableCell>{employee.userIdCode}</TableCell>
                   <TableCell>

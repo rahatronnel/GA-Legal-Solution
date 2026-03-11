@@ -208,6 +208,7 @@
         "email": { "type": "string", "format": "email" },
         "role": { "type": "string", "enum": ["Admin", "Operator", "Driver", "Viewer"] },
         "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "employeeType": { "type": "string", "enum": ["Executive", "S. Staff"], "description": "Classification of the employee." },
         "username": { "type": "string" },
         "departmentId": { "type": "string" },
         "sectionId": { "type": "string" },
