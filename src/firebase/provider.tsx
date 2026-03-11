@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, createUserWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -53,7 +54,7 @@ export interface UserHookResult {
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
 // --- Multi-Admin Seeding ---
-const SEED_SUPERADMIN_KEY = 'superadmin_seeded_v2_dual';
+const SEED_SUPERADMIN_KEY = 'superadmin_seeded_v3_pass_migrated';
 
 async function seedAdmins(auth: Auth) {
   if (typeof window !== 'undefined' && localStorage.getItem(SEED_SUPERADMIN_KEY)) {
@@ -66,7 +67,19 @@ async function seedAdmins(auth: Auth) {
         await createUserWithEmailAndPassword(auth, 'superadmin@galsolution.com', 'superadmin@#%');
         console.log('Main superadmin seeded.');
     } catch (error: any) {
-        if (error.code !== 'auth/email-already-in-use') console.error('Error seeding main superadmin:', error);
+        if (error.code === 'auth/email-already-in-use') {
+            // One-Time Password Migration Pulse: Sync cloud credentials with new organizational rules
+            try {
+                const userCred = await signInWithEmailAndPassword(auth, 'superadmin@galsolution.com', 'superadmin2026');
+                await updatePassword(userCred.user, 'superadmin@#%');
+                console.log('Superadmin password migrated to new secure version.');
+                await auth.signOut(); // Terminate migration session
+            } catch (migError) {
+                // Already updated or password changed manually by user
+            }
+        } else {
+            console.error('Error seeding main superadmin:', error);
+        }
     }
 
     // 2. Seed System Admin (Procurement Management)
