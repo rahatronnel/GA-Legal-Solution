@@ -86,6 +86,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
       (emp.processCode && emp.processCode.toLowerCase().includes(lowercasedTerm)) ||
       (emp.employeeType && emp.employeeType.toLowerCase().includes(lowercasedTerm)) ||
+      (emp.location && emp.location.toLowerCase().includes(lowercasedTerm)) ||
       (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
       (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm))
     );
@@ -184,6 +185,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       remarks: '',
       defaultPassword: '',
       processCode: '',
+      location: 'Dhaka Office/Factory/Gazipur Branch Office'
     }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Employees');
@@ -226,6 +228,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                   remarks: String(item.remarks || '').trim(),
                   defaultPassword: String(item.defaultPassword || '').trim(),
                   processCode: String(item.processCode || '').trim(),
+                  location: (String(item.location || '').trim() || '') as any,
               };
               
               return {
@@ -290,6 +293,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                   designationId: desig?.id || '',
                   processCode: String(item['Process Code'] || '').trim(),
                   gender: (String(item['Gender'] || '').trim() || '') as any,
+                  location: (String(item['Location'] || '').trim() || '') as any,
                   defaultPassword: String(item['Password'] || '').trim(),
                   // Optional Null-Pulse
                   mobileNumber: '',
@@ -407,7 +411,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
               <TableHead>Employee</TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Mobile Number</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Status</TableHead>
@@ -464,7 +468,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                       </Tooltip>
                     </div>
                   </TableCell>
-                  <TableCell>{employee.mobileNumber || 'N/A'}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-[10px] font-bold">{employee.location || 'N/A'}</Badge></TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{getDepartmentName(employee.departmentId)}</TableCell>
                   <TableCell>{employee.status}</TableCell>
@@ -514,7 +518,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={9} className="h-24 text-center">
                     {searchTerm ? `No employees found for "${searchTerm}".` : "No employees found."}
                 </TableCell>
               </TableRow>

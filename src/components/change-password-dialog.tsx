@@ -21,7 +21,7 @@ import { collection } from 'firebase/firestore';
 import type { Employee } from '../app/user-management/components/employee-entry-form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Mail, Phone, Building, Briefcase } from 'lucide-react';
+import { User, Mail, Phone, Building, Briefcase, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Designation } from '../app/user-management/components/designation-table';
 import type { Section } from '../app/user-management/components/section-table';
@@ -179,6 +179,7 @@ export function ChangePasswordDialog({ children }: { children: React.ReactNode }
                     </div>
                 </div>
                 <div className="grid gap-4">
+                  <InfoItem icon={MapPin} label="Work Location" value={employee.location} />
                   <InfoItem icon={Mail} label="Email" value={employee.email} />
                   <InfoItem icon={Phone} label="Mobile Number" value={employee.mobileNumber} />
                   <InfoItem icon={Building} label="Department" value={departmentName} />

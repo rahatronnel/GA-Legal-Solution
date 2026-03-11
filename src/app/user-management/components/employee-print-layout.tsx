@@ -48,7 +48,7 @@ const PrintFooter = ({ pageNumber, children }: { pageNumber: number, children?: 
 const PrintPage: React.FC<{children: React.ReactNode, pageNumber: number, orgSettings: OrganizationSettings, className?: string, footerContent?: React.ReactNode}> = ({children, pageNumber, orgSettings, className = '', footerContent}) => (
     <div className={`p-4 bg-white text-black font-sans print-page relative ${className}`} style={{ minHeight: '26cm' /* A4 height minus margins */ }}>
         <PrintHeader orgSettings={orgSettings} />
-        <div className="flex-grow pt-6">
+        <div className={`flex-grow pt-6`}>
             {children}
         </div>
         <PrintFooter pageNumber={pageNumber}>{footerContent}</PrintFooter>
@@ -140,6 +140,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                     <div>
                         <h4 className="text-base font-semibold border-b-2 border-gray-300 pb-1 mb-2">Contact & Login Details</h4>
                         <div className="grid grid-cols-2 gap-x-6">
+                            <InfoRow label="Work Location" value={employee.location} />
                             <InfoRow label="Mobile Number" value={employee.mobileNumber} />
                             <InfoRow label="Email Address" value={employee.email} />
                             <InfoRow label="Username / Login ID" value={employee.username} />

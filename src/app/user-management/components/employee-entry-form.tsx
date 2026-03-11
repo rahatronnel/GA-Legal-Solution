@@ -43,6 +43,7 @@ export type Employee = {
   status: 'Active' | 'Inactive' | '';
   employeeType: 'Executive' | 'S. Staff' | '';
   gender: 'Male' | 'Female' | 'Other' | '';
+  location: 'Dhaka Office' | 'Factory' | 'Gazipur Branch Office' | '';
   username: string;
   departmentId: string;
   designationId: string;
@@ -69,6 +70,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   status: '',
   employeeType: '',
   gender: '',
+  location: '',
   username: '',
   departmentId: '',
   designationId: '',
@@ -201,7 +203,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   const validateStep = (currentStep: number) => {
     switch(currentStep) {
       case 1:
-        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.role && employeeData.status && employeeData.email && employeeData.employeeType;
+        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.role && employeeData.status && employeeData.email && employeeData.employeeType && employeeData.location;
       case 2:
         if (isEditing) return true;
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
@@ -299,6 +301,17 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                 <SelectContent>
                                     <SelectItem value="Executive">Executive</SelectItem>
                                     <SelectItem value="S. Staff">S. Staff</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><MapPin className="h-3 w-3" /> Work Location<MandatoryIndicator/></Label>
+                            <Select value={employeeData.location} onValueChange={handleSelectChange('location')}>
+                                <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Dhaka Office">Dhaka Office</SelectItem>
+                                    <SelectItem value="Factory">Factory</SelectItem>
+                                    <SelectItem value="Gazipur Branch Office">Gazipur Branch Office</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

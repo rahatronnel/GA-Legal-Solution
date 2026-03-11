@@ -210,6 +210,7 @@
         "status": { "type": "string", "enum": ["Active", "Inactive"] },
         "employeeType": { "type": "string", "enum": ["Executive", "S. Staff"], "description": "Classification of the employee." },
         "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
+        "location": { "type": "string", "enum": ["Dhaka Office", "Factory", "Gazipur Branch Office"], "description": "The primary work location of the employee." },
         "username": { "type": "string" },
         "departmentId": { "type": "string" },
         "sectionId": { "type": "string" },
@@ -229,7 +230,7 @@
         "defaultPassword": { "type": "string", "description": "Default password for the new user." },
         "processCode": { "type": "string", "description": "Organizational process codes for identifying functional workflows." }
       },
-      "required": ["userIdCode", "fullName", "username", "role", "status", "email"]
+      "required": ["userIdCode", "fullName", "username", "role", "status", "email", "location"]
     },
     "VehicleType": {
       "title": "Vehicle Type", "type": "object", "description": "Defines a type or category of a vehicle.",
