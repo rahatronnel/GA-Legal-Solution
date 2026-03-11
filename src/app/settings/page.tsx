@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { ModuleHeader } from '@/app/components/module-header';
 
 type ApprovalStep = {
     stepName: string;
@@ -181,93 +182,96 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="relative space-y-6">
-        <Card>
-            <CardHeader>
-                <CardTitle>Organization Settings</CardTitle>
-                <CardDescription>Manage your organization's general information, branding, and pro-active reminders.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2"><Label htmlFor="name">Organization Name</Label><Input id="name" value={settings.name} onChange={handleInputChange} /></div>
-                    <div className="space-y-2"><Label htmlFor="slogan">Slogan</Label><Input id="slogan" value={settings.slogan} onChange={handleInputChange} /></div>
-                    <div className="space-y-2 sm:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" value={settings.address} onChange={handleInputChange} /></div>
-                    <div className="space-y-2"><Label htmlFor="contactNumber">Contact Number</Label><Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} /></div>
-                    <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={settings.email} onChange={handleInputChange} /></div>
-                    
-                    <div className="space-y-2 p-4 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5 group hover:border-primary transition-colors">
-                        <Label htmlFor="notificationReminderHours" className="flex items-center gap-2 font-bold text-primary"><Clock className="h-4 w-4" /> Persistent Reminder Pulse (Hours)</Label>
-                        <Input id="notificationReminderHours" type="number" value={settings.notificationReminderHours} onChange={handleInputChange} className="bg-background font-bold" />
-                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tight mt-1 leading-tight">
-                            The system will automatically re-notify users and escalate the reminder count every [X] hours until the task is approved.
-                        </p>
-                    </div>
-                </div>
-                <div className="md:col-span-1 space-y-6">
-                    <div className="space-y-2">
-                        <Label>Organization Logo</Label>
-                        <div className="flex flex-col items-center gap-2">
-                            <Label htmlFor="logo-upload" className="cursor-pointer w-full">
-                                <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/20 hover:border-primary transition-colors">
-                                {logoPreview ? (
-                                    <Image src={logoPreview} alt="Logo" width={200} height={112} className="object-contain" />
-                                ) : (
-                                    <div className="text-center text-muted-foreground p-4"><Upload className="mx-auto h-8 w-8 mb-2"/><p className="text-sm">Click to upload logo</p></div>
-                                )}
-                                </div>
-                            </Label>
-                            <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'logo')} />
+    <div className="space-y-6">
+        <ModuleHeader />
+        <div className="relative space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Organization Settings</CardTitle>
+                    <CardDescription>Manage your organization's general information, branding, and pro-active reminders.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2"><Label htmlFor="name">Organization Name</Label><Input id="name" value={settings.name} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="slogan">Slogan</Label><Input id="slogan" value={settings.slogan} onChange={handleInputChange} /></div>
+                        <div className="space-y-2 sm:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" value={settings.address} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="contactNumber">Contact Number</Label><Input id="contactNumber" value={settings.contactNumber} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={settings.email} onChange={handleInputChange} /></div>
+                        
+                        <div className="space-y-2 p-4 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5 group hover:border-primary transition-colors">
+                            <Label htmlFor="notificationReminderHours" className="flex items-center gap-2 font-bold text-primary"><Clock className="h-4 w-4" /> Persistent Reminder Pulse (Hours)</Label>
+                            <Input id="notificationReminderHours" type="number" value={settings.notificationReminderHours} onChange={handleInputChange} className="bg-background font-bold" />
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tight mt-1 leading-tight">
+                                The system will automatically re-notify users and escalate the reminder count every [X] hours until the task is approved.
+                            </p>
                         </div>
                     </div>
-                </div>
-                </div>
-                <div className="flex justify-end"><Button onClick={handleSave} className="font-bold uppercase tracking-widest">Commit Organizational Settings</Button></div>
-            </CardContent>
-        </Card>
+                    <div className="md:col-span-1 space-y-6">
+                        <div className="space-y-2">
+                            <Label>Organization Logo</Label>
+                            <div className="flex flex-col items-center gap-2">
+                                <Label htmlFor="logo-upload" className="cursor-pointer w-full">
+                                    <div className="aspect-video w-full rounded-md bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/20 hover:border-primary transition-colors">
+                                    {logoPreview ? (
+                                        <Image src={logoPreview} alt="Logo" width={200} height={112} className="object-contain" />
+                                    ) : (
+                                        <div className="text-center text-muted-foreground p-4"><Upload className="mx-auto h-8 w-8 mb-2"/><p className="text-sm">Click to upload logo</p></div>
+                                    )}
+                                    </div>
+                                </Label>
+                                <Input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'logo')} />
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    <div className="flex justify-end"><Button onClick={handleSave} className="font-bold uppercase tracking-widest">Commit Organizational Settings</Button></div>
+                </CardContent>
+            </Card>
 
-        <div className="flex justify-center pt-12">
-            <Button variant="ghost" size="icon" className="opacity-10 hover:opacity-100 transition-opacity h-6 w-6 rounded-full" onClick={() => setIsMaintenanceOpen(true)}><ShieldAlert className="h-3 w-3 text-muted-foreground" /></Button>
+            <div className="flex justify-center pt-12">
+                <Button variant="ghost" size="icon" className="opacity-10 hover:opacity-100 transition-opacity h-6 w-6 rounded-full" onClick={() => setIsMaintenanceOpen(true)}><ShieldAlert className="h-3 w-3 text-muted-foreground" /></Button>
+            </div>
+
+            <Dialog open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
+                <DialogContent className="sm:max-w-md animate-dialog-in">
+                    <DialogHeader><DialogTitle>Advanced Controls</DialogTitle><DialogDescription>Maintenance tools and module visibility settings.</DialogDescription></DialogHeader>
+                    <div className="space-y-6 py-4">
+                        <div className="space-y-4">
+                            <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Feature Visibility</h4>
+                            <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="vis-proc" checked={settings.moduleVisibility.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
+                                    <Label htmlFor="vis-proc">Show Procurement Management Section</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="vis-exam" checked={settings.moduleVisibility.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
+                                    <Label htmlFor="vis-exam">Show Audience Response System (ARS) Icon</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="vis-core" checked={settings.moduleVisibility.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
+                                    <Label htmlFor="vis-core">Show Core Modules Section</Label>
+                                </div>
+                                <Separator />
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label className="font-bold flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Notification System</Label>
+                                        <p className="text-xs text-muted-foreground">Derived task-driven Action Center.</p>
+                                    </div>
+                                    <Switch checked={settings.moduleVisibility.enableNotifications} onCheckedChange={(c) => handleVisibilityChange('enableNotifications', c)} />
+                                </div>
+                            </div>
+                            <Button className="w-full mt-2" size="sm" onClick={handleSave}><CheckCircle2 className="mr-2 h-4 w-4"/> Update Visibility</Button>
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-sm uppercase tracking-wider text-destructive">Data Maintenance</h4>
+                            <BulkDeleteSection />
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
-
-        <Dialog open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
-            <DialogContent className="sm:max-w-md animate-dialog-in">
-                <DialogHeader><DialogTitle>Advanced Controls</DialogTitle><DialogDescription>Maintenance tools and module visibility settings.</DialogDescription></DialogHeader>
-                <div className="space-y-6 py-4">
-                    <div className="space-y-4">
-                        <h4 className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Layout className="h-4 w-4" /> Feature Visibility</h4>
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-proc" checked={settings.moduleVisibility.showProcurementManagement} onCheckedChange={(c) => handleVisibilityChange('showProcurementManagement', !!c)} />
-                                <Label htmlFor="vis-proc">Show Procurement Management Section</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-exam" checked={settings.moduleVisibility.showLikeExam} onCheckedChange={(c) => handleVisibilityChange('showLikeExam', !!c)} />
-                                <Label htmlFor="vis-exam">Show Audience Response System (ARS) Icon</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="vis-core" checked={settings.moduleVisibility.showCoreModules} onCheckedChange={(c) => handleVisibilityChange('showCoreModules', !!c)} />
-                                <Label htmlFor="vis-core">Show Core Modules Section</Label>
-                            </div>
-                            <Separator />
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label className="font-bold flex items-center gap-2"><Bell className="h-4 w-4 text-primary" /> Notification System</Label>
-                                    <p className="text-xs text-muted-foreground">Derived task-driven Action Center.</p>
-                                </div>
-                                <Switch checked={settings.moduleVisibility.enableNotifications} onCheckedChange={(c) => handleVisibilityChange('enableNotifications', c)} />
-                            </div>
-                        </div>
-                        <Button className="w-full mt-2" size="sm" onClick={handleSave}><CheckCircle2 className="mr-2 h-4 w-4"/> Update Visibility</Button>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                        <h4 className="font-bold text-sm uppercase tracking-wider text-destructive">Data Maintenance</h4>
-                        <BulkDeleteSection />
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
     </div>
   );
 }
