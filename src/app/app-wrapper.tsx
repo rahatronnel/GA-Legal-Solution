@@ -296,8 +296,11 @@ export function AppWrapper() {
 
   const isSyncingInitialIdentity = isUserLoading && !emergencyBypass;
   const isSyncingCorporateProfile = !!user?.email && user.email !== 'superadmin@galsolution.com' && isLoadingUserEmployee;
+  
+  // CRITICAL: Prevent "Visible before Config" by locking the app until Settings Registry is synced
+  const isSyncingOrgConfig = isLoadingSettings && !emergencyBypass;
 
-  if (isSyncingInitialIdentity || isSyncingCorporateProfile) {
+  if (isSyncingInitialIdentity || isSyncingCorporateProfile || isSyncingOrgConfig) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background gap-6 p-8">
         <div className="relative">
