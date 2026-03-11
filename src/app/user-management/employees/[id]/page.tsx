@@ -23,7 +23,7 @@ import { useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase
 import { doc, collection } from 'firebase/firestore';
 
 
-const DocumentViewer = ({ doc, label }: { doc: string; label: string }) => {
+const DocumentViewer = ({ doc, label }: { doc: string | undefined; label: string }) => {
     if (!doc) {
       return (
         <Card>
@@ -201,8 +201,8 @@ export default function EmployeeProfilePage() {
                     )}
                 </TabsContent>
                 <TabsContent value="documents" className="pt-4 space-y-6">
-                    <DocumentViewer doc={employee.documents.nid} label="National ID (NID)" />
-                    <DocumentViewer doc={employee.documents.other} label="Other Document" />
+                    <DocumentViewer doc={employee.documents?.nid} label="National ID (NID)" />
+                    <DocumentViewer doc={employee.documents?.other} label="Other Document" />
                 </TabsContent>
             </Tabs>
         </div>
