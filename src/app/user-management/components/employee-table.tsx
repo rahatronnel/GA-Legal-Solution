@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePrint } from '@/app/vehicle-management/components/print-provider';
 import type { Designation } from './designation-table';
@@ -461,7 +462,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     <div className="space-y-2"><Label htmlFor="confirm-new-password">Confirm New Password</Label><Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} /></div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsSetPasswordOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                     <Button onClick={confirmSetPassword}>Set Password</Button>
                 </DialogFooter>
             </DialogContent>
