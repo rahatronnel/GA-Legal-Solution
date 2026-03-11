@@ -224,7 +224,8 @@
             "other": { "type": "string", "description": "Data URL of the other document." }
           }
         },
-        "defaultPassword": { "type": "string", "description": "Default password for the new user." }
+        "defaultPassword": { "type": "string", "description": "Default password for the new user." },
+        "processCode": { "type": "string", "description": "Organizational process codes for identifying functional workflows." }
       },
       "required": ["userIdCode", "fullName", "mobileNumber", "username", "role", "status", "email"]
     },
@@ -708,7 +709,6 @@
         "currentApproverId": { "type": "string" },
         "approvalHistory": {
             "type": "array",
-            "description": "An audit trail of the approval process.",
             "items": {
                 "type": "object",
                 "properties": {

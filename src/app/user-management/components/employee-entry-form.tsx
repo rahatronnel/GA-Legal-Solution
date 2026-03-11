@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, User, Calendar as CalendarIcon, Hash, Phone, Mail, UserCheck, 
     CheckCircle2, Clock, Building, Briefcase, MapPin, FileText, KeyRound, 
-    FileSignature, ShieldCheck, Image as ImageIcon
+    FileSignature, ShieldCheck, Image as ImageIcon, Cpu
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -55,6 +55,7 @@ export type Employee = {
     other: string; 
   }
   defaultPassword?: string;
+  processCode: string;
 };
 
 const initialEmployeeData: Omit<Employee, 'id'> = {
@@ -74,6 +75,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   signature: '',
   documents: { nid: '', other: '' },
   defaultPassword: '',
+  processCode: '',
 };
 
 const MandatoryIndicator = () => <span className="text-red-500 ml-1">*</span>;
@@ -268,10 +270,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                         {profilePicPreview && <Button variant="link" size="sm" className="text-destructive" onClick={removeProfilePic}>Remove photo</Button>}
                     </div>
                     <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Hash className="h-3 w-3" /> User ID / Code<MandatoryIndicator/></Label><Input id="userIdCode" value={employeeData.userIdCode} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><User className="h-3 w-3" /> Full Name<MandatoryIndicator/></Label><Input id="fullName" value={employeeData.fullName} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Phone className="h-3 w-3" /> Mobile Number<MandatoryIndicator/></Label><Input id="mobileNumber" value={employeeData.mobileNumber} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Mail className="h-3 w-3" /> Corporate Email<MandatoryIndicator/></Label><Input id="email" type="email" value={employeeData.email} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Hash className="h-3 w-3" /> User ID / Code<MandatoryIndicator/></Label><Input id="userIdCode" value={employeeData.userIdCode} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><User className="h-3 w-3" /> Full Name<MandatoryIndicator/></Label><Input id="fullName" value={employeeData.fullName} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Phone className="h-3 w-3" /> Mobile Number<MandatoryIndicator/></Label><Input id="mobileNumber" value={employeeData.mobileNumber} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Mail className="h-3 w-3" /> Corporate Email<MandatoryIndicator/></Label><Input id="email" type="email" value={employeeData.email} onChange={handleInputChange} /></div>
                         <div className="space-y-2">
                             <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><UserCheck className="h-3 w-3" /> Access Role<MandatoryIndicator/></Label>
                             <Select value={employeeData.role} onValueChange={handleSelectChange('role')}>
@@ -303,6 +305,10 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                             <SelectTrigger><SelectValue placeholder="Select designation" /></SelectTrigger>
                             <SelectContent>{designations.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold text-blue-600"><Cpu className="h-3 w-3" /> Process Code</Label>
+                        <Input id="processCode" value={employeeData.processCode} onChange={handleInputChange} placeholder="e.g. PC-001, PC-002" />
                     </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><CalendarIcon className="h-3 w-3" /> Joining Date</Label>

@@ -125,7 +125,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                     <div className="flex-shrink-0">
                          <Avatar className="h-32 w-32 border">
                             <AvatarImage src={employee.profilePicture} alt={employee.fullName} />
-                            <AvatarFallback className="text-3xl">{getInitials(employee.fullName)}</AvatarFallback>
+                            <AvatarFallback className="text-4xl">{getInitials(employee.fullName)}</AvatarFallback>
                         </Avatar>
                     </div>
                     <div className="flex-grow">
@@ -143,6 +143,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                             <InfoRow label="Mobile Number" value={employee.mobileNumber} />
                             <InfoRow label="Email Address" value={employee.email} />
                             <InfoRow label="Username / Login ID" value={employee.username} />
+                            <InfoRow label="Process Code" value={employee.processCode} />
                             <InfoRow label="Address" value={employee.address} fullWidth />
                         </div>
                     </div>

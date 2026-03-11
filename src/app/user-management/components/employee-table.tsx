@@ -20,15 +20,15 @@ import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { usePrint } from '@/app/vehicle-management/components/print-provider';
+import { usePrint } from './print-provider';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
 import type { Department } from './department-table';
 import { useFirestore, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useAuth, initiateEmailSignUp, useUser, recreateUserWithPassword } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface EmployeeTableProps {
@@ -83,6 +83,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       (emp.fullName && emp.fullName.toLowerCase().includes(lowercasedTerm)) ||
       (emp.userIdCode && emp.userIdCode.toLowerCase().includes(lowercasedTerm)) ||
       (emp.mobileNumber && emp.mobileNumber.toLowerCase().includes(lowercasedTerm)) ||
+      (emp.processCode && emp.processCode.toLowerCase().includes(lowercasedTerm)) ||
       (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
       (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm))
     );
@@ -179,6 +180,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       address: '',
       remarks: '',
       defaultPassword: '',
+      processCode: '',
     }]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Employees');
@@ -219,6 +221,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                   address: String(item.address || '').trim(),
                   remarks: String(item.remarks || '').trim(),
                   defaultPassword: String(item.defaultPassword || '').trim(),
+                  processCode: String(item.processCode || '').trim(),
               };
               
               return {

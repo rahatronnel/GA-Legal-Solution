@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { 
     ArrowLeft, User, FileText, Phone, Mail, UserCheck, ShieldAlert, UserCog,
-    Home, Building, Briefcase, Calendar, MessageSquare, Download, Printer
+    Home, Building, Briefcase, Calendar, MessageSquare, Download, Printer, Cpu
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -162,6 +162,7 @@ export default function EmployeeProfilePage() {
                     <InfoItem icon={UserCog} label="User ID / Code" value={employee.userIdCode} />
                     <InfoItem icon={Mail} label="Email" value={employee.email} />
                     <InfoItem icon={Phone} label="Mobile" value={employee.mobileNumber} />
+                    <InfoItem icon={Cpu} label="Process Code" value={employee.processCode} />
                 </CardContent>
             </Card>
         </div>
