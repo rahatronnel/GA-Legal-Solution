@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound, Copy } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Download, Upload, Eye, User, Printer, Search, Trash, KeyRound, Copy, FileSpreadsheet } from 'lucide-react';
 import { EmployeeEntryForm, type Employee } from './employee-entry-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -247,6 +247,77 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
     event.target.value = '';
   };
 
+  const handleYKKFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && employeesRef) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+
+          const processed = json.map(item => {
+              // High-Fidelity Lookup Engine: Resolve IDs from Names (Case-Insensitive)
+              const deptName = String(item['Department name'] || '').trim().toLowerCase();
+              const sectName = String(item['Process Code Wise Section'] || '').trim().toLowerCase();
+              const desigName = String(item['Designation'] || '').trim().toLowerCase();
+
+              const dept = departments.find(d => d.name.toLowerCase() === deptName);
+              const sect = sections.find(s => s.name.toLowerCase() === sectName);
+              const desig = designations.find(d => d.name.toLowerCase() === desigName);
+              
+              const idStr = String(item['ID'] || '').trim();
+              if (!idStr) return null;
+
+              // Security Handshake: Derive corporate login email from ID
+              const loginEmail = idStr.includes('@') ? idStr : `${idStr}@ykk-erp.com`;
+              
+              const existing = employees.find(e => e.userIdCode === idStr || e.email === loginEmail);
+              
+              const empData: Partial<Employee> = {
+                  userIdCode: idStr,
+                  fullName: String(item['Name'] || '').trim(),
+                  email: loginEmail,
+                  username: idStr,
+                  role: 'Viewer', // Organizational Default
+                  status: 'Active', // Organizational Default
+                  employeeType: (String(item['Employee Type'] || '').trim() || '') as any,
+                  departmentId: dept?.id || '',
+                  sectionId: sect?.id || '',
+                  designationId: desig?.id || '',
+                  processCode: String(item['Process Code'] || '').trim(),
+                  gender: (String(item['Gender'] || '').trim() || '') as any,
+                  defaultPassword: String(item['Password'] || '').trim(),
+                  // Optional Null-Pulse
+                  mobileNumber: '',
+                  joiningDate: '',
+                  address: '',
+                  remarks: '',
+                  documents: { nid: '', other: '' }
+              };
+              
+              return {
+                  isNew: !existing,
+                  data: empData,
+                  original: existing
+              };
+          }).filter(Boolean) as ProcessedEmployee[];
+          
+          setProcessedUpload(processed);
+          setIsUploadConfirmOpen(true);
+
+        } catch (error: any) {
+          toast({ variant: 'destructive', title: 'YKK Upload Error', description: error.message });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    event.target.value = '';
+  };
+
   const confirmUpload = async () => {
     if (!employeesRef || !auth) return;
     
@@ -295,10 +366,17 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
         <div className="flex gap-2 flex-wrap">
             <Button onClick={handleAdd}><PlusCircle className="mr-2 h-4 w-4" /> Add Employee</Button>
             <Button variant="outline" onClick={handleDownloadTemplate}><Download className="mr-2 h-4 w-4" /> Template</Button>
-            <Label htmlFor="upload-excel-employees" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
+            
+            <label htmlFor="upload-excel-employees" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer">
                 <Upload className="mr-2 h-4 w-4" /> Upload
-            </Label>
+            </label>
             <Input id="upload-excel-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
+
+            <label htmlFor="upload-ykk-employees" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 h-10 px-4 py-2 cursor-pointer font-bold animate-pulse">
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Upload YKK Format
+            </label>
+            <Input id="upload-ykk-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleYKKFileUpload} />
+
              <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" disabled={employees.length === 0}>
@@ -356,7 +434,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     </div>
                     <div>
                         <p className="font-medium leading-none mb-1">{employee.fullName}</p>
-                        <Badge variant="outline" className="text-[9px] h-4 font-black uppercase tracking-tighter opacity-70">{employee.employeeType || 'Unset'}</Badge>
+                        <div className="flex gap-1">
+                            <Badge variant="outline" className="text-[9px] h-4 font-black uppercase tracking-tighter opacity-70">{employee.employeeType || 'Unset'}</Badge>
+                            {employee.gender && <Badge variant="secondary" className="text-[9px] h-4 font-black uppercase tracking-tighter opacity-70">{employee.gender}</Badge>}
+                        </div>
                     </div>
                   </TableCell>
                   <TableCell>{employee.userIdCode}</TableCell>
@@ -383,7 +464,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                       </Tooltip>
                     </div>
                   </TableCell>
-                  <TableCell>{employee.mobileNumber}</TableCell>
+                  <TableCell>{employee.mobileNumber || 'N/A'}</TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{getDepartmentName(employee.departmentId)}</TableCell>
                   <TableCell>{employee.status}</TableCell>
@@ -462,7 +543,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     <div className="space-y-2"><Label htmlFor="confirm-new-password">Confirm New Password</Label><Input id="confirm-new-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} /></div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setIsSetPasswordOpen(false)}>Cancel</Button>
                     <Button onClick={confirmSetPassword}>Set Password</Button>
                 </DialogFooter>
             </DialogContent>
@@ -496,7 +577,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     <h4 className="font-semibold">New Employees to Create ({processedUpload.filter(p => p.isNew).length})</h4>
                     <ScrollArea className="flex-grow border rounded-md p-2">
                         <ul className="list-disc pl-5">
-                        {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i}>{p.data.fullName} ({p.data.email})</li>)}
+                        {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i} className="text-xs">{p.data.fullName} ({p.data.email})</li>)}
                         </ul>
                     </ScrollArea>
                 </div>
@@ -504,7 +585,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     <h4 className="font-semibold">Employees to Update ({processedUpload.filter(p => !p.isNew).length})</h4>
                     <ScrollArea className="flex-grow border rounded-md p-2">
                         <ul className="list-disc pl-5">
-                        {processedUpload.filter(p => !p.isNew).map((p, i) => <li key={i}>{p.original?.fullName} ({p.original?.email})</li>)}
+                        {processedUpload.filter(p => !p.isNew).map((p, i) => <li key={i} className="text-xs">{p.original?.fullName} ({p.original?.email})</li>)}
                         </ul>
                     </ScrollArea>
                 </div>

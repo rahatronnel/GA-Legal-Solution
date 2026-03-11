@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, User, Calendar as CalendarIcon, Hash, Phone, Mail, UserCheck, 
     CheckCircle2, Clock, Building, Briefcase, MapPin, FileText, KeyRound, 
-    FileSignature, ShieldCheck, Image as ImageIcon, Cpu, Tag
+    FileSignature, ShieldCheck, Image as ImageIcon, Cpu, Tag, UserSquare2
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -42,6 +42,7 @@ export type Employee = {
   role: 'Admin' | 'Operator' | 'Driver' | 'Viewer' | '';
   status: 'Active' | 'Inactive' | '';
   employeeType: 'Executive' | 'S. Staff' | '';
+  gender: 'Male' | 'Female' | 'Other' | '';
   username: string;
   departmentId: string;
   designationId: string;
@@ -67,6 +68,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   role: '',
   status: '',
   employeeType: '',
+  gender: '',
   username: '',
   departmentId: '',
   designationId: '',
@@ -297,6 +299,17 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                                 <SelectContent>
                                     <SelectItem value="Executive">Executive</SelectItem>
                                     <SelectItem value="S. Staff">S. Staff</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><UserSquare2 className="h-3 w-3" /> Gender</Label>
+                            <Select value={employeeData.gender} onValueChange={handleSelectChange('gender')}>
+                                <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Male">Male</SelectItem>
+                                    <SelectItem value="Female">Female</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

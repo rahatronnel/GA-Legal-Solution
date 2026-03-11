@@ -209,6 +209,7 @@
         "role": { "type": "string", "enum": ["Admin", "Operator", "Driver", "Viewer"] },
         "status": { "type": "string", "enum": ["Active", "Inactive"] },
         "employeeType": { "type": "string", "enum": ["Executive", "S. Staff"], "description": "Classification of the employee." },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
         "username": { "type": "string" },
         "departmentId": { "type": "string" },
         "sectionId": { "type": "string" },
@@ -228,7 +229,7 @@
         "defaultPassword": { "type": "string", "description": "Default password for the new user." },
         "processCode": { "type": "string", "description": "Organizational process codes for identifying functional workflows." }
       },
-      "required": ["userIdCode", "fullName", "mobileNumber", "username", "role", "status", "email"]
+      "required": ["userIdCode", "fullName", "username", "role", "status", "email"]
     },
     "VehicleType": {
       "title": "Vehicle Type", "type": "object", "description": "Defines a type or category of a vehicle.",

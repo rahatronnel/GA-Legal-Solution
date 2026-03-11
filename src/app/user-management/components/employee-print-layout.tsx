@@ -145,6 +145,7 @@ export const EmployeePrintLayout: React.FC<EmployeePrintLayoutProps> = ({ employ
                             <InfoRow label="Username / Login ID" value={employee.username} />
                             <InfoRow label="Process Code" value={employee.processCode} />
                             <InfoRow label="Employee Type" value={employee.employeeType} />
+                            <InfoRow label="Gender" value={employee.gender} />
                             <InfoRow label="Address" value={employee.address} fullWidth />
                         </div>
                     </div>
