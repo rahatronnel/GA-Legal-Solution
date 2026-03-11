@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio, BarChart2, ClipboardList, Settings as SettingsIcon, PlayCircle, Monitor } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, Settings, Users, ShieldCheck, AlertTriangle, RefreshCw, Radio, BarChart2, ClipboardList, Settings as SettingsIcon, PlayCircle, Monitor, ShoppingCart } from 'lucide-react';
 import { coreModules, majorModules } from '@/lib/modules';
 import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import {
@@ -71,11 +71,23 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     const { user } = useUser();
     const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
     
-    const showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
-    const showARS = orgSettings?.moduleVisibility?.showLikeExam ?? true;
-    const showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
+    const isMainSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isProcurementAdmin = user?.email === 'systemadmin@ykk.com';
 
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    let showProcurement = orgSettings?.moduleVisibility?.showProcurementManagement ?? true;
+    let showARS = orgSettings?.moduleVisibility?.showLikeExam ?? true;
+    let showCore = orgSettings?.moduleVisibility?.showCoreModules ?? true;
+
+    // Hard Rules: Module Partitioning
+    if (isMainSuperAdmin) {
+        showProcurement = false;
+        showARS = false;
+        showCore = true;
+    } else if (isProcurementAdmin) {
+        showProcurement = true;
+        showARS = false;
+        showCore = false;
+    }
 
     return (
         <div className="dark w-full min-h-screen flex flex-col items-center justify-center p-4 relative bg-background">
@@ -89,12 +101,16 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                     />
                 </div>
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" className="text-white" asChild>
-                        <Link href="/user-management"><Users /></Link>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-white" asChild>
-                        <Link href="/settings"><Settings /></Link>
-                    </Button>
+                    {!isProcurementAdmin && (
+                        <>
+                            <Button variant="ghost" size="icon" className="text-white" asChild>
+                                <Link href="/user-management"><Users /></Link>
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-white" asChild>
+                                <Link href="/settings"><Settings /></Link>
+                            </Button>
+                        </>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -111,7 +127,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                       <DropdownMenuContent align="end" className="w-56 mt-2 animate-scale-in" sideOffset={8}>
                         <DropdownMenuLabel className="flex flex-col">
                             <span className="font-bold truncate text-sm">{currentUserEmployee?.fullName || user?.email}</span>
-                            <span className="text-[10px] text-muted-foreground font-normal truncate">{currentUserEmployee?.email || ''}</span>
+                            <span className="text-[10px] text-muted-foreground font-normal truncate">{user?.email || ''}</span>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <ChangePasswordDialog>
@@ -138,7 +154,6 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                 {majorModules.map((majorMod) => {
                     const isVisible = (majorMod.name === 'Procurement Management' && showProcurement);
                     
-                    // Exclude ARS from main highlighted grid
                     if (!isVisible) return null;
 
                     return (
@@ -197,10 +212,8 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                 )}
             </div>
 
-            {/* DISCRETE PERIMETER ICON: Live Audience Response System (ARS) */}
             {showARS && (
                 <div className="fixed bottom-8 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500 flex flex-col items-end gap-2">
-                    {isSuperAdmin && <span className="bg-primary text-primary-foreground text-[10px] font-black px-3 py-1 rounded-full shadow-2xl animate-bounce border-2 border-white/20 uppercase tracking-widest">ARS Main Hub</span>}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button 
@@ -246,6 +259,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
 export function AppWrapper() {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname() || '/';
+  const router = useRouter();
   const [handshakeTimeout, setHandshakeTimeout] = useState(false);
   const [emergencyBypass, setEmergencyBypass] = useState(false);
 
@@ -253,22 +267,35 @@ export function AppWrapper() {
   const settingsDocRef = useMemoFirebase(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
   const { data: orgSettings, isLoading: isLoadingSettings } = useDoc<OrganizationSettings>(settingsDocRef);
 
-  // Instantaneous Performance: Target current profile with a limit query
+  const isMainSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const isProcurementAdmin = user?.email === 'systemadmin@ykk.com';
+
   const userEmployeeQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.email || user.email === 'superadmin@galsolution.com') return null;
+    if (!firestore || !user?.email || isMainSuperAdmin || isProcurementAdmin) return null;
     return query(collection(firestore, 'employees'), where('email', '==', user.email), limit(1));
-  }, [firestore, user?.email]);
+  }, [firestore, user?.email, isMainSuperAdmin, isProcurementAdmin]);
   
   const { data: userEmployeeData, isLoading: isLoadingUserEmployee } = useCollection<Employee>(userEmployeeQuery);
   const currentUserEmployee = userEmployeeData?.[0] || null;
 
   useEffect(() => {
-    // Latency Monitor: Show emergency bypass if handshake takes more than 10s
     const timer = setTimeout(() => {
         if (!user && isUserLoading) setHandshakeTimeout(true);
     }, 10000);
     return () => clearTimeout(timer);
   }, [user, isUserLoading]);
+
+  // STRICT SECURITY GATE: Partition Access
+  useEffect(() => {
+      if (!isUserLoading && user) {
+          if (isMainSuperAdmin && pathname.startsWith('/procurement')) {
+              router.push('/');
+          }
+          if (isProcurementAdmin && (pathname.startsWith('/vehicle-management') || pathname.startsWith('/billflow') || pathname.startsWith('/settings') || pathname.startsWith('/user-management'))) {
+              router.push('/');
+          }
+      }
+  }, [user, isUserLoading, pathname, isMainSuperAdmin, isProcurementAdmin, router]);
 
   useEffect(() => {
     if (orgSettings?.favicon) {
@@ -283,21 +310,16 @@ export function AppWrapper() {
     }
   }, [orgSettings]);
 
-  // HIGH-FIDELITY SECURITY GATE LOGIC
   const isCorporateUser = useMemo(() => {
-    if (isUserLoading) return true; // Assume true while loading auth to avoid flicker
+    if (isUserLoading) return true; 
     if (!user) return false;
-    if (user.email === 'superadmin@galsolution.com') return true;
+    if (isMainSuperAdmin || isProcurementAdmin) return true;
     return !!currentUserEmployee;
-  }, [user, isUserLoading, currentUserEmployee]);
+  }, [user, isUserLoading, currentUserEmployee, isMainSuperAdmin, isProcurementAdmin]);
 
-  // Public Participants are allowed ONLY on the entry page
   const isPublicRoute = pathname.startsWith('/exam/entry');
-
   const isSyncingInitialIdentity = isUserLoading && !emergencyBypass;
-  const isSyncingCorporateProfile = !!user?.email && user.email !== 'superadmin@galsolution.com' && isLoadingUserEmployee;
-  
-  // CRITICAL: Prevent "Visible before Config" by locking the app until Settings Registry is synced
+  const isSyncingCorporateProfile = !!user?.email && !isMainSuperAdmin && !isProcurementAdmin && isLoadingUserEmployee;
   const isSyncingOrgConfig = isLoadingSettings && !emergencyBypass;
 
   if (isSyncingInitialIdentity || isSyncingCorporateProfile || isSyncingOrgConfig) {
@@ -327,15 +349,8 @@ export function AppWrapper() {
     );
   }
 
-  // If not logged in, force login (except for public emergency bypass)
-  if (!user && !emergencyBypass) {
-    return <LoginPage />;
-  }
-
-  // FIREWALL: Anonymous participants trying to edit URL to go to dashboard
-  if (!isPublicRoute && !isCorporateUser && !emergencyBypass) {
-      return <LoginPage />;
-  }
+  if (!user && !emergencyBypass) return <LoginPage />;
+  if (!isPublicRoute && !isCorporateUser && !emergencyBypass) return <LoginPage />;
 
   const findMatchingKey = (path: string) => {
     if (moduleComponents[path]) return path;

@@ -43,7 +43,7 @@ export interface FirebaseServicesAndUser {
 }
 
 // Return type for useUser() - specific to user auth state
-export interface UserHookResult { // Renamed from UserAuthHookResult for consistency if desired, or keep as UserAuthHookResult
+export interface UserHookResult { 
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -52,27 +52,33 @@ export interface UserHookResult { // Renamed from UserAuthHookResult for consist
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
 
-// --- Superadmin Seeding ---
-const SEED_SUPERADMIN_KEY = 'superadmin_seeded_v1';
+// --- Multi-Admin Seeding ---
+const SEED_SUPERADMIN_KEY = 'superadmin_seeded_v2_dual';
 
-async function seedSuperadmin(auth: Auth) {
+async function seedAdmins(auth: Auth) {
   if (typeof window !== 'undefined' && localStorage.getItem(SEED_SUPERADMIN_KEY)) {
     return;
   }
 
   try {
-    // This is a "safe" operation. If the user already exists, it will throw an error
-    // which we catch and ignore. This prevents creating the user multiple times.
-    await createUserWithEmailAndPassword(auth, 'superadmin@galsolution.com', 'superadmin2026');
-    console.log('Superadmin user created successfully.');
-  } catch (error: any) {
-    if (error.code === 'auth/email-already-in-use') {
-      // This is expected if the user already exists.
-      console.log('Superadmin user already exists.');
-    } else {
-      // Log other errors for debugging.
-      console.error('Error seeding superadmin:', error);
+    // 1. Seed Main Superadmin (Core Modules)
+    try {
+        await createUserWithEmailAndPassword(auth, 'superadmin@galsolution.com', 'superadmin@#%');
+        console.log('Main superadmin seeded.');
+    } catch (error: any) {
+        if (error.code !== 'auth/email-already-in-use') console.error('Error seeding main superadmin:', error);
     }
+
+    // 2. Seed System Admin (Procurement Management)
+    try {
+        await createUserWithEmailAndPassword(auth, 'systemadmin@ykk.com', 'sysadmin2026');
+        console.log('System admin seeded.');
+    } catch (error: any) {
+        if (error.code !== 'auth/email-already-in-use') console.error('Error seeding system admin:', error);
+    }
+
+  } catch (error: any) {
+      console.error('Master seeding failure:', error);
   } finally {
       if(typeof window !== 'undefined'){
         localStorage.setItem(SEED_SUPERADMIN_KEY, 'true');
@@ -103,8 +109,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
     
-    // Seed the superadmin user when auth is ready
-    seedSuperadmin(auth);
+    // Seed the admins when auth is ready
+    seedAdmins(auth);
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -218,7 +224,7 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
  * This provides the User object, loading status, and any auth errors.
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
-export const useUser = (): UserHookResult => { // Renamed from useAuthUser
-  const { user, isUserLoading, userError } = useFirebase(); // Leverages the main hook
+export const useUser = (): UserHookResult => { 
+  const { user, isUserLoading, userError } = useFirebase(); 
   return { user, isUserLoading, userError };
 };

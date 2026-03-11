@@ -49,7 +49,6 @@ import { ChangePasswordDialog } from '@/components/change-password-dialog';
 
 /**
  * CompactPipelineNode - High-density process nodes for the one-line header.
- * Enhanced with hover zoom and persistent short names.
  */
 const CompactPipelineNode = ({ 
     shortName, label, color, isActive, onClick, onMouseEnter 
@@ -101,7 +100,6 @@ function LocalPurchaseContent() {
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isBlueprintOpen, setIsBlueprintOpen] = useState(false);
 
-  // Hover states for sliding indicators
   const [hoveredPipelineIndex, setHoveredPipelineIndex] = useState<number | null>(null);
   const [hoveredUtilityIndex, setHoveredUtilityIndex] = useState<number | null>(null);
 
@@ -113,7 +111,7 @@ function LocalPurchaseContent() {
     router.push(`?${params.toString()}`);
   };
 
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
 
   const employeesRef = useMemoFirebase(() => firestore ? collection(firestore, 'employees') : null, [firestore]);
   const { data: employees } = useCollection<Employee>(employeesRef);
@@ -123,15 +121,10 @@ function LocalPurchaseContent() {
       return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
   }, [user, employees]);
 
-  // QUANTUM SLIDING LOGIC: Module Pipeline
   const pipelineTabs = ['demand-notes', 'gp-desk', 'cs', 'po', 'mrr', 'pn'];
   const activePipelineIndex = pipelineTabs.indexOf(activeTab);
-  
-  // High-Fidelity display index: prefers hover, falls back to active
   const displayPipelineIndex = hoveredPipelineIndex !== null ? hoveredPipelineIndex : (activePipelineIndex !== -1 ? activePipelineIndex : 0);
 
-  // UTILITY HUB INDEXING
-  // 0: Blueprint, 1: Tracker, 2: Audit, 3: Master Data, 4: Settings
   const utilityTabs = ['blueprint', 'tracker', 'audit', 'master-data', 'settings'];
   const activeUtilityIndex = activeTab === 'master-data' ? 3 : (activeTab === 'settings' ? 4 : -1);
   const displayUtilityIndex = hoveredUtilityIndex !== null ? hoveredUtilityIndex : (activeUtilityIndex !== -1 ? activeUtilityIndex : null);
@@ -139,11 +132,7 @@ function LocalPurchaseContent() {
   return (
     <TooltipProvider>
     <div className="space-y-6 pb-20">
-      
-      {/* THE MASTER COMMAND HUB - ONE LINE INTEGRATION */}
       <div className="flex items-center justify-between gap-4 p-3 bg-background border-b shadow-xl sticky top-0 z-30 backdrop-blur-xl">
-        
-        {/* SECTION 1: IDENTITY & HOME */}
         <div className="flex items-center gap-3 shrink-0">
             <Button size="icon" variant="ghost" asChild className="h-10 w-10 rounded-full hover:bg-primary hover:text-white transition-all active:scale-90">
                 <Link href="/"><Home className="h-5 w-5" /></Link>
@@ -184,14 +173,11 @@ function LocalPurchaseContent() {
             </DropdownMenu>
         </div>
 
-        {/* SECTION 2: THE 6-MODULE PIPELINE (CENTRAL SUBWAY WITH MAGNETIC HOVER PORTAL) */}
         <div 
             className="flex-1 flex items-center justify-center px-4 max-w-2xl relative h-14"
             onMouseLeave={() => setHoveredPipelineIndex(null)}
         >
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/10 -translate-y-1/2 z-0" />
-            
-            {/* THE MAGNETIC HOVER/ACTIVE PORTAL INDICATOR */}
             <div 
                 className="absolute h-14 w-14 rounded-full bg-primary/10 blur-xl transition-all duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] z-0"
                 style={{ 
@@ -199,7 +185,6 @@ function LocalPurchaseContent() {
                     transform: 'translateX(0)' 
                 }}
             />
-
             <div className="flex justify-between items-center w-full relative z-10 gap-2">
                 <CompactPipelineNode onMouseEnter={() => setHoveredPipelineIndex(0)} shortName="DN" label="Demand Note" color="bg-red-500" isActive={activeTab === 'demand-notes'} onClick={() => handleTabChange('demand-notes')} />
                 <CompactPipelineNode onMouseEnter={() => setHoveredPipelineIndex(1)} shortName="GP" label="GP Sourcing" color="bg-cyan-500" isActive={activeTab === 'gp-desk'} onClick={() => handleTabChange('gp-desk')} />
@@ -210,28 +195,23 @@ function LocalPurchaseContent() {
             </div>
         </div>
 
-        {/* SECTION 3: UTILITY HUB & NOTIFICATIONS (ELECTRIFIED ALERTS WITH MAGNETIC PILL) */}
         <div className="flex items-center gap-2 shrink-0">
             <div 
                 className="flex bg-muted/30 p-1 rounded-full border border-primary/5 shadow-inner gap-0.5 relative"
                 onMouseLeave={() => setHoveredUtilityIndex(null)}
             >
-                {/* UTILITY MAGNETIC SLIDING PILL */}
                 {displayUtilityIndex !== null && (
                     <div 
                         className="absolute h-8 w-8 rounded-full bg-primary transition-all duration-500 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg"
                         style={{ left: `calc(1px + ${displayUtilityIndex * 34}px)` }}
                     />
                 )}
-
                 <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(0)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsBlueprintOpen(true)}><Workflow className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Operational Blueprint</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(1)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsTrackerOpen(true)}><History className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Workflow Tracker</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(2)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsAuditOpen(true)}><Activity className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Performance Analytics</TooltipContent></Tooltip>
-                
                 <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(3)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'master-data' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('master-data')}><Database className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Master Registry</TooltipContent></Tooltip>
                 {isSuperAdmin && <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(4)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'settings' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('settings')}><Settings className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Admin Settings</TooltipContent></Tooltip>}
             </div>
-
             <div className="relative group ml-2 scale-110">
                 <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full animate-pulse opacity-50" />
                 <NotificationCenter />
@@ -239,7 +219,6 @@ function LocalPurchaseContent() {
         </div>
       </div>
 
-      {/* MODULE CONTENT RENDERER */}
       <div className="max-w-[98vw] mx-auto px-4 mt-4">
         <ShadTabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <ShadTabsContent value="demand-notes" className="animate-in fade-in slide-in-from-bottom-4 duration-500 mt-0"><DemandNoteTable /></ShadTabsContent>
@@ -281,11 +260,9 @@ function LocalPurchaseContent() {
         </ShadTabs>
       </div>
 
-      {/* COMMAND CONTROL DIALOGS - OPTIMIZED VERTICAL FIT */}
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}><DialogContent className="sm:max-w-[95vw] h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl rounded-3xl"><div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0"><div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0"><div><DialogTitle className="text-2xl font-black text-primary">Organizational Workflow Tracker</DialogTitle><DialogDescription className="font-bold">Comprehensive audit trail and lifecycle visibility.</DialogDescription></div><Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button></div><div className="flex-grow min-h-0"><WorkflowTracker /></div></div></DialogContent></Dialog>
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}><DialogContent className="sm:max-w-[98vw] h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl rounded-3xl"><div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0"><div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0"><div><DialogTitle className="text-2xl font-black text-primary uppercase tracking-tighter">Personnel Performance Analytics</DialogTitle><DialogDescription className="font-bold text-destructive">Diagnostic view of organizational efficiency.</DialogDescription></div><Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button></div><div className="flex-grow min-h-0"><UserAuditReport /></div></div></DialogContent></Dialog>
       <BlueprintDialog isOpen={isBlueprintOpen} onOpenChange={setIsBlueprintOpen} />
-
     </div>
     </TooltipProvider>
   );

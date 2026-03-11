@@ -59,9 +59,6 @@ import { useGSAP } from '@gsap/react';
 import type { Vendor } from '@/app/billflow/components/vendor-entry-form';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 
-/**
- * CSUserGuide - High-Fidelity documentation portal for CS standards.
- */
 const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -353,74 +350,24 @@ export function ComparativeStatementTable() {
         return (employees as Employee[]).find((e: Employee) => e.email === user.email);
     }, [user, employees]);
 
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isMainSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isProcurementAdmin = user?.email === 'systemadmin@ykk.com';
+    const isSuperAdmin = isMainSuperAdmin || isProcurementAdmin;
+
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
     const isManager = orgSettings?.procurementSettings?.managingDirectorId === currentUserEmployee?.id || 
                       orgSettings?.procurementSettings?.factoryDirectorId === currentUserEmployee?.id;
 
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // --- QUANTUM GSAP REVEAL MATRIX (ACCELERATED) ---
     useGSAP(() => {
         if (isLoading) return;
-
         const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-
-        // Stage 1: Fast Snappy Entrance
-        tl.fromTo(containerRef.current, {
-            opacity: 0,
-            filter: "blur(10px)",
-        }, {
-            opacity: 1,
-            filter: "blur(0px)",
-            duration: 0.4,
-        });
-
-        // Stage 2: Staggered Magnetic Header Pop
-        tl.fromTo(".cs-header-animate", {
-            y: -20,
-            scale: 0.95,
-            opacity: 0,
-        }, {
-            y: 0,
-            scale: 1,
-            opacity: 1,
-            duration: 0.3,
-            stagger: 0.03,
-            ease: "back.out(1.7)"
-        }, "-=0.3");
-
-        // Stage 3: Table 3D Perspective Reveal
-        tl.fromTo(".cs-table-animate", {
-            rotationX: -5,
-            transformOrigin: "top",
-            scale: 0.99,
-            opacity: 0,
-        }, {
-            rotationX: 0,
-            scale: 1,
-            opacity: 1,
-            duration: 0.5,
-            ease: "expo.out"
-        }, "-=0.2");
-
-        // Stage 4: Liquid Row Stagger (Accelerated)
+        tl.fromTo(containerRef.current, { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4 });
+        tl.fromTo(".cs-header-animate", { y: -20, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.3, stagger: 0.03, ease: "back.out(1.7)" }, "-=0.3");
+        tl.fromTo(".cs-table-animate", { rotationX: -5, transformOrigin: "top", scale: 0.99, opacity: 0 }, { rotationX: 0, scale: 1, opacity: 1, duration: 0.5, ease: "expo.out" }, "-=0.2");
         if (comparativeStatements && comparativeStatements.length > 0) {
-            tl.fromTo(".cs-row-animate", {
-                x: -20,
-                opacity: 0,
-                filter: "blur(8px)",
-            }, {
-                x: 0,
-                opacity: 1,
-                filter: "blur(0px)",
-                stagger: {
-                    each: 0.02,
-                    from: "start"
-                },
-                duration: 0.4,
-                ease: "power2.out"
-            }, "-=0.4");
+            tl.fromTo(".cs-row-animate", { x: -20, opacity: 0, filter: "blur(8px)" }, { x: 0, opacity: 1, filter: "blur(0px)", stagger: { each: 0.02, from: "start" }, duration: 0.4, ease: "power2.out" }, "-=0.4");
         }
     }, { scope: containerRef, dependencies: [isLoading, comparativeStatements?.length] });
 
