@@ -1,75 +1,102 @@
 # Operational Blueprint: Vehicle Management Module (VMM)
 
-## Part I: Business Requirements Document (BRD)
+## 1. Project Overview
+**Project Name:** Vehicle Management Module (VMM) – YKK ERP Solution  
+**Background:** The organization currently manages a diverse fleet of vehicles and professional drivers using fragmented systems. This project centralizes these operations into a high-fidelity digital ecosystem.  
+**Purpose:** To provide a single source of truth for all fleet-related data, ensuring operational transparency and resource optimization.  
+**Business Problem:** Lack of real-time visibility into vehicle status, high untracked maintenance costs, manual trip logging errors, and compliance risks regarding document expiries (Licenses, Insurance, Fitness).
 
-### 1. Executive Summary
-The Vehicle Management Module (VMM) is a core component of the YKK ERP Solution, designed to provide absolute visibility and governance over the organization's fleet assets. The system transitions traditional fleet tracking into a high-fidelity digital ecosystem, ensuring operational efficiency, safety compliance, and financial transparency.
+## 2. Business Objectives
+**Main Goals:**
+*   Implement a centralized registry for all vehicles and drivers.
+*   Automate the tracking of trips, itineraries, and associated expenses.
+*   Create a non-repudiable audit trail for maintenance and accidents.
+*   Digitize physical document storage for legal compliance.
 
-### 2. Project Scope
-The VMM encompasses the entire lifecycle of a vehicle within the organization, including:
-- **Asset Registry**: Centralized database of technical specifications and ownership.
-- **Personnel Management**: Comprehensive driver profiles and licensing verification.
-- **Operational Logistics**: Real-time trip logging, route management, and itinerary tracking.
-- **Technical Maintenance**: Preventive and corrective service history with parts-level cost auditing.
-- **Incident Governance**: Official accident reporting, insurance claim tracking, and damage assessment.
-- **Analytical Intelligence**: Real-time dashboards and multi-dimensional lifecycle reports.
+**Expected Benefits:**
+*   **Cost Reduction:** Improved oversight of maintenance and fuel/trip expenses.
+*   **Asset Longevity:** Proactive preventive maintenance tracking.
+*   **Risk Mitigation:** Real-time visibility into accident trends and driver fault status.
+*   **Operational Speed:** Instant generation of high-fidelity A4 printable reports.
 
-### 3. Business Objectives
-- **Operational Efficiency**: Minimize vehicle downtime through proactive maintenance scheduling and real-time status tracking.
-- **Cost Optimization**: Detailed auditing of trip expenses, fuel costs, and repair bills.
-- **Compliance & Safety**: Enforce digital vaulting of mandatory documents (RC, Insurance, Fitness, Licenses) with expiry tracking.
-- **Asset Longevity**: Monitor the "Health Pulse" of each asset via the Vehicle Lifecycle Report.
+**KPIs / Success Criteria:**
+*   99.9% data accuracy in vehicle deployment logs.
+*   100% digitization of mandatory vehicle/driver documents.
+*   Zero missing trip expense reports.
 
----
+## 3. Scope of the Project
+**In Scope:**
+*   **Asset Registry:** Registration No, Engine/Chassis No, Brand, Model, and Manufacture Year.
+*   **Personnel Management:** Professional driver profiles and licensing verification.
+*   **Operational Logistics:** Real-time trip logging, route management, and itinerary tracking.
+*   **Technical Maintenance:** Preventive and corrective service history with parts-level cost auditing.
+*   **Incident Governance:** Official accident reporting, insurance claim tracking, and damage assessment.
+*   **Print Driver System:** High-fidelity A4 output for all entities.
 
-## Part II: Software Requirements Specification (SRS)
+**Out of Scope:**
+*   Real-time GPS hardware integration (Live Map Tracking).
+*   External Fuel Station API integrations.
+*   Automated Insurance renewal payments.
 
-### 1. System Perspective
-The VMM is a client-side reactive application built on Next.js 14+, leveraging Firebase Firestore for real-time data synchronization. It operates within a secure organizational handshake, ensuring that sensitive fleet data is only accessible to authorized corporate personnel.
+## 4. Stakeholders
+*   **Project Sponsor:** YKK Executive Management.
+*   **Business Owner:** Operations and Logistics Department.
+*   **Project Manager:** ERP Implementation Lead.
+*   **Development Team:** App Prototyper (Firebase Studio).
+*   **End Users:** Fleet Operators, Admin Personnel, and Drivers.
 
-### 2. Functional Requirements
+## 5. Business Requirements
+*   **Asset Governance:** System must record comprehensive vehicle specifications and assignments.
+*   **Personnel Oversight:** System must track driver eligibility and licensing status.
+*   **Logistics Auditing:** System must record multi-stop itineraries and odometer variances.
+*   **Technical Accountability:** Every maintenance job must be linked to a specific garage and parts list.
+*   **Safety Compliance:** Every incident must be documented with visual evidence and legal filing status.
 
-#### 2.1 Fleet Asset Management
-- **V-REG-001**: The system shall record comprehensive vehicle data including Registration No, Engine/Chassis No, Brand, Model, and Manufacture Year.
-- **V-REG-002**: The system shall support digital document vaulting for RC, Insurance, and Fitness certificates.
-- **V-REG-003**: The system shall track driver assignment history with effective dates to maintain a non-repudiable audit trail of vehicle custody.
+## 6. Functional Requirements
+*   **Authentication:** Multi-role access (Admin, Operator, Driver, Viewer).
+*   **Dynamic Dashboard:** Visual distribution of vehicle status and monthly cost trends via Recharts.
+*   **Data Entry:** Multi-step ShadCN forms for complex data sets (Trips/Maintenance).
+*   **Cloud Sync:** Real-time synchronization via Firestore for multi-terminal access.
+*   **Evidence Vault:** Base64-based document storage for RC, NID, and Invoices.
+*   **Filtering:** Advanced filtering by Vehicle, Driver, Date Range, and Status.
 
-#### 2.2 Driver Management
-- **D-MGMT-001**: The system shall maintain professional driver profiles including Father's name, DOB, and high-fidelity profile pictures.
-- **D-MGMT-002**: The system shall enforce license verification by recording License Number, Class (Light/Heavy), and Expiry Dates.
-- **D-MGMT-003**: The system shall provide an "Employment Verification" matrix including Joining Date, Shift, and Supervisor.
+## 7. Non-Functional Requirements
+*   **Performance:** UI interactions must remain fluid under heavy data load.
+*   **Security:** Row-level security through Firestore rules ensuring private data isolation.
+*   **Scalability:** Architecture must support the addition of unlimited fleet assets.
+*   **Reliability:** High availability via Google Cloud infrastructure.
+*   **Data Integrity:** Immutability of historical logs (Trips/Maintenance) without admin override.
 
-#### 2.3 Trip & Logistics Execution
-- **T-LOG-001**: The system shall record trips with multi-stop itineraries, capturing precise start/end odometer readings.
-- **T-LOG-002**: The system shall track trip-specific expenses categorized by type (Fuel, Toll, Parking, etc.).
-- **T-LOG-003**: The system shall support "Trip Status" transitions: Planned -> Ongoing -> Completed.
+## 8. Process Flow / Workflow
+1.  **Onboarding:** Admin registers a new Vehicle and Driver.
+2.  **Assignment:** Driver is formally assigned to a Vehicle with an effective date.
+3.  **Deployment:** Operator logs a Trip (Planned -> Ongoing -> Completed).
+4.  **Maintenance:** If vehicle requires service, a Maintenance Record is logged with parts used.
+5.  **Incident:** If an accident occurs, an Accident Report is filed with evidence.
+6.  **Reporting:** Management reviews the Dashboard or generates physical A4 reports for audit.
 
-#### 2.4 Maintenance & Technical Audit
-- **M-AUDIT-001**: The system shall log maintenance jobs including service type, garage identification, and actual service date.
-- **M-AUDIT-002**: The system shall record parts-level details including Brand, Quantity, Price, and Warranty.
-- **M-AUDIT-003**: The system shall allow forecasted "Next Service" dates to enable preventive maintenance planning.
+## 9. Data Requirements
+**Primary Entities:**
+*   `vehicles`: Core technical and ownership data.
+*   `drivers`: Personnel, license, and assignment history.
+*   `trips`: Itinerary, odometer, and expense objects.
+*   `maintenanceRecords`: Service dates, parts list, and costs.
+*   `accidents`: Severity, fault status, and legal documentation.
+*   `masterData`: Routes, Locations, Trip Purposes, Expense Types.
 
-#### 2.5 Accident & Incident Governance
-- **A-GOV-001**: The system shall record incident metrics including Collision Type, Severity, Fault Status, and precise location.
-- **A-GOV-002**: The system shall track legal filings, including Police GD/FIR numbers and Insurance Claim references.
-- **A-GOV-003**: The system shall support "Before/After" photo evidence vaulting for damage assessment.
+## 10. Assumptions & Constraints
+*   **Assumptions:** All users have access to an internet-enabled terminal (Desktop/Mobile).
+*   **Constraints:** Firestore 1MB document limit necessitates aggressive Base64 image compression (~120KB target).
+*   **Constraint:** The system currently operates as a client-side reactive app (Next.js).
 
-### 3. Data Entities (Firestore Schema Analysis)
+## 11. Timeline / Milestones
+*   **Phase I:** Foundation - Master Data Registry & Locations.
+*   **Phase II:** Personnel & Assets - Driver/Vehicle Onboarding.
+*   **Phase III:** Execution - Trip Logging & Expense Tracking.
+*   **Phase IV:** Governance - Maintenance, Accidents & Analytical Reports.
 
-| Entity | Primary Keys | Key Properties |
-| :--- | :--- | :--- |
-| `vehicles` | `id`, `vehicleIdCode` | `registrationNumber`, `brandId`, `status`, `driverAssignmentHistory` |
-| `drivers` | `id`, `driverIdCode` | `name`, `licenseExpiryDate`, `assignedVehicleId`, `documents` |
-| `trips` | `id`, `tripId` | `vehicleId`, `stops`, `startingMeter`, `endingMeter`, `expenses` |
-| `maintenanceRecords` | `id` | `serviceDate`, `parts`, `expenses`, `serviceCenterId` |
-| `accidents` | `id`, `accidentId` | `severityLevelId`, `policeReportFiled`, `estimatedRepairCost` |
-
-### 4. User Interface Requirements
-- **High-Fidelity Interaction**: The module utilizes ShadCN components for a professional, responsive layout.
-- **Analytical Dashboards**: Integrated Recharts components provide visual distributions of Vehicle Status and Monthly Cost Trends.
-- **Physical Output Standards**: The module includes a "Print Driver" system that generates high-fidelity, A4-optimized physical reports for Drivers, Vehicles, Trips, and Accidents.
-
-### 5. Security & Privacy
-- **Identity-Aware Guard**: Access is restricted to users with a verified "Corporate Identity" (Employee profile or Superadmin).
-- **Row-Level Security**: Firestore security rules ensure that authenticated users can only perform authorized operations.
-- **Document Integrity**: Immutability logic prevents the deletion of historical audit logs (Trips/Maintenance) without administrative overrides.
+## 12. Approval Section
+**Confirmed By:** _________________________ (Project Sponsor)  
+**Date:** _________________________  
+**Verified By:** _________________________ (Logistics Head)  
+**Date:** _________________________
