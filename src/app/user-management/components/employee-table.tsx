@@ -76,6 +76,11 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       return departments.find(d => d.id === deptId)?.name || 'N/A';
   }
 
+  const getDesignationName = (designationId?: string) => {
+      if(!designationId || !designations || designations.length === 0) return 'N/A';
+      return designations.find(d => d.id === designationId)?.name || 'N/A';
+  }
+
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
     if (!searchTerm) return employees;
@@ -88,9 +93,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       (emp.employeeType && emp.employeeType.toLowerCase().includes(lowercasedTerm)) ||
       (emp.location && emp.location.toLowerCase().includes(lowercasedTerm)) ||
       (getDepartmentName(emp.departmentId).toLowerCase().includes(lowercasedTerm)) ||
-      (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm))
+      (getSectionName(emp.sectionId).toLowerCase().includes(lowercasedTerm)) ||
+      (getDesignationName(emp.designationId).toLowerCase().includes(lowercasedTerm))
     );
-  }, [employees, searchTerm, sections, departments]);
+  }, [employees, searchTerm, sections, departments, designations]);
 
   const handleAdd = () => {
     setCurrentEmployee(null);
@@ -403,7 +409,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by name, ID, email..."
+            placeholder="Search by name, ID, Location, Dept..."
             className="w-full rounded-lg bg-background pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -453,6 +459,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">SL No.</TableHead>
               <TableHead>Employee</TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Email</TableHead>
@@ -467,12 +474,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
             {!employees ? (
                 Array.from({length: 5}).map((_, i) => (
                     <TableRow key={i}>
-                        <TableCell colSpan={8}><Skeleton className="h-10 w-full" /></TableCell>
+                        <TableCell colSpan={9}><Skeleton className="h-10 w-full" /></TableCell>
                     </TableRow>
                 ))
             ) : filteredEmployees && filteredEmployees.length > 0 ? (
-              filteredEmployees.map((employee) => (
+              filteredEmployees.map((employee, index) => (
                 <TableRow key={employee.id}>
+                  <TableCell className="font-medium text-muted-foreground">{index + 1}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                        {employee.profilePicture ? (
