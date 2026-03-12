@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, User, Calendar as CalendarIcon, Hash, Phone, Mail, UserCheck, 
     CheckCircle2, Clock, Building, Briefcase, MapPin, FileText, KeyRound, 
-    FileSignature, ShieldCheck, Image as ImageIcon, Cpu, Tag, UserSquare2
+    FileSignature, ShieldCheck, ImageIcon, Cpu, Tag, UserSquare2
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -29,7 +29,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
-import { initiateEmailSignUp, useAuth } from '@/firebase';
+import { initiateEmailSignUp, useAuth, recreateUserWithPassword } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 
 
@@ -244,9 +244,16 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                 onSave(dataToSave as any);
             } catch (authError: any) {
                 if (authError.code === 'auth/email-already-in-use') {
-                    // Identity Synchronization Pulse: Allow database creation if Auth identity already exists
-                    onSave(dataToSave as any);
-                    toast({ title: 'Identity Synchronized', description: 'Authentication user existed; database record restored.' });
+                    // Digital Identity Overwrite Protocol:
+                    // If Auth exists, reset the password and restore the registry record.
+                    try {
+                        await recreateUserWithPassword(auth, dataToSave.email!, defaultPassword);
+                        onSave(dataToSave as any);
+                        toast({ title: 'Identity Overwritten', description: 'Authentication user reset with new password; registry restored.' });
+                    } catch (e) {
+                        console.error('Identity overwrite failed:', e);
+                        throw e;
+                    }
                 } else {
                     throw authError;
                 }

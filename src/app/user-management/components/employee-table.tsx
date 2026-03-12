@@ -362,9 +362,16 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     createdCount++;
                 } catch (authError: any) {
                     if (authError.code === 'auth/email-already-in-use') {
-                        // High-Fidelity Identity Synchronization Pulse:
-                        // If Auth exists but Firestore record was deleted, restore the data record.
+                        // Digital Identity Overwrite Protocol: 
+                        // Re-initialize the existing auth user with the new password and restore registry record.
                         const { defaultPassword, ...dataToSave } = item.data;
+                        if (defaultPassword) {
+                            try {
+                                await recreateUserWithPassword(auth, dataToSave.email!, defaultPassword);
+                            } catch (e) {
+                                console.error(`Failed to force reset auth for ${dataToSave.email}`, e);
+                            }
+                        }
                         addDocumentNonBlocking(employeesRef, dataToSave as Omit<Employee, 'id'>);
                         syncedCount++;
                     } else {
