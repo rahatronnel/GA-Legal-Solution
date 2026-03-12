@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { 
     Upload, X, Calendar as CalendarIcon, PlusCircle, Trash2, ChevronsUpDown, Check, 
     File as FileIcon, User, Wrench, Building, Hash, Clock, DollarSign, ListOrdered, Tag, 
-    Layers, Settings, Info, Box, Image as ImageIcon, ShieldCheck, CheckCircle2
+    Layers, Settings, Info, Box, Image as ImageIcon, ShieldCheck, CheckCircle2, Car
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -316,7 +317,7 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
         </div>
 
         <DialogFooter className="flex justify-between w-full pt-4 border-t">
-            <Button variant="outline" onClick={() => prevStep} disabled={step === 1}>Previous</Button>
+            <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 1}>Previous</Button>
             {step < 3 ? (
                 <Button onClick={() => setStep(s => s + 1)}>Continue</Button>
             ) : (
