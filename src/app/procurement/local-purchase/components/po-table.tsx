@@ -274,7 +274,7 @@ export function PurchaseOrderTable() {
   const [selectedPoForMrr, setSelectedPoForMrr] = useState<PurchaseOrder | null>(null);
 
   const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
-  const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+  const isSuperAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
   const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
 
   const filteredPOs = useMemo(() => {

@@ -80,7 +80,7 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
 
     // Hard Rules: Module Partitioning
     if (isMainSuperAdmin) {
-        showProcurement = false;
+        showProcurement = true; // Both admins can now see procurement
         showARS = false;
         showCore = true;
     } else if (isProcurementAdmin) {
@@ -288,9 +288,8 @@ export function AppWrapper() {
   // STRICT SECURITY GATE: Partition Access
   useEffect(() => {
       if (!isUserLoading && user) {
-          if (isMainSuperAdmin && pathname.startsWith('/procurement')) {
-              router.push('/');
-          }
+          // Grant systemadmin@ykk.com access to procurement (handled by showProcurement in ModuleDashboard)
+          // Also allowing main super admin to access procurement if needed
           if (isProcurementAdmin && (pathname.startsWith('/vehicle-management') || pathname.startsWith('/billflow') || pathname.startsWith('/settings') || pathname.startsWith('/user-management'))) {
               router.push('/');
           }

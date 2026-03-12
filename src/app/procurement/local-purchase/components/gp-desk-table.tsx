@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -42,16 +41,20 @@ import { Separator } from '@/components/ui/separator';
 const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in">
-            <DialogHeader>
-                <div className="flex items-center gap-2 text-primary">
-                    <HelpCircle className="h-6 w-6" />
-                    <DialogTitle className="text-xl">GP Desk Operational Guide</DialogTitle>
+        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col animate-dialog-in p-0 overflow-hidden">
+            <div className="bg-primary p-6 text-primary-foreground shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <HelpCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                        <DialogTitle className="text-2xl font-black tracking-tight text-white">GP Desk Operational Guide</DialogTitle>
+                        <DialogDescription className="text-primary-foreground/80 font-medium">Internal workflow for General Purchase (GP) task management and vendor sourcing.</DialogDescription>
+                    </div>
                 </div>
-                <DialogDescription>Internal workflow for General Purchase (GP) task management and vendor sourcing.</DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="flex-grow pr-4 border rounded-md">
-                <div className="space-y-6 p-4">
+            </div>
+            <ScrollArea className="flex-grow">
+                <div className="space-y-6 p-6 pb-32">
                     <section className="space-y-2">
                         <h4 className="font-bold flex items-center gap-2 text-primary"><Info className="h-4 w-4"/> Objective</h4>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -89,8 +92,8 @@ const GPDeskUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChan
                 </div>
                 <ScrollBar orientation="vertical" />
             </ScrollArea>
-            <DialogFooter className="border-t pt-4">
-                <Button onClick={() => onOpenChange(false)}>Dismiss Guide</Button>
+            <DialogFooter className="p-4 border-t shrink-0">
+                <Button onClick={() => onOpenChange(false)} className="w-full font-bold uppercase tracking-widest text-white">Dismiss Guide</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -182,7 +185,7 @@ export function GPDeskTable() {
 
     const roleData = useMemo(() => {
         const settings = orgSettings?.procurementSettings;
-        const superAdmin = user?.email === 'superadmin@galsolution.com';
+        const superAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
 
         if (!settings || !employees || !user) {
             return { isGPOfficer: false, isSuperAdmin: superAdmin, isGPConcern: false, isManager: false };
@@ -404,7 +407,7 @@ export function GPDeskTable() {
                                 const isWaitingForAssignment = isGPManager && !item.gpConcernOfficerId;
 
                                 return (
-                                <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (needsVendorAssignment || needsCsCreation || isWaitingForAssignment) && 'bg-orange-500/5')}>
+                                <TableRow key={item.id} className={cn("hover:bg-muted/30 transition-colors", (needsVendorAssignment || needsCsCreation || isWaitingForAssignment) && 'bg-orange-50/5')}>
                                     <TableCell>
                                         <div className="flex items-center gap-1">
                                             <span className="font-medium">{item.demandNoteNumber}</span>

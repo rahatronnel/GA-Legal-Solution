@@ -420,7 +420,7 @@ export function DemandNoteTable() {
     }, [user, employees]);
 
     const roleData = useMemo(() => {
-        const superAdminCheck = user?.email === 'superadmin@galsolution.com';
+        const superAdminCheck = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
         const settings = orgSettings?.procurementSettings;
         if (!settings || !currentUserEmployee) return { isSuperAdmin: superAdminCheck, isGPOfficer: false, isGPConcern: false, isManager: false, isAnyDeptHead: false };
 

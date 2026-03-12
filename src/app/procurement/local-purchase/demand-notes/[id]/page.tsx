@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -44,7 +45,7 @@ import { Input } from '@/components/ui/input';
 
 const InfoItem: React.FC<{ icon: React.ElementType, label: string, value: React.ReactNode, fullWidth?: boolean }> = ({ icon: Icon, label, value, fullWidth }) => (
     <div className={`space-y-1 ${fullWidth ? 'col-span-2' : ''}`}>
-        <div className="text-sm font-medium text-muted-foreground flex items-center"><Icon className="h-4 w-4 mr-2" />{label}</div>
+        <div className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Icon className="h-4 w-4" />{label}</div>
         <div className="text-base font-semibold pl-6">{value || 'N/A'}</div>
     </div>
 );
@@ -193,7 +194,7 @@ function DemandNoteProfileContent() {
         return employees.find(e => e.id === user.uid) || employees.find(e => e.email === user.email);
     }, [user, employees]);
 
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
     const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === currentUserEmployee?.id;
     const isAssignedGPConcern = demandNote?.gpConcernOfficerId === currentUserEmployee?.id;
     const isReadOnly = !isSuperAdmin && !isGPOfficer && !isAssignedGPConcern;
@@ -267,7 +268,7 @@ function DemandNoteProfileContent() {
     }
     
     const isPendingApproval = demandNote.approvalStatus !== 0 && demandNote.approvalStatus !== 1;
-    const canApprove = user?.email === 'superadmin@galsolution.com' || (currentUserEmployee && demandNote.currentApproverId === currentUserEmployee.id);
+    const canApprove = isSuperAdmin || (currentUserEmployee && demandNote.currentApproverId === currentUserEmployee.id);
 
     return (
       <TooltipProvider>

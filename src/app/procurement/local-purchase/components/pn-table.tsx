@@ -30,7 +30,7 @@ export function PaymentNoteTable() {
     const [selectedPnForStatus, setSelectedPnForStatus] = useState<any>(null);
 
     const currentUserEmployee = useMemo(() => employees?.find(e => e.email === user?.email), [user, employees]);
-    const isSuperAdmin = user?.email === 'superadmin@galsolution.com';
+    const isSuperAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
 
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -126,7 +126,7 @@ export function PaymentNoteTable() {
                                     const isWaitingForApproval = currentUserEmployee && pn.currentApproverId === currentUserEmployee.id && pn.approvalStatus !== 1 && pn.approvalStatus !== 0;
 
                                     return (
-                                        <TableRow key={pn.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForApproval && 'bg-orange-500/5')}>
+                                        <TableRow key={pn.id} className={cn("hover:bg-muted/30 transition-colors", isWaitingForApproval && 'bg-orange-50/5')}>
                                             <TableCell className="font-bold text-xs">
                                                 <div className="flex items-center gap-1 group/pn">
                                                     <span>{pn.pnNumber}</span>
@@ -204,7 +204,7 @@ export function PaymentNoteTable() {
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/full-print?mode=download`, '_blank')}>
-                                                                        <Download className="h-4 w-4" />
+                                                                        <Download className="mr-2 h-4 w-4" />
                                                                     </Button>
                                                                 </TooltipTrigger>
                                                                 <TooltipContent>Download Full-Set PDF</TooltipContent>

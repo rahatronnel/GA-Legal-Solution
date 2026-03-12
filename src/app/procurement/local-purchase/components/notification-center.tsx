@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -60,6 +59,7 @@ export function NotificationCenter() {
         const list: Task[] = [];
         const uid = currentUserEmployee.id;
         const now = new Date();
+        const isSuperAdmin = user?.email === 'superadmin@galsolution.com' || user?.email === 'systemadmin@ykk.com';
 
         const calculateReminders = (timestamp: string) => {
             const hoursPending = differenceInHours(now, parseISO(timestamp));
@@ -96,7 +96,7 @@ export function NotificationCenter() {
             }
 
             // 13. DN Fully Authorized -> Assign GP Concern (GP Officer Task)
-            const isGPOfficer = orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid;
+            const isGPOfficer = (orgSettings?.procurementSettings?.generalPurchaseOfficerId === uid) || isSuperAdmin;
             if (dn.approvalStatus === 1 && !dn.gpConcernOfficerId && isGPOfficer) {
                 const lastAppr = dn.approvalHistory?.[dn.approvalHistory.length - 1]?.timestamp || dn.entryDate;
                 const r = calculateReminders(lastAppr);
@@ -291,7 +291,7 @@ export function NotificationCenter() {
         });
 
         return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }, [currentUserEmployee, demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings, reminderThreshold]);
+    }, [currentUserEmployee, user, demandNotes, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings, reminderThreshold]);
 
     const unacknowledgedTasks = useMemo(() => {
         if (!acknowledgedTasks) return tasks;
