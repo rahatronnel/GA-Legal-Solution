@@ -192,6 +192,24 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
     XLSX.writeFile(wb, 'EmployeeTemplate.xlsx');
   };
 
+  const handleDownloadYKKTemplate = () => {
+    const ws = XLSX.utils.json_to_sheet([{ 
+      ID: '1001',
+      Name: 'John Doe',
+      Designation: 'Manager',
+      'Employee Type': 'Executive',
+      'Department name': 'Operations',
+      'Process Code': 'PC-001',
+      'Process Code Wise Section': 'Sourcing',
+      Gender: 'Male',
+      Location: 'Dhaka Office',
+      Password: 'password123'
+    }]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'YKK_Template');
+    XLSX.writeFile(wb, 'YKK_Employee_Template.xlsx');
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && employeesRef) {
@@ -263,18 +281,24 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
           const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
           const processed = json.map(item => {
-              // High-Fidelity Lookup Engine: Resolve IDs from Names (Case-Insensitive)
-              const deptName = String(item['Department name'] || '').trim().toLowerCase();
-              const sectName = String(item['Process Code Wise Section'] || '').trim().toLowerCase();
-              const desigName = String(item['Designation'] || '').trim().toLowerCase();
-
-              const dept = departments.find(d => d.name.toLowerCase() === deptName);
-              const sect = sections.find(s => s.name.toLowerCase() === sectName);
-              const desig = designations.find(d => d.name.toLowerCase() === desigName);
-              
-              const idStr = String(item['ID'] || '').trim();
+              // High-Fidelity Header Resolve Logic (Support both YKK and normalized keys)
+              const idStr = String(item['ID'] || item['id'] || '').trim();
               if (!idStr) return null;
 
+              const name = String(item['Name'] || item['name'] || '').trim();
+              const desigNameStr = String(item['Designation'] || item['designation'] || '').trim().toLowerCase();
+              const empTypeStr = String(item['Employee Type'] || item['employee type'] || '').trim();
+              const deptNameStr = String(item['Department name'] || item['department name'] || '').trim().toLowerCase();
+              const procCodeStr = String(item['Process Code'] || item['process code'] || '').trim();
+              const sectNameStr = String(item['Process Code Wise Section'] || item['process code wise section'] || '').trim().toLowerCase();
+              const genderStr = String(item['Gender'] || item['gender'] || '').trim();
+              const locationStr = String(item['Location'] || item['location'] || '').trim();
+              const passwordStr = String(item['Password'] || item['password'] || '').trim();
+
+              const dept = departments.find(d => d.name.toLowerCase() === deptNameStr);
+              const sect = sections.find(s => s.name.toLowerCase() === sectNameStr);
+              const desig = designations.find(d => d.name.toLowerCase() === desigNameStr);
+              
               // Security Handshake: Derive corporate login email from ID
               const loginEmail = idStr.includes('@') ? idStr : `${idStr}@ykk-erp.com`;
               
@@ -282,20 +306,19 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
               
               const empData: Partial<Employee> = {
                   userIdCode: idStr,
-                  fullName: String(item['Name'] || '').trim(),
+                  fullName: name,
                   email: loginEmail,
                   username: idStr,
                   role: 'Viewer', // Organizational Default
                   status: 'Active', // Organizational Default
-                  employeeType: (String(item['Employee Type'] || '').trim() || '') as any,
+                  employeeType: empTypeStr as any,
                   departmentId: dept?.id || '',
                   sectionId: sect?.id || '',
                   designationId: desig?.id || '',
-                  processCode: String(item['Process Code'] || '').trim(),
-                  gender: (String(item['Gender'] || '').trim() || '') as any,
-                  location: (String(item['Location'] || '').trim() || '') as any,
-                  defaultPassword: String(item['Password'] || '').trim(),
-                  // Optional Null-Pulse
+                  processCode: procCodeStr,
+                  gender: genderStr as any,
+                  location: locationStr as any,
+                  defaultPassword: passwordStr,
                   mobileNumber: '',
                   joiningDate: '',
                   address: '',
@@ -340,7 +363,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     toast({ variant: 'destructive', title: `Failed to create user ${item.data.email}`, description: authError.message });
                 }
             } else {
-                 toast({ variant: 'destructive', title: `Skipping user ${item.data.email}`, description: 'New users require a valid email and a password of at least 6 characters in the Excel file.' });
+                 console.warn(`Skipping user creation for ${item.data.email} due to missing data or short password.`);
             }
         } else if (item.original?.id) {
             const { defaultPassword, ...dataToUpdate } = item.data; 
@@ -349,7 +372,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
         }
     }
     
-    toast({ title: 'Upload Complete', description: `${createdCount} employee(s) created, ${updatedCount} employee(s) updated.` });
+    toast({ title: 'Upload Handshake Complete', description: `${createdCount} identities registered, ${updatedCount} records synchronized.` });
     setIsUploadConfirmOpen(false);
     setProcessedUpload([]);
   };
@@ -376,10 +399,13 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
             </label>
             <Input id="upload-excel-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
 
-            <label htmlFor="upload-ykk-employees" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 h-10 px-4 py-2 cursor-pointer font-bold animate-pulse">
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Upload YKK Format
-            </label>
-            <Input id="upload-ykk-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleYKKFileUpload} />
+            <div className="flex gap-1 items-center bg-primary/5 p-1 rounded-lg border-2 border-primary/10">
+                <Button variant="ghost" size="sm" onClick={handleDownloadYKKTemplate} className="h-8 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10"><Download className="mr-1 h-3 w-3"/> YKK Template</Button>
+                <label htmlFor="upload-ykk-employees" className="inline-flex items-center justify-center rounded-md text-[10px] font-black uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 cursor-pointer transition-all active:scale-95 shadow-lg shadow-primary/20">
+                    <FileSpreadsheet className="mr-1.5 h-3 w-3" /> Upload YKK Format
+                </label>
+                <Input id="upload-ykk-employees" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleYKKFileUpload} />
+            </div>
 
              <AlertDialog open={isDeleteAllConfirmOpen} onOpenChange={setIsDeleteAllConfirmOpen}>
                 <AlertDialogTrigger asChild>
@@ -581,7 +607,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     <h4 className="font-semibold">New Employees to Create ({processedUpload.filter(p => p.isNew).length})</h4>
                     <ScrollArea className="flex-grow border rounded-md p-2">
                         <ul className="list-disc pl-5">
-                        {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i} className="text-xs">{p.data.fullName} ({p.data.email})</li>)}
+                        {processedUpload.filter(p => p.isNew).map((p, i) => <li key={i} className="text-xs font-bold text-primary">{p.data.fullName} ({p.data.email})</li>)}
                         </ul>
                     </ScrollArea>
                 </div>
@@ -596,7 +622,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={() => setIsUploadConfirmOpen(false)}>Cancel</Button>
-                <Button onClick={confirmUpload}>Confirm</Button>
+                <Button onClick={confirmUpload} className="bg-primary font-bold shadow-lg shadow-primary/20">Confirm & Synchronize Identities</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
