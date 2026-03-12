@@ -194,6 +194,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
 
   const handleDownloadYKKTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([{ 
+      Location: 'Dhaka Office',
       ID: '1001',
       Name: 'John Doe',
       Designation: 'Manager',
@@ -202,7 +203,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
       'Process Code': 'PC-001',
       'Process Code Wise Section': 'Sourcing',
       Gender: 'Male',
-      Location: 'Dhaka Office',
       Password: 'password123'
     }]);
     const wb = XLSX.utils.book_new();
