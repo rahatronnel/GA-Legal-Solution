@@ -239,12 +239,22 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
         if (isEditing && employee.id) {
             onSave(dataToSave as any, employee.id);
         } else if (defaultPassword) {
-            await initiateEmailSignUp(auth, dataToSave.email!, defaultPassword);
-            onSave(dataToSave as any);
+            try {
+                await initiateEmailSignUp(auth, dataToSave.email!, defaultPassword);
+                onSave(dataToSave as any);
+            } catch (authError: any) {
+                if (authError.code === 'auth/email-already-in-use') {
+                    // Identity Synchronization Pulse: Allow database creation if Auth identity already exists
+                    onSave(dataToSave as any);
+                    toast({ title: 'Identity Synchronized', description: 'Authentication user existed; database record restored.' });
+                } else {
+                    throw authError;
+                }
+            }
         }
         setIsOpen(false);
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Operation Failed' });
+        toast({ variant: 'destructive', title: 'Operation Failed', description: error.message });
     }
   };
 

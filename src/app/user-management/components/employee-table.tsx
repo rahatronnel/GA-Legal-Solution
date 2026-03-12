@@ -350,6 +350,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
     
     let createdCount = 0;
     let updatedCount = 0;
+    let syncedCount = 0;
 
     for (const item of processedUpload) {
         if (item.isNew) {
@@ -360,7 +361,15 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     addDocumentNonBlocking(employeesRef, dataToSave as Omit<Employee, 'id'>);
                     createdCount++;
                 } catch (authError: any) {
-                    toast({ variant: 'destructive', title: `Failed to create user ${item.data.email}`, description: authError.message });
+                    if (authError.code === 'auth/email-already-in-use') {
+                        // High-Fidelity Identity Synchronization Pulse:
+                        // If Auth exists but Firestore record was deleted, restore the data record.
+                        const { defaultPassword, ...dataToSave } = item.data;
+                        addDocumentNonBlocking(employeesRef, dataToSave as Omit<Employee, 'id'>);
+                        syncedCount++;
+                    } else {
+                        toast({ variant: 'destructive', title: `Failed to create user ${item.data.email}`, description: authError.message });
+                    }
                 }
             } else {
                  console.warn(`Skipping user creation for ${item.data.email} due to missing data or short password.`);
@@ -372,7 +381,10 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
         }
     }
     
-    toast({ title: 'Upload Handshake Complete', description: `${createdCount} identities registered, ${updatedCount} records synchronized.` });
+    toast({ 
+        title: 'Upload Handshake Complete', 
+        description: `${createdCount} identities registered, ${syncedCount} identities synchronized, ${updatedCount} records updated.` 
+    });
     setIsUploadConfirmOpen(false);
     setProcessedUpload([]);
   };
