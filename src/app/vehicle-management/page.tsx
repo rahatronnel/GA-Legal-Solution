@@ -1,12 +1,13 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleHeader } from '@/app/components/module-header';
 import { 
     LayoutDashboard, Route, Car, Users, Wrench, AlertTriangle, 
-    FileBarChart, Database, Tag, MapPin, Hash, Settings
+    FileBarChart, Database, Tag, MapPin, Hash, Settings, Workflow
 } from 'lucide-react';
 
 import { 
@@ -40,11 +41,27 @@ import { MaintenanceExpenseTypeTable } from "./components/maintenance-expense-ty
 import { AccidentTypeTable } from "./components/accident-type-table";
 import { SeverityLevelTable } from "./components/severity-level-table";
 import { FaultStatusTable } from "./components/fault-status-table";
+import { VehicleBlueprintDialog } from './components/vehicle-blueprint-dialog';
+import { Button } from '@/components/ui/button';
 
 export default function VehicleManagementPage() {
+  const [isBlueprintOpen, setIsBlueprintOpen] = useState(false);
+
   return (
     <div className="space-y-4">
-        <ModuleHeader />
+        <div className="flex justify-between items-center">
+            <ModuleHeader />
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="mb-4 text-primary border-primary hover:bg-primary/5 font-black uppercase tracking-widest text-[10px] gap-2 shadow-lg shadow-primary/10"
+                onClick={() => setIsBlueprintOpen(true)}
+            >
+                <Workflow className="h-4 w-4" /> 
+                Operational Blueprint
+            </Button>
+        </div>
+
         <Tabs defaultValue="dashboard" className="w-full">
             <TabsList className="grid w-full grid-cols-8 h-auto p-1 bg-muted/50 rounded-xl">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2 py-3"><LayoutDashboard className="h-4 w-4" /> <span className="hidden md:inline">Dashboard</span></TabsTrigger>
@@ -201,6 +218,8 @@ export default function VehicleManagementPage() {
                 </FleetMasterDataProvider>
             </TabsContent>
         </Tabs>
+
+        <VehicleBlueprintDialog isOpen={isBlueprintOpen} onOpenChange={setIsBlueprintOpen} />
     </div>
   );
 }
