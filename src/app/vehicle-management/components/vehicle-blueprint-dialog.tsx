@@ -30,7 +30,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Lock, 
     Truck, BellRing, Database, ArrowRight, Play, CheckCircle, 
     Briefcase, ChevronDown, Activity, Scale, ShieldAlert, Cpu, 
-    ClipboardCheck, Car, Wrench, AlertTriangle, Milestone, PlusCircle
+    ClipboardCheck, Car, Wrench, AlertTriangle, Milestone, PlusCircle, Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -113,6 +113,19 @@ const FlowDiamond = ({ label, color }: any) => (
 const FlowArrow = () => (
     <div className="flex items-center justify-center w-12 shrink-0">
         <ArrowRight className="h-6 w-6 text-white/40 animate-pulse" />
+    </div>
+);
+
+const OrganogramNode = ({ label, sub, colorClass }: { label: string, sub: string, colorClass: string }) => (
+    <div className={cn("p-2 border rounded-lg text-center shadow-sm w-[110px] shrink-0 transition-transform hover:scale-105", colorClass)}>
+        <p className="text-[8px] font-black uppercase leading-none truncate">{label}</p>
+        <p className="text-[7px] font-bold opacity-70 mt-1 truncate">{sub}</p>
+    </div>
+);
+
+const OrganogramConnector = ({ vertical = false }: { vertical?: boolean }) => (
+    <div className={cn("flex items-center justify-center opacity-30", vertical ? "h-4 w-full" : "w-4 h-full")}>
+        {vertical ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
     </div>
 );
 
