@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -31,7 +30,7 @@ import {
     History as HistoryIcon, Layers, UserPlus, Tag, Lock, 
     Truck, BellRing, Database, ArrowRight, Play, CheckCircle, 
     Briefcase, ChevronDown, Activity, Scale, ShieldAlert, Cpu, 
-    ClipboardCheck, Car, Wrench, AlertTriangle, Milestone
+    ClipboardCheck, Car, Wrench, AlertTriangle, Milestone, PlusCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -152,7 +151,7 @@ export function VehicleBlueprintDialog({
                                 <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><HistoryIcon className="h-3 w-3"/> Lifecycle</TabsTrigger>
                                 <TabsTrigger value="onboarding" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><PlusCircle className="h-3 w-3"/> 1. Registry</TabsTrigger>
                                 <TabsTrigger value="assignment" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><Users className="h-3 w-3"/> 2. Pairing</TabsTrigger>
-                                <TabsTrigger value="trips" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><RouteIcon className="h-3 w-3"/> 3. Logistics</TabsTrigger>
+                                <TabsTrigger value="trips" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><Milestone className="h-3 w-3"/> 3. Logistics</TabsTrigger>
                                 <TabsTrigger value="maintenance" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><Wrench className="h-3 w-3"/> 4. Technical</TabsTrigger>
                                 <TabsTrigger value="accidents" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><AlertTriangle className="h-3 w-3"/> 5. Governance</TabsTrigger>
                                 <TabsTrigger value="access" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-2 font-black uppercase text-[10px] tracking-widest gap-1.5 shrink-0"><Lock className="h-3 w-3"/> Security</TabsTrigger>
