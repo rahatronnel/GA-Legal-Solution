@@ -43,7 +43,7 @@ export function MaintenanceExpenseTypeTable() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [currentExpenseType, setCurrentExpenseType] = useState<Partial<MaintenanceExpenseType> | null>(null);
+  const [currentItem, setCurrentItem] = useState<Partial<MaintenanceExpenseType> | null>(null);
   const [expenseTypeData, setExpenseTypeData] = useState({ name: '', code: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -64,7 +64,7 @@ export function MaintenanceExpenseTypeTable() {
   };
 
   const resetForm = () => {
-    setCurrentExpenseType(null);
+    setCurrentItem(null);
     setExpenseTypeData({ name: '', code: '' });
   }
 
@@ -74,19 +74,19 @@ export function MaintenanceExpenseTypeTable() {
   };
 
   const handleEdit = (expenseType: MaintenanceExpenseType) => {
-    setCurrentExpenseType(expenseType);
+    setCurrentItem(expenseType);
     setExpenseTypeData({ name: expenseType.name, code: expenseType.code });
     setIsDialogOpen(true);
   };
 
   const handleDelete = (expenseType: MaintenanceExpenseType) => {
-    setCurrentExpenseType(expenseType);
+    setCurrentItem(expenseType);
     setIsDeleteConfirmOpen(true);
   };
 
   const confirmDelete = () => {
-    if (currentExpenseType?.id && expenseTypesRef) {
-        deleteDocumentNonBlocking(doc(expenseTypesRef, currentExpenseType.id));
+    if (currentItem?.id && expenseTypesRef) {
+        deleteDocumentNonBlocking(doc(expenseTypesRef, currentItem.id));
         toast({ title: 'Success', description: 'Maintenance expense type deleted successfully.' });
     }
     setIsDeleteConfirmOpen(false);
@@ -100,8 +100,8 @@ export function MaintenanceExpenseTypeTable() {
     }
     if (!expenseTypesRef) return;
 
-    if (currentExpenseType?.id) {
-      setDocumentNonBlocking(doc(expenseTypesRef, currentExpenseType.id), expenseTypeData, { merge: true });
+    if (currentItem?.id) {
+      setDocumentNonBlocking(doc(expenseTypesRef, currentItem.id), expenseTypeData, { merge: true });
       toast({ title: 'Success', description: 'Maintenance expense type updated successfully.' });
     } else {
       addDocumentNonBlocking(expenseTypesRef, expenseTypeData);
@@ -266,7 +266,7 @@ export function MaintenanceExpenseTypeTable() {
           <DialogHeader>
             <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the expense type "{currentExpenseType?.name}".
+              This action cannot be undone. This will permanently delete the expense type "{currentItem?.name}".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
