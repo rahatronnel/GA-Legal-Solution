@@ -43,7 +43,7 @@ export function MaintenanceTypeTable() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState<Partial<MaintenanceType> | null>(null);
+  const [currentMaintenanceType, setCurrentMaintenanceType] = useState<Partial<MaintenanceType> | null>(null);
   const [maintenanceTypeData, setMaintenanceTypeData] = useState({ name: '', code: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
