@@ -1,4 +1,4 @@
-git gi ori# Firebase Studio
+git giori# Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
 

@@ -275,17 +275,42 @@ export function MaintenanceEntryForm({ isOpen, setIsOpen, onSave, record, employ
               <div className="space-y-6">
                 <div className="space-y-4">
                     <div className="flex justify-between items-center"><h3 className="font-semibold text-lg flex items-center gap-2"><Layers className="h-5 w-5 text-primary" /> Step 2: Parts & Associated Costs</h3><Button variant="outline" size="sm" onClick={addPart}><PlusCircle className="mr-2 h-4 w-4"/>Add Part</Button></div>
+                    
+                    {parts.length > 0 && (
+                        <div className="hidden md:grid grid-cols-6 gap-2 px-3 mb-[-12px] text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            <div>Part Name</div>
+                            <div>Unit Price</div>
+                            <div>Quantity</div>
+                            <div className="col-span-2">Warranty / Validity</div>
+                            <div className="text-right">Action</div>
+                        </div>
+                    )}
+
                     <div className="space-y-3">
                         {parts.map((part) => (
                             <div key={part.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center p-3 rounded-md border bg-primary/5">
-                                <Select value={part.partId} onValueChange={(v) => updatePart(part.id, 'partId', v)}>
-                                    <SelectTrigger className="h-8"><SelectValue placeholder="Part Name"/></SelectTrigger>
-                                    <SelectContent>{allParts.map((ap: PartType) => <SelectItem key={ap.id} value={ap.id}>{ap.name}</SelectItem>)}</SelectContent>
-                                </Select>
-                                <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} className="h-8" />
-                                <Input placeholder="Qty" type="number" value={part.quantity} onChange={(e) => updatePart(part.id, 'quantity', parseInt(e.target.value) || 0)} className="h-8" />
-                                <Input placeholder="Warranty" value={part.warranty} onChange={(e) => updatePart(part.id, 'warranty', e.target.value)} className="h-8 md:col-span-2" />
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive ml-auto" onClick={() => setParts(p => p.filter(x => x.id !== part.id))}><Trash2 className="h-4 w-4"/></Button>
+                                <div className="space-y-1">
+                                    <Label className="md:hidden text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Select Part</Label>
+                                    <Select value={part.partId} onValueChange={(v) => updatePart(part.id, 'partId', v)}>
+                                        <SelectTrigger className="h-8"><SelectValue placeholder="Part Name"/></SelectTrigger>
+                                        <SelectContent>{allParts.map((ap: PartType) => <SelectItem key={ap.id} value={ap.id}>{ap.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="md:hidden text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Price</Label>
+                                    <Input placeholder="Price" type="number" value={part.price} onChange={(e) => updatePart(part.id, 'price', parseFloat(e.target.value) || 0)} className="h-8" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="md:hidden text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Qty</Label>
+                                    <Input placeholder="Qty" type="number" value={part.quantity} onChange={(e) => updatePart(part.id, 'quantity', parseInt(e.target.value) || 0)} className="h-8" />
+                                </div>
+                                <div className="space-y-1 md:col-span-2">
+                                    <Label className="md:hidden text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Warranty</Label>
+                                    <Input placeholder="Warranty" value={part.warranty} onChange={(e) => updatePart(part.id, 'warranty', e.target.value)} className="h-8" />
+                                </div>
+                                <div className="flex justify-end pt-2 md:pt-0">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setParts(p => p.filter(x => x.id !== part.id))}><Trash2 className="h-4 w-4"/></Button>
+                                </div>
                             </div>
                         ))}
                     </div>
