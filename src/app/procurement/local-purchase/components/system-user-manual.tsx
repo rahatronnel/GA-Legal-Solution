@@ -20,7 +20,7 @@ import {
     Wallet, ChevronRight, Info, CheckCircle2, UserPlus, Users, 
     DollarSign, Gavel, Truck, ShieldCheck, ClipboardCheck, History,
     Search, BellRing, Printer, Download, ArrowRight, Lightbulb, 
-    AlertTriangle, Cpu, ListOrdered, Activity, Upload
+    AlertTriangle, Cpu, ListOrdered, Activity, Upload, Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
