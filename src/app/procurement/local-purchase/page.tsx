@@ -25,7 +25,7 @@ import { PaymentNoteTable } from './components/pn-table';
 import { 
     FileText, Briefcase, BarChart2, Package, 
     Database, Settings, History, X, Workflow, Wallet, Activity,
-    ShoppingCart, Home, User as UserIcon, LogOut
+    ShoppingCart, Home, User as UserIcon, LogOut, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -33,6 +33,7 @@ import { UserAuditReport } from './components/user-audit-report';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { BlueprintDialog } from './components/blueprint-dialog';
+import { SystemUserManual } from './components/system-user-manual';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -99,6 +100,7 @@ function LocalPurchaseContent() {
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isBlueprintOpen, setIsBlueprintOpen] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
 
   const [hoveredPipelineIndex, setHoveredPipelineIndex] = useState<number | null>(null);
   const [hoveredUtilityIndex, setHoveredUtilityIndex] = useState<number | null>(null);
@@ -125,8 +127,8 @@ function LocalPurchaseContent() {
   const activePipelineIndex = pipelineTabs.indexOf(activeTab);
   const displayPipelineIndex = hoveredPipelineIndex !== null ? hoveredPipelineIndex : (activePipelineIndex !== -1 ? activePipelineIndex : 0);
 
-  const utilityTabs = ['blueprint', 'tracker', 'audit', 'master-data', 'settings'];
-  const activeUtilityIndex = activeTab === 'master-data' ? 3 : (activeTab === 'settings' ? 4 : -1);
+  const utilityTabs = ['manual', 'blueprint', 'tracker', 'audit', 'master-data', 'settings'];
+  const activeUtilityIndex = activeTab === 'master-data' ? 4 : (activeTab === 'settings' ? 5 : -1);
   const displayUtilityIndex = hoveredUtilityIndex !== null ? hoveredUtilityIndex : (activeUtilityIndex !== -1 ? activeUtilityIndex : null);
 
   return (
@@ -206,11 +208,12 @@ function LocalPurchaseContent() {
                         style={{ left: `calc(1px + ${displayUtilityIndex * 34}px)` }}
                     />
                 )}
-                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(0)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsBlueprintOpen(true)}><Workflow className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Operational Blueprint</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(1)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsTrackerOpen(true)}><History className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Workflow Tracker</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(2)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsAuditOpen(true)}><Activity className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Performance Analytics</TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(3)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'master-data' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('master-data')}><Database className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Master Registry</TooltipContent></Tooltip>
-                {isSuperAdmin && <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(4)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'settings' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('settings')}><Settings className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Admin Settings</TooltipContent></Tooltip>}
+                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(0)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsManualOpen(true)}><BookOpen className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>System User Manual</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(1)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsBlueprintOpen(true)}><Workflow className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Operational Blueprint</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(2)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsTrackerOpen(true)}><History className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Workflow Tracker</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(3)} variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:text-white transition-all z-10" onClick={() => setIsAuditOpen(true)}><Activity className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Performance Analytics</TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(4)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'master-data' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('master-data')}><Database className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Master Registry</TooltipContent></Tooltip>
+                {isSuperAdmin && <Tooltip><TooltipTrigger asChild><Button onMouseEnter={() => setHoveredUtilityIndex(5)} variant="ghost" size="icon" className={cn("h-8 w-8 rounded-full transition-all z-10", activeTab === 'settings' ? "text-white" : "hover:text-white")} onClick={() => handleTabChange('settings')}><Settings className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Admin Settings</TooltipContent></Tooltip>}
             </div>
             <div className="relative group ml-2 scale-110">
                 <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full animate-pulse opacity-50" />
@@ -263,6 +266,7 @@ function LocalPurchaseContent() {
       <Dialog open={isTrackerOpen} onOpenChange={setIsTrackerOpen}><DialogContent className="sm:max-w-[95vw] h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl rounded-3xl"><div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0"><div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0"><div><DialogTitle className="text-2xl font-black text-primary">Organizational Workflow Tracker</DialogTitle><DialogDescription className="font-bold">Comprehensive audit trail and lifecycle visibility.</DialogDescription></div><Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsTrackerOpen(false)}><X className="h-5 w-5" /></Button></div><div className="flex-grow min-h-0"><WorkflowTracker /></div></div></DialogContent></Dialog>
       <Dialog open={isAuditOpen} onOpenChange={setIsAuditOpen}><DialogContent className="sm:max-w-[98vw] h-[80vh] flex flex-col p-0 overflow-hidden shadow-2xl rounded-3xl"><div className="p-6 flex-grow overflow-hidden flex flex-col min-h-0"><div className="flex justify-between items-center mb-4 border-b pb-4 shrink-0"><div><DialogTitle className="text-2xl font-black text-primary uppercase tracking-tighter">Personnel Performance Analytics</DialogTitle><DialogDescription className="font-bold text-destructive">Diagnostic view of organizational efficiency.</DialogDescription></div><Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAuditOpen(false)}><X className="h-5 w-5" /></Button></div><div className="flex-grow min-h-0"><UserAuditReport /></div></div></DialogContent></Dialog>
       <BlueprintDialog isOpen={isBlueprintOpen} onOpenChange={setIsBlueprintOpen} />
+      <SystemUserManual isOpen={isManualOpen} onOpenChange={setIsManualOpen} />
     </div>
     </TooltipProvider>
   );
