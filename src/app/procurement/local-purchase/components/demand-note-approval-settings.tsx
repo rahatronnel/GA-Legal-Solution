@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -11,6 +10,7 @@ import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Employee } from '@/app/user-management/components/employee-entry-form';
 import type { Section } from '@/app/user-management/components/section-table';
+import type { Department } from '@/app/user-management/components/department-table';
 import { useProcurement } from './procurement-provider';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -132,7 +132,7 @@ const MultiSelectPopover: React.FC<{
 export function DemandNoteApprovalSettings() {
     const { toast } = useToast();
     const firestore = useFirestore();
-    const { employees, sections, orgSettings, isLoading } = useProcurement();
+    const { employees, departments, orgSettings, isLoading } = useProcurement();
 
     const settingsDocRef = useMemo(() => firestore ? doc(firestore, 'settings', 'organization') : null, [firestore]);
 
@@ -258,22 +258,22 @@ export function DemandNoteApprovalSettings() {
                 <CardHeader>
                     <CardTitle>Demand Note Approval Roles</CardTitle>
                     <CardDescription>
-                        Assign department heads, advisors, and key roles for the procurement approval process.
+                        Assign department heads, advisors, and key roles based on Corporate Departments.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
                     <div>
                         <h3 className="text-lg font-medium mb-4">Department Heads & Advisors</h3>
                         <div className="space-y-4">
-                            {(sections || []).map(section => (
-                                <div key={section.id} className="grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] items-center gap-4 p-3 border rounded-lg">
-                                    <Label className="font-semibold">{section.name}</Label>
+                            {(departments || []).map(dept => (
+                                <div key={dept.id} className="grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] items-center gap-4 p-3 border rounded-lg">
+                                    <Label className="font-semibold">{dept.name}</Label>
                                     <div className="space-y-1">
                                         <Label className="text-xs text-muted-foreground">Department Head</Label>
                                         <Combobox
                                             items={employees || []}
-                                            value={departmentHeads.find(dh => dh.sectionId === section.id)?.headId || ''}
-                                            onSelect={(employeeId) => handleDeptHeadChange(section.id, 'headId', employeeId)}
+                                            value={departmentHeads.find(dh => dh.sectionId === dept.id)?.headId || ''}
+                                            onSelect={(employeeId) => handleDeptHeadChange(dept.id, 'headId', employeeId)}
                                             placeholder="Select Head..."
                                         />
                                     </div>
@@ -281,8 +281,8 @@ export function DemandNoteApprovalSettings() {
                                         <Label className="text-xs text-muted-foreground">Technical Advisor</Label>
                                         <Combobox
                                             items={employees || []}
-                                            value={departmentHeads.find(dh => dh.sectionId === section.id)?.technicalAdvisorId || ''}
-                                            onSelect={(employeeId) => handleDeptHeadChange(section.id, 'technicalAdvisorId', employeeId)}
+                                            value={departmentHeads.find(dh => dh.sectionId === dept.id)?.technicalAdvisorId || ''}
+                                            onSelect={(employeeId) => handleDeptHeadChange(dept.id, 'technicalAdvisorId', employeeId)}
                                             placeholder="Select Advisor..."
                                         />
                                     </div>
