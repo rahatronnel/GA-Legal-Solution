@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
@@ -101,15 +102,13 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
                     />
                 </div>
                 <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" className="text-white" asChild>
+                        <Link href="/user-management"><Users /></Link>
+                    </Button>
                     {!isProcurementAdmin && (
-                        <>
-                            <Button variant="ghost" size="icon" className="text-white" asChild>
-                                <Link href="/user-management"><Users /></Link>
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-white" asChild>
-                                <Link href="/settings"><Settings /></Link>
-                            </Button>
-                        </>
+                        <Button variant="ghost" size="icon" className="text-white" asChild>
+                            <Link href="/settings"><Settings /></Link>
+                        </Button>
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -288,9 +287,8 @@ export function AppWrapper() {
   // STRICT SECURITY GATE: Partition Access
   useEffect(() => {
       if (!isUserLoading && user) {
-          // Grant systemadmin@ykk.com access to procurement (handled by showProcurement in ModuleDashboard)
-          // Also allowing main super admin to access procurement if needed
-          if (isProcurementAdmin && (pathname.startsWith('/vehicle-management') || pathname.startsWith('/billflow') || pathname.startsWith('/settings') || pathname.startsWith('/user-management'))) {
+          // Grant systemadmin@ykk.com access to procurement and user management
+          if (isProcurementAdmin && (pathname.startsWith('/vehicle-management') || pathname.startsWith('/billflow') || pathname.startsWith('/settings'))) {
               router.push('/');
           }
       }

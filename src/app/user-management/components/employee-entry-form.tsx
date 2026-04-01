@@ -29,6 +29,7 @@ import { cn, imageToDataUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Designation } from './designation-table';
 import type { Section } from './section-table';
+import type { Department } from './department-table';
 import { initiateEmailSignUp, useAuth, recreateUserWithPassword } from '@/firebase';
 import { Separator } from '@/components/ui/separator';
 
@@ -74,6 +75,7 @@ const initialEmployeeData: Omit<Employee, 'id'> = {
   username: '',
   departmentId: '',
   designationId: '',
+  sectionId: '',
   joiningDate: '',
   address: '',
   remarks: '',
@@ -93,9 +95,10 @@ interface EmployeeEntryFormProps {
   employee: Partial<Employee> | null;
   sections: Section[];
   designations: Designation[];
+  departments: Department[];
 }
 
-export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, sections, designations }: EmployeeEntryFormProps) {
+export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, sections, designations, departments }: EmployeeEntryFormProps) {
   const auth = useAuth();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -203,7 +206,7 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
   const validateStep = (currentStep: number) => {
     switch(currentStep) {
       case 1:
-        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.role && employeeData.status && employeeData.email && employeeData.employeeType && employeeData.location;
+        return employeeData.userIdCode && employeeData.fullName && employeeData.mobileNumber && employeeData.role && employeeData.status && employeeData.email && employeeData.employeeType && employeeData.location && employeeData.departmentId;
       case 2:
         if (isEditing) return true;
         return employeeData.defaultPassword && employeeData.email && employeeData.defaultPassword.length >= 6;
@@ -244,15 +247,16 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                 onSave(dataToSave as any);
             } catch (authError: any) {
                 if (authError.code === 'auth/email-already-in-use') {
-                    // Digital Identity Overwrite Protocol:
-                    // If Auth exists, reset the password and restore the registry record.
-                    try {
-                        await recreateUserWithPassword(auth, dataToSave.email!, defaultPassword);
-                        onSave(dataToSave as any);
-                        toast({ title: 'Identity Overwritten', description: 'Authentication user reset with new password; registry restored.' });
-                    } catch (e) {
-                        console.error('Identity overwrite failed:', e);
-                        throw e;
+                    const { defaultPassword, ...dataToSave } = finalData;
+                    if (defaultPassword) {
+                        try {
+                            await recreateUserWithPassword(auth, dataToSave.email!, defaultPassword);
+                            onSave(dataToSave as any);
+                            toast({ title: 'Identity Overwritten', description: 'Authentication user reset with new password; registry restored.' });
+                        } catch (e) {
+                            console.error('Identity overwrite failed:', e);
+                            throw e;
+                        }
                     }
                 } else {
                     throw authError;
@@ -348,14 +352,21 @@ export function EmployeeEntryForm({ isOpen, setIsOpen, onSave, employee, section
                 <Separator />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Section / Unit</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Building className="h-3 w-3" /> Primary Department<MandatoryIndicator/></Label>
                         <Select value={employeeData.departmentId} onValueChange={handleSelectChange('departmentId')}>
+                            <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                            <SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Building className="h-3 w-3" /> Assigned Section</Label>
+                        <Select value={employeeData.sectionId} onValueChange={handleSelectChange('sectionId')}>
                             <SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger>
                             <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground"><Briefcase className="h-3 w-3" /> Designation</Label>
+                        <Label className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-bold"><Briefcase className="h-3 w-3" /> Designation</Label>
                         <Select value={employeeData.designationId} onValueChange={handleSelectChange('designationId')}>
                             <SelectTrigger><SelectValue placeholder="Select designation" /></SelectTrigger>
                             <SelectContent>{designations.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>

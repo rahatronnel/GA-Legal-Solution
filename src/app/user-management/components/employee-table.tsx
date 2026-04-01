@@ -287,7 +287,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
           const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
           const processed = json.map(item => {
-              // High-Fidelity Header Resolve Logic (Support both YKK and normalized keys)
               const idStr = String(item['ID'] || item['id'] || '').trim();
               if (!idStr) return null;
 
@@ -305,7 +304,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
               const sect = sections.find(s => s.name.toLowerCase() === sectNameStr);
               const desig = designations.find(d => d.name.toLowerCase() === desigNameStr);
               
-              // Security Handshake: Derive corporate login email from ID
               const loginEmail = idStr.includes('@') ? idStr : `${idStr}@ykk-erp.com`;
               
               const existing = employees.find(e => e.userIdCode === idStr || e.email === loginEmail);
@@ -315,8 +313,8 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                   fullName: name,
                   email: loginEmail,
                   username: idStr,
-                  role: 'Viewer', // Organizational Default
-                  status: 'Active', // Organizational Default
+                  role: 'Viewer',
+                  status: 'Active',
                   employeeType: empTypeStr as any,
                   departmentId: dept?.id || '',
                   sectionId: sect?.id || '',
@@ -368,8 +366,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                     createdCount++;
                 } catch (authError: any) {
                     if (authError.code === 'auth/email-already-in-use') {
-                        // Digital Identity Overwrite Protocol: 
-                        // Re-initialize the existing auth user with the new password and restore registry record.
                         const { defaultPassword, ...dataToSave } = item.data;
                         if (defaultPassword) {
                             try {
@@ -384,8 +380,6 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
                         toast({ variant: 'destructive', title: `Failed to create user ${item.data.email}`, description: authError.message });
                     }
                 }
-            } else {
-                 console.warn(`Skipping user creation for ${item.data.email} due to missing data or short password.`);
             }
         } else if (item.original?.id) {
             const { defaultPassword, ...dataToUpdate } = item.data; 
@@ -587,6 +581,7 @@ export function EmployeeTable({ employees, setEmployees, sections, designations,
         employee={currentEmployee}
         sections={sections || []}
         designations={designations || []}
+        departments={departments || []}
       />
       
       <Dialog open={isSetPasswordOpen} onOpenChange={setIsSetPasswordOpen}>
