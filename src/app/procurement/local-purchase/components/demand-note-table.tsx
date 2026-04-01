@@ -328,7 +328,7 @@ const DNApprovalFlowDialog = ({
                                 animate="open"
                                 exit="exit"
                                 style={{ transformOrigin: "bottom right" }}
-                                className="fixed left-[50%] top-[50%] z-50 sm:max-md w-full h-[70vh] max-h-[70vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
+                                className="fixed left-[50%] top-[50%] z-50 sm:max-w-xl w-full h-[80vh] max-h-[80vh] flex flex-col p-0 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.6)] border-none outline-none focus:outline-none bg-background rounded-[28px]"
                             >
                                 <div className="p-6 bg-primary text-white shrink-0 relative overflow-hidden shadow-lg z-20">
                                     <div className="relative z-10 flex justify-between items-center">
