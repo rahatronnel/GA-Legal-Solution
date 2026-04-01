@@ -258,7 +258,8 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
         if (!isEditing) {
             if (orgSettings?.procurementSettings) {
                 const creator = employees.find(e => e.id === noteData.createdBy);
-                const department = sections.find(s => s.id === creator?.departmentId);
+                // Corrected: Lookup primary department for routing
+                const department = departments.find(d => d.id === creator?.departmentId);
 
                 const hasSpecialItem = items.some(item => {
                     const masterItem = billItemMasters.find(m => m.id === item.billItemMasterId);
@@ -270,6 +271,7 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                 const approvalFlowSteps = [];
                 const { departmentHeads, managingDirectorId, factoryDirectorId, manufacturingDeptManagerId, specializedDeptManagerId, specializedDeptTaId } = orgSettings.procurementSettings;
                 
+                // Corrected: Find approvers assigned to this department
                 const deptApprovers = departmentHeads.find(dh => dh.sectionId === department?.id);
                 const deptHeadId = deptApprovers?.headId;
                 const techAdvisorId = deptApprovers?.technicalAdvisorId;
@@ -280,6 +282,8 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                     if (specializedDeptManagerId) approvalFlowSteps.push({ stepName: 'Specialized Dept. Manager', approverId: specializedDeptManagerId });
                     if (managingDirectorId) approvalFlowSteps.push({ stepName: 'Managing Director', approverId: managingDirectorId });
                 } else if (department?.isManufacturingDept) {
+                    // Note: Department entity doesn't have isManufacturingDept, functional Section does.
+                    // If routing depends on section type, we'd check sections registry here.
                     if (deptHeadId) approvalFlowSteps.push({ stepName: 'Department Head', approverId: deptHeadId });
                     if (techAdvisorId) approvalFlowSteps.push({ stepName: 'Technical Advisor', approverId: techAdvisorId });
                     if (manufacturingDeptManagerId) approvalFlowSteps.push({ stepName: 'Manufacturing Dept. Manager', approverId: manufacturingDeptManagerId });

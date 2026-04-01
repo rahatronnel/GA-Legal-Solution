@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -27,7 +28,7 @@ import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocu
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
-import Link from 'next/link';
+import Link from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import {
@@ -392,7 +393,7 @@ export function DemandNoteTable() {
     const { toast } = useToast();
     const firestore = useFirestore();
     const { user } = useUser();
-    const { demandNotes, employees, sections, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings } = useProcurement();
+    const { demandNotes, employees, sections, departments, comparativeStatements, purchaseOrders, mrrs, paymentNotes, isLoading, orgSettings } = useProcurement();
     const { handlePrint } = usePrint();
 
     const dataRef = useMemoFirebase(() => firestore ? collection(firestore, 'demandNotes') : null, [firestore]);
@@ -445,7 +446,7 @@ export function DemandNoteTable() {
         };
     }, [orgSettings, currentUserEmployee, user]);
 
-    const getDepartmentName = (id?: string) => sections?.find(s => s.id === id)?.name || 'N/A';
+    const getDepartmentName = (id?: string) => departments?.find(d => d.id === id)?.name || 'N/A';
 
     const enrichedItems = useMemo(() => {
         const safeItems = Array.isArray(demandNotes) ? demandNotes : [];
@@ -477,7 +478,7 @@ export function DemandNoteTable() {
                 isVisible = true; 
             } else if (roleData.isAnyDeptHead) {
                 const isHeadOfThisDept = orgSettings?.procurementSettings?.departmentHeads?.some(
-                    dh => dh.sectionId === item.sectionId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
+                    dh => dh.sectionId === item.departmentId && (dh.headId === currentUserEmployee?.id || dh.technicalAdvisorId === currentUserEmployee?.id)
                 );
                 if (isHeadOfThisDept) isVisible = true;
             }
@@ -513,7 +514,7 @@ export function DemandNoteTable() {
 
             return searchTermMatch && statusMatch && stageMatch && dateMatch;
         }).sort((a, b) => new Date(b.entryDate || 0).getTime() - new Date(a.entryDate || 0).getTime());
-    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, roleData, orgSettings, currentUserEmployee, sections]);
+    }, [enrichedItems, searchTerm, statusFilter, stageFilter, dateRange, roleData, orgSettings, currentUserEmployee, departments]);
 
     const approvableItems = useMemo(() => {
         return filteredItems.filter(item => 
