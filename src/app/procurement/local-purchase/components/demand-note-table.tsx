@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -28,7 +29,6 @@ import { useUser, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocu
 import { collection, doc } from 'firebase/firestore';
 import type { DemandNote, Quotation } from './demand-note-entry-form';
 import { DemandNoteEntryForm } from './demand-note-entry-form';
-import Link from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { getDemandNoteStatusText, getNextApprovalStatusCode } from '../lib/status-helper';
 import {
