@@ -113,7 +113,7 @@ interface DemandNoteEntryFormProps {
 export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: DemandNoteEntryFormProps) {
     const { toast } = useToast();
     const { user } = useUser();
-    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings, deliveryPlaces } = useProcurement();
+    const { sections, processCodes, demandTypes, billItemMasters, employees, billItemCategories, orgSettings, deliveryPlaces, departments } = useProcurement();
 
     const [step, setStep] = useState(1);
     const [noteData, setNoteData] = useState<Omit<DemandNote, 'id' | 'demandNoteNumber' | 'items' | 'documents'>>(initialDemandNoteData);
@@ -126,9 +126,14 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
     const progress = Math.round((step / totalSteps) * 100);
 
     const departmentName = React.useMemo(() => {
-        if (!noteData.departmentId || !sections || sections.length === 0) return '';
-        return sections.find(s => s.id === noteData.departmentId)?.name || '';
-    }, [noteData.departmentId, sections]);
+        if (!noteData.departmentId || !departments || departments.length === 0) return '';
+        return departments.find(d => d.id === noteData.departmentId)?.name || '';
+    }, [noteData.departmentId, departments]);
+
+    const sectionName = React.useMemo(() => {
+        if (!noteData.sectionId || !sections || sections.length === 0) return '';
+        return sections.find(s => s.id === noteData.sectionId)?.name || '';
+    }, [noteData.sectionId, sections]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -323,11 +328,11 @@ export function DemandNoteEntryForm({ isOpen, setIsOpen, onSave, demandNote }: D
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2"><Building className="h-4 w-4" /> Department<MandatoryIndicator/></Label>
-                                <Input value={departmentName || ''} disabled className="bg-muted/50" />
+                                <Input value={departmentName || 'N/A'} disabled className="bg-muted/50 font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2"><Building className="h-4 w-4" /> Section</Label>
-                                <Input value={departmentName || ''} disabled className="bg-muted/50" />
+                                <Input value={sectionName || 'N/A'} disabled className="bg-muted/50 font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Process Code</Label>
