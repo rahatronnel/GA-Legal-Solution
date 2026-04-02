@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -217,19 +216,19 @@ const DNStatusTrackerDialog = ({
 
     const macroStatus = useMemo(() => {
         if (pn?.approvalStatus === 1) return { label: 'Payment Authorized', color: 'bg-green-600', icon: CheckCircle2 };
-        if (pn) return { label: 'In Treasury Audit (PN)', color: 'bg-orange-50', icon: Wallet };
+        if (pn) return { label: 'In Treasury Audit (PN)', color: 'bg-amber-600', icon: Wallet };
         if (mrr?.approvalStatus === 1) return { label: 'Awaiting Payment Initiation', color: 'bg-blue-600', icon: DollarSign };
-        if (mrr) return { label: 'In Quality Audit (MRR)', color: 'bg-orange-50', icon: Package };
+        if (mrr) return { label: 'In Quality Audit (MRR)', color: 'bg-amber-600', icon: Package };
         if (po?.isSentToVendor) return { label: 'Awaiting Goods Arrival', color: 'bg-blue-500', icon: Truck };
-        if (po?.approvalStatus === 1) return { label: 'Awaiting PO Dispatch', color: 'bg-orange-50', icon: Send };
-        if (po) return { label: 'In PO Authorization', color: 'bg-orange-50', icon: ShoppingCart };
+        if (po?.approvalStatus === 1) return { label: 'Awaiting PO Dispatch', color: 'bg-amber-600', icon: Send };
+        if (po) return { label: 'In PO Authorization', color: 'bg-amber-600', icon: ShoppingCart };
         if (cs?.approvalStatus === 1) return { label: 'Awaiting PO Creation', color: 'bg-blue-600', icon: FilePlus };
-        if (cs?.approvalStatus === 3) return { label: 'In Financial Audit (CS)', color: 'bg-orange-50', icon: BarChart2 };
-        if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-orange-50', icon: Hand };
+        if (cs?.approvalStatus === 3) return { label: 'In Financial Audit (CS)', color: 'bg-amber-600', icon: BarChart2 };
+        if (cs) return { label: 'Awaiting Vendor Award', color: 'bg-amber-600', icon: Hand };
         if (dn.gpConcernOfficerId) return { label: 'In Vendor Sourcing (GP)', color: 'bg-blue-500', icon: Briefcase };
         if (dn.approvalStatus === 1) return { label: 'Awaiting GP Assignment', color: 'bg-blue-600', icon: UserPlus };
         if (dn.approvalStatus === 0) return { label: 'Requisition Rejected', color: 'bg-destructive', icon: XCircleIcon };
-        return { label: 'In Internal Approval (DN)', color: 'bg-orange-50', icon: Hourglass };
+        return { label: 'In Internal Approval (DN)', color: 'bg-amber-600', icon: Hourglass };
     }, [dn, cs, po, mrr, pn]);
 
     return (
