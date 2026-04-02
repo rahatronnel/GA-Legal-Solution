@@ -544,24 +544,49 @@ export function ComparativeStatementTable() {
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-1.5">
                                                     {needsVendorSelection && (
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-500/10 rounded-full animate-pulse border border-blue-500/20" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}>
-                                                            <Hand className="h-4 w-4" />
-                                                        </Button>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-500/10 rounded-full animate-pulse border border-blue-500/20" onClick={() => { setSelectedCsForVendor(cs); setIsVendorSelectionOpen(true); }}>
+                                                                    <Hand className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="animate-scale-in">Award Contract / Select Vendor</TooltipContent>
+                                                        </Tooltip>
                                                     )}
                                                     {cs.approvalStatus === 1 && !poExists && (isSuperAdmin || isGPOfficer || (currentUserEmployee && dn?.gpConcernOfficerId === currentUserEmployee.id)) && (
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-600/10 rounded-full border border-green-600/20" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}>
-                                                            <FilePlus className="h-4 w-4" />
-                                                        </Button>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-600/10 rounded-full border border-green-600/20" onClick={() => { setSelectedCsForPo(cs); setIsPoFormOpen(true); }}>
+                                                                    <FilePlus className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="animate-scale-in">Create Purchase Order</TooltipContent>
+                                                        </Tooltip>
                                                     )}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-500" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}>
-                                                        <Info className="h-4 w-4"/>
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" asChild>
-                                                        <Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link>
-                                                    </Button>
-                                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}>
-                                                        <Trash2 className="h-4 w-4"/>
-                                                    </Button>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 text-blue-500" onClick={() => {setSelectedCsForStatus(cs); setIsStatusModalOpen(true);}}>
+                                                                <Info className="h-4 w-4"/>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="animate-scale-in">View Approval Flow</TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" asChild>
+                                                                <Link href={`/procurement/local-purchase/comparative-statements/${cs.id}`}><Eye className="h-4 w-4"/></Link>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="animate-scale-in">View Details</TooltipContent>
+                                                    </Tooltip>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => csRef && deleteDocumentNonBlocking(doc(csRef, cs.id))}>
+                                                                <Trash2 className="h-4 w-4"/>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="animate-scale-in">Delete Record</TooltipContent>
+                                                    </Tooltip>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -607,7 +632,7 @@ export function ComparativeStatementTable() {
                     <div className="py-4 space-y-4">
                         <p className="text-[10px] font-black uppercase text-blue-900">Deep Scan Engine</p>
                         <p className="text-[9px] text-muted-foreground font-bold">
-                          DN -&gt; GP -&gt; CS -&gt; PO -&gt; MRR -&gt; PN
+                          DN -> GP -> CS -> PO -> MRR -> PN
                         </p>
                         <Separator className="my-2" />
                         {selectedCsForStatus?.approvalFlow?.steps.map((step: any, index: number) => {
