@@ -166,7 +166,7 @@ const CSUserGuide = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: 
 const VendorSelectionDialog: React.FC<{
   cs: ComparativeStatement | null;
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   onVendorSelected: (csId: string, vendorId: string) => void;
   vendors: any[];
 }> = ({ cs, isOpen, onOpenChange, onVendorSelected, vendors }) => {
@@ -371,6 +371,32 @@ export function ComparativeStatementTable() {
         }
     }, { scope: containerRef, dependencies: [isLoading, comparativeStatements?.length] });
 
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+
+    const calculateCsTotals = (cs: ComparativeStatement, vendorId: string) => {
+        const subtotal = cs.items.reduce((acc, item) => {
+            const quote = item.vendorQuotes.find(q => q.vendorId === vendorId);
+            return acc + (item.quantity * (quote?.unitPrice || 0));
+        }, 0);
+
+        const detail = cs.vendorDetails.find(d => d.vendorId === vendorId);
+        let discount = 0;
+        if (detail) {
+            if (detail.discountType === 'Percentage') {
+                discount = subtotal * ((detail.discountValue || 0) / 100);
+            } else {
+                discount = detail.discountValue || 0;
+            }
+        }
+
+        const subtotalAfterDiscount = subtotal - discount;
+        const vat = subtotalAfterDiscount * ((detail?.vatPercentage || 0) / 100);
+        const tax = subtotalAfterDiscount * ((detail?.taxPercentage || 0) / 100);
+        const total = subtotalAfterDiscount + vat + tax;
+
+        return { subtotal, discount, vat, tax, total };
+    };
+
     const filteredItems = useMemo(() => {
         const safeItems = Array.isArray(comparativeStatements) ? comparativeStatements : [];
         if (safeItems.length === 0) return [];
@@ -481,7 +507,9 @@ export function ComparativeStatementTable() {
                                 </TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">CS Identity</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">DN Reference</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">GP Concern</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">Awarded Vendor</TableHead>
+                                <TableHead className="font-black uppercase text-[10px] tracking-widest">Awarded Amount</TableHead>
                                 <TableHead className="font-black uppercase text-[10px] tracking-widest">Status</TableHead>
                                 <TableHead className="w-[140px] text-right font-black uppercase text-[10px] tracking-widest">Actions</TableHead>
                             </TableRow>
@@ -489,7 +517,7 @@ export function ComparativeStatementTable() {
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-20">
+                                    <TableCell colSpan={8} className="text-center py-20">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                                             <p className="text-[10px] font-black uppercase text-muted-foreground animate-pulse">Syncing Registry...</p>
@@ -500,12 +528,15 @@ export function ComparativeStatementTable() {
                                 filteredItems.map((cs) => {
                                     const poExists = purchaseOrders?.some(po => po.csId === cs.id);
                                     const dn = demandNotes?.find(d => d.id === cs.demandNoteId);
+                                    const gpConcern = employees?.find(e => e.id === dn?.gpConcernOfficerId);
                                     
                                     const needsVendorSelection = cs.approvalStatus === 2 && (isSuperAdmin || isGPOfficer || currentUserEmployee?.id === cs.vendorSelectorId);
                                     const needsApproval = currentUserEmployee && cs.currentApproverId === currentUserEmployee.id && cs.approvalStatus !== 1 && cs.approvalStatus !== 0 && cs.approvalStatus !== 2;
                                     
                                     const isWaitingForMe = needsVendorSelection || needsApproval;
                                     const isApprovable = approvableItems.some(i => i.id === cs.id);
+
+                                    const financialDetails = cs.selectedVendorId ? calculateCsTotals(cs, cs.selectedVendorId) : null;
 
                                     return (
                                         <TableRow key={cs.id} className={cn("hover:bg-primary/[0.02] transition-colors duration-200 cs-row-animate group h-14", isWaitingForMe && "bg-orange-50/5")}>
@@ -529,10 +560,23 @@ export function ComparativeStatementTable() {
                                             </TableCell>
                                             <TableCell><Badge variant="outline" className="font-bold border-primary/10 text-[10px]">{dn?.demandNoteNumber || 'N/A'}</Badge></TableCell>
                                             <TableCell>
+                                                <span className="text-[10px] font-black uppercase text-primary">{gpConcern?.fullName || 'Unassigned'}</span>
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-black text-primary">{cs.selectedVendorId ? vendors?.find((v: Vendor) => v.id === cs.selectedVendorId)?.vendorName : 'Pending Selection'}</span>
                                                     {cs.vendorSelectionDate && <span className="text-[9px] text-muted-foreground italic font-black">Awarded: {new Date(cs.vendorSelectionDate).toLocaleDateString()}</span>}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                {financialDetails ? (
+                                                    <div className="flex flex-col text-[10px] gap-0.5">
+                                                        <span className="font-black text-xs text-primary">{formatCurrency(financialDetails.total)}</span>
+                                                        <span className="text-muted-foreground font-bold">VAT: {formatCurrency(financialDetails.vat)}</span>
+                                                        <span className="text-muted-foreground font-bold">Tax: {formatCurrency(financialDetails.tax)}</span>
+                                                        <span className="text-red-500 font-bold">Disc: -{formatCurrency(financialDetails.discount)}</span>
+                                                    </div>
+                                                ) : <span className="text-[10px] text-muted-foreground italic">N/A</span>}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2 flex-wrap">
@@ -594,7 +638,7 @@ export function ComparativeStatementTable() {
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
+                                    <TableCell colSpan={8} className="h-48 text-center text-muted-foreground italic font-medium">
                                         <div className="flex flex-col items-center gap-3 opacity-20">
                                             <BarChart2 className="h-12 w-12" />
                                             <p className="font-black uppercase text-xs tracking-[0.2em]">Registry Empty</p>
