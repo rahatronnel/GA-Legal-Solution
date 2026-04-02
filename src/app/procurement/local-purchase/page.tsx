@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, Suspense, useState, useEffect } from 'react';
@@ -17,6 +18,7 @@ import { PurchaseOrderTable } from './components/po-table';
 import { ProcessCodeTable } from './components/process-code-table';
 import { DemandTypeTable } from './components/demand-type-table';
 import { BillItemMasterTable } from '@/app/billflow/components/bill-item-master-table';
+import { BillItemCategoryTable } from '@/app/billflow/components/bill-item-category-table';
 import { DeliveryPlaceTable } from './components/delivery-place-table';
 import { WorkflowTracker } from './components/workflow-tracker';
 import { MRRTable } from './components/mrr-table';
@@ -241,12 +243,14 @@ function LocalPurchaseContent() {
                                     <ShadTabsList className="flex bg-muted/20 border-b h-auto p-1 rounded-none overflow-x-auto no-scrollbar">
                                         <ShadTabsTrigger value="vendors" className="text-[10px] font-black uppercase tracking-widest px-6 py-3">Vendors</ShadTabsTrigger>
                                         <ShadTabsTrigger value="bill-items" className="text-[10px] font-black uppercase tracking-widest px-6 py-3">Items</ShadTabsTrigger>
+                                        <ShadTabsTrigger value="item-categories" className="text-[10px] font-black uppercase tracking-widest px-6 py-3">Item Categories</ShadTabsTrigger>
                                         <ShadTabsTrigger value="places" className="text-[10px] font-black uppercase tracking-widest px-6 py-3">Offices</ShadTabsTrigger>
                                         <ShadTabsTrigger value="codes" className="text-[10px] font-black uppercase tracking-widest px-6 py-3">Process Codes</ShadTabsTrigger>
                                     </ShadTabsList>
                                     <div className="p-6">
                                         <ShadTabsContent value="vendors"><VendorTable /></ShadTabsContent>
                                         <ShadTabsContent value="bill-items"><BillItemMasterTable /></ShadTabsContent>
+                                        <ShadTabsContent value="item-categories"><BillItemCategoryTable /></ShadTabsContent>
                                         <ShadTabsContent value="places"><DeliveryPlaceTable /></ShadTabsContent>
                                         <ShadTabsContent value="codes"><ProcessCodeTable /></ShadTabsContent>
                                     </div>
