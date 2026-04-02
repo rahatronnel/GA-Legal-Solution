@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -86,6 +87,34 @@ export function PaymentNoteTable() {
         }, { merge: true });
         
         toast({ title: status === 1 ? 'Approved' : 'Rejected' });
+    };
+
+    /**
+     * handleDownloadPdf - Executes a background fetch of the full-set bundle.
+     * Uses a hidden iframe to prevent the user from leaving the current registry view.
+     */
+    const handleDownloadPdf = (pnId: string) => {
+        const downloadUrl = `/procurement/local-purchase/payment-notes/${pnId}/full-print?mode=download`;
+        
+        // Create an invisible anchor point for the document generation process
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.top = '-10000px';
+        iframe.style.left = '-10000px';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+        
+        toast({ 
+            title: "Compiling Bundle", 
+            description: "Executing 9-stage organizational join in the background. Please wait..." 
+        });
+
+        // Cleanup the background process after a safe execution window
+        setTimeout(() => {
+            if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+            }
+        }, 60000); 
     };
 
     return (
@@ -203,7 +232,7 @@ export function PaymentNoteTable() {
                                                             </Tooltip>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600" onClick={() => window.open(`/procurement/local-purchase/payment-notes/${pn.id}/full-print?mode=download`, '_blank')}>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600" onClick={() => handleDownloadPdf(pn.id)}>
                                                                         <Download className="mr-2 h-4 w-4" />
                                                                     </Button>
                                                                 </TooltipTrigger>
@@ -218,7 +247,7 @@ export function PaymentNoteTable() {
                                         </TableRow>
                                     )
                                 })
-                            ) : <TableRow><TableCell colSpan={8} className="h-32 text-center text-muted-foreground italic">No Payment Notes found.</TableCell></TableRow>}
+                            ) : <TableRow><TableCell colSpan={8} className="text-center py-10">No Payment Notes found.</TableCell></TableRow>}
                         </TableBody>
                     </Table>
                 </div>
