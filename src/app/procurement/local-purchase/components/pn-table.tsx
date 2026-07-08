@@ -90,8 +90,8 @@ export function PaymentNoteTable() {
     };
 
     /**
-     * handleDownloadPdf - Executes a background fetch of the full-set bundle.
-     * Uses a hidden iframe to prevent the user from leaving the current registry view.
+     * handleDownloadPdf - Executes a robust background fetch of the full-set bundle.
+     * Uses an extended execution window to allow for complex PDF joins.
      */
     const handleDownloadPdf = (pnId: string) => {
         const downloadUrl = `/procurement/local-purchase/payment-notes/${pnId}/full-print?mode=download`;
@@ -101,20 +101,22 @@ export function PaymentNoteTable() {
         iframe.style.position = 'fixed';
         iframe.style.top = '-10000px';
         iframe.style.left = '-10000px';
+        iframe.style.width = '1200px'; // Give the virtual viewport enough space for high-fidelity capture
+        iframe.style.height = '1200px';
         iframe.src = downloadUrl;
         document.body.appendChild(iframe);
         
         toast({ 
             title: "Compiling Bundle", 
-            description: "Executing 9-stage organizational join in the background. Please wait..." 
+            description: "Executing 9-stage organizational join. This may take up to 20 seconds. Please wait..." 
         });
 
-        // Cleanup the background process after a safe execution window
+        // Extended cleanup window (2 minutes) to allow for large PDF unrolling and complex rendering
         setTimeout(() => {
             if (document.body.contains(iframe)) {
                 document.body.removeChild(iframe);
             }
-        }, 60000); 
+        }, 120000); 
     };
 
     return (

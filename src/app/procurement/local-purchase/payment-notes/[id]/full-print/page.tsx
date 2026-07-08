@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { PaymentBundlePrintLayout } from '../../../components/payment-bundle-print-layout';
 import { useDoc, useMemoFirebase, useFirestore, useCollection, useUser } from '@/firebase';
@@ -20,12 +20,17 @@ import type { BillItemMaster } from '@/app/billflow/components/bill-item-master-
 import type { Section } from '@/app/user-management/components/section-table';
 import type { ProcessCode } from '../../../components/process-code-table';
 import type { DemandType } from '../../../components/demand-type-table';
+import { Button } from '@/components/ui/button';
+import { Printer, Download, CheckCircle2 } from 'lucide-react';
 
 export default function PNFullPrintPage() {
     const params = useParams();
     const firestore = useFirestore();
     const { user, isUserLoading: isAuthLoading } = useUser();
     const { id } = params;
+
+    const [isActionExecuted, setIsActionExecuted] = useState(false);
+    const [settlingProgress, setSettlingProgress] = useState(0);
 
     const pnRef = useMemoFirebase(() => (firestore && id) ? doc(firestore, 'paymentNotes', id as string) : null, [firestore, id]);
     const { data: pn, isLoading: l1 } = useDoc<PaymentNote>(pnRef);
@@ -71,39 +76,59 @@ export default function PNFullPrintPage() {
 
     const isGlobalLoading = isAuthLoading || !firestore || l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11 || l12 || l13 || l14;
 
+    const performAction = async (mode: string | null) => {
+        if (isActionExecuted) return;
+        setIsActionExecuted(true);
+
+        // Extended settling window for PDF unrolling and image rendering
+        if (mode === 'download') {
+            const element = document.querySelector('.payment-bundle-container');
+            if (element) {
+                try {
+                    // @ts-ignore
+                    const html2pdf = (await import('html2pdf.js')).default;
+                    const opt = {
+                        margin: 0,
+                        filename: `YKK_FullSet_${pn?.pnNumber || 'Bundle'}.pdf`,
+                        image: { type: 'jpeg', quality: 0.95 },
+                        html2canvas: { 
+                            scale: 1.5, // Reduced scale for better memory management in background iframes
+                            useCORS: true, 
+                            logging: false, 
+                            letterRendering: true 
+                        },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    };
+                    // @ts-ignore
+                    await html2pdf().from(element).set(opt).save();
+                } catch (err) {
+                    console.error("Critical PDF Export Failure:", err);
+                }
+            }
+        } else {
+            window.print();
+        }
+    };
+
     useEffect(() => {
         if (!isGlobalLoading && pn && mrr && po && cs && dn && orgSettings) {
             const searchParams = new URLSearchParams(window.location.search);
             const mode = searchParams.get('mode');
 
-            if (mode === 'download') {
-                const executeDownload = async () => {
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                    const element = document.querySelector('.payment-bundle-container');
-                    if (element) {
-                        try {
-                            // @ts-ignore
-                            const html2pdf = (await import('html2pdf.js')).default;
-                            const opt = {
-                                margin: 0,
-                                filename: `YKK_FullSet_${pn.pnNumber}.pdf`,
-                                image: { type: 'jpeg', quality: 0.98 },
-                                html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
-                                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-                            };
-                            // @ts-ignore
-                            await html2pdf().from(element).set(opt).save();
-                        } catch (err) {
-                            console.error("Critical PDF Export Failure:", err);
-                        }
+            // High-Fidelity Settling Protocol: Wait for canvases to render
+            const timer = setInterval(() => {
+                setSettlingProgress(prev => {
+                    if (prev >= 100) {
+                        clearInterval(timer);
+                        performAction(mode);
+                        return 100;
                     }
-                };
-                executeDownload();
-            } else {
-                const timer = setTimeout(() => { window.print(); }, 5000); 
-                return () => clearTimeout(timer);
-            }
+                    return prev + 10;
+                });
+            }, 800); // ~8 seconds total settling time
+
+            return () => clearInterval(timer);
         }
     }, [isGlobalLoading, pn, mrr, po, cs, dn, orgSettings]);
 
@@ -133,12 +158,35 @@ export default function PNFullPrintPage() {
             <div className="p-12 text-center space-y-4">
                 <h2 className="text-2xl font-bold text-destructive">Bundle Compilation Incomplete</h2>
                 <p className="text-muted-foreground max-w-md mx-auto">The system could not retrieve the full record set. Verify all modules are approved and linked.</p>
+                <Button variant="outline" onClick={() => window.location.reload()}>Retry Handshake</Button>
             </div>
         );
     }
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white min-h-screen relative">
+            {/* High-Fidelity Manual Overrides (Floaters for when background logic settles) */}
+            <div className="fixed top-4 right-4 z-[9999] flex gap-2 print:hidden bg-white/80 backdrop-blur-md p-2 rounded-full border shadow-2xl animate-in slide-in-from-top-4 duration-1000">
+                <div className="flex flex-col items-center justify-center px-4 border-r mr-2">
+                    <p className="text-[8px] font-black uppercase text-muted-foreground mb-1">Bundle Readiness</p>
+                    <div className="w-24 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${settlingProgress}%` }} />
+                    </div>
+                </div>
+                <Button size="sm" onClick={() => performAction(null)} className="rounded-full h-10 px-6 font-bold uppercase tracking-widest text-[10px]">
+                    <Printer className="mr-2 h-4 w-4" /> Force Print
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => performAction('download')} className="rounded-full h-10 px-6 font-bold uppercase tracking-widest text-[10px]">
+                    <Download className="mr-2 h-4 w-4" /> Force Download
+                </Button>
+                {isActionExecuted && (
+                    <div className="flex items-center gap-1 text-green-600 px-4">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span className="text-[10px] font-black uppercase">Triggered</span>
+                    </div>
+                )}
+            </div>
+
             <PaymentBundlePrintLayout 
                 pn={pn}
                 mrr={mrr}
