@@ -23,11 +23,13 @@ import {
     DialogContent, 
     DialogHeader, 
     DialogTitle, 
-    DialogDescription 
+    DialogDescription,
+    DialogFooter
 } from '@/components/ui/dialog';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 /**
  * AnswerDetailModal - Displays a question-by-question diagnostic of a participant's submission.
