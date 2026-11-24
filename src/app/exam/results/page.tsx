@@ -10,7 +10,7 @@ import {
     BarChart2, Globe, TrendingUp, Users, Award, 
     ShieldAlert, ChevronLeft, Trash2, Eye, 
     CheckCircle2, XCircle, FileText, Search,
-    Info, ListOrdered, User, Hash
+    Info, ListOrdered, User, Hash, Check, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -29,10 +29,11 @@ import {
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * AnswerDetailModal - Displays a question-by-question diagnostic of a participant's submission.
+ * Enhanced: Shows full option matrix with relative highlighting.
  */
 const AnswerDetailModal = ({ 
     sub, 
@@ -82,7 +83,7 @@ const AnswerDetailModal = ({
                                         "border-l-8 transition-all hover:shadow-md",
                                         isCorrect ? "border-l-emerald-500 bg-emerald-500/5" : "border-l-destructive bg-destructive/5"
                                     )}>
-                                        <CardContent className="p-4 space-y-3">
+                                        <CardContent className="p-4 space-y-4">
                                             <div className="flex justify-between items-start gap-4">
                                                 <div className="space-y-1">
                                                     <span className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1">
@@ -97,22 +98,44 @@ const AnswerDetailModal = ({
                                                 )}
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                                <div className="p-3 rounded-xl bg-background/50 border">
-                                                    <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Submitted Signal</p>
-                                                    <p className={cn(
-                                                        "text-sm font-black italic",
-                                                        isCorrect ? "text-emerald-600" : "text-destructive"
-                                                    )}>
-                                                        {userAnswer || "NO SIGNAL DETECTED"}
-                                                    </p>
+                                            <div className="space-y-2">
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-2">Option Matrix</p>
+                                                <div className="grid grid-cols-1 gap-1.5">
+                                                    {q.options.map((opt, optIdx) => {
+                                                        const isUserSelected = userAnswer === opt;
+                                                        const isCorrectOption = q.correctOption === opt;
+                                                        
+                                                        return (
+                                                            <div key={optIdx} className={cn(
+                                                                "flex items-center gap-3 px-4 py-2.5 rounded-xl border text-[13px] transition-all",
+                                                                isCorrectOption && "bg-emerald-500/10 border-emerald-500/50 text-emerald-700 font-bold ring-2 ring-emerald-500/10",
+                                                                isUserSelected && !isCorrectOption && "bg-destructive/10 border-destructive/50 text-destructive font-bold",
+                                                                !isUserSelected && !isCorrectOption && "bg-background/50 opacity-60 grayscale-[50%]"
+                                                            )}>
+                                                                <span className={cn(
+                                                                    "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
+                                                                    isCorrectOption ? "bg-emerald-500 text-white" : (isUserSelected ? "bg-destructive text-white" : "bg-muted text-muted-foreground")
+                                                                )}>
+                                                                    {String.fromCharCode(65 + optIdx)}
+                                                                </span>
+                                                                <span className="flex-1">{opt}</span>
+                                                                {isUserSelected && (
+                                                                    <Badge variant="outline" className={cn(
+                                                                        "text-[8px] h-4 font-black uppercase tracking-tighter ml-2",
+                                                                        isCorrect ? "bg-emerald-500 text-white border-none" : "bg-destructive text-white border-none"
+                                                                    )}>
+                                                                        Your Signal
+                                                                    </Badge>
+                                                                )}
+                                                                {!isUserSelected && isCorrectOption && (
+                                                                    <Badge variant="outline" className="text-[8px] h-4 font-black uppercase tracking-tighter ml-2 border-emerald-500 text-emerald-600 bg-emerald-50/50">
+                                                                        Validation Key
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
-                                                {!isCorrect && (
-                                                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                                        <p className="text-[9px] font-black uppercase text-emerald-700 mb-1">Correct Validation Key</p>
-                                                        <p className="text-sm font-black text-emerald-600 italic">{q.correctOption}</p>
-                                                    </div>
-                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
