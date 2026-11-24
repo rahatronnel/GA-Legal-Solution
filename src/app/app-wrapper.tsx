@@ -82,11 +82,9 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
     // Hard Rules: Module Partitioning
     if (isMainSuperAdmin) {
         showProcurement = true; // Both admins can now see procurement
-        showARS = false;
         showCore = true;
     } else if (isProcurementAdmin) {
         showProcurement = true;
-        showARS = false;
         showCore = false;
     }
 
@@ -151,7 +149,9 @@ const ModuleDashboard = ({ orgSettings, currentUserEmployee }: { orgSettings: Or
             </div>
             <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 {majorModules.map((majorMod) => {
-                    const isVisible = (majorMod.name === 'Procurement Management' && showProcurement);
+                    const isVisible = 
+                        (majorMod.name === 'Procurement Management' && showProcurement) ||
+                        (majorMod.name === 'Live Audience Response System (ARS)' && showARS);
                     
                     if (!isVisible) return null;
 
@@ -333,7 +333,7 @@ export function AppWrapper() {
 
         {handshakeTimeout && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-xs space-y-4">
-                <div className="p-3 rounded-lg border bg-orange-500/5 text-orange-600 border-orange-500/20 flex gap-3 items-center">
+                <div className="p-3 rounded-lg border bg-orange-50/5 text-orange-600 border-orange-500/20 flex gap-3 items-center">
                     <AlertTriangle className="h-5 w-5 shrink-0" />
                     <p className="text-[10px] font-bold leading-tight">Handshake latency detected. Please verify your internet connection or Firebase credentials.</p>
                 </div>
