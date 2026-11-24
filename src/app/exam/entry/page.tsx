@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp, XCircle, LogOut } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Home, UserCircle, Wifi, Clock, Timer, Trophy, Star, TrendingUp, XCircle, LogOut, ChevronRight } from 'lucide-react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { cn } from '@/lib/utils';
@@ -57,6 +57,9 @@ export default function ArsEntryPage() {
     const [isFinished, setIsFinished] = useState(false);
     const [finalResult, setFinalResult] = useState<any>(null);
 
+    // Self-Paced Navigation State
+    const [localActiveIndex, setLocalActiveIndex] = useState(0);
+
     // Timer logic
     const [timeLeft, setTimeLeft] = useState(0);
 
@@ -75,7 +78,7 @@ export default function ArsEntryPage() {
         }
     }, [isDataLoading, urlExamId, exams, selectedExam]);
 
-    // 2. Persistent Resumption
+    // 2. Persistent Resumption & Local Progress Calculation
     const userSubmission = useMemo(() => {
         if (!user || !submissions || !selectedExam) return null;
         return submissions.find(s => s.examId === selectedExam.id && s.userId === user.uid);
@@ -87,9 +90,14 @@ export default function ArsEntryPage() {
             setParticipantName(userSubmission.participantName);
             setParticipantMobile(userSubmission.participantMobile);
             setCurrentSubmissionId(userSubmission.id);
-            setAnswers(userSubmission.answers || {});
+            const answers = userSubmission.answers || {};
+            setAnswers(answers);
             
-            // Restore finish state if applicable (Only if status is definitively set)
+            // Critical: Initialize local progress based on existing answers
+            const answeredCount = Object.keys(answers).length;
+            setLocalActiveIndex(answeredCount);
+            
+            // Restore finish state if applicable
             if (userSubmission.status === 'Passed' || userSubmission.status === 'Failed') {
                 setFinalResult(userSubmission);
                 setIsFinished(true);
@@ -107,22 +115,29 @@ export default function ArsEntryPage() {
         questions.filter(q => q.examId === selectedExam?.id), 
     [questions, selectedExam]);
 
+    // Self-Paced Question Selection
     const currentQuestion = useMemo(() => {
-        if (!liveExam || liveExam.activeQuestionIndex === -1) return null;
-        return activeQuestions[liveExam.activeQuestionIndex];
-    }, [liveExam, activeQuestions]);
+        if (!liveExam || !isBoarded) return null;
+        // If the moderator hasn't started the session globally, stay in standby
+        if (liveExam.activeQuestionIndex === -1 && !isFinished) return null;
+        
+        // If participant has finished all questions
+        if (localActiveIndex >= activeQuestions.length) return null;
 
-    // Reset signal commitment when question changes
+        return activeQuestions[localActiveIndex];
+    }, [liveExam, activeQuestions, localActiveIndex, isBoarded, isFinished]);
+
+    // Reset signal commitment when MOVING to next local question
     useEffect(() => {
         setIsSignalCommitted(false);
-    }, [liveExam?.activeQuestionIndex]);
+    }, [localActiveIndex]);
 
-    // 4. Timer Pulse
+    // 4. Timer Pulse (Local for current question)
     useEffect(() => {
         if (currentQuestion) {
             setTimeLeft(currentQuestion.timeLimitSeconds || 30);
         }
-    }, [liveExam?.activeQuestionIndex, currentQuestion?.id]);
+    }, [localActiveIndex, currentQuestion?.id]);
 
     useEffect(() => {
         if (!liveExam?.isLive || timeLeft <= 0 || !currentQuestion) return;
@@ -134,12 +149,17 @@ export default function ArsEntryPage() {
         return () => clearInterval(interval);
     }, [timeLeft, liveExam?.isLive, currentQuestion]);
 
-    // Auto-calculate results when session concludes
+    // Auto-calculate results when session concludes OR participant finishes independently
     useEffect(() => {
         if (isBoarded && liveExam && !liveExam.isLive && liveExam.activeQuestionIndex !== -1 && !isFinished) {
             finalizeSubmission();
         }
-    }, [liveExam?.isLive, isBoarded]);
+        
+        // Finalize if participant finishes all questions early
+        if (isBoarded && activeQuestions.length > 0 && localActiveIndex >= activeQuestions.length && !isFinished) {
+            finalizeSubmission();
+        }
+    }, [liveExam?.isLive, isBoarded, localActiveIndex]);
 
     const handleBoarding = async () => {
         if (!participantName || !participantMobile || !selectedExam || !firestore || !user) return;
@@ -182,6 +202,10 @@ export default function ArsEntryPage() {
 
     const handleCommitSignal = () => {
         setIsSignalCommitted(true);
+    };
+
+    const handleNextSignal = () => {
+        setLocalActiveIndex(prev => prev + 1);
     };
 
     const finalizeSubmission = () => {
@@ -242,7 +266,6 @@ export default function ArsEntryPage() {
                                 &quot;Hello {participantName}, your assessment signal has been successfully hard-locked into the organizational performance matrix.&quot;
                             </p>
                         </div>
-                        {/* EXIT LOGIC: Directed to the entry registry instead of the private dashboard */}
                         <Button className="w-full h-14 rounded-full font-black uppercase tracking-widest shadow-xl shadow-primary/20 border-4 border-white/10" asChild onClick={() => setSelectedExam(null)}>
                             <Link href="/exam/entry"><LogOut className="mr-2 h-5 w-5" /> Exit Session</Link>
                         </Button>
@@ -348,7 +371,7 @@ export default function ArsEntryPage() {
 
             <div className="max-w-xl w-full space-y-8 relative z-10">
                 <div className="flex justify-between items-center mb-4">
-                    <Badge className="bg-primary/10 text-primary uppercase font-black tracking-widest text-[9px] border border-primary/20 h-6 px-3">Signal {liveExam.activeQuestionIndex + 1} of {activeQuestions.length}</Badge>
+                    <Badge className="bg-primary/10 text-primary uppercase font-black tracking-widest text-[9px] border border-primary/20 h-6 px-3">Signal {localActiveIndex + 1} of {activeQuestions.length}</Badge>
                     <div className="flex items-center gap-3">
                         <div className={cn("text-4xl font-black font-mono transition-colors", timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-white/40")}>
                             {timeLeft}s
@@ -380,13 +403,20 @@ export default function ArsEntryPage() {
                 )}
 
                 <div className="flex flex-col items-center gap-6 pt-8">
-                    {!isSignalCommitted && (
+                    {!isSignalCommitted ? (
                         <Button 
                             className="w-full h-16 rounded-full font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 border-4 border-white/10" 
                             disabled={!localAnswers[currentQuestion.id]}
                             onClick={handleCommitSignal}
                         >
                             Finalize Selection
+                        </Button>
+                    ) : (
+                        <Button 
+                            className="w-full h-16 rounded-full font-black uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-4 border-white/10 animate-in slide-in-from-bottom-4" 
+                            onClick={handleNextSignal}
+                        >
+                            Proceed to Next Signal <ChevronRight className="ml-2 h-5 w-5" />
                         </Button>
                     )}
                     <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest flex items-center gap-2 opacity-50">
